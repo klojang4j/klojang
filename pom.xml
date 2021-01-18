@@ -1,0 +1,252 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>nl.naturalis.yokete</groupId>
+	<artifactId>yokete</artifactId>
+	<version>1.0.0</version>
+
+	<name>Yokete</name>
+
+	<properties>
+
+		<!-- ==================================================================== -->
+		<!-- *** Build settings                                               *** -->
+		<!-- ==================================================================== -->
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+		<!-- ==================================================================== -->
+		<!-- *** Maven plugin versions                                        *** -->
+		<!-- *** Check for updates: mvn versions:display-plugin-updates       *** -->
+		<!-- ==================================================================== -->
+		<maven-enforcer-plugin.version>3.0.0-M3</maven-enforcer-plugin.version>
+		<maven-checkstyle-plugin.version>3.1.1</maven-checkstyle-plugin.version>
+		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+		<maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
+		<maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
+		<git-commit-id-plugin.version>4.0.3</git-commit-id-plugin.version>
+
+		<!-- ==================================================================== -->
+		<!-- *** Library dependencies                                         *** -->
+		<!-- *** Check for updates: mvn versions:display-dependency-updates   *** -->
+		<!-- *** Check dependencies: mvn dependency:analyze                   *** -->
+		<!-- ==================================================================== -->
+		<naturalis-common.version>2.9</naturalis-common.version>
+		<commons-text.version>1.9</commons-text.version>
+		<junit.version>5.7.0</junit.version>
+
+
+	</properties>
+
+
+	<organization>
+		<name>Naturalis Biodiversity Center</name>
+		<url>http://www.naturalis.nl</url>
+	</organization>
+
+
+	<distributionManagement>
+		<repository>
+			<id>naturalis</id>
+			<url>http://mvnrepository.naturalis.io:8081/repository/naturalis/</url>
+		</repository>
+		<snapshotRepository>
+			<id>naturalis</id>
+			<url>http://mvnrepository.naturalis.io:8081/repository/naturalis/</url>
+		</snapshotRepository>
+	</distributionManagement>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.junit</groupId>
+				<artifactId>junit-bom</artifactId>
+				<version>${junit.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+
+	<dependencies>
+	
+		<!-- NATURALIS -->
+		<dependency>
+			<groupId>nl.naturalis.common</groupId>
+			<artifactId>naturalis-common</artifactId>
+			<version>${naturalis-common.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-text</artifactId>
+			<version>${commons-text.version}</version>
+		</dependency>
+		
+		<!-- TEST -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+	</dependencies>
+
+	<build>
+
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+		<testResources>
+			<testResource>
+				<directory>src/test/resources</directory>
+				<filtering>true</filtering>
+			</testResource>
+		</testResources>
+
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-enforcer-plugin</artifactId>
+					<version>${maven-enforcer-plugin.version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-checkstyle-plugin</artifactId>
+					<version>${maven-checkstyle-plugin.version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>${maven-compiler-plugin.version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-dependency-plugin</artifactId>
+					<version>${maven-dependency-plugin.version}</version>
+                    <!-- following is needed until 3.1.2 is released -->
+					<!-- dependencies>
+						<dependency>
+							<groupId>org.apache.maven.shared</groupId>
+							<artifactId>maven-dependency-analyzer</artifactId>
+							<version>1.11.1</version>
+						</dependency>
+					</dependencies -->
+				</plugin>
+				<plugin>
+					<groupId>pl.project13.maven</groupId>
+					<artifactId>git-commit-id-plugin</artifactId>
+					<version>${git-commit-id-plugin.version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>${maven-surefire-plugin.version}</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>enforce-versions</id>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireMavenVersion>
+									<version>[3.6.3,)</version>
+								</requireMavenVersion>
+								<requireJavaVersion>
+									<version>[11,)</version>
+								</requireJavaVersion>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>pl.project13.maven</groupId>
+				<artifactId>git-commit-id-plugin</artifactId>
+				<configuration>
+					<dotGitDirectory>${project.basedir}/../.git</dotGitDirectory>
+					<generateGitPropertiesFile>true</generateGitPropertiesFile>
+					<generateGitPropertiesFilename>
+						${project.build.outputDirectory}/${project.artifactId}.git.properties
+					</generateGitPropertiesFilename>
+					<format>properties</format>
+					<dateFormat>yyyy-MM-dd HH:mm:ss</dateFormat>
+				</configuration>
+				<executions>
+					<execution>
+						<id>generate-git-properties</id>
+						<phase>initialize</phase>
+						<goals>
+							<goal>revision</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>check-style</id>
+						<configuration>
+							<configLocation>google_checks.xml</configLocation>
+							<encoding>UTF-8</encoding>
+							<failsOnError>true</failsOnError>
+							<consoleOutput>true</consoleOutput>
+							<includeTestSourceDirectory>true
+							</includeTestSourceDirectory>
+						</configuration>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>default-compile</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+						<configuration>
+							<source>11</source>
+							<target>11</target>
+						</configuration>
+					</execution>
+					<execution>
+						<id>default-testCompile</id>
+						<phase>test-compile</phase>
+						<goals>
+							<goal>testCompile</goal>
+						</goals>
+						<configuration>
+							<source>11</source>
+							<target>11</target>
+						</configuration>
+					</execution>
+				</executions>
+				<configuration>
+					<source>11</source>
+					<target>11</target>
+				</configuration>
+			</plugin>
+		</plugins>
+
+	</build>
+
+</project>

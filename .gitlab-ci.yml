@@ -1,0 +1,11 @@
+image: alpine:latest
+
+pages:
+  stage: test
+  script:
+  - echo 'Nothing to do'
+  artifacts:
+    paths:
+    - public
+  only:
+  - master
