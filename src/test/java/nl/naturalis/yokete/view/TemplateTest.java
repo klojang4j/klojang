@@ -2,7 +2,6 @@ package nl.naturalis.yokete.view;
 
 import org.junit.jupiter.api.Test;
 import nl.naturalis.common.IOMethods;
-import nl.naturalis.yokete.view.Template;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TemplateTest {

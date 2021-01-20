@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import nl.naturalis.common.IOMethods;
-import nl.naturalis.yokete.view.FlatMapRenderer;
-import nl.naturalis.yokete.view.Template;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class FlatMapRendererTest {

@@ -4,18 +4,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.UnaryOperator;
 import org.apache.commons.text.StringEscapeUtils;
 import nl.naturalis.common.check.Check;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 import static nl.naturalis.common.check.CommonChecks.nullPointer;
-import static nl.naturalis.common.check.CommonChecks.subsetOf;
+import static nl.naturalis.common.check.CommonChecks.*;
 import static nl.naturalis.yokete.view.EscapeType.ESCAPE_HTML;
 import static nl.naturalis.yokete.view.EscapeType.ESCAPE_JS;
 import static nl.naturalis.yokete.view.EscapeType.ESCAPE_NONE;
 
 /**
- * Replaces variables within a text template.
+ * Renders template with data from a {@link Map}. The map is assumed to be a simple key-value store
+ * without nested objects.
  *
  * @author Ayco Holleman
  */
@@ -23,6 +25,8 @@ public class FlatMapRenderer {
 
   private static final String ERR_NOT_STARTED = "Not started yet";
   private static final String ERR_NOT_RESET = "Awaiting reset";
+
+  private final ReentrantLock lock = new ReentrantLock();
 
   private final Template template;
 
@@ -81,19 +85,16 @@ public class FlatMapRenderer {
     }
   }
 
-  /*
-   * When rendering we want to work on a copy of the template; we don't want the variables to be
-   * substituted in the template itself.
-   */
   private List<String> parts;
 
   public void start() {
     Check.with(IllegalStateException::new, parts).is(nullPointer(), ERR_NOT_RESET);
+    lock.lock();
     parts = template.getParts();
   }
 
   public void substitute(Map<String, Object> data, EscapeType escapeType, Set<String> fields) {
-    Check.with(IllegalStateException::new, parts).is(notNull(), ERR_NOT_STARTED);
+    Check.with(IllegalStateException::new, lock.isLocked()).is(yes(), ERR_NOT_STARTED);
     Map<String, Object> myData;
     if (fields == data.keySet()) {
       myData = data;
@@ -120,6 +121,7 @@ public class FlatMapRenderer {
 
   public void reset() {
     parts = null;
+    lock.unlock();
   }
 
   // All parts containing the name of a variable are overwritten with
