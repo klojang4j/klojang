@@ -10,7 +10,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import nl.naturalis.common.check.Check;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 import static nl.naturalis.common.check.CommonChecks.nullPointer;
-import static nl.naturalis.common.check.CommonChecks.subsetOf;
+import static nl.naturalis.common.check.CommonChecks.*;
 import static nl.naturalis.common.check.CommonChecks.yes;
 import static nl.naturalis.yokete.view.EscapeType.ESCAPE_HTML;
 import static nl.naturalis.yokete.view.EscapeType.ESCAPE_JS;
@@ -106,13 +106,13 @@ public class MapRenderer {
   private List<String> parts;
 
   public void start() {
-    Check.with(IllegalStateException::new, parts).is(nullPointer(), ERR_NOT_RESET);
+    Check.with(illegalState(), parts).is(nullPointer(), ERR_NOT_RESET);
     lock.lock();
     parts = template.getParts();
   }
 
   public void substitute(Map<String, Object> data, EscapeType escapeType, Set<String> fields) {
-    Check.with(IllegalStateException::new, lock.isLocked()).is(yes(), ERR_NOT_STARTED);
+    Check.with(illegalState(), lock.isLocked()).is(yes(), ERR_NOT_STARTED);
     Map<String, Object> myData;
     if (fields == data.keySet()) {
       myData = data;
@@ -125,7 +125,7 @@ public class MapRenderer {
   }
 
   public StringBuilder render() {
-    Check.with(IllegalStateException::new, parts).is(notNull(), ERR_NOT_STARTED);
+    Check.with(illegalState(), parts).is(notNull(), ERR_NOT_STARTED);
     int sz = parts.stream().mapToInt(String::length).sum();
     StringBuilder sb = new StringBuilder(sz);
     parts.forEach(sb::append);
@@ -133,7 +133,7 @@ public class MapRenderer {
   }
 
   public void render(StringBuilder sb) {
-    Check.with(IllegalStateException::new, parts).is(notNull(), ERR_NOT_STARTED);
+    Check.with(illegalState(), parts).is(notNull(), ERR_NOT_STARTED);
     parts.forEach(sb::append);
   }
 

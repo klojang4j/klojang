@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import nl.naturalis.common.collection.IntList;
+import static java.util.stream.Collectors.toList;
 import static nl.naturalis.common.StringMethods.concat;
-import static java.util.stream.Collectors.*;
 
 /**
  * A {@code Template} parses a template file and breaks it up in parts containing variables and
