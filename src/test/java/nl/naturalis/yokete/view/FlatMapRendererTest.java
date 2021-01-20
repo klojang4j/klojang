@@ -12,7 +12,7 @@ public class FlatMapRendererTest {
   public void test00() {
     String tmpl = IOMethods.toString(getClass(), "test00.in.html");
     Template template = new Template(tmpl);
-    FlatMapRenderer renderer = new FlatMapRenderer(template);
+    MapRenderer renderer = new MapRenderer(template);
     Map<String, Object> data = new HashMap<>();
     data.put("topdeskId", "M20070792");
     data.put("id", 1127);

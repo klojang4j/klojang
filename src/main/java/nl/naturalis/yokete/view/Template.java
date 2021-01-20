@@ -8,6 +8,14 @@ import nl.naturalis.common.collection.IntList;
 import static nl.naturalis.common.StringMethods.concat;
 import static java.util.stream.Collectors.*;
 
+/**
+ * A {@code Template} parses a template file and breaks it up in parts containing variables and
+ * parts containing literal text. It also removes the lines and blocks of text marked as ignorable.
+ * You should cache and reuse a {@code Template} instance for a particular template files as
+ * instantiating a {@code Template} is expensive.
+ *
+ * @author Ayco Holleman
+ */
 public class Template {
 
   private static final String WHITESPACE = "\\s*";
@@ -30,41 +38,41 @@ public class Template {
   private static final String HIDDEN_VARIABLE =
       concat(HTML_COMMENT_START, WHITESPACE, VARIABLE, WHITESPACE, HTML_COMMENT_END);
 
-  private static final String DESIGN_LINE =
+  private static final String IGNORE_LINE =
       concat(
           LINE_START,
           HTML_COMMENT_START,
           NON_BREAKING_SPACE,
-          "~%%design%",
+          "~%%ignore%",
           NON_BREAKING_SPACE,
           HTML_COMMENT_END,
           LINE_END);
 
-  private static final String DESIGN_BLOCK =
+  private static final String IGNORE_BLOCK =
       concat(
           "(?ms)", // modifiers, equivalent to Pattern.MULTILINE | Pattern.DOTALL
           HTML_COMMENT_START,
           WHITESPACE,
-          "~%%beginDesign%",
+          "~%%beginIgnore%",
           WHATEVER,
-          "~%%endDesign%",
+          "~%%endIgnore%",
           WHITESPACE,
           HTML_COMMENT_END);
 
   private static final Pattern REGEX_VARIABLE = Pattern.compile(VARIABLE);
   private static final Pattern REGEX_HIDDEN_VAR = Pattern.compile(HIDDEN_VARIABLE);
-  private static final Pattern REGEX_IGNORE_LINE = Pattern.compile(DESIGN_LINE);
-  private static final Pattern REGEX_IGNORE_BLOCK = Pattern.compile(DESIGN_BLOCK);
+  private static final Pattern REGEX_IGNORE_LINE = Pattern.compile(IGNORE_LINE);
+  private static final Pattern REGEX_IGNORE_BLOCK = Pattern.compile(IGNORE_BLOCK);
 
   /*
-   * The parts that the template is split into. Some parts will contain just text, other parts will
+   * The parts that the template is split into. Some parts will contain literal text, other parts will
    * contain the name of a variable
    */
   private final List<String> parts = new ArrayList<>();
 
   /*
    * Contains the array indices of the elements in the parts List that contain the name of a
-   * variable
+   * variable.
    */
   private final IntList varIndices = new IntList();
 
@@ -92,18 +100,40 @@ public class Template {
     }
   }
 
+  /**
+   * Returns the parts that the template is split into. Some parts will contain literal text, other
+   * parts will contain the name of a variable.
+   *
+   * @return The constuent parts of the template file
+   */
   public List<String> getParts() {
     return new ArrayList<>(parts);
   }
 
+  /**
+   * Returns the indices of the parts list that contain variables.
+   *
+   * @return The indices of the parts list that contain variables
+   */
   public IntList getVarIndices() {
     return new IntList(varIndices);
   }
 
+  /**
+   * The returns the number of variables found in the template.
+   *
+   * @return The number of variables found in the template
+   */
   public int countVariables() {
     return varIndices.size();
   }
 
+  /**
+   * Returns all variables found in the template. Note that variables may occur multiple times in a
+   * template, so the returned list does not necessarily contain unique variable names.
+   *
+   * @return All variables found in the template
+   */
   public List<String> getVariables() {
     return varIndices.stream().mapToObj(parts::get).collect(toList());
   }

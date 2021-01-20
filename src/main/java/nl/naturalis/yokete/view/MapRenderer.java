@@ -10,18 +10,19 @@ import org.apache.commons.text.StringEscapeUtils;
 import nl.naturalis.common.check.Check;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 import static nl.naturalis.common.check.CommonChecks.nullPointer;
-import static nl.naturalis.common.check.CommonChecks.*;
+import static nl.naturalis.common.check.CommonChecks.subsetOf;
+import static nl.naturalis.common.check.CommonChecks.yes;
 import static nl.naturalis.yokete.view.EscapeType.ESCAPE_HTML;
 import static nl.naturalis.yokete.view.EscapeType.ESCAPE_JS;
 import static nl.naturalis.yokete.view.EscapeType.ESCAPE_NONE;
 
 /**
- * Renders template with data from a {@link Map}. The map is assumed to be a simple key-value store
- * without nested objects.
+ * Renders template with data from a {@link Map}. The map is assumed to be flat (i.e. without nested
+ * objects). Map values are rendered using {@link Object#toString()}.
  *
  * @author Ayco Holleman
  */
-public class FlatMapRenderer {
+public class MapRenderer {
 
   private static final String ERR_NOT_STARTED = "Not started yet";
   private static final String ERR_NOT_RESET = "Awaiting reset";
@@ -38,29 +39,29 @@ public class FlatMapRenderer {
    *
    * @param template
    */
-  public FlatMapRenderer(Template template) {
+  public MapRenderer(Template template) {
     this.template = template;
   }
 
   /**
    * Sets the function that generates a value for a variable whose value is null. By default an
-   * empty string is inserted at the location of a variable whose value is null. For HTML files you
-   * might want the variable to be substituted with a non-breaking space (&amp;nbsp;) instead. The
-   * function is passed the name of the variable and should return an appropriate "null value" for
-   * that variable.
+   * empty string is inserted at the location of a variable whose value is null. For HTML files, for
+   * example, you might want the variable to be substituted with a non-breaking space (&amp;nbsp;)
+   * instead. The function is passed the name of the variable and should return an appropriate "null
+   * value" for that variable.
    *
    * @param nullString
    */
-  public FlatMapRenderer whenNull(UnaryOperator<String> whenNull) {
+  public MapRenderer whenNull(UnaryOperator<String> whenNull) {
     this.whenNull = whenNull;
     return this;
   }
 
-  public synchronized StringBuilder render(Map<String, Object> data) {
+  public StringBuilder render(Map<String, Object> data) {
     return render(data, ESCAPE_NONE);
   }
 
-  public synchronized StringBuilder render(Map<String, Object> data, EscapeType escapeType) {
+  public StringBuilder render(Map<String, Object> data, EscapeType escapeType) {
     try {
       start();
       substitute(data, escapeType, data.keySet());
@@ -70,12 +71,11 @@ public class FlatMapRenderer {
     }
   }
 
-  public synchronized void render(Map<String, Object> data, StringBuilder out) {
+  public void render(Map<String, Object> data, StringBuilder out) {
     render(data, out, ESCAPE_NONE);
   }
 
-  public synchronized void render(
-      Map<String, Object> data, StringBuilder out, EscapeType escapeType) {
+  public void render(Map<String, Object> data, StringBuilder out, EscapeType escapeType) {
     try {
       start();
       substitute(data, escapeType, data.keySet());
@@ -83,6 +83,24 @@ public class FlatMapRenderer {
     } finally {
       reset();
     }
+  }
+
+  public void repeat(List<Map<String, Object>> data, StringBuilder out) {
+    repeat(data, out, ESCAPE_NONE);
+  }
+
+  public StringBuilder repeat(List<Map<String, Object>> data) {
+    return repeat(data, ESCAPE_NONE);
+  }
+
+  public void repeat(List<Map<String, Object>> data, StringBuilder out, EscapeType escapeType) {
+    data.stream().forEach(map -> render(map, out, escapeType));
+  }
+
+  public StringBuilder repeat(List<Map<String, Object>> data, EscapeType escapeType) {
+    StringBuilder out = new StringBuilder(512);
+    data.stream().forEach(map -> render(map, out, escapeType));
+    return out;
   }
 
   private List<String> parts;
