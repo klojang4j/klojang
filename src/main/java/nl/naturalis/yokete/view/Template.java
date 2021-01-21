@@ -1,6 +1,7 @@
 package nl.naturalis.yokete.view;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -105,9 +106,58 @@ public class Template {
     if (offset < template.length()) {
       parts.add(template.substring(offset));
     }
-    if (varIndices.isEmpty()) {
-      throw new RenderException("No variables found in template");
+  }
+
+  private LinkedList<Part<?>> extractSubTemplates(String template) {
+    LinkedList<Part<?>> parts = new LinkedList<>();
+    Matcher matcher = REGEX_SUB_TEMPLATE.matcher(template);
+    int offset = 0;
+    while (matcher.find()) {
+      int start = matcher.start();
+      if (start > offset) {
+        String parseLater = template.substring(offset, start);
+        parts.add(new LiteralPart(parseLater));
+      }
+      String name = matcher.group(1);
+      String src = matcher.group(2);
+      parts.add(new TemplatePart(name, new Template(src)));
+      offset = matcher.end();
     }
+    if (offset < template.length()) {
+      String parseLater = template.substring(offset);
+      parts.add(new LiteralPart(parseLater));
+    }
+    return parts;
+  }
+
+  private LinkedList<Part<?>> extractVariables(LinkedList<Part<?>> parseResult) {
+    for (int i = 0; i < parseResult.size(); ++i) {
+      Part<?> p = parseResult.get(i);
+      if (p.getClass() == LiteralPart.class) {}
+    }
+
+    return parseResult;
+  }
+
+  private List<Part<?>> extractVariables(String template) {
+    List<Part<?>> parts = new ArrayList<>();
+    Matcher matcher = REGEX_VARIABLE.matcher(template);
+    int offset = 0;
+    while (matcher.find()) {
+      int start = matcher.start();
+      if (start > offset) {
+        String text = template.substring(offset, start);
+        parts.add(new LiteralPart(text));
+      }
+      String varName = matcher.group(1);
+      parts.add(new VariablePart(varName));
+      offset = matcher.end();
+    }
+    if (offset < template.length()) {
+      String text = template.substring(offset);
+      parts.add(new LiteralPart(text));
+    }
+    return parts;
   }
 
   /**
