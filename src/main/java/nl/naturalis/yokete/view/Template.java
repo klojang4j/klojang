@@ -24,45 +24,54 @@ public class Template {
   private static final String LINE_START = "^.*";
   private static final String LINE_END = ".*$";
 
-  private static final String PATH_ELEMENT = "[a-zA-Z_][a-zA-Z0-9_]*";
+  private static final String NAME = "[a-zA-Z][a-zA-Z0-9_]*";
   private static final String INDEX = "\\d+";
-  private static final String EITHER = concat(PATH_ELEMENT, "|", INDEX);
+  private static final String EITHER = concat(NAME, "|", INDEX);
   private static final String PATH = concat(EITHER, "(\\.", EITHER, ")*");
   private static final String VARIABLE = concat("~%(", PATH, ")%");
 
   private static final String HTML_COMMENT_START = Pattern.quote("<!--");
   private static final String HTML_COMMENT_END = Pattern.quote("-->");
 
-  // Variable within an HTML comment. This will make the unprocessed template render nicely in a
-  // browser, if that's important.
+  // Variable within an HTML comment. This will make the unprocessed template render more nicely,
+  // but for the rendering process it doesn't make a difference (both "hidden" and "visible"
+  // variables are replaced with something else).
   private static final String HIDDEN_VARIABLE =
-      concat(HTML_COMMENT_START, WHITESPACE, VARIABLE, WHITESPACE, HTML_COMMENT_END);
+      concat(HTML_COMMENT_START, WHITESPACE, "(", VARIABLE, ")", WHITESPACE, HTML_COMMENT_END);
 
-  private static final String IGNORE_LINE =
+  private static final String SUB_TEMPLATE =
+      concat("~%%beginTemplate:(", NAME, ")%(", WHATEVER, ")~%%endTemplate%");
+
+  private static final String HIDDEN_SUB_TEMPLATE =
+      concat(HTML_COMMENT_START, WHITESPACE, "(", SUB_TEMPLATE, ")", WHITESPACE, HTML_COMMENT_END);
+
+  private static final String COMMENT_LINE =
       concat(
           LINE_START,
           HTML_COMMENT_START,
           NON_BREAKING_SPACE,
-          "~%%ignore%",
+          "~%%comment%",
           NON_BREAKING_SPACE,
           HTML_COMMENT_END,
           LINE_END);
 
-  private static final String IGNORE_BLOCK =
+  private static final String COMMENT_BLOCK =
       concat(
           "(?ms)", // modifiers, equivalent to Pattern.MULTILINE | Pattern.DOTALL
           HTML_COMMENT_START,
           WHITESPACE,
-          "~%%beginIgnore%",
+          "~%%beginComment%",
           WHATEVER,
-          "~%%endIgnore%",
+          "~%%endComment%",
           WHITESPACE,
           HTML_COMMENT_END);
 
   private static final Pattern REGEX_VARIABLE = Pattern.compile(VARIABLE);
   private static final Pattern REGEX_HIDDEN_VAR = Pattern.compile(HIDDEN_VARIABLE);
-  private static final Pattern REGEX_IGNORE_LINE = Pattern.compile(IGNORE_LINE);
-  private static final Pattern REGEX_IGNORE_BLOCK = Pattern.compile(IGNORE_BLOCK);
+  private static final Pattern REGEX_SUB_TEMPLATE = Pattern.compile(SUB_TEMPLATE);
+  private static final Pattern REGEX_HIDDEN_SUBTEMPLATE = Pattern.compile(HIDDEN_SUB_TEMPLATE);
+  private static final Pattern REGEX_COMMENT_LINE = Pattern.compile(COMMENT_LINE);
+  private static final Pattern REGEX_COMMENT_BLOCK = Pattern.compile(COMMENT_BLOCK);
 
   /*
    * The parts that the template is split into. Some parts will contain literal text, other parts will
@@ -77,8 +86,9 @@ public class Template {
   private final IntList varIndices = new IntList();
 
   public Template(String template) {
-    template = removeDesign(template);
+    template = removeComments(template);
     template = unhideVariables(template);
+    template = unhideTemplates(template);
     Matcher matcher = REGEX_VARIABLE.matcher(template);
     int partCounter = 0;
     int offset = 0;
@@ -143,13 +153,19 @@ public class Template {
   // way.
   private static String unhideVariables(String template) {
     Matcher matcher = REGEX_HIDDEN_VAR.matcher(template);
-    template = matcher.replaceAll(r -> "~%" + r.group(1) + "%");
+    template = matcher.replaceAll(r -> r.group(1));
     return template;
   }
 
-  private static String removeDesign(String template) {
-    template = REGEX_IGNORE_LINE.matcher(template).replaceAll("");
-    template = REGEX_IGNORE_BLOCK.matcher(template).replaceAll("");
+  private static String unhideTemplates(String template) {
+    Matcher matcher = REGEX_HIDDEN_SUBTEMPLATE.matcher(template);
+    template = matcher.replaceAll(r -> r.group(1));
+    return template;
+  }
+
+  private static String removeComments(String template) {
+    template = REGEX_COMMENT_LINE.matcher(template).replaceAll("");
+    template = REGEX_COMMENT_BLOCK.matcher(template).replaceAll("");
     return template;
   }
 }
