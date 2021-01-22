@@ -4,10 +4,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import nl.naturalis.common.collection.IntList;
 import static java.util.stream.Collectors.toList;
-import static nl.naturalis.common.StringMethods.concat;
+import static nl.naturalis.yokete.view.Regex.*;
 
 /**
  * A {@code Template} parses a template file and breaks it up in parts containing variables and
@@ -18,61 +17,6 @@ import static nl.naturalis.common.StringMethods.concat;
  * @author Ayco Holleman
  */
 public class Template {
-
-  private static final String WHITESPACE = "\\s*";
-  private static final String NON_BREAKING_SPACE = "[ \\t]*";
-  private static final String WHATEVER = ".*";
-  private static final String LINE_START = "^.*";
-  private static final String LINE_END = ".*$";
-
-  private static final String NAME = "[a-zA-Z][a-zA-Z0-9_]*";
-  private static final String INDEX = "\\d+";
-  private static final String EITHER = concat(NAME, "|", INDEX);
-  private static final String PATH = concat(EITHER, "(\\.", EITHER, ")*");
-  private static final String VARIABLE = concat("~%(", PATH, ")%");
-
-  private static final String HTML_COMMENT_START = Pattern.quote("<!--");
-  private static final String HTML_COMMENT_END = Pattern.quote("-->");
-
-  // Variable within an HTML comment. This will make the unprocessed template render more nicely,
-  // but for the rendering process it doesn't make a difference (both "hidden" and "visible"
-  // variables are replaced with something else).
-  private static final String HIDDEN_VARIABLE =
-      concat(HTML_COMMENT_START, WHITESPACE, "(", VARIABLE, ")", WHITESPACE, HTML_COMMENT_END);
-
-  private static final String SUB_TEMPLATE =
-      concat("~%%beginTemplate:(", NAME, ")%(", WHATEVER, ")~%%endTemplate%");
-
-  private static final String HIDDEN_SUB_TEMPLATE =
-      concat(HTML_COMMENT_START, WHITESPACE, "(", SUB_TEMPLATE, ")", WHITESPACE, HTML_COMMENT_END);
-
-  private static final String COMMENT_LINE =
-      concat(
-          LINE_START,
-          HTML_COMMENT_START,
-          NON_BREAKING_SPACE,
-          "~%%comment%",
-          NON_BREAKING_SPACE,
-          HTML_COMMENT_END,
-          LINE_END);
-
-  private static final String COMMENT_BLOCK =
-      concat(
-          "(?ms)", // modifiers, equivalent to Pattern.MULTILINE | Pattern.DOTALL
-          HTML_COMMENT_START,
-          WHITESPACE,
-          "~%%beginComment%",
-          WHATEVER,
-          "~%%endComment%",
-          WHITESPACE,
-          HTML_COMMENT_END);
-
-  private static final Pattern REGEX_VARIABLE = Pattern.compile(VARIABLE);
-  private static final Pattern REGEX_HIDDEN_VAR = Pattern.compile(HIDDEN_VARIABLE);
-  private static final Pattern REGEX_SUB_TEMPLATE = Pattern.compile(SUB_TEMPLATE);
-  private static final Pattern REGEX_HIDDEN_SUBTEMPLATE = Pattern.compile(HIDDEN_SUB_TEMPLATE);
-  private static final Pattern REGEX_COMMENT_LINE = Pattern.compile(COMMENT_LINE);
-  private static final Pattern REGEX_COMMENT_BLOCK = Pattern.compile(COMMENT_BLOCK);
 
   /*
    * The parts that the template is split into. Some parts will contain literal text, other parts will
@@ -110,7 +54,7 @@ public class Template {
 
   private LinkedList<Part<?>> extractSubTemplates(String template) {
     LinkedList<Part<?>> parts = new LinkedList<>();
-    Matcher matcher = REGEX_SUB_TEMPLATE.matcher(template);
+    Matcher matcher = REGEX_NESTED_TEMPLATE.matcher(template);
     int offset = 0;
     while (matcher.find()) {
       int start = matcher.start();
@@ -199,7 +143,7 @@ public class Template {
   }
 
   // Replaces "<!-- ~%myVar% -->" with "~%myVar%", after which there is no longer any difference
-  // between "hidden" and "non-hidden" variables, and they can all be processed further in the same
+  // between "hidden" and "visible" variables, and they can all be processed further in the same
   // way.
   private static String unhideVariables(String template) {
     Matcher matcher = REGEX_HIDDEN_VAR.matcher(template);
@@ -208,7 +152,7 @@ public class Template {
   }
 
   private static String unhideTemplates(String template) {
-    Matcher matcher = REGEX_HIDDEN_SUBTEMPLATE.matcher(template);
+    Matcher matcher = REGEX_HIDDEN_NESTED_TMPL.matcher(template);
     template = matcher.replaceAll(r -> r.group(1));
     return template;
   }
