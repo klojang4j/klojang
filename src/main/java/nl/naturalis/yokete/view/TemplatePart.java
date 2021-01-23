@@ -1,21 +1,21 @@
 package nl.naturalis.yokete.view;
 
-public class TemplatePart implements Part<Template> {
+public class TemplatePart extends AbstractPart {
 
   private final String name;
   private final Template template;
 
-  public TemplatePart(String name, Template template) {
+  public TemplatePart(String name, Template template, int start, int end) {
+    super(start, end);
     this.name = name;
     this.template = template;
   }
 
-  @Override
-  public Template getContents() {
-    return template;
-  }
-
   public String getName() {
     return name;
+  }
+
+  public Template getTemplate() {
+    return template;
   }
 }

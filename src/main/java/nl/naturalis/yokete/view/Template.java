@@ -9,99 +9,28 @@ import static java.util.stream.Collectors.toList;
 import static nl.naturalis.yokete.view.Regex.*;
 
 /**
- * A {@code Template} parses a template file and breaks it up in parts containing variables and
- * parts containing literal text. It also removes the lines and blocks of text marked as ignorable.
- * You should cache and reuse a {@code Template} instance for a particular template files as
- * instantiating a {@code Template} is expensive.
+ * A {@code Template} captures the result of parsing a text template. It provides access to the
+ * constituent parts of a text template: template variables, nested templates and literal text. It
+ * also takes care of removing comments from the text template.
  *
  * @author Ayco Holleman
  */
 public class Template {
 
-  /*
-   * The parts that the template is split into. Some parts will contain literal text, other parts will
-   * contain the name of a variable
-   */
-  private final List<String> parts = new ArrayList<>();
-
-  /*
-   * Contains the array indices of the elements in the parts List that contain the name of a
-   * variable.
-   */
-  private final IntList varIndices = new IntList();
+  private final List<Part> parts;
+  private final IntList tmplIndices;
+  private final IntList varIndices;
 
   public Template(String template) {
     template = removeComments(template);
     template = unhideVariables(template);
     template = unhideTemplates(template);
-    Matcher matcher = REGEX_VARIABLE.matcher(template);
-    int partCounter = 0;
-    int offset = 0;
-    while (matcher.find()) {
-      int start = matcher.start();
-      if (start > offset) {
-        parts.add(template.substring(offset, start));
-        partCounter++;
-      }
-      parts.add(matcher.group(1));
-      varIndices.add(partCounter++);
-      offset = matcher.end();
-    }
-    if (offset < template.length()) {
-      parts.add(template.substring(offset));
-    }
-  }
-
-  private LinkedList<Part<?>> extractSubTemplates(String template) {
-    LinkedList<Part<?>> parts = new LinkedList<>();
-    Matcher matcher = REGEX_NESTED_TEMPLATE.matcher(template);
-    int offset = 0;
-    while (matcher.find()) {
-      int start = matcher.start();
-      if (start > offset) {
-        String parseLater = template.substring(offset, start);
-        parts.add(new LiteralPart(parseLater));
-      }
-      String name = matcher.group(1);
-      String src = matcher.group(2);
-      parts.add(new TemplatePart(name, new Template(src)));
-      offset = matcher.end();
-    }
-    if (offset < template.length()) {
-      String parseLater = template.substring(offset);
-      parts.add(new LiteralPart(parseLater));
-    }
-    return parts;
-  }
-
-  private LinkedList<Part<?>> extractVariables(LinkedList<Part<?>> parseResult) {
-    for (int i = 0; i < parseResult.size(); ++i) {
-      Part<?> p = parseResult.get(i);
-      if (p.getClass() == LiteralPart.class) {}
-    }
-
-    return parseResult;
-  }
-
-  private List<Part<?>> extractVariables(String template) {
-    List<Part<?>> parts = new ArrayList<>();
-    Matcher matcher = REGEX_VARIABLE.matcher(template);
-    int offset = 0;
-    while (matcher.find()) {
-      int start = matcher.start();
-      if (start > offset) {
-        String text = template.substring(offset, start);
-        parts.add(new LiteralPart(text));
-      }
-      String varName = matcher.group(1);
-      parts.add(new VariablePart(varName));
-      offset = matcher.end();
-    }
-    if (offset < template.length()) {
-      String text = template.substring(offset);
-      parts.add(new LiteralPart(text));
-    }
-    return parts;
+    LinkedList<Part> parts = new LinkedList<>();
+    parseNestedTemplates(template, parts);
+    parseVariables(parts);
+    this.parts = new ArrayList<>(parts);
+    this.tmplIndices = getTmplIndices(parts);
+    this.varIndices = getVarIndices(parts);
   }
 
   /**
@@ -110,8 +39,17 @@ public class Template {
    *
    * @return The constuent parts of the template file
    */
-  public List<String> getParts() {
+  public List<Part> getParts() {
     return new ArrayList<>(parts);
+  }
+
+  /**
+   * Returns the indices of the parts list that contain nested templates.
+   *
+   * @return The indices of the parts list that contain nested templates
+   */
+  public IntList getTemplateIndices() {
+    return new IntList(tmplIndices);
   }
 
   /**
@@ -139,7 +77,87 @@ public class Template {
    * @return All variables found in the template
    */
   public List<String> getVariables() {
-    return varIndices.stream().mapToObj(parts::get).collect(toList());
+    return varIndices
+        .stream()
+        .mapToObj(parts::get)
+        .map(VariablePart.class::cast)
+        .map(VariablePart::getName)
+        .collect(toList());
+  }
+
+  private static void parseNestedTemplates(String template, LinkedList<Part> parts) {
+    Matcher matcher = REGEX_NESTED_TEMPLATE.matcher(template);
+    int end = 0; // end index of the previous nested template
+    while (matcher.find()) {
+      int start = matcher.start();
+      if (start > end) {
+        String parseLater = template.substring(end, start);
+        parts.add(new UnparsedPart(parseLater, end, start));
+      }
+      String name = matcher.group(1);
+      String src = matcher.group(2);
+      end = matcher.end();
+      parts.add(new TemplatePart(name, new Template(src), start, end));
+    }
+    if (end < template.length()) {
+      String parseLater = template.substring(end);
+      parts.add(new UnparsedPart(parseLater, end, template.length()));
+    }
+  }
+
+  private static IntList getTmplIndices(List<Part> parts) {
+    IntList indices = new IntList();
+    for (int i = 0; i < parts.size(); ++i) {
+      if (parts.get(i).getClass() == TemplatePart.class) {
+        indices.add(i);
+      }
+    }
+    return indices;
+  }
+
+  private static IntList getVarIndices(List<Part> parts) {
+    IntList indices = new IntList();
+    for (int i = 0; i < parts.size(); ++i) {
+      if (parts.get(i).getClass() == VariablePart.class) {
+        indices.add(i);
+      }
+    }
+    return indices;
+  }
+
+  private static void parseVariables(LinkedList<Part> parseResult) {
+    for (int i = 0; i < parseResult.size(); ++i) {
+      Part p = parseResult.get(i);
+      if (p.getClass() == UnparsedPart.class) {
+        List<Part> parts = parseVariables((UnparsedPart) p);
+        parseResult.remove(i);
+        parseResult.addAll(i, parts);
+      }
+    }
+  }
+
+  private static List<Part> parseVariables(UnparsedPart unparsed) {
+    String contents = unparsed.getContents();
+    int offset = unparsed.start();
+    List<Part> parts = new ArrayList<>();
+    Matcher matcher = REGEX_VARIABLE.matcher(contents);
+    int end = 0;
+    while (matcher.find()) {
+      int start = matcher.start();
+      if (start > end) {
+        String text = contents.substring(end, start);
+        parts.add(new TextPart(text, end + offset, start + offset));
+      }
+      EscapeType et = EscapeType.parse(matcher.group(2));
+      String name = matcher.group(3);
+      end = matcher.end();
+      parts.add(new VariablePart(et, name, start + offset, end + offset));
+    }
+    if (end < contents.length()) {
+      String text = contents.substring(end);
+      parts.add(new TextPart(text, end + offset, contents.length() + offset));
+    }
+    return parts;
   }
 
   // Replaces "<!-- ~%myVar% -->" with "~%myVar%", after which there is no longer any difference

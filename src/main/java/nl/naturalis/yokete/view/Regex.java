@@ -6,10 +6,14 @@ import static java.util.regex.Pattern.compile;
 
 class Regex {
 
+  // Equivalent to prefixing the regular expression with "(?ms)"
+  private static final int MS_MODIFIERS = Pattern.MULTILINE | Pattern.DOTALL;
+
   // GENERIC REGULAR EXPRESSIONS:
 
   private static final String WHITESPACE = "\\s*";
   private static final String NON_BREAKING_SPACE = "[ \\t]*";
+  private static final String DOT = "\\.";
   private static final String WHATEVER = ".*";
   private static final String LINE_START = "^.*";
   private static final String LINE_END = ".*$";
@@ -18,32 +22,28 @@ class Regex {
 
   // NAME COMPONENTS:
 
+  private static final String ESCAPE_TYPE = "((text|html|js):)?";
   private static final String NAME = "[a-zA-Z][a-zA-Z0-9_]*";
-  private static final String INDEX = "\\d+";
-  private static final String EITHER = concat(NAME, "|", INDEX);
-  private static final String PATH = concat(EITHER, "(\\.", EITHER, ")*");
+  private static final String PATH = concat("(", NAME, "(", DOT, NAME, ")*)");
 
   // ACTUALLY USED TO PARSE TEMPLATES:
 
-  private static final String VARIABLE = concat("~%(", PATH, ")%");
+  // ~%((text|html|js):)?([a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)*)%
+  // esc type: group 2
+  // var name: group 3
+  static final String VARIABLE = concat("~%", ESCAPE_TYPE, PATH, "%");
 
-  private static final String HIDDEN_VAR =
+  static final String HIDDEN_VAR =
       concat(HTML_COMMENT_START, WHITESPACE, "(", VARIABLE, ")", WHITESPACE, HTML_COMMENT_END);
 
-  private static final String NESTED_TEMPLATE =
+  static final String NESTED_TEMPLATE =
       concat("~%%beginTemplate:(", NAME, ")%(", WHATEVER, ")~%%endTemplate%");
 
-  private static final String HIDDEN_NESTED_TMPL =
+  static final String HIDDEN_NESTED_TMPL =
       concat(
-          HTML_COMMENT_START,
-          WHITESPACE,
-          "(",
-          NESTED_TEMPLATE,
-          ")",
-          WHITESPACE,
-          HTML_COMMENT_END);
+          HTML_COMMENT_START, WHITESPACE, "(", NESTED_TEMPLATE, ")", WHITESPACE, HTML_COMMENT_END);
 
-  private static final String COMMENT_LINE =
+  static final String COMMENT_LINE =
       concat(
           LINE_START,
           HTML_COMMENT_START,
@@ -53,7 +53,7 @@ class Regex {
           HTML_COMMENT_END,
           LINE_END);
 
-  private static final String COMMENT_BLOCK =
+  static final String COMMENT_BLOCK =
       concat(
           HTML_COMMENT_START,
           WHITESPACE,
@@ -62,9 +62,6 @@ class Regex {
           "~%%endComment%",
           WHITESPACE,
           HTML_COMMENT_END);
-
-  // Equivalent to prefixing the regular expression with "(?ms)"
-  private static final int MS_MODIFIERS = Pattern.MULTILINE | Pattern.DOTALL;
 
   static final Pattern REGEX_VARIABLE = compile(VARIABLE);
   static final Pattern REGEX_HIDDEN_VAR = compile(HIDDEN_VAR);
