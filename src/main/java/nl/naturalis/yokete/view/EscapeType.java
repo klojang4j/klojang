@@ -6,6 +6,17 @@ package nl.naturalis.yokete.view;
  * @author Ayco Holleman
  */
 public enum EscapeType {
+
+  /**
+   * The escape type assigned to template variables that don't specify an inline escape type. For
+   * example, the escape type of ~%html:person.address.street% is {@code ESCAPE_HTML} whereas the
+   * escape type of ~%html:person.address.street% is {@code NOT_SPECIFIED}. It is not allowed to
+   * pass this {@code EscapeTye} to the render methods. However, if a template variable's escape
+   * type is {@code NOT_SPECIFIED}, its value will be escaped using whatever {@code EscapeTye}
+   * <i>is</i> passed to the render methods.
+   */
+  NOT_SPECIFIED(null),
+
   /**
    * Do not apply any escaping. This is the {@code EscapeType} when a template variable is to be
    * substituted with an entire block of already properly escaped HTML, Javascript or HTML. This can
@@ -61,7 +72,7 @@ public enum EscapeType {
    */
   public static EscapeType parse(String s) {
     if (s == null) {
-      return null;
+      return NOT_SPECIFIED;
     }
     switch (s) {
       case "text":

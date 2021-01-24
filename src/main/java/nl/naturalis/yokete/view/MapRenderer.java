@@ -1,20 +1,14 @@
 package nl.naturalis.yokete.view;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.UnaryOperator;
 import org.apache.commons.text.StringEscapeUtils;
 import nl.naturalis.common.check.Check;
-import static nl.naturalis.common.check.CommonChecks.notNull;
-import static nl.naturalis.common.check.CommonChecks.nullPointer;
 import static nl.naturalis.common.check.CommonChecks.*;
-import static nl.naturalis.common.check.CommonChecks.yes;
 import static nl.naturalis.yokete.view.EscapeType.ESCAPE_HTML;
 import static nl.naturalis.yokete.view.EscapeType.ESCAPE_JS;
-import static nl.naturalis.yokete.view.EscapeType.ESCAPE_NONE;
+import static nl.naturalis.yokete.view.EscapeType.*;
 
 /**
  * Renders template with data from a {@link Map}. The map is assumed to be flat (i.e. without nested
@@ -103,12 +97,14 @@ public class MapRenderer {
     return out;
   }
 
-  private List<String> parts;
+  private List<Part> parts;
+  private List<String> out;
 
   public void start() {
     Check.with(illegalState(), parts).is(nullPointer(), ERR_NOT_RESET);
     lock.lock();
     parts = template.getParts();
+    out = new ArrayList<>(Arrays.asList(new String[parts.size()]));
   }
 
   public void substitute(Map<String, Object> data, EscapeType escapeType, Set<String> fields) {
@@ -121,51 +117,57 @@ public class MapRenderer {
       myData = new HashMap<>(data);
       myData.keySet().retainAll(fields);
     }
-    substitute(myData, escapeType);
+    processVars(myData, escapeType);
   }
 
   public StringBuilder render() {
-    Check.with(illegalState(), parts).is(notNull(), ERR_NOT_STARTED);
-    int sz = parts.stream().mapToInt(String::length).sum();
+    Check.with(illegalState(), lock.isLocked()).is(yes(), ERR_NOT_STARTED);
+    int sz = out.stream().mapToInt(String::length).sum();
     StringBuilder sb = new StringBuilder(sz);
-    parts.forEach(sb::append);
+    out.forEach(sb::append);
     return sb;
   }
 
   public void render(StringBuilder sb) {
-    Check.with(illegalState(), parts).is(notNull(), ERR_NOT_STARTED);
+    Check.with(illegalState(), lock.isLocked()).is(yes(), ERR_NOT_STARTED);
     parts.forEach(sb::append);
   }
 
   public void reset() {
     parts = null;
+    out = null;
     lock.unlock();
   }
 
   // All parts containing the name of a variable are overwritten with
   // the value of that variable
-  private void substitute(Map<String, Object> data, EscapeType escapeType) {
-    template
-        .getVarIndices()
-        .forEach(
-            index -> {
-              String var = parts.get(index);
-              if (data.containsKey(var)) {
-                Object val = data.get(var);
-                if (val == null) {
-                  parts.set(index, whenNull.apply(var));
-                } else if (escapeType == ESCAPE_NONE || escapingNotRequired(val)) {
-                  parts.set(index, val.toString());
-                } else if (escapeType == ESCAPE_HTML) {
-                  parts.set(index, StringEscapeUtils.escapeHtml4(val.toString()));
-                } else if (escapeType == ESCAPE_JS) {
-                  parts.set(index, StringEscapeUtils.escapeEcmaScript(val.toString()));
-                }
-              }
-            });
+  private void processVars(Map<String, Object> data, EscapeType escapeType) {
+    template.getVarIndices().forEach(index -> processVar(index, data, escapeType));
   }
 
-  private static boolean escapingNotRequired(Object val) {
+  private void processVar(int index, Map<String, Object> data, EscapeType escapeType) {
+    VariablePart vp = VariablePart.class.cast(parts.get(index));
+    String var = vp.getName();
+    EscapeType et = vp.getEscapeType();
+    if (data.containsKey(var)) {
+      Object val = data.get(var);
+      if (val == null) {
+        out.set(index, whenNull.apply(var));
+      } else if (escapingNotNecessary(val)) {
+        out.set(index, val.toString());
+      } else if (et == NOT_SPECIFIED || et == escapeType) {
+        if (escapeType == ESCAPE_NONE || escapingNotNecessary(val)) {
+          out.set(index, val.toString());
+        } else if (escapeType == ESCAPE_HTML) {
+          out.set(index, StringEscapeUtils.escapeHtml4(val.toString()));
+        } else if (escapeType == ESCAPE_JS) {
+          out.set(index, StringEscapeUtils.escapeEcmaScript(val.toString()));
+        }
+      }
+    }
+  }
+
+  private static boolean escapingNotNecessary(Object val) {
     return val instanceof Number || val instanceof Boolean;
   }
 }
