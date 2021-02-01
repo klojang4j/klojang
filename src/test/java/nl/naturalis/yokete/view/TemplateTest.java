@@ -1,5 +1,7 @@
 package nl.naturalis.yokete.view;
 
+import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import nl.naturalis.common.IOMethods;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -10,10 +12,18 @@ public class TemplateTest {
   public void test00() {
     String tmpl = IOMethods.toString(getClass(), "test00.in.html");
     Template template = new Template(tmpl);
-    assertEquals(11, template.countVariables());
-    assertEquals("topdeskId", template.getVariables().get(0));
-    assertEquals("id", template.getVariables().get(1));
-    assertEquals("amount", template.getVariables().get(9));
-    assertEquals("issueDate", template.getVariables().get(10));
+    List<Part> parts =
+        template
+            .getParts()
+            .stream()
+            .filter(VariablePart.class::isInstance)
+            .collect(Collectors.toList());
+    int varCount =
+        (int) template.getParts().stream().filter(VariablePart.class::isInstance).count();
+    assertEquals(11, varCount);
+    assertEquals("topdeskId", parts.get(0).toString());
+    assertEquals("id", parts.get(1).toString());
+    assertEquals("amount", parts.get(9).toString());
+    assertEquals("issueDate", parts.get(10).toString());
   }
 }

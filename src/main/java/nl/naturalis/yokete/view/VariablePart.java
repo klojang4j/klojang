@@ -1,6 +1,6 @@
 package nl.naturalis.yokete.view;
 
-public class VariablePart extends AbstractPart {
+public class VariablePart extends AbstractPart implements NamedPart {
 
   private final String name;
   private final EscapeType escapeType;
@@ -16,6 +16,11 @@ public class VariablePart extends AbstractPart {
   }
 
   public String getName() {
+    return name;
+  }
+
+  @Override
+  public String toString() {
     return name;
   }
 }

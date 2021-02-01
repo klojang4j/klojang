@@ -1,6 +1,6 @@
 package nl.naturalis.yokete.view;
 
-public class TemplatePart extends AbstractPart {
+public class TemplatePart extends AbstractPart implements NamedPart {
 
   private final String name;
   private final Template template;
@@ -17,5 +17,10 @@ public class TemplatePart extends AbstractPart {
 
   public Template getTemplate() {
     return template;
+  }
+
+  @Override
+  public String toString() {
+    return name;
   }
 }

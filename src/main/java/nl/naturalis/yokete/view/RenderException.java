@@ -6,6 +6,10 @@ public class RenderException extends RuntimeException {
     super(message);
   }
 
+  public RenderException(Throwable cause) {
+    super(cause);
+  }
+
   public RenderException(String message, Throwable cause) {
     super(message, cause);
   }
