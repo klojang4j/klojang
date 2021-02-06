@@ -1,20 +1,26 @@
-package nl.naturalis.yokete.view;
+package nl.naturalis.yokete.util;
 
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.path.PathWalker;
+import nl.naturalis.yokete.view.RenderException;
+import nl.naturalis.yokete.view.ViewData;
 
 public class PathViewData<T> implements ViewData {
 
   private final PathWalker pw;
-  private final Object obj;
 
-  public PathViewData(PathWalker pw, Object obj) {
+  private Object obj;
+
+  public PathViewData(PathWalker pw) {
     this.pw = pw;
+  }
+
+  public void setData(Object obj) {
     this.obj = obj;
   }
 
   @Override
-  public Object get(String var) {
+  public Object getVariableValue(String var) {
     try {
       Object val = pw.read(obj);
       return val == PathWalker.DEAD_END ? ABSENT : val;

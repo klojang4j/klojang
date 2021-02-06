@@ -68,7 +68,7 @@ public class Renderer {
     Check.notNull(varName, "varName");
     Check.that(escapeType, "escapeType").is(notSameAs(), NOT_SPECIFIED);
     if (value != ABSENT) {
-      IntList indices = template.getVariableIndices().get(varName);
+      IntList indices = template.getVariableIndices().getVariableValue(varName);
       if (indices == null) {
         throw new RenderException("No such variable: \"" + varName + "\"");
       }
@@ -108,7 +108,7 @@ public class Renderer {
     Check.notNull(name, "name");
     Check.that(data, "data").is(notEmpty());
     Check.that(escapeType, "").is(notSameAs(), NOT_SPECIFIED);
-    IntList indices = template.getVariableIndices().get(name);
+    IntList indices = template.getVariableIndices().getVariableValue(name);
     if (indices == null) {
       throw new RenderException("No such nested template: \"" + name + "\"");
     }
@@ -129,7 +129,7 @@ public class Renderer {
     Check.that(data, "data").is(notEmpty());
     Check.that(escapeType, "escapeType").is(notSameAs(), NOT_SPECIFIED);
     Check.that(varNames, "varNames").is(notEmpty());
-    IntList indices = template.getVariableIndices().get(name);
+    IntList indices = template.getVariableIndices().getVariableValue(name);
     if (indices == null) {
       throw new RenderException("No such nested template: \"" + name + "\"");
     }
@@ -206,7 +206,7 @@ public class Renderer {
       varNames.retainAll(names);
     }
     for (String varName : varNames) {
-      setVariable(varName, data.get(varName), escapeType);
+      setVariable(varName, data.getVariableValue(varName), escapeType);
     }
   }
 
@@ -219,7 +219,7 @@ public class Renderer {
       tmplNames.retainAll(names);
     }
     for (String tmplName : tmplNames) {
-      Object value = data.get(tmplName);
+      Object value = data.getVariableValue(tmplName);
       if (value != null || value != ABSENT) {
         if (!(value instanceof ViewData)) {
           String fmt =
