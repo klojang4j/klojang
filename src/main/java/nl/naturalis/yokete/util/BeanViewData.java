@@ -4,16 +4,16 @@ import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.invoke.BeanReader;
 import nl.naturalis.yokete.view.RenderException;
-import nl.naturalis.yokete.view.ViewData;
-import static nl.naturalis.common.check.CommonChecks.*;
+import static nl.naturalis.common.check.CommonChecks.notNull;
 
-public class BeanViewData<T> implements ViewData {
+public class BeanViewData<T> extends AbstractViewData {
 
   private final BeanReader<T> br;
 
   private T bean;
 
-  public BeanViewData(BeanReader<T> beanReader) {
+  public BeanViewData(BeanReader<T> beanReader, ViewDataStringifiers stringifiers) {
+    super(stringifiers);
     this.br = beanReader;
   }
 
@@ -22,7 +22,7 @@ public class BeanViewData<T> implements ViewData {
   }
 
   @Override
-  public String getVariableValue(String var) {
+  protected Object getRawValue(String var) {
     Check.that(bean).is(notNull(), "No data");
     try {
       return br.get(bean, var);

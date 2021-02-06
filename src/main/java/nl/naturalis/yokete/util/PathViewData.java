@@ -3,15 +3,15 @@ package nl.naturalis.yokete.util;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.path.PathWalker;
 import nl.naturalis.yokete.view.RenderException;
-import nl.naturalis.yokete.view.ViewData;
 
-public class PathViewData<T> implements ViewData {
+public class PathViewData<T> extends AbstractViewData {
 
   private final PathWalker pw;
 
   private Object obj;
 
-  public PathViewData(PathWalker pw) {
+  public PathViewData(PathWalker pw, ViewDataStringifiers stringifiers) {
+    super(stringifiers);
     this.pw = pw;
   }
 
@@ -20,7 +20,7 @@ public class PathViewData<T> implements ViewData {
   }
 
   @Override
-  public Object getVariableValue(String var) {
+  protected Object getRawValue(String var) {
     try {
       Object val = pw.read(obj);
       return val == PathWalker.DEAD_END ? ABSENT : val;
