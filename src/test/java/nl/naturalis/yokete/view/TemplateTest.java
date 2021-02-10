@@ -11,7 +11,7 @@ public class TemplateTest {
   @Test
   public void test00() {
     String tmpl = IOMethods.toString(getClass(), "test00.in.html");
-    Template template = new Template(tmpl);
+    Template template = Template.parse(tmpl);
     List<Part> parts =
         template
             .getParts()

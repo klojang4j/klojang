@@ -7,30 +7,33 @@ import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.view.InvalidStringifierException;
-import static nl.naturalis.common.check.CommonChecks.notNull;
+import static nl.naturalis.yokete.view.InvalidStringifierException.customStringifierMustNotReturnNull;
+import static nl.naturalis.yokete.view.InvalidStringifierException.customStringifierNotNullResistant;
 
 public class ViewDataStringifiers {
 
-  private static final String ERR0 = "%s illegally returned null";
-  private static final String CUSTOM_STRINGIFIER = "custom stringifier";
-  private static final String NULL_STRINGIFIER = "null stringifier";
-  private static final String CATCH_ALL_STRINGIFIER = "catch-all stringifier";
+  private static final String CUSTOM_STRINGIFIER = "Custom stringifier";
+  private static final String NULL_STRINGIFIER = "Null stringifier";
+  private static final String CATCH_ALL_STRINGIFIER = "Catch-all stringifier";
 
-  private final GenericStringifiers genericStringifiers;
+  private final TypeStringifiers genericStringifiers;
   private final Map<String, Class<?>> varNameToType = new HashMap<>();
 
-  public ViewDataStringifiers(GenericStringifiers typeStringifiers) {
+  public ViewDataStringifiers(TypeStringifiers typeStringifiers) {
     this.genericStringifiers = typeStringifiers;
   }
 
-  public String stringify(String varName, Object value) {
+  public String stringify(String varName, Object value) throws InvalidStringifierException {
     BiFunction<String, Object, String> cs = getCustomStringifier(varName, value);
     if (cs != null) {
       try {
         String s = cs.apply(varName, value);
-        return checkReturnValue(s).is(notNull(), ERR0, CUSTOM_STRINGIFIER).ok();
+        if (s == null) {
+          throw customStringifierMustNotReturnNull(CUSTOM_STRINGIFIER);
+        }
+        return s;
       } catch (NullPointerException e) {
-        throw notNullResistent(CUSTOM_STRINGIFIER);
+        throw customStringifierNotNullResistant(CUSTOM_STRINGIFIER);
       }
     }
     Class<?> type = varNameToType.get(varName);
@@ -39,9 +42,12 @@ public class ViewDataStringifiers {
       if (uo != null) {
         try {
           String s = uo.apply(varName);
-          return checkReturnValue(s).is(notNull(), ERR0, NULL_STRINGIFIER).ok();
+          if (s == null) {
+            throw customStringifierMustNotReturnNull(NULL_STRINGIFIER);
+          }
+          return s;
         } catch (NullPointerException e) {
-          throw notNullResistent(NULL_STRINGIFIER);
+          throw customStringifierNotNullResistant(NULL_STRINGIFIER);
         }
       }
       if (type != null) {
@@ -59,9 +65,12 @@ public class ViewDataStringifiers {
     Check.notNull(stringifier, CATCH_ALL_STRINGIFIER);
     try {
       String s = stringifier.stringify(value);
-      return checkReturnValue(s).is(notNull(), ERR0, CATCH_ALL_STRINGIFIER).ok();
+      if (s == null) {
+        throw customStringifierMustNotReturnNull(CATCH_ALL_STRINGIFIER);
+      }
+      return s;
     } catch (NullPointerException e) {
-      throw notNullResistent(CATCH_ALL_STRINGIFIER);
+      throw customStringifierNotNullResistant(CATCH_ALL_STRINGIFIER);
     }
   }
 
@@ -81,13 +90,5 @@ public class ViewDataStringifiers {
 
   protected Stringifier getCatchAllStringifier() {
     return Stringifier.BASIC;
-  }
-
-  private static Check<String, InvalidStringifierException> checkReturnValue(String s) {
-    return Check.with(InvalidStringifierException::new, s);
-  }
-
-  private static InvalidStringifierException notNullResistent(String stringifier) {
-    return new InvalidStringifierException(stringifier + " not capable of handling null values");
   }
 }

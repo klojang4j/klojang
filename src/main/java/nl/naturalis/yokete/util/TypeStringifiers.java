@@ -5,10 +5,20 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.TypeMap;
 import nl.naturalis.common.collection.UnmodifiableTypeMap;
 import nl.naturalis.yokete.view.InvalidStringifierException;
-import static nl.naturalis.common.ClassMethods.getClassName;
 import static nl.naturalis.common.check.CommonChecks.notNull;
-
-public final class GenericStringifiers {
+import static nl.naturalis.yokete.view.InvalidStringifierException.typeStringifierMustNotReturnNull;
+import static nl.naturalis.yokete.view.InvalidStringifierException.typeStringifierNotNullResistant;
+/**
+ * A class that allows you to configure and retrieve type-specific stringifiers. In other words the
+ * stringifiers defined here are not tied to any model object in particular. You can configure a
+ * specific {@link Stringifier} for a specific class, but you can also configure a single
+ * stringifier for a set of classes that share a base class or interface. If you associate a {@code
+ * Stringifier} with a base class or interface, all classes that extend or implement it will be
+ * stringified using that {@code Stringifier}.
+ *
+ * @author Ayco Holleman
+ */
+public final class TypeStringifiers {
 
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
 
@@ -23,8 +33,8 @@ public final class GenericStringifiers {
       bldr.add(type, stringifier);
     }
 
-    public GenericStringifiers freeze() {
-      return new GenericStringifiers(bldr.freeze());
+    public TypeStringifiers freeze() {
+      return new TypeStringifiers(bldr.freeze());
     }
   }
 
@@ -34,15 +44,11 @@ public final class GenericStringifiers {
     return new Builder();
   }
 
-  public static final GenericStringifiers NONE = configure().freeze();
-
-  private static final String ERR0 = "Invalid Stringifier for type %s: ";
-  private static final String ERR1 = ERR0 + "not capable of handling null values";
-  private static final String ERR2 = ERR0 + "illegally returned null";
+  public static final TypeStringifiers NONE = configure().freeze();
 
   private final TypeMap<Stringifier> typeMap;
 
-  private GenericStringifiers(TypeMap<Stringifier> typeMap) {
+  private TypeStringifiers(TypeMap<Stringifier> typeMap) {
     this.typeMap = typeMap;
   }
 
@@ -50,33 +56,34 @@ public final class GenericStringifiers {
     return Optional.ofNullable(typeMap.get(type));
   }
 
-  public Optional<String> stringify(Object value) {
+  public Optional<String> stringify(Object value) throws InvalidStringifierException {
     Check.that(value).is(notNull(), "Cannot stringify null without knowing type");
     Stringifier stringifier = typeMap.get(value.getClass());
     if (stringifier != null) {
       String s = stringifier.stringify(value);
-      checkReturnValue(s).is(notNull(), ERR2, getClassName(value));
+      if (s == null) {
+        throw typeStringifierMustNotReturnNull(value);
+      }
       return Optional.of(s);
     }
     return Optional.empty();
   }
 
-  public Optional<String> stringify(Class<?> type, Object value) {
+  public Optional<String> stringify(Class<?> type, Object value)
+      throws InvalidStringifierException {
     Check.notNull(type, "type");
     Stringifier stringifier = typeMap.get(type);
     if (stringifier != null) {
       try {
         String s = stringifier.stringify(value);
-        checkReturnValue(s).is(notNull(), ERR2, getClassName(value));
+        if (s == null) {
+          throw typeStringifierMustNotReturnNull(value);
+        }
         return Optional.of(s);
       } catch (NullPointerException e) {
-        throw new InvalidStringifierException(String.format(ERR1, getClassName(value)));
+        throw typeStringifierNotNullResistant(type);
       }
     }
     return Optional.empty();
-  }
-
-  private static Check<String, InvalidStringifierException> checkReturnValue(String s) {
-    return Check.with(InvalidStringifierException::new, s);
   }
 }

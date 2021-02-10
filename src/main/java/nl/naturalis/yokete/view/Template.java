@@ -4,10 +4,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import nl.naturalis.common.collection.ImmutableIntList;
+import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
+import nl.naturalis.common.collection.UnmodifiableIntList;
 import static java.util.stream.Collectors.toUnmodifiableSet;
+import static nl.naturalis.common.check.CommonChecks.*;
 
 /**
  * A {@code Template} captures the result of parsing a text template. It provides access to the
@@ -19,18 +21,18 @@ import static java.util.stream.Collectors.toUnmodifiableSet;
  */
 public class Template {
 
-  public static Template parse(String source) {
+  public static Template parse(String source) throws InvalidTemplateException {
     List<Part> parts = TemplateParser.INSTANCE.parse(source);
     return new Template(parts);
   }
 
   private final List<Part> parts;
   private final Map<String, IntList> varIndices;
-  private final Map<String, IntList> tmplIndices;
+  private final IntList textIndices;
+  private final Map<String, Integer> tmplIndices;
   private final int varCount;
   private final int tmplCount;
-  private final Set<String> names; // variable + template names
-  private final IntList textIndices;
+  private final Set<String> names; // variable names + template names
 
   private Template(List<Part> parts) {
     this.parts = parts;
@@ -53,7 +55,7 @@ public class Template {
     return parts;
   }
 
-  public Map<String, IntList> getVariableIndices() {
+  public Map<String, IntList> getVarPartIndices() {
     return varIndices;
   }
 
@@ -65,7 +67,7 @@ public class Template {
     return varCount;
   }
 
-  public Map<String, IntList> getNestedTemplateIndices() {
+  public Map<String, Integer> getTemplatePartIndices() {
     return tmplIndices;
   }
 
@@ -77,23 +79,45 @@ public class Template {
     return tmplCount;
   }
 
+  public Template getNestedTemplate(String name) {
+    Check.that(name).is(keyIn(), tmplIndices, "No such template: %s", name);
+    int partIndex = tmplIndices.get(name);
+    return Check.that(parts.get(partIndex))
+        .is(instanceOf(), TemplatePart.class, "%s is not a template", name)
+        .ok(TemplatePart.class::cast)
+        .getTemplate();
+  }
+
   /**
-   * Returns the names of all template variables and nested templates.
+   * Returns the names of all variables and nested templates within this {@code Template}.
    *
-   * @return The names of all template variables and nested templates found in the template
+   * @return The names of all variables and nested templates within this {@code Template}
    */
-  public Set<String> getNames() {
+  public Set<String> getAllNames() {
     return names;
   }
 
   /**
-   * Returns an immutable {@link IntList} of all parts that contain literal text. instances in the
-   * parts list.
+   * Returns an {@link IntList} of all parts that contain literal text.
    *
-   * @return The indices of the parts list that contain nested templates
+   * @return An {@link IntList} of all parts that contain literal text
    */
-  public IntList getTextIndices() {
+  public IntList getTextPartIndices() {
     return textIndices;
+  }
+
+  /*
+   * Let's just make it really explicit that nothing is equal to a Template instance except the
+   * instance itself.
+   */
+  @Override
+  public boolean equals(Object obj) {
+    return this == obj;
+  }
+
+  @Override
+  public int hashCode() {
+    return System.identityHashCode(this);
   }
 
   private static Map<String, IntList> getVarIndices(List<Part> parts) {
@@ -104,7 +128,7 @@ public class Template {
         indices.computeIfAbsent(name, k -> new IntArrayList(5, 5)).add(i);
       }
     }
-    indices.entrySet().forEach(e -> e.setValue(ImmutableIntList.copyOf(e.getValue())));
+    indices.entrySet().forEach(e -> e.setValue(UnmodifiableIntList.copyOf(e.getValue())));
     return Map.copyOf(indices);
   }
 
@@ -112,15 +136,14 @@ public class Template {
     return (int) parts.stream().filter(VariablePart.class::isInstance).count();
   }
 
-  private static Map<String, IntList> getTmplIndices(List<Part> parts) {
-    Map<String, IntList> indices = new HashMap<>();
+  private static Map<String, Integer> getTmplIndices(List<Part> parts) {
+    Map<String, Integer> indices = new HashMap<>();
     for (int i = 0; i < parts.size(); ++i) {
       if (parts.get(i).getClass() == TemplatePart.class) {
         String name = TemplatePart.class.cast(parts.get(i)).getName();
-        indices.computeIfAbsent(name, k -> new IntArrayList(5, 5)).add(i);
+        indices.put(name, i);
       }
     }
-    indices.entrySet().forEach(e -> e.setValue(ImmutableIntList.copyOf(e.getValue())));
     return Map.copyOf(indices);
   }
 
@@ -144,6 +167,6 @@ public class Template {
         indices.add(i);
       }
     }
-    return ImmutableIntList.copyOf(indices);
+    return UnmodifiableIntList.copyOf(indices);
   }
 }

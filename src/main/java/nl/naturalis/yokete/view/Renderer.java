@@ -5,30 +5,33 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 import org.apache.commons.text.StringEscapeUtils;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
-import static nl.naturalis.common.CollectionMethods.implode;
 import static nl.naturalis.common.CollectionMethods.initializedList;
 import static nl.naturalis.common.check.CommonChecks.*;
 import static nl.naturalis.common.check.CommonGetters.size;
 import static nl.naturalis.yokete.view.EscapeType.ESCAPE_HTML;
 import static nl.naturalis.yokete.view.EscapeType.ESCAPE_NONE;
 import static nl.naturalis.yokete.view.EscapeType.NOT_SPECIFIED;
-import static nl.naturalis.yokete.view.ViewData.ABSENT;
+import static nl.naturalis.common.check.CommonGetters.*;
+import static nl.naturalis.yokete.view.RenderException.*;
+
 /** @author Ayco Holleman */
 public class Renderer {
 
   private static final String ERR_NOT_STARTED =
       "No active render session. Call Renderer.start() first";
 
-  private final ReentrantLock lock = new ReentrantLock();
+  private static final String ERR_NOT_RENDERABLE =
+      "Cannot render until all variables and nested templates have been populated";
 
   private final Template template;
-  private final VariableRenderer varRenderer;
 
   /**
    * Creates a {@code VariableSubstituter} that uses the {@link #REGEX_VARIABLE default variable
@@ -36,81 +39,56 @@ public class Renderer {
    *
    * @param template
    */
-  public Renderer(Template template, VariableRenderer varRenderer) {
+  public Renderer(Template template) {
     this.template = Check.notNull(template, "template").ok();
-    this.varRenderer = Check.notNull(varRenderer, "varRenderer").ok();
   }
 
-  private Thread lockHolder;
   private List<String> variableValues;
   private List<Renderer[]> nestedRenderers;
   private Set<String> unrendered;
 
   public void start() {
-    lock.lock();
-    lockHolder = Thread.currentThread();
     List<Part> parts = template.getParts();
     variableValues = initializedList(String.class, parts.size());
     nestedRenderers = initializedList(Renderer[].class, parts.size());
     unrendered = new HashSet<>(template.getVariableNames());
   }
 
-  /* METHODS FOR SETTING A SINGLE TEMPLATE VARIABLE */
-
-  public void setVariable(String varName, Object value) {
-    setVariable(varName, value, ESCAPE_NONE);
-  }
-
-  public void setVariable(String varName, Object value, EscapeType escapeType) {
-    Check.with(IllegalStateException::new, lockHolder)
-        .is(notNull(), ERR_NOT_STARTED)
-        .is(sameAs(), Thread.currentThread(), ERR_NOT_STARTED);
-    Check.notNull(varName, "varName");
-    Check.that(escapeType, "escapeType").is(notSameAs(), NOT_SPECIFIED);
-    if (value != ABSENT) {
-      IntList indices = template.getVariableIndices().getVariableValue(varName);
-      if (indices == null) {
-        throw new RenderException("No such variable: \"" + varName + "\"");
-      }
-      indices.forEach(i -> setVar(i, value, escapeType));
-      unrendered.remove(varName);
-    }
-  }
-
-  private void setVar(int partIndex, Object val, EscapeType escapeType) {
-    List<Part> parts = template.getParts();
-    VariablePart vp = VariablePart.class.cast(parts.get(partIndex));
-    String var = vp.getName();
-    EscapeType myEscapeType = vp.getEscapeType();
-    String s = varRenderer.apply(var, val);
-    if (myEscapeType == NOT_SPECIFIED) {
-      myEscapeType = escapeType;
-    }
-    if (myEscapeType == ESCAPE_NONE) {
-      variableValues.set(partIndex, s);
-    } else if (myEscapeType == ESCAPE_HTML) {
-      variableValues.set(partIndex, StringEscapeUtils.escapeHtml4(s));
-    } else /* ESCAPE_JS */ {
-      variableValues.set(partIndex, StringEscapeUtils.escapeEcmaScript(s));
-    }
-  }
-
   /* METHODS FOR POPULATING A SINGLE NESTED TEMPLATE */
 
-  public void populateTemplate(String name, ViewData data) {
+  /**
+   * Populates a single nested template using the available data in the {@code ViewData} object.
+   * Note that the {@code ViewData} object is not required to supply all values for all variables in
+   * the template. You can call this method multiple times until all variables are set.
+   *
+   * @param name
+   * @param data
+   * @throws RenderException
+   */
+  public void populateTemplate(String name, ViewData data) throws RenderException {
     populateTemplate(name, data, ESCAPE_NONE);
   }
 
-  public void populateTemplate(String name, ViewData data, EscapeType escapeType) {
-    Check.with(IllegalStateException::new, lockHolder)
-        .is(notNull(), ERR_NOT_STARTED)
-        .is(sameAs(), Thread.currentThread(), ERR_NOT_STARTED);
+  /**
+   * Populates a single nested template using the available data in the {@code ViewData} object and
+   * using the specified escape type. Note that the {@code ViewData} object is not required to
+   * supply all values for all variables in the template. You can call this method multiple times
+   * until all variables are set.
+   *
+   * @param name
+   * @param data
+   * @param escapeType
+   * @throws RenderException
+   */
+  public void populateTemplate(String name, ViewData data, EscapeType escapeType)
+      throws RenderException {
     Check.notNull(name, "name");
     Check.that(data, "data").is(notEmpty());
-    Check.that(escapeType, "").is(notSameAs(), NOT_SPECIFIED);
-    IntList indices = template.getVariableIndices().getVariableValue(name);
+    Check.that(escapeType, "escapeType").is(notSameAs(), NOT_SPECIFIED);
+    Template nested = template.getNestedTemplate(name);
+    IntList indices = template.getVarPartIndices().get(name);
     if (indices == null) {
-      throw new RenderException("No such nested template: \"" + name + "\"");
+      throw noSuchTemplate(name);
     }
     indices.forEach(i -> repeat(i, List.of(data), escapeType, null));
   }
@@ -121,42 +99,40 @@ public class Renderer {
   }
 
   public void repeatTemplate(
-      String name, List<ViewData> data, EscapeType escapeType, Set<String> varNames) {
-    Check.with(IllegalStateException::new, lockHolder)
-        .is(notNull(), ERR_NOT_STARTED)
-        .is(sameAs(), Thread.currentThread(), ERR_NOT_STARTED);
+      String name, List<ViewData> data, EscapeType escapeType, Set<String> varNames)
+      throws RenderException {
     Check.notNull(name, "name");
     Check.that(data, "data").is(notEmpty());
     Check.that(escapeType, "escapeType").is(notSameAs(), NOT_SPECIFIED);
     Check.that(varNames, "varNames").is(notEmpty());
-    IntList indices = template.getVariableIndices().getVariableValue(name);
+    IntList indices = template.getVarPartIndices().get(name);
     if (indices == null) {
-      throw new RenderException("No such nested template: \"" + name + "\"");
+      throw noSuchTemplate(name);
     }
     indices.forEach(i -> repeat(i, data, escapeType, varNames));
   }
 
   private void repeat(
-      int partIndex, List<ViewData> data, EscapeType escapeType, Set<String> names) {
+      String tmplName, List<ViewData> data, EscapeType escapeType, Set<String> names) {
     List<Part> parts = template.getParts();
-    Template nested = TemplatePart.class.cast(parts.get(partIndex)).getTemplate();
+    Template nested = template.getNestedTemplate(tmplName);
     if (names == null) {
-      names = nested.getNames();
+      names = nested.getAllNames();
     }
     Renderer[] renderers = nestedRenderers.get(partIndex);
     if (renderers == null) {
       renderers = new Renderer[data.size()];
       for (int i = 0; i < renderers.length; ++i) {
-        renderers[i] = new Renderer(nested, varRenderer);
+        renderers[i] = new Renderer(nested);
       }
     } else {
       Check.that(data).has(size(), eq(), renderers.length);
     }
     if (names == null) {
-      names = nested.getNames();
+      names = nested.getAllNames();
     }
     for (int i = 0; i < renderers.length; ++i) {
-      Renderer renderer = new Renderer(nested, varRenderer);
+      Renderer renderer = new Renderer(nested);
       renderer.setViewData(data.get(i), escapeType, names);
     }
   }
@@ -170,7 +146,7 @@ public class Renderer {
   }
 
   public void setViewData(ViewData data, EscapeType escapeType) {
-    setViewData(data, escapeType, template.getNames());
+    setViewData(data, escapeType, template.getAllNames());
   }
 
   /**
@@ -189,55 +165,47 @@ public class Renderer {
    *     processed
    */
   public void setViewData(ViewData data, EscapeType escapeType, Set<String> varNames) {
-    checkSession();
     Check.notNull(data, "data");
     Check.notNull(varNames, "varNames");
     Check.that(escapeType, "escapeType").is(notSameAs(), NOT_SPECIFIED);
-    setViewDataVars(data, escapeType, varNames);
-    setViewDataTmpls(data, escapeType, varNames);
+    processVarsInViewData(data, escapeType, varNames);
+    processTmplsInViewData(data, escapeType, varNames);
   }
 
-  private void setViewDataVars(ViewData data, EscapeType escapeType, Set<String> names) {
+  private void processVarsInViewData(ViewData data, EscapeType escapeType, Set<String> names) {
     Set<String> varNames;
-    if (names == null || names == template.getNames()) {
+    if (names == null || names == template.getAllNames()) {
       varNames = template.getVariableNames();
     } else {
       varNames = new HashSet<>(template.getVariableNames());
       varNames.retainAll(names);
     }
     for (String varName : varNames) {
-      setVariable(varName, data.getVariableValue(varName), escapeType);
+      Optional<List<String>> values = data.getValue(template, varName);
+      if (values.isPresent()) {}
+
+      data.getValue(template, varName).ifPresent(val -> setVariable(varName, val, escapeType));
     }
   }
 
-  private void setViewDataTmpls(ViewData data, EscapeType escapeType, Set<String> names) {
+  private void processTmplsInViewData(ViewData data, EscapeType escapeType, Set<String> names) {
     Set<String> tmplNames;
-    if (names == null || names == template.getNames()) {
+    if (names == null || names == template.getAllNames()) {
       tmplNames = template.getNestedTemplateNames();
     } else {
       tmplNames = new HashSet<>(template.getNestedTemplateNames());
       tmplNames.retainAll(names);
     }
     for (String tmplName : tmplNames) {
-      Object value = data.getVariableValue(tmplName);
-      if (value != null || value != ABSENT) {
-        if (!(value instanceof ViewData)) {
-          String fmt =
-              "Error while populating nested template \"%s\": "
-                  + "ViewData must return another ViewData object "
-                  + "for nested templates";
-          String msg = String.format(fmt, tmplName);
-          throw new RenderException(msg);
-        }
-        populateTemplate(tmplName, (ViewData) value, escapeType, names);
-      }
+      data.getNestedViewData(template, tmplName)
+          .ifPresent(vd -> populateTemplate(tmplName, vd, escapeType, names));
     }
   }
 
   /* SESSION RENDER METHODS */
 
   public StringBuilder render() {
-    checkSession();
+    checkRendereable();
     StringBuilder sb = new StringBuilder(1024);
     List<Part> parts = template.getParts();
     for (int i = 0; i < parts.size(); ++i) {
@@ -253,15 +221,15 @@ public class Renderer {
     return sb;
   }
 
-  public void render(StringBuilder sb) {
-    checkSession();
+  public void render(StringBuilder sb) throws RenderException {
+    checkRendereable();
     Check.notNull(sb);
     processText();
     variableValues.forEach(sb::append);
   }
 
-  public void render(OutputStream out) {
-    checkSession();
+  public void render(OutputStream out) throws RenderException {
+    checkRendereable();
     processText();
     try {
       for (int i = 0; i < variableValues.size(); ++i) {
@@ -273,11 +241,9 @@ public class Renderer {
   }
 
   public void reset() {
-    lockHolder = null;
     variableValues = null;
     nestedRenderers = null;
     unrendered = null;
-    lock.unlock();
   }
 
   private void processText() {
@@ -289,8 +255,7 @@ public class Renderer {
     }
   }
 
-  private void checkSession() {
-    Check.with(IllegalStateException::new, lockHolder)
-        .is(sameAs(), Thread.currentThread(), ERR_NOT_STARTED);
+  private void checkRendereable() throws RenderException {
+    Check.with(RenderException::new, unrendered).has(size(), eq(), 0, ERR_NOT_RENDERABLE);
   }
 }

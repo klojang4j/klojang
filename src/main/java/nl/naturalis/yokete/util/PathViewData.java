@@ -1,31 +1,49 @@
 package nl.naturalis.yokete.util;
 
-import nl.naturalis.common.ExceptionMethods;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import nl.naturalis.common.path.Path;
 import nl.naturalis.common.path.PathWalker;
-import nl.naturalis.yokete.view.RenderException;
+import nl.naturalis.common.path.PathWalker.DeadEndAction;
+import nl.naturalis.yokete.view.Template;
+import nl.naturalis.yokete.view.ViewData;
+import static java.util.stream.Collectors.toList;
+import static nl.naturalis.common.ObjectMethods.ifNotNull;
 
-public class PathViewData<T> extends AbstractViewData {
+public class PathViewData extends AbstractViewData {
 
-  private final PathWalker pw;
+  private static Map<Template, PathWalker> pwCache = new HashMap<>();
 
-  private Object obj;
+  private Object bean;
 
-  public PathViewData(PathWalker pw, ViewDataStringifiers stringifiers) {
+  public PathViewData(ViewDataStringifiers stringifiers) {
     super(stringifiers);
-    this.pw = pw;
   }
 
-  public void setData(Object obj) {
-    this.obj = obj;
+  public PathViewData with(Object bean) {
+    this.bean = bean;
+    return this;
   }
 
   @Override
-  protected Object getRawValue(String var) {
-    try {
-      Object val = pw.read(obj);
-      return val == PathWalker.DEAD_END ? ABSENT : val;
-    } catch (Throwable e) {
-      throw ExceptionMethods.wrap(e, RenderException::new);
+  protected Optional<?> getRawValue(Template template, String name) {
+    PathWalker pw = pwCache.computeIfAbsent(template, this::newPathWalker);
+    Object val = pw.read(bean);
+    if (val == PathWalker.DEAD_END) {
+      return Optional.empty();
     }
+    return ifNotNull(val, Optional::of, NULL);
+  }
+
+  private PathWalker newPathWalker(Template template) {
+    List<Path> paths = template.getAllNames().stream().map(Path::new).collect(toList());
+    return new PathWalker(paths, DeadEndAction.RETURN_DEAD_END);
+  }
+
+  @Override
+  protected ViewData createViewData(Template template, String name, Object bean) {
+    return null;
   }
 }
