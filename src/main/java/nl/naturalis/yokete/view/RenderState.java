@@ -21,19 +21,19 @@ class RenderState {
    */
   private final List<String> varValues;
 
-  private final Set<String> unsetVars; // variables which have not been set yet
-  private final Set<String> unsetTemplates; // templates which have not been populated yet
+  private final Set<String> vToDo; // variables which have not been set yet
+  private final Set<String> tToDo; // templates which have not been populated yet
 
   RenderState(Template template) {
     this.template = template;
-    this.renderers = new IdentityHashMap<>(template.countNestedTemplates());
+    this.renderers = new IdentityHashMap<>(template.countTemplates());
     List<Part> parts = template.getParts();
     this.varValues = initializedList(String.class, parts.size());
-    this.unsetVars = new HashSet<>(template.getVariableNames());
-    this.unsetTemplates = new HashSet<>(template.getNestedTemplateNames());
+    this.vToDo = new HashSet<>(template.getVariableNames());
+    this.tToDo = new HashSet<>(template.getTemplateNames());
   }
 
-  List<Renderer> getRenderersForTemplate(Template template, String tmplName, int amount)
+  List<Renderer> getRenderers(Template template, String tmplName, int amount)
       throws RenderException {
     List<Renderer> myRenderers = renderers.get(template);
     if (myRenderers == null) {
@@ -48,19 +48,19 @@ class RenderState {
     varValues.set(partIndex, value);
   }
 
-  boolean isVariableSet(String var) {
-    return !unsetVars.contains(var);
+  boolean isSet(String var) {
+    return !vToDo.contains(var);
   }
 
-  void doneWithVar(String var) {
-    unsetVars.remove(var);
+  boolean isPopulated(String tmplName) {
+    return !tToDo.contains(tmplName);
   }
 
-  boolean isTemplatePopulated(String tmpl) {
-    return !unsetTemplates.contains(tmpl);
+  void done(String var) {
+    vToDo.remove(var);
   }
 
-  void templateNowPopulated(String tmpl) {
-    unsetTemplates.remove(tmpl);
+  boolean populated(String tmpl) {
+    return !tToDo.contains(tmpl);
   }
 }

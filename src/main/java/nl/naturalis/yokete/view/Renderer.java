@@ -85,7 +85,7 @@ public class Renderer {
     Check.notNull(name, "name");
     Check.that(data, "data").is(notEmpty());
     Check.that(escapeType, "escapeType").is(notSameAs(), NOT_SPECIFIED);
-    Template nested = template.getNestedTemplate(name);
+    Template nested = template.getTemplate(name);
     IntList indices = template.getVarPartIndices().get(name);
     if (indices == null) {
       throw noSuchTemplate(name);
@@ -115,7 +115,7 @@ public class Renderer {
   private void repeat(
       String tmplName, List<ViewData> data, EscapeType escapeType, Set<String> names) {
     List<Part> parts = template.getParts();
-    Template nested = template.getNestedTemplate(tmplName);
+    Template nested = template.getTemplate(tmplName);
     if (names == null) {
       names = nested.getAllNames();
     }
@@ -191,9 +191,9 @@ public class Renderer {
   private void processTmplsInViewData(ViewData data, EscapeType escapeType, Set<String> names) {
     Set<String> tmplNames;
     if (names == null || names == template.getAllNames()) {
-      tmplNames = template.getNestedTemplateNames();
+      tmplNames = template.getTemplateNames();
     } else {
-      tmplNames = new HashSet<>(template.getNestedTemplateNames());
+      tmplNames = new HashSet<>(template.getTemplateNames());
       tmplNames.retainAll(names);
     }
     for (String tmplName : tmplNames) {

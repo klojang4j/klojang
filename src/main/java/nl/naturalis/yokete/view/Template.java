@@ -71,15 +71,15 @@ public class Template {
     return tmplIndices;
   }
 
-  public Set<String> getNestedTemplateNames() {
+  public Set<String> getTemplateNames() {
     return tmplIndices.keySet();
   }
 
-  public int countNestedTemplates() {
+  public int countTemplates() {
     return tmplCount;
   }
 
-  public Template getNestedTemplate(String name) {
+  public Template getTemplate(String name) {
     Check.that(name).is(keyIn(), tmplIndices, "No such template: %s", name);
     int partIndex = tmplIndices.get(name);
     return Check.that(parts.get(partIndex))
