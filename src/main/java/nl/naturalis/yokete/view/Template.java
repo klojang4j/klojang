@@ -79,6 +79,13 @@ public class Template {
     return tmplCount;
   }
 
+  /**
+   * Returns a {@code Template} nested inside this {@code Template}, identified by the specified
+   * name.
+   *
+   * @param name The name of the nested template
+   * @return A {@code Template} nested inside this {@code Template}
+   */
   public Template getTemplate(String name) {
     Check.that(name).is(keyIn(), tmplIndices, "No such template: %s", name);
     int partIndex = tmplIndices.get(name);

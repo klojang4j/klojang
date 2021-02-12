@@ -1,11 +1,12 @@
 package nl.naturalis.yokete.view;
 
 import java.util.*;
-import static nl.naturalis.common.CollectionMethods.initializedList;
-import static nl.naturalis.yokete.view.RenderException.templateRepetitionMismatch;
+import static nl.naturalis.common.CollectionMethods.*;
+import static nl.naturalis.yokete.view.RenderException.repetitionMismatch;
 
 class RenderState {
 
+  @SuppressWarnings("unused")
   private final Template template;
 
   /**
@@ -13,6 +14,8 @@ class RenderState {
    * often the the template is going to be repeated inside the parent template.
    */
   private final IdentityHashMap<Template, List<Renderer>> renderers;
+
+  private final IdentityHashMap<Template, List<RenderSession>> sessions;
 
   /**
    * A sparsely populated list containing the values of the template variables. Each populated
@@ -27,6 +30,7 @@ class RenderState {
   RenderState(Template template) {
     this.template = template;
     this.renderers = new IdentityHashMap<>(template.countTemplates());
+    this.sessions = new IdentityHashMap<>(template.countTemplates());
     List<Part> parts = template.getParts();
     this.varValues = initializedList(String.class, parts.size());
     this.vToDo = new HashSet<>(template.getVariableNames());
@@ -39,9 +43,20 @@ class RenderState {
     if (myRenderers == null) {
       myRenderers = new ArrayList<>(amount);
     } else if (myRenderers.size() != amount) {
-      throw templateRepetitionMismatch(tmplName, myRenderers.size(), amount);
+      throw repetitionMismatch(tmplName, myRenderers.size(), amount);
     }
     return myRenderers;
+  }
+
+  List<RenderSession> getSessions(Template template, String tmplName, int amount)
+      throws RenderException {
+    List<RenderSession> mySessions = sessions.get(template);
+    if (mySessions == null) {
+      mySessions = initializedList(RenderSession::new, amount);
+    } else if (mySessions.size() != amount) {
+      throw repetitionMismatch(tmplName, mySessions.size(), amount);
+    }
+    return mySessions;
   }
 
   void setVar(int partIndex, String value) {

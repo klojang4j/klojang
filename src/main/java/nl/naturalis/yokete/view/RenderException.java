@@ -37,7 +37,7 @@ public class RenderException extends YoketeException {
     return new RenderException(format(ALREADY_POPULATED, name));
   }
 
-  static RenderException templateRepetitionMismatch(String name, int expected, int actual) {
+  static RenderException repetitionMismatch(String name, int expected, int actual) {
     return new RenderException(format(TEMPLATE_REPETITION_MISMATCH, expected, name, actual));
   }
 

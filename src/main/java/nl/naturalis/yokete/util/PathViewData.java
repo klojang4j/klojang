@@ -37,13 +37,13 @@ public class PathViewData extends AbstractViewData {
     return ifNotNull(val, Optional::of, NULL);
   }
 
+  @Override
+  protected ViewData createViewData(Template template, String name, Object bean) {
+    return new PathViewData(stringifiers).with(bean);
+  }
+
   private PathWalker newPathWalker(Template template) {
     List<Path> paths = template.getAllNames().stream().map(Path::new).collect(toList());
     return new PathWalker(paths, DeadEndAction.RETURN_DEAD_END);
-  }
-
-  @Override
-  protected ViewData createViewData(Template template, String name, Object bean) {
-    return null;
   }
 }
