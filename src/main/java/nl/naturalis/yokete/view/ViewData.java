@@ -4,8 +4,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * A generic interface for objects that mediate between the data access layer and rendering layer.
- * Its main purpose is the stringify the raw model data served up by the data access layer.
+ * A generic interface for objects that mediate between the data layer and viw layer. Its main
+ * purpose is the stringify the model data served up by the data layer. The Yokete module is
+ * agnostic about this is accomplished, but provides three {@code ViewData} implementations in the
+ * {@code util} package.
  *
  * @author Ayco Holleman
  */
@@ -21,7 +23,7 @@ public interface ViewData {
    * course, all variables must have been substituted with actual values.)
    *
    * <p>The value of the variable comes in the form of a {@code List} of strings. If the list
-   * contains more than one string, all strings are inserted, side by side, at the location of the
+   * contains more than one string, all strings are inserted adjacently at the location of the
    * variable. This can be useful if the variable represents not a simple, scalar value value but an
    * HTML snippet. For example, if you have this template:
    *
@@ -46,10 +48,10 @@ public interface ViewData {
    * </pre>
    *
    * <p>If the {@code List} is empty, the {@code Renderer} will replace the variable with an empty
-   * string. This allows for conditional rendering: by deliberately supplying the {@code Renderer}
-   * with an empty {@code List}, you tell the {@code Renderer} to suppress rendering the variable.
-   * This is probably even more useful when rendering {@link #getNestedViewData(Template, String)
-   * nested templates}.
+   * string. This allows for conditional rendering. By supplying the {@code Renderer} with an empty
+   * {@code List}, you effectively tell the {@code Renderer} to suppress rendering the variable.
+   * Note that this is probably more useful when rendering {@link #getNestedViewData(Template,
+   * String) nested templates}.
    *
    * <p>The {@code template} argument is the {@link Template} containing the variable.
    * Implementations could use it for pre-caching or other purposes, but are free to ignore it.
@@ -62,14 +64,14 @@ public interface ViewData {
   Optional<List<String>> getValue(Template template, String varName) throws RenderException;
 
   /**
-   * Returns a nested {@code ViewData} object containing the values for the specified nested
+   * Returns a {@code ViewData} object containing the values for the specified <i>nested</i>
    * template. See {@link #getValue(Template, String) getValue} for the precise contract for this
    * method
    *
-   * @param template The {@code Template} that contains the specified nested template
-   * @param nestedTemplateName The name of the nested template
+   * @param parent The {@code Template} that contains the specified nested template
+   * @param chilTemplateName The name of the nested template
    * @return An {@code Optional} containing a nested {@code ViewData} object
    */
-  Optional<List<ViewData>> getNestedViewData(Template template, String nestedTemplateName)
+  Optional<List<ViewData>> getNestedViewData(Template parent, String chilTemplateName)
       throws RenderException;
 }
