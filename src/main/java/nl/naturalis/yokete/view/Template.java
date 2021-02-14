@@ -1,31 +1,53 @@
 package nl.naturalis.yokete.view;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import nl.naturalis.common.IOMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.collection.UnmodifiableIntList;
 import static java.util.stream.Collectors.toUnmodifiableSet;
-import static nl.naturalis.common.check.CommonChecks.*;
+import static nl.naturalis.common.check.CommonChecks.instanceOf;
+import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 /**
- * A {@code Template} captures the result of parsing a text template. It provides access to the
+ * A {@code Template} captures the result of parsing a template file. It provides access to the
  * constituent parts of a text template: {@link VariablePart template variables}, {@link
- * TemplatePart nested templates} and literal text. It also takes care of removing comments from the
- * text template.
+ * TemplatePart nested templates} and {@link TextPart literal text}. {@code Template} instances are
+ * immutable, expensive-to-create and heavy-weight objects. They should be cached, for example as a
+ * static final field in your controller or resource class. Creating a new {@code Template} instance
+ * from the same template file would be very inefficient.
  *
  * @author Ayco Holleman
  */
 public class Template {
+
+  /**
+   * The name of the root template: &#34;&#64ROOT&#34;. This is the {@code Template} that got
+   * instantiated directly from file. The templates nested inside it get their name from the
+   * contents of the file (e.g. ~%%begin:<b>mainTable</b>%).
+   */
+  public static final String ROOT_TEMPLATE_NAME = "@ROOT";
+
+  public static Template parse(InputStream in) throws InvalidTemplateException {
+    return parse(IOMethods.toString(in));
+  }
 
   public static Template parse(String source) throws InvalidTemplateException {
     List<Part> parts = TemplateParser.INSTANCE.parse(source);
     return new Template(parts);
   }
 
+  static Template parse(String tmplName, String source) throws InvalidTemplateException {
+    List<Part> parts = TemplateParser.INSTANCE.parse(source);
+    return new Template(tmplName, parts);
+  }
+
+  private final String name;
   private final List<Part> parts;
   private final Map<String, IntList> varIndices;
   private final IntList textIndices;
@@ -35,6 +57,11 @@ public class Template {
   private final Set<String> names; // variable names + template names
 
   private Template(List<Part> parts) {
+    this(ROOT_TEMPLATE_NAME, parts);
+  }
+
+  private Template(String name, List<Part> parts) {
+    this.name = name;
     this.parts = parts;
     this.varIndices = getVarIndices(parts);
     this.varCount = getVarCount(parts);
@@ -42,6 +69,15 @@ public class Template {
     this.tmplCount = getTmplCount(parts);
     this.names = getNames(parts);
     this.textIndices = getTextIndices(parts);
+  }
+
+  /**
+   * Returns the name of the template.
+   *
+   * @return The name of the template
+   */
+  public String getName() {
+    return name;
   }
 
   /**

@@ -40,7 +40,7 @@ class TemplateParser {
       names.add(name);
       String src = matcher.group(2);
       end = matcher.end();
-      parts.add(new TemplatePart(name, Template.parse(src), start, end));
+      parts.add(new TemplatePart(Template.parse(name, src), start, end));
     }
     if (end < template.length()) {
       String parseLater = template.substring(end);

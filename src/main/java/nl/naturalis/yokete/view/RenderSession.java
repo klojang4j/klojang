@@ -1,29 +1,26 @@
 package nl.naturalis.yokete.view;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.io.PrintStream;
+import java.util.*;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.common.collection.IntList;
-import static java.util.stream.Collectors.joining;
 import static nl.naturalis.common.ObjectMethods.ifEmpty;
 import static nl.naturalis.common.ObjectMethods.isEmpty;
 import static nl.naturalis.common.check.CommonChecks.in;
 import static nl.naturalis.common.check.CommonChecks.no;
-import static nl.naturalis.common.check.CommonChecks.notSameAs;
+import static nl.naturalis.common.check.CommonChecks.noneNull;
+import static nl.naturalis.common.check.CommonChecks.*;
 import static nl.naturalis.yokete.view.EscapeType.ESCAPE_NONE;
 import static nl.naturalis.yokete.view.EscapeType.NOT_SPECIFIED;
 import static nl.naturalis.yokete.view.RenderException.*;
 
-public final class RenderSession {
+public class RenderSession {
 
-  private final Template tmpl;
-  private final RenderState state;
+  final Template template;
+  final RenderState state;
 
-  RenderSession(Template tmpl) {
-    this.tmpl = tmpl;
-    this.state = new RenderState(tmpl);
+  RenderSession(Template template) {
+    this.template = template;
+    this.state = new RenderState(template);
   }
 
   /* METHODS FOR SETTING A SINGLE TEMPLATE VARIABLE */
@@ -36,12 +33,7 @@ public final class RenderSession {
    * @throws RenderException
    */
   public RenderSession setVariable(String name, String value) throws RenderException {
-    return setVar(name, List.of(value), ESCAPE_NONE, false);
-  }
-
-  public RenderSession setVariable(String name, String value, boolean allowOverwrite)
-      throws RenderException {
-    return setVar(name, List.of(value), ESCAPE_NONE, allowOverwrite);
+    return setVariable(name, List.of(value), ESCAPE_NONE);
   }
 
   /**
@@ -55,13 +47,7 @@ public final class RenderSession {
    */
   public RenderSession setVariable(String name, String value, EscapeType escapeType)
       throws RenderException {
-    return setVar(name, List.of(value), escapeType, false);
-  }
-
-  public RenderSession setVariable(
-      String name, String value, EscapeType escapeType, boolean allowOverwrite)
-      throws RenderException {
-    return setVar(name, List.of(value), escapeType, allowOverwrite);
+    return setVariable(name, List.of(value), escapeType);
   }
 
   /**
@@ -131,108 +117,58 @@ public final class RenderSession {
    */
   public RenderSession setVariable(String name, List<String> value, EscapeType escapeType)
       throws RenderException {
-    return setVar(name, value, escapeType, false);
-  }
-
-  public RenderSession setVariable(
-      String name, List<String> value, EscapeType escapeType, boolean allowOverwrite)
-      throws RenderException {
-    return setVar(name, value, escapeType, allowOverwrite);
-  }
-
-  private RenderSession setVar(
-      String name, List<String> value, EscapeType escapeType, boolean allowOverwrite)
-      throws RenderException {
     Check.notNull(name, "name");
-    Check.notNull(value, "value");
-    if (!allowOverwrite) {
-      Check.with(s -> alreadySet(name), state.isSet(name)).is(no());
-    }
-    Check.with(s -> noSuchVariable(name), name).is(in(), tmpl.getVariableNames());
+    Check.that(value, "value").is(noneNull());
+    Check.notNull(escapeType, "escapeType");
+    Check.with(s -> alreadySet(name), state.isSet(name)).is(no());
+    Check.with(s -> noSuchVariable(name), name).is(in(), template.getVariableNames());
     Check.with(s -> badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
-    IntList indices = tmpl.getVarPartIndices().get(name);
-    indices.forEach(i -> setVar(i, value, escapeType));
+    template.getVarPartIndices().get(name).forEach(i -> escape(i, value, escapeType));
     state.done(name);
     return this;
   }
 
-  private void setVar(int partIndex, List<String> val, EscapeType escapeType) {
-    List<Part> parts = tmpl.getParts();
+  private void escape(int partIndex, List<String> val, EscapeType escapeType) {
+    List<Part> parts = template.getParts();
     VariablePart part = (VariablePart) parts.get(partIndex);
     EscapeType myEscapeType = part.getEscapeType();
     if (myEscapeType == NOT_SPECIFIED) {
       myEscapeType = escapeType;
     }
-    String str = val.stream().map(myEscapeType::apply).collect(joining());
-    state.setVar(partIndex, str);
+    List<String> escaped = new ArrayList<>(val.size());
+    val.stream().map(myEscapeType::apply).forEach(escaped::add);
+    state.setVar(partIndex, escaped);
   }
 
   /* METHODS FOR POPULATING A SINGLE NESTED TEMPLATE */
 
   public RenderSession populateTemplate(String name, ViewData data) throws RenderException {
-    return repeat(name, List.of(data), ESCAPE_NONE, null, false);
-  }
-
-  public RenderSession populateTemplate(String name, ViewData data, boolean allowOverwrite)
-      throws RenderException {
-    return repeat(name, List.of(data), ESCAPE_NONE, null, allowOverwrite);
+    return repeatTemplate(name, List.of(data), ESCAPE_NONE, null);
   }
 
   public RenderSession populateTemplate(
       String name, ViewData data, EscapeType escapeType, Set<String> names) throws RenderException {
-    return repeat(name, List.of(data), escapeType, names, false);
-  }
-
-  public RenderSession populateTemplate(
-      String name, ViewData data, EscapeType escapeType, Set<String> names, boolean allowOverwrite)
-      throws RenderException {
-    return repeat(name, List.of(data), escapeType, names, allowOverwrite);
+    return repeatTemplate(name, List.of(data), escapeType, names);
   }
 
   public RenderSession repeatTemplate(String name, List<ViewData> data) throws RenderException {
-    return repeat(name, data, ESCAPE_NONE, null, false);
-  }
-
-  public RenderSession repeatTemplate(String name, List<ViewData> data, boolean allowOverwrite)
-      throws RenderException {
-    return repeat(name, data, ESCAPE_NONE, null, allowOverwrite);
+    return repeatTemplate(name, data, ESCAPE_NONE, null);
   }
 
   public RenderSession repeatTemplate(
       String name, List<ViewData> data, EscapeType escapeType, Set<String> names)
       throws RenderException {
-    return repeat(name, data, escapeType, names, false);
-  }
-
-  public RenderSession repeatTemplate(
-      String name,
-      List<ViewData> data,
-      EscapeType escapeType,
-      Set<String> names,
-      boolean allowOverwrite)
-      throws RenderException {
-    return repeat(name, data, escapeType, names, allowOverwrite);
-  }
-
-  private RenderSession repeat(
-      String name,
-      List<ViewData> data,
-      EscapeType escapeType,
-      Set<String> names,
-      boolean allowOverwrite)
-      throws RenderException {
     Check.notNull(name, "name");
-    Check.notNull(data, "data");
-    if (!allowOverwrite) {
-      Check.with(s -> alreadyPopulated(name), state.isPopulated(name)).is(no());
-    }
-    Check.with(s -> noSuchTemplate(name), name).is(in(), tmpl.getTemplateNames());
+    Check.that(data, "data").is(noneNull());
+    Check.notNull(escapeType, "escapeType");
+    Check.with(s -> alreadyPopulated(name), state.isPopulated(name)).is(no());
+    Check.with(s -> noSuchTemplate(name), name).is(in(), template.getTemplateNames());
     Check.with(s -> badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
-    Template nested = tmpl.getTemplate(name);
+    Template nested = template.getTemplate(name);
     names = ifEmpty(names, nested::getAllNames);
-    List<RenderSession> session = state.getSessions(nested, name, data.size());
+    List<RenderSession> session = state.createOrGetSessions(nested, name, data.size());
     for (int i = 0; i < session.size(); ++i) {
-      session.get(i).setViewData(data.get(i), escapeType, names, allowOverwrite);
+      session.get(i).setViewData(data.get(i), escapeType, names);
     }
     state.populated(name);
     return this;
@@ -240,29 +176,16 @@ public final class RenderSession {
 
   /* METHODS FOR POPULATING WHATEVER IS IN THE PROVIDED ViewData OBJECT */
 
-  public void setViewData(ViewData data) throws RenderException {
-    processVarsInViewData(data, ESCAPE_NONE, null, false);
-    processTmplsInViewData(data, ESCAPE_NONE, null, false);
+  public RenderSession setViewData(ViewData data) throws RenderException {
+    return setViewData(data, ESCAPE_NONE, null);
   }
 
-  public void setViewData(ViewData data, boolean allowOverwrite) throws RenderException {
-    processVarsInViewData(data, ESCAPE_NONE, null, allowOverwrite);
-    processTmplsInViewData(data, ESCAPE_NONE, null, allowOverwrite);
-  }
-
-  public void setViewData(ViewData data, EscapeType escapeType) throws RenderException {
-    processVarsInViewData(data, escapeType, null, false);
-    processTmplsInViewData(data, escapeType, null, false);
-  }
-
-  public void setViewData(ViewData data, EscapeType escapeType, boolean allowOverwrite)
-      throws RenderException {
-    processVarsInViewData(data, escapeType, null, allowOverwrite);
-    processTmplsInViewData(data, escapeType, null, allowOverwrite);
+  public RenderSession setViewData(ViewData data, EscapeType escapeType) throws RenderException {
+    return setViewData(data, escapeType, null);
   }
 
   /**
-   * Populates all variables and nested templates that can be populated using the provided {@code
+   * Populates variables and nested templates that can be populated using the provided {@code
    * ViewData} object. Only variables and nested templates whose name is present in the {@code
    * names} argument will be processed. This allows you to call this method multiple times with the
    * same {@code ViewData} object but different escape types. The {@code ViewData} object is itself
@@ -277,51 +200,69 @@ public final class RenderSession {
    *     processed
    * @throws RenderException
    */
-  public void setViewData(ViewData data, EscapeType escapeType, Set<String> names)
+  public RenderSession setViewData(ViewData data, EscapeType escapeType, Set<String> names)
       throws RenderException {
-    processVarsInViewData(data, escapeType, names, false);
-    processTmplsInViewData(data, escapeType, names, false);
+    processVarsInViewData(data, escapeType, names);
+    processTmplsInViewData(data, escapeType, names);
+    return this;
   }
 
-  public void setViewData(
-      ViewData data, EscapeType escapeType, Set<String> names, boolean allowOverwrite)
-      throws RenderException {
-    processVarsInViewData(data, escapeType, names, allowOverwrite);
-    processTmplsInViewData(data, escapeType, names, allowOverwrite);
+  void render(PrintStream ps) throws RenderException {
+    Check.notNull(ps);
+    if (!state.isRenderable()) {
+      throw notRenderable(state.getUnsetVariables(), state.getUnpopulatedTemplates());
+    }
+    Renderer renderer = new Renderer(state);
+    renderer.render(ps);
   }
 
-  private void processVarsInViewData(
-      ViewData data, EscapeType escapeType, Set<String> names, boolean allowOverwrite)
+  void render(StringBuilder sb) throws RenderException {
+    Check.notNull(sb);
+    if (!state.isRenderable()) {
+      throw notRenderable(state.getUnsetVariables(), state.getUnpopulatedTemplates());
+    }
+    Renderer renderer = new Renderer(state);
+    renderer.render(sb);
+  }
+
+  StringBuilder render() throws RenderException {
+    if (!state.isRenderable()) {
+      throw notRenderable(state.getUnsetVariables(), state.getUnpopulatedTemplates());
+    }
+    Renderer renderer = new Renderer(state);
+    return renderer.render();
+  }
+
+  private void processVarsInViewData(ViewData data, EscapeType escapeType, Set<String> names)
       throws RenderException {
     Set<String> varNames;
-    if (isEmpty(names) || names.equals(tmpl.getAllNames())) {
-      varNames = tmpl.getVariableNames();
+    if (isEmpty(names) || names.equals(template.getAllNames())) {
+      varNames = template.getVariableNames();
     } else {
-      varNames = new HashSet<>(tmpl.getVariableNames());
+      varNames = new HashSet<>(template.getVariableNames());
       varNames.retainAll(names);
     }
     for (String name : varNames) {
-      Optional<List<String>> value = data.getValue(tmpl, name);
+      Optional<List<String>> value = data.getValue(template, name);
       if (value.isPresent()) {
-        setVar(name, value.get(), escapeType, allowOverwrite);
+        setVariable(name, value.get(), escapeType);
       }
     }
   }
 
-  private void processTmplsInViewData(
-      ViewData data, EscapeType escapeType, Set<String> names, boolean allowOverwrite)
+  private void processTmplsInViewData(ViewData data, EscapeType escapeType, Set<String> names)
       throws RenderException {
     Set<String> tmplNames;
-    if (isEmpty(names) || names.equals(tmpl.getAllNames())) {
-      tmplNames = tmpl.getTemplateNames();
+    if (isEmpty(names) || names.equals(template.getAllNames())) {
+      tmplNames = template.getTemplateNames();
     } else {
-      tmplNames = new HashSet<>(tmpl.getTemplateNames());
+      tmplNames = new HashSet<>(template.getTemplateNames());
       tmplNames.retainAll(names);
     }
     for (String name : tmplNames) {
-      Optional<List<ViewData>> nested = data.getNestedViewData(tmpl, name);
+      Optional<List<ViewData>> nested = data.getNestedViewData(template, name);
       if (nested.isPresent()) {
-        repeat(name, nested.get(), escapeType, names, allowOverwrite);
+        repeatTemplate(name, nested.get(), escapeType, names);
       }
     }
   }

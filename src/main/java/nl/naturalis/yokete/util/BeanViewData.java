@@ -42,7 +42,7 @@ public class BeanViewData extends AbstractViewData {
   }
 
   @Override
-  protected ViewData createViewData(Template template, String tmplName, Object bean) {
+  protected ViewData createViewData(Template template, Object bean) {
     return new BeanViewData(stringifiers).with(bean);
   }
 

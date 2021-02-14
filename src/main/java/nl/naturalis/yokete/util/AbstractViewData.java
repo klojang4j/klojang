@@ -9,6 +9,7 @@ import nl.naturalis.yokete.view.Template;
 import nl.naturalis.yokete.view.ViewData;
 import static nl.naturalis.common.CollectionMethods.asList;
 import static nl.naturalis.common.check.CommonChecks.notNull;
+import static nl.naturalis.yokete.view.RenderException.*;
 
 public abstract class AbstractViewData implements ViewData {
 
@@ -49,12 +50,12 @@ public abstract class AbstractViewData implements ViewData {
     if (raw.isEmpty()) {
       return raw;
     }
-    List objects = asList(raw.get());
-    List<ViewData> viewData = new ArrayList<>(objects.size());
-    for (int i = 0; i < objects.size(); ++i) {
-      Check.with(RenderException::new, objects.get(i))
-          .is(notNull(), "Cannot create ViewData from null value at index %d", i)
-          .then(obj -> viewData.add(createViewData(template, tmplName, obj)));
+    List objs = asList(raw.get());
+    List<ViewData> viewData = new ArrayList<>(objs.size());
+    for (int i = 0; i < objs.size(); ++i) {
+      int idx = i;
+      Check.with(s -> nullViewData(tmplName, idx), objs.get(i)).is(notNull());
+      viewData.add(createViewData(template, objs.get(i)));
     }
     return Optional.of(viewData);
   }
@@ -82,6 +83,6 @@ public abstract class AbstractViewData implements ViewData {
    * @param obj
    * @return
    */
-  protected abstract ViewData createViewData(Template template, String name, Object value)
+  protected abstract ViewData createViewData(Template template, Object value)
       throws RenderException;
 }

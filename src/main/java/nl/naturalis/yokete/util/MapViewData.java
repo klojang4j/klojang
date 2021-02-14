@@ -6,9 +6,9 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.view.RenderException;
 import nl.naturalis.yokete.view.Template;
 import nl.naturalis.yokete.view.ViewData;
-import static nl.naturalis.common.ClassMethods.prettyClassName;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.common.check.CommonChecks.notNull;
+import static nl.naturalis.yokete.view.RenderException.nestedMapExpected;
 
 public class MapViewData extends AbstractViewData {
 
@@ -34,14 +34,11 @@ public class MapViewData extends AbstractViewData {
 
   @Override
   @SuppressWarnings("unchecked")
-  protected ViewData createViewData(Template template, String tmplName, Object data)
-      throws RenderException {
+  protected ViewData createViewData(Template template, Object data) throws RenderException {
     try {
       return new MapViewData(stringifiers).with((Map<String, Object>) data);
     } catch (ClassCastException e) {
-      String fmt = "Expected Map<String,Object> for template \"%s\". Got: %s";
-      String msg = String.format(fmt, tmplName, prettyClassName(data));
-      throw new RenderException(msg);
+      throw nestedMapExpected(template.getName(), data);
     }
   }
 }

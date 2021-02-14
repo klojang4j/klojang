@@ -1,81 +1,77 @@
 package nl.naturalis.yokete.view;
 
 import java.util.*;
-import static nl.naturalis.common.CollectionMethods.*;
+import static nl.naturalis.common.CollectionMethods.initializedList;
 import static nl.naturalis.yokete.view.RenderException.repetitionMismatch;
 
 class RenderState {
 
-  @SuppressWarnings("unused")
   private final Template template;
-
-  /**
-   * Maps each nested template to a list of (nested) renderers. The size of the list determines how
-   * often the the template is going to be repeated inside the parent template.
-   */
-  private final IdentityHashMap<Template, List<Renderer>> renderers;
-
+  private final Set<String> vToDo; // variables that have not been set yet
+  private final Set<String> tToDo; // templates that have not been populated yet
   private final IdentityHashMap<Template, List<RenderSession>> sessions;
-
-  /**
-   * A sparsely populated list containing the values of the template variables. Each populated
-   * element in the list corresponds to a variable part. The unpopulated elements correspond to text
-   * parts or template parts.
-   */
-  private final List<String> varValues;
-
-  private final Set<String> vToDo; // variables which have not been set yet
-  private final Set<String> tToDo; // templates which have not been populated yet
+  private final Map<Integer, List<String>> varValues;
 
   RenderState(Template template) {
     this.template = template;
-    this.renderers = new IdentityHashMap<>(template.countTemplates());
     this.sessions = new IdentityHashMap<>(template.countTemplates());
-    List<Part> parts = template.getParts();
-    this.varValues = initializedList(String.class, parts.size());
+    this.varValues = new HashMap<>(template.countTemplates());
     this.vToDo = new HashSet<>(template.getVariableNames());
     this.tToDo = new HashSet<>(template.getTemplateNames());
   }
 
-  List<Renderer> getRenderers(Template template, String tmplName, int amount)
-      throws RenderException {
-    List<Renderer> myRenderers = renderers.get(template);
-    if (myRenderers == null) {
-      myRenderers = new ArrayList<>(amount);
-    } else if (myRenderers.size() != amount) {
-      throw repetitionMismatch(tmplName, myRenderers.size(), amount);
-    }
-    return myRenderers;
+  Template getTemplate() {
+    return template;
   }
 
-  List<RenderSession> getSessions(Template template, String tmplName, int amount)
+  List<RenderSession> createOrGetSessions(Template template, String tmplName, int amount)
       throws RenderException {
     List<RenderSession> mySessions = sessions.get(template);
     if (mySessions == null) {
-      mySessions = initializedList(RenderSession::new, amount);
+      mySessions = initializedList(() -> new RenderSession(template), amount);
     } else if (mySessions.size() != amount) {
       throw repetitionMismatch(tmplName, mySessions.size(), amount);
     }
     return mySessions;
   }
 
-  void setVar(int partIndex, String value) {
-    varValues.set(partIndex, value);
+  List<RenderSession> getSessions(Template template) {
+    return sessions.get(template);
+  }
+
+  List<String> getVar(int partIndex) {
+    return varValues.get(partIndex);
+  }
+
+  void setVar(int partIndex, List<String> value) {
+    varValues.put(partIndex, value);
   }
 
   boolean isSet(String var) {
     return !vToDo.contains(var);
   }
 
-  boolean isPopulated(String tmplName) {
-    return !tToDo.contains(tmplName);
-  }
-
   void done(String var) {
     vToDo.remove(var);
   }
 
-  boolean populated(String tmpl) {
-    return !tToDo.contains(tmpl);
+  boolean isPopulated(String tmplName) {
+    return !tToDo.contains(tmplName);
+  }
+
+  void populated(String tmpl) {
+    tToDo.remove(tmpl);
+  }
+
+  Set<String> getUnsetVariables() {
+    return vToDo;
+  }
+
+  Set<String> getUnpopulatedTemplates() {
+    return tToDo;
+  }
+
+  boolean isRenderable() {
+    return vToDo.isEmpty() && tToDo.isEmpty();
   }
 }

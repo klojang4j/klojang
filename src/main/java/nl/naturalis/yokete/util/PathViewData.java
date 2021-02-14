@@ -38,7 +38,7 @@ public class PathViewData extends AbstractViewData {
   }
 
   @Override
-  protected ViewData createViewData(Template template, String name, Object bean) {
+  protected ViewData createViewData(Template template, Object bean) {
     return new PathViewData(stringifiers).with(bean);
   }
 
