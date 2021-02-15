@@ -1,10 +1,17 @@
 package nl.naturalis.yokete.view;
 
+import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
+import nl.naturalis.common.IOMethods;
 import static org.junit.jupiter.api.Assertions.*;
-import static nl.naturalis.yokete.view.Regex.REGEX_VARIABLE;
+import static nl.naturalis.yokete.view.Regex.*;
 
 public class RegexTest {
+
+  @Test
+  public void print() {
+    Regex.printAll();
+  }
 
   @Test
   public void test00() {
@@ -30,13 +37,24 @@ public class RegexTest {
     assertTrue(REGEX_VARIABLE.matcher("~%text:person.address%").find());
   }
 
-  /*
-   * Used when instantiating a Template to make sure that two nested templates with the same name
-   * also have the same content.
-   */
   @Test
   public void test03() {
-    String s = " a   b cd     e f";
-    assertEquals("abcdef", s.replaceAll("\\s*", ""));
+    assertTrue(REGEX_HIDDEN_VAR.matcher("<!--~%person%-->").find());
+    assertTrue(REGEX_HIDDEN_VAR.matcher("<!-- ~%person% -->").find());
+    assertTrue(REGEX_HIDDEN_VAR.matcher("<!--\t~%person%\t-->").find());
+    assertTrue(REGEX_HIDDEN_VAR.matcher("foo\n<!--~%person%-->bar").find());
+    assertTrue(REGEX_HIDDEN_VAR.matcher("<!--      \n~%person%\n\n   -->").find());
+  }
+
+  @Test
+  public void test04() {
+    String s = IOMethods.toString(getClass(), "RegexTest.test04.html");
+    assertTrue(REGEX_TEMPLATE.matcher(s).find());
+  }
+
+  @Test
+  public void test05() {
+    String s = IOMethods.toString(getClass(), "RegexTest.test05.html");
+    assertTrue(REGEX_HIDDEN_TMPL.matcher(s).find());
   }
 }

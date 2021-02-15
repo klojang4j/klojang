@@ -24,7 +24,7 @@ class TemplateParser {
 
   private static Set<String> parseNestedTemplates(String template, LinkedList<Part> parts)
       throws InvalidTemplateException {
-    Matcher matcher = REGEX_NESTED_TEMPLATE.matcher(template);
+    Matcher matcher = REGEX_TEMPLATE.matcher(template);
     Set<String> names = new HashSet<>();
     int end = 0; // end index of the previous nested template
     while (matcher.find()) {
@@ -100,14 +100,13 @@ class TemplateParser {
   }
 
   private static String unhideTemplates(String template) {
-    Matcher matcher = REGEX_HIDDEN_NESTED_TMPL.matcher(template);
+    Matcher matcher = REGEX_HIDDEN_TMPL.matcher(template);
     template = matcher.replaceAll(r -> r.group(1));
     return template;
   }
 
   private static String removeComments(String template) {
-    template = REGEX_COMMENT_LINE.matcher(template).replaceAll("");
-    template = REGEX_COMMENT_BLOCK.matcher(template).replaceAll("");
+    template = REGEX_DITCH_BLOCK.matcher(template).replaceAll("");
     return template;
   }
 }

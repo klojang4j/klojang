@@ -1,72 +1,66 @@
 package nl.naturalis.yokete.view;
 
 import java.util.regex.Pattern;
-import static nl.naturalis.common.StringMethods.concat;
 import static java.util.regex.Pattern.compile;
+import static nl.naturalis.common.ObjectMethods.*;
 
 class Regex {
 
   // Equivalent to prefixing the regular expression with "(?ms)"
   private static final int MS_MODIFIERS = Pattern.MULTILINE | Pattern.DOTALL;
 
-  // GENERIC REGULAR EXPRESSIONS:
+  // At least one character, percentage sign and colon not permitted
+  private static final String NAME = "([^%:]+)";
+  private static final String VS = getVarStart();
+  private static final String TS = getTmplStart();
+  private static final String NE = getNameEnd();
 
-  private static final String WHITESPACE = "\\s*";
-  private static final String NON_BREAKING_SPACE = "[ \\t]*";
-  private static final String DOT = "\\.";
-  private static final String WHATEVER = ".*";
-  private static final String LINE_START = "^.*";
-  private static final String LINE_END = ".*$";
-  private static final String HTML_COMMENT_START = Pattern.quote("<!--");
-  private static final String HTML_COMMENT_END = Pattern.quote("-->");
+  // esc type: group 2; var name: group 3
+  static final String VARIABLE = VS + "((text|html|js):)?" + NAME + NE;
 
-  // NAME COMPONENTS:
+  static final String HIDDEN_VAR = "<!--\\s*(" + VARIABLE + ")\\s*-->";
 
-  private static final String ESCAPE_TYPE = "((text|html|js):)?";
-  private static final String NAME = "[a-zA-Z][a-zA-Z0-9_]*";
-  private static final String PATH = concat("(", NAME, "(", DOT, NAME, ")*)");
+  static final String TEMPLATE = rgxTemplate(1);
 
-  // ACTUALLY USED TO PARSE TEMPLATES:
+  static final String HIDDEN_TMPL = "<!--\\s*(" + rgxTemplate(2) + ")\\s*-->";
 
-  // ~%((text|html|js):)?([a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)*)%
-  // esc type: group 2
-  // var name: group 3
-  static final String VARIABLE = concat("~%", ESCAPE_TYPE, PATH, "%");
+  static final String IMPORT = TS + "import:(" + NAME + ":)?" + NAME + NE;
 
-  static final String HIDDEN_VAR =
-      concat(HTML_COMMENT_START, WHITESPACE, "(", VARIABLE, ")", WHITESPACE, HTML_COMMENT_END);
+  static final String HIDDEN_IMPORT = "<!--\\s*(" + IMPORT + ")\\s*-->";
 
-  static final String NESTED_TEMPLATE =
-      concat("~%%beginTemplate:(", NAME, ")%(", WHATEVER, ")~%%endTemplate%");
-
-  static final String HIDDEN_NESTED_TMPL =
-      concat(
-          HTML_COMMENT_START, WHITESPACE, "(", NESTED_TEMPLATE, ")", WHITESPACE, HTML_COMMENT_END);
-
-  static final String COMMENT_LINE =
-      concat(
-          LINE_START,
-          HTML_COMMENT_START,
-          NON_BREAKING_SPACE,
-          "~%%comment%",
-          NON_BREAKING_SPACE,
-          HTML_COMMENT_END,
-          LINE_END);
-
-  static final String COMMENT_BLOCK =
-      concat(
-          HTML_COMMENT_START,
-          WHITESPACE,
-          "~%%beginComment%",
-          WHATEVER,
-          "~%%endComment%",
-          WHITESPACE,
-          HTML_COMMENT_END);
+  // Everything in a template file that is inside a pair of <!--%%--> tokens is completely ignored
+  // when rendering the template
+  static final String DITCH_BLOCK = "<!--%%-->.*<!--%%-->";
 
   static final Pattern REGEX_VARIABLE = compile(VARIABLE);
   static final Pattern REGEX_HIDDEN_VAR = compile(HIDDEN_VAR);
-  static final Pattern REGEX_NESTED_TEMPLATE = compile(NESTED_TEMPLATE, MS_MODIFIERS);
-  static final Pattern REGEX_HIDDEN_NESTED_TMPL = compile(HIDDEN_NESTED_TMPL, MS_MODIFIERS);
-  static final Pattern REGEX_COMMENT_LINE = compile(COMMENT_LINE);
-  static final Pattern REGEX_COMMENT_BLOCK = compile(COMMENT_BLOCK, MS_MODIFIERS);
+  static final Pattern REGEX_TEMPLATE = compile(TEMPLATE, MS_MODIFIERS);
+  static final Pattern REGEX_HIDDEN_TMPL = compile(HIDDEN_TMPL, MS_MODIFIERS);
+  static final Pattern REGEX_DITCH_BLOCK = compile(DITCH_BLOCK);
+
+  private static final String rgxTemplate(int groupRef) {
+    return TS + "begin:" + NAME + NE + ".*" + TS + "end:\\" + groupRef + NE;
+  }
+
+  private static String getVarStart() {
+    return ifNotNull(System.getProperty("nl.naturalis.yokete.varStart"), Pattern::quote, "~%");
+  }
+
+  private static String getTmplStart() {
+    return ifNotNull(System.getProperty("nl.naturalis.yokete.tmplStart"), Pattern::quote, "~%%");
+  }
+
+  private static String getNameEnd() {
+    return ifNotNull(System.getProperty("nl.naturalis.yokete.nameEnd"), Pattern::quote, "%");
+  }
+
+  static void printAll() {
+    System.out.println("VARIABLE ........: " + VARIABLE);
+    System.out.println("HIDDEN_VAR ......: " + HIDDEN_VAR);
+    System.out.println("TEMPLATE ........: " + TEMPLATE);
+    System.out.println("HIDDEN_TMPL .....: " + HIDDEN_TMPL);
+    System.out.println("IMPORT ..........: " + IMPORT);
+    System.out.println("HIDDEN_IMPORT ...: " + HIDDEN_IMPORT);
+    System.out.println("DITCH_BLOCK: ....: " + DITCH_BLOCK);
+  }
 }
