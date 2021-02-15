@@ -57,4 +57,33 @@ public class RegexTest {
     String s = IOMethods.toString(getClass(), "RegexTest.test05.html");
     assertTrue(REGEX_HIDDEN_TMPL.matcher(s).find());
   }
+
+  @Test
+  public void test06() {
+    String s = IOMethods.toString(getClass(), "RegexTest.test06.html");
+    assertTrue(REGEX_HIDDEN_TMPL.matcher(s).find());
+  }
+
+  @Test
+  public void test07() {
+    assertTrue(REGEX_IMPORT.matcher("~%%import:/views/rows.html%").find());
+  }
+
+  @Test
+  public void test08() {
+    assertTrue(REGEX_IMPORT.matcher("~%%import:foo:/views/rows.html%").find());
+  }
+
+  @Test
+  public void test09() {
+    assertTrue(REGEX_HIDDEN_IMPORT.matcher("FOO<!-- ~%%import:/views/rows.html% -->BAR").find());
+  }
+
+  @Test
+  public void test10() {
+    assertTrue(
+        REGEX_HIDDEN_IMPORT
+            .matcher("FOO\n<!-- \t ~%%import:foo:/views/rows.html%\n\n--> BAR")
+            .find());
+  }
 }

@@ -35,8 +35,10 @@ class Regex {
   static final Pattern REGEX_VARIABLE = compile(VARIABLE);
   static final Pattern REGEX_HIDDEN_VAR = compile(HIDDEN_VAR);
   static final Pattern REGEX_TEMPLATE = compile(TEMPLATE, MS_MODIFIERS);
+  static final Pattern REGEX_IMPORT = compile(IMPORT);
+  static final Pattern REGEX_HIDDEN_IMPORT = compile(HIDDEN_IMPORT);
   static final Pattern REGEX_HIDDEN_TMPL = compile(HIDDEN_TMPL, MS_MODIFIERS);
-  static final Pattern REGEX_DITCH_BLOCK = compile(DITCH_BLOCK);
+  static final Pattern REGEX_DITCH_BLOCK = compile(DITCH_BLOCK, MS_MODIFIERS);
 
   private static final String rgxTemplate(int groupRef) {
     return TS + "begin:" + NAME + NE + ".*" + TS + "end:\\" + groupRef + NE;
@@ -55,12 +57,12 @@ class Regex {
   }
 
   static void printAll() {
-    System.out.println("VARIABLE ........: " + VARIABLE);
-    System.out.println("HIDDEN_VAR ......: " + HIDDEN_VAR);
-    System.out.println("TEMPLATE ........: " + TEMPLATE);
-    System.out.println("HIDDEN_TMPL .....: " + HIDDEN_TMPL);
-    System.out.println("IMPORT ..........: " + IMPORT);
-    System.out.println("HIDDEN_IMPORT ...: " + HIDDEN_IMPORT);
-    System.out.println("DITCH_BLOCK: ....: " + DITCH_BLOCK);
+    System.out.println("VARIABLE ........: " + REGEX_VARIABLE);
+    System.out.println("HIDDEN_VAR ......: " + REGEX_HIDDEN_VAR);
+    System.out.println("TEMPLATE ........: " + REGEX_TEMPLATE);
+    System.out.println("HIDDEN_TMPL .....: " + REGEX_HIDDEN_TMPL);
+    System.out.println("IMPORT ..........: " + REGEX_IMPORT);
+    System.out.println("HIDDEN_IMPORT ...: " + REGEX_HIDDEN_IMPORT);
+    System.out.println("DITCH_BLOCK: ....: " + REGEX_DITCH_BLOCK);
   }
 }
