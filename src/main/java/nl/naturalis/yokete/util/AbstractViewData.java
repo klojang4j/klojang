@@ -54,7 +54,7 @@ public abstract class AbstractViewData implements ViewData {
     List<ViewData> viewData = new ArrayList<>(objs.size());
     for (int i = 0; i < objs.size(); ++i) {
       int idx = i;
-      Check.with(s -> nullViewData(tmplName, idx), objs.get(i)).is(notNull());
+      Check.on(s -> nullViewData(tmplName, idx), objs.get(i)).is(notNull());
       viewData.add(createViewData(template, objs.get(i)));
     }
     return Optional.of(viewData);

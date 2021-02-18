@@ -28,7 +28,7 @@ class RenderState {
       throws RenderException {
     List<RenderSession> mySessions = sessions.get(template);
     if (mySessions == null) {
-      mySessions = initializedList(() -> new RenderSession(template), amount);
+      mySessions = initializedList(new RenderSession(template), amount);
     } else if (mySessions.size() != amount) {
       throw repetitionMismatch(tmplName, mySessions.size(), amount);
     }

@@ -1,11 +1,9 @@
 package nl.naturalis.yokete.view;
 
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import nl.naturalis.common.IOMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
@@ -27,24 +25,64 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
 public class Template {
 
   /**
-   * The name of the root template: &#34;&#64ROOT&#34;. This is the {@code Template} that got
-   * instantiated directly from file. The templates nested inside it get their name from the
-   * contents of the file (e.g. ~%%begin:<b>mainTable</b>%).
+   * The name of the root template: &#34;&#64ROOT&#34;. This is the {@code Template} that explicitly
+   * instantiated using one of the {@code parse(...)} methods. The templates nested inside it get
+   * their name from the contents of the file (e.g. ~%%begin:<b>mainTable</b>%).
    */
   public static final String ROOT_TEMPLATE_NAME = "@ROOT";
 
-  public static Template parse(InputStream in) throws InvalidTemplateException {
-    return parse(IOMethods.toString(in));
-  }
-
+  /**
+   * Parses the specified source text into a {@code Template} instance. Only use this constructor if
+   * the template does not {@code import} any nested templates using {@code
+   * ~%%import:path/to/other/resource%}.
+   *
+   * @param source The source text for the {@code Template}
+   * @return a new {@code Template} instance
+   * @throws InvalidTemplateException
+   */
   public static Template parse(String source) throws InvalidTemplateException {
-    List<Part> parts = TemplateParser.INSTANCE.parse(source);
-    return new Template(parts);
+    return parse(source, null);
   }
 
-  static Template parse(String tmplName, String source) throws InvalidTemplateException {
-    List<Part> parts = TemplateParser.INSTANCE.parse(source);
-    return new Template(tmplName, parts);
+  /**
+   * Parses the specified source text into a {@code Template} instance. The specified class will be
+   * used to {@code import} nested templates by calling {@link Class#getResourceAsStream(String)
+   * getResourceAsStream} upon it.
+   *
+   * @param source The source text for the {@code Template}
+   * @param resourceClass The class to call {@code Class.getResourceAsStream} upon in order to
+   *     {@code import} nested templates.
+   * @return a new {@code Template} instance
+   * @throws InvalidTemplateException
+   */
+  public static Template parse(String source, Class<?> resourceClass)
+      throws InvalidTemplateException {
+    TemplateParser parser = new TemplateParser(source, resourceClass);
+    return new Template(parser.parse());
+  }
+
+  /**
+   * Loads the template file at the specified location by calling {@code
+   * resourceClass.getResourceAsStream, path} and parses its contents into a {@code Template}
+   * instance. The specified class will be used to {@code import} nested templates in the same
+   * manner.
+   *
+   * @param resourceClass The class to call {@code getResourceAsStream} upon in order to load source
+   *     for the template and any {@code imported} nested templates
+   * @param path The location of the template file
+   * @return
+   * @throws InvalidTemplateException
+   */
+  public static Template parse(Class<?> resourceClass, String path)
+      throws InvalidTemplateException {
+    TemplateParser parser = new TemplateParser(resourceClass, path);
+    return new Template(parser.parse());
+  }
+
+  static Template parse(String tmplName, String source, Class<?> clazz)
+      throws InvalidTemplateException {
+    TemplateParser parser = new TemplateParser(source, clazz);
+    return new Template(tmplName, parser.parse());
   }
 
   private final String name;

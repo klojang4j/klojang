@@ -120,9 +120,9 @@ public class RenderSession {
     Check.notNull(name, "name");
     Check.that(value, "value").is(noneNull());
     Check.notNull(escapeType, "escapeType");
-    Check.with(s -> alreadySet(name), state.isSet(name)).is(no());
-    Check.with(s -> noSuchVariable(name), name).is(in(), template.getVariableNames());
-    Check.with(s -> badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
+    Check.on(s -> alreadySet(name), state.isSet(name)).is(no());
+    Check.on(s -> noSuchVariable(name), name).is(in(), template.getVariableNames());
+    Check.on(s -> badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
     template.getVarPartIndices().get(name).forEach(i -> escape(i, value, escapeType));
     state.done(name);
     return this;
@@ -161,9 +161,9 @@ public class RenderSession {
     Check.notNull(name, "name");
     Check.that(data, "data").is(noneNull());
     Check.notNull(escapeType, "escapeType");
-    Check.with(s -> alreadyPopulated(name), state.isPopulated(name)).is(no());
-    Check.with(s -> noSuchTemplate(name), name).is(in(), template.getTemplateNames());
-    Check.with(s -> badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
+    Check.on(s -> alreadyPopulated(name), state.isPopulated(name)).is(no());
+    Check.on(s -> noSuchTemplate(name), name).is(in(), template.getTemplateNames());
+    Check.on(s -> badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
     Template nested = template.getTemplate(name);
     names = ifEmpty(names, nested::getAllNames);
     List<RenderSession> session = state.createOrGetSessions(nested, name, data.size());

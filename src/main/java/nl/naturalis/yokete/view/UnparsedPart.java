@@ -12,4 +12,8 @@ class UnparsedPart extends AbstractPart {
   String getContents() {
     return contents;
   }
+
+  TextPart toTextPart() {
+    return new TextPart(contents, start(), end());
+  }
 }

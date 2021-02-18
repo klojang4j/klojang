@@ -9,14 +9,14 @@ class Regex {
   // Equivalent to prefixing the regular expression with "(?ms)"
   private static final int MS_MODIFIERS = Pattern.MULTILINE | Pattern.DOTALL;
 
-  // At least one character, percentage sign and colon not permitted
-  private static final String NAME = "([^%:]+)";
+  // A name is any sequence of one or more characters, excluding colon, tilde and percentage sign
+  private static final String NAME = "([^%:~]+)";
   private static final String VS = getVarStart();
   private static final String TS = getTmplStart();
   private static final String NE = getNameEnd();
 
-  // esc type: group 2; var name: group 3
-  static final String VARIABLE = VS + "((text|html|js):)?" + NAME + NE;
+  // escape type: group 2; var name: group 3
+  static final String VARIABLE = VS + "(" + NAME + ":)?" + NAME + NE;
 
   static final String HIDDEN_VAR = "<!--\\s*(" + VARIABLE + ")\\s*-->";
 
@@ -41,7 +41,7 @@ class Regex {
   static final Pattern REGEX_DITCH_BLOCK = compile(DITCH_BLOCK, MS_MODIFIERS);
 
   private static final String rgxTemplate(int groupRef) {
-    return TS + "begin:" + NAME + NE + ".*" + TS + "end:\\" + groupRef + NE;
+    return TS + "begin:" + NAME + NE + "(.*)" + TS + "end:\\" + groupRef + NE;
   }
 
   private static String getVarStart() {

@@ -30,7 +30,7 @@
 		<!-- *** Check for updates: mvn versions:display-dependency-updates   *** -->
 		<!-- *** Check dependencies: mvn dependency:analyze                   *** -->
 		<!-- ==================================================================== -->
-		<naturalis-common.version>2.9</naturalis-common.version>
+		<naturalis-common.version>2.10</naturalis-common.version>
 		<commons-text.version>1.9</commons-text.version>
 		<junit.version>5.7.0</junit.version>
 

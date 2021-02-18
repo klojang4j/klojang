@@ -1,5 +1,6 @@
 package nl.naturalis.yokete.view;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import nl.naturalis.common.IOMethods;
@@ -59,31 +60,53 @@ public class RegexTest {
   }
 
   @Test
-  public void test06() {
+  public void import01() {
     String s = IOMethods.toString(getClass(), "RegexTest.test06.html");
     assertTrue(REGEX_HIDDEN_TMPL.matcher(s).find());
   }
 
   @Test
-  public void test07() {
+  public void import02() {
     assertTrue(REGEX_IMPORT.matcher("~%%import:/views/rows.html%").find());
   }
 
   @Test
-  public void test08() {
+  public void import03() {
     assertTrue(REGEX_IMPORT.matcher("~%%import:foo:/views/rows.html%").find());
   }
 
   @Test
-  public void test09() {
+  public void import04() {
     assertTrue(REGEX_HIDDEN_IMPORT.matcher("FOO<!-- ~%%import:/views/rows.html% -->BAR").find());
   }
 
   @Test
-  public void test10() {
+  public void import05() {
     assertTrue(
         REGEX_HIDDEN_IMPORT
             .matcher("FOO\n<!-- \t ~%%import:foo:/views/rows.html%\n\n--> BAR")
             .find());
+  }
+
+  @Test
+  public void import06() {
+    Matcher m = REGEX_IMPORT.matcher("FOO ******* ~%%import:foo:/views/rows.html% ******* BAR");
+    m.find();
+    assertEquals(3, m.groupCount()); // The match itself, group(0), does not count
+    assertEquals("~%%import:foo:/views/rows.html%", m.group(0));
+    assertEquals("foo:", m.group(1));
+    assertEquals("foo", m.group(2));
+    assertEquals("/views/rows.html", m.group(3));
+  }
+
+  @Test
+  public void import07() {
+    Matcher m = REGEX_IMPORT.matcher("FOO ******* ~%%import:/views/rows.html% ******* BAR");
+    m.find();
+    assertEquals(3, m.groupCount()); // Number of groups defined by regex, not by input
+    assertEquals("~%%import:/views/rows.html%", m.group(0));
+    assertNull(m.group(1));
+    assertNull(m.group(2));
+    assertEquals("/views/rows.html", m.group(3));
   }
 }
