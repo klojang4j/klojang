@@ -53,8 +53,8 @@ public class TemplateParserTest {
   @Test
   public void parseNestedTemplates00() throws InvalidTemplateException {
     String src = IOMethods.toString(getClass(), "TemplateParserTest.parseNestedTemplates00.html");
+    // System.out.println(src);
     TemplateParser parser = new TemplateParser(src, null);
-    System.out.println(src);
     LinkedList<Part> parts = new LinkedList<>();
     Set<String> names = new HashSet<>();
     parser.parseNestedTemplates(src, parts, names);
@@ -65,6 +65,30 @@ public class TemplateParserTest {
     assertTrue(t.getAllNames().contains("selectedAge"));
     assertTrue(parts.get(3) instanceof TemplatePart);
     t = ((TemplatePart) parts.get(3)).getTemplate();
+    assertEquals(2, t.getAllNames().size());
+    assertTrue(t.getAllNames().contains("name"));
+    assertTrue(t.getAllNames().contains("age"));
+  }
+
+  @Test
+  public void parseImportTemplates00() throws InvalidTemplateException {
+    String src = IOMethods.toString(getClass(), "TemplateParserTest.parseImportedTemplates00.html");
+    // System.out.println(src);
+    UnparsedPart p = new UnparsedPart(src, 0, src.length());
+    TemplateParser parser = new TemplateParser(src, getClass());
+    Set<String> names = new HashSet<>();
+    List<Part> parts = parser.parseImportedTemplates(p, names);
+    assertTrue(parts.get(1) instanceof TemplatePart);
+    TemplatePart tp = (TemplatePart) parts.get(1);
+    assertEquals("jsVars", tp.getName());
+    Template t = tp.getTemplate();
+    assertEquals(2, t.getAllNames().size());
+    assertTrue(t.getAllNames().contains("selectedName"));
+    assertTrue(t.getAllNames().contains("selectedAge"));
+    assertTrue(parts.get(3) instanceof TemplatePart);
+    tp = (TemplatePart) parts.get(3);
+    assertEquals("tableRow", tp.getName());
+    t = tp.getTemplate();
     assertEquals(2, t.getAllNames().size());
     assertTrue(t.getAllNames().contains("name"));
     assertTrue(t.getAllNames().contains("age"));

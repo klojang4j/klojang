@@ -1,10 +1,11 @@
 package nl.naturalis.yokete.view;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 import nl.naturalis.common.IOMethods;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static nl.naturalis.yokete.view.Regex.*;
 
 public class RegexTest {
