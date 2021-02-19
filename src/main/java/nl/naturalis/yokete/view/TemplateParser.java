@@ -40,7 +40,7 @@ class TemplateParser {
     src = removeDitchBlocks(src);
     src = uncommentVariables(src);
     src = uncommentTemplates(src);
-    src = uncommentImports(src);
+    src = uncommentIncludes(src);
     LinkedList<Part> parts = new LinkedList<>();
     // Gets populated with the names of nested and imported templates, so we can check for
     // duplicates across methods:
@@ -52,7 +52,6 @@ class TemplateParser {
     return List.copyOf(parts);
   }
 
-  // Returns the names of the nested templates, enabling us to check for duplicates downstream.
   @VisibleForTesting
   void parseNestedTemplates(String src, LinkedList<Part> parts, Set<String> names)
       throws InvalidTemplateException {
@@ -132,7 +131,7 @@ class TemplateParser {
     String src = unparsed.getContents();
     int offset = unparsed.start();
     List<Part> parts = new ArrayList<>();
-    Matcher matcher = REGEX_IMPORT.matcher(src);
+    Matcher matcher = REGEX_INCLUDE.matcher(src);
     int end = 0;
     while (matcher.find()) {
       int start = matcher.start();
@@ -218,8 +217,8 @@ class TemplateParser {
     return template;
   }
 
-  private static String uncommentImports(String template) {
-    Matcher matcher = REGEX_HIDDEN_IMPORT.matcher(template);
+  private static String uncommentIncludes(String template) {
+    Matcher matcher = REGEX_HIDDEN_INCLUDE.matcher(template);
     template = matcher.replaceAll(r -> r.group(1));
     return template;
   }

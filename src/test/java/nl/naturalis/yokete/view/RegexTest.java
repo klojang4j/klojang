@@ -68,33 +68,33 @@ public class RegexTest {
 
   @Test
   public void import02() {
-    assertTrue(REGEX_IMPORT.matcher("~%%import:/views/rows.html%").find());
+    assertTrue(REGEX_INCLUDE.matcher("~%%include:/views/rows.html%").find());
   }
 
   @Test
   public void import03() {
-    assertTrue(REGEX_IMPORT.matcher("~%%import:foo:/views/rows.html%").find());
+    assertTrue(REGEX_INCLUDE.matcher("~%%include:foo:/views/rows.html%").find());
   }
 
   @Test
   public void import04() {
-    assertTrue(REGEX_HIDDEN_IMPORT.matcher("FOO<!-- ~%%import:/views/rows.html% -->BAR").find());
+    assertTrue(REGEX_HIDDEN_INCLUDE.matcher("FOO<!-- ~%%include:/views/rows.html% -->BAR").find());
   }
 
   @Test
   public void import05() {
     assertTrue(
-        REGEX_HIDDEN_IMPORT
-            .matcher("FOO\n<!-- \t ~%%import:foo:/views/rows.html%\n\n--> BAR")
+        REGEX_HIDDEN_INCLUDE
+            .matcher("FOO\n<!-- \t ~%%include:foo:/views/rows.html%\n\n--> BAR")
             .find());
   }
 
   @Test
   public void import06() {
-    Matcher m = REGEX_IMPORT.matcher("FOO ******* ~%%import:foo:/views/rows.html% ******* BAR");
+    Matcher m = REGEX_INCLUDE.matcher("FOO ******* ~%%include:foo:/views/rows.html% ******* BAR");
     m.find();
     assertEquals(3, m.groupCount()); // The match itself, group(0), does not count
-    assertEquals("~%%import:foo:/views/rows.html%", m.group(0));
+    assertEquals("~%%include:foo:/views/rows.html%", m.group(0));
     assertEquals("foo:", m.group(1));
     assertEquals("foo", m.group(2));
     assertEquals("/views/rows.html", m.group(3));
@@ -102,10 +102,10 @@ public class RegexTest {
 
   @Test
   public void import07() {
-    Matcher m = REGEX_IMPORT.matcher("FOO ******* ~%%import:/views/rows.html% ******* BAR");
+    Matcher m = REGEX_INCLUDE.matcher("FOO ******* ~%%include:/views/rows.html% ******* BAR");
     m.find();
     assertEquals(3, m.groupCount()); // Number of groups defined by regex, not by input
-    assertEquals("~%%import:/views/rows.html%", m.group(0));
+    assertEquals("~%%include:/views/rows.html%", m.group(0));
     assertNull(m.group(1));
     assertNull(m.group(2));
     assertEquals("/views/rows.html", m.group(3));
