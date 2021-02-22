@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.util;
+package nl.naturalis.yokete.view.data;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +20,7 @@ public class ViewDataStringifiers {
   private final Map<String, Class<?>> varNameToType = new HashMap<>();
 
   public ViewDataStringifiers(TypeStringifiers typeStringifiers) {
-    this.genericStringifiers = typeStringifiers;
+    this.genericStringifiers = Check.notNull(typeStringifiers).ok();
   }
 
   public String stringify(String varName, Object value) throws InvalidStringifierException {

@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.util;
+package nl.naturalis.yokete.view.data;
 
 import java.util.Map;
 import java.util.Optional;

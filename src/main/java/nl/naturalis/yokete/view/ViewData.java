@@ -4,10 +4,20 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * A generic interface for objects that mediate between the data layer and viw layer. Its main
- * purpose is the stringify the model data served up by the data layer. The Yokete module is
- * agnostic about this is accomplished, but provides three {@code ViewData} implementations in the
- * {@code util} package.
+ * A generic interface for objects that mediate between the data layer and view layer. {@code
+ * ViewData} objects serve two purposes:
+ *
+ * <ol>
+ *   <li>To provide name-based access to the model beans (or whatever else) served up by the data
+ *       layer. A {@link RenderSession} takes the names found in a {@link Template} and asks the
+ *       client-provided {@code ViewData} object to come up with a value for them.
+ *   <li>To stringify the values served up by the data layer so they can be "inserted" into the
+ *       blanks of the template. Note that this does <i>not</i> entail escaping of any kind (e.g.
+ *       HTML escaping). That is taken care of separately.
+ * </ol>
+ *
+ * <p>You can write your own {@code ViewData} implementations or use one of three implementations in
+ * the {@link nl.naturalis.yokete.view.data} package.
  *
  * @author Ayco Holleman
  */
@@ -69,9 +79,9 @@ public interface ViewData {
    * method
    *
    * @param parent The {@code Template} that contains the specified nested template
-   * @param chilTemplateName The name of the nested template
+   * @param childTemplateName The name of the nested template
    * @return An {@code Optional} containing a nested {@code ViewData} object
    */
-  Optional<List<ViewData>> getNestedViewData(Template parent, String chilTemplateName)
+  Optional<List<ViewData>> getNestedViewData(Template parent, String childTemplateName)
       throws RenderException;
 }

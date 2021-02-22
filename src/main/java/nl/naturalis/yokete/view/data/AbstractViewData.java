@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.util;
+package nl.naturalis.yokete.view.data;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +15,8 @@ public abstract class AbstractViewData implements ViewData {
 
   /**
    * Special value to return from {@link #getRawValue(Template, String) getRawValue(template, name)}
-   * if the name does not map to a property in the source data.
+   * if the specified name did map to a property in the source data, but the property's value was
+   * null.
    */
   protected static final Optional<?> NULL = Optional.of(new Object());
 
@@ -64,8 +65,8 @@ public abstract class AbstractViewData implements ViewData {
    * Returns the untyped value associated with the specified name, which can be the name of a
    * template variable or a nested template. If the name does not map to any property in the source
    * data, an empty {@code Optional} must be returned. However, if the name <i>does</i> map to a
-   * property in the source data, but the property's value turns out to be null, the special value
-   * {@link #NULL} must be returned.
+   * property in the source data, but the property's value was null, the special value {@link #NULL}
+   * must be returned.
    *
    * @param template
    * @param name
@@ -74,9 +75,9 @@ public abstract class AbstractViewData implements ViewData {
   protected abstract Optional<?> getRawValue(Template template, String name) throws RenderException;
 
   /**
-   * Creates a {@code ViewData} object from the specified value. The value may be the raw value
-   * returned from {@link #getRawValue(Template, String)} or, if the raw value was multi-valued
-   * (e.g. an array), one element from it. The value is anyhow guaranteed not to be {@code null}.
+   * Creates a {@code ViewData} object from the specified value. The value either is the raw value
+   * returned from {@link #getRawValue(Template, String)} or, if the raw value was an array or a
+   * {@code Collection}, one element from it. The value is anyhow guaranteed not to be {@code null}.
    *
    * @param template
    * @param name

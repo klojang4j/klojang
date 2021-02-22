@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.util;
+package nl.naturalis.yokete.view.data;
 
 @FunctionalInterface
 public interface Stringifier {
