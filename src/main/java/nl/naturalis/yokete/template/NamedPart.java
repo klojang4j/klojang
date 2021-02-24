@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.view;
+package nl.naturalis.yokete.template;
 
 /**
  * Interface for those parts of a template that can be identified by name (i&#46;e&#46; template

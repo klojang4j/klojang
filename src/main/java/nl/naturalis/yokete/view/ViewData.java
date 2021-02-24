@@ -2,6 +2,7 @@ package nl.naturalis.yokete.view;
 
 import java.util.List;
 import java.util.Optional;
+import nl.naturalis.yokete.template.Template;
 
 /**
  * A generic interface for objects that mediate between the data layer and view layer. {@code

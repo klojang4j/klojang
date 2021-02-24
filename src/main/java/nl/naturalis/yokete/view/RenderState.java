@@ -1,6 +1,7 @@
 package nl.naturalis.yokete.view;
 
 import java.util.*;
+import nl.naturalis.yokete.template.Template;
 import static nl.naturalis.common.CollectionMethods.initializedList;
 import static nl.naturalis.yokete.view.RenderException.repetitionMismatch;
 

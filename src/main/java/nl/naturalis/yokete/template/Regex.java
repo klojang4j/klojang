@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.view;
+package nl.naturalis.yokete.template;
 
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -43,42 +43,53 @@ class Regex {
   static final String VARIABLE = VS + "(" + NAME + ":)?" + NAME + NE;
 
   /* private */
-  static final String HIDDEN_VAR = "<!--\\s*(" + VARIABLE + ")\\s*-->";
+  static final String VARIABLE_CMT = "<!--\\s*(" + VARIABLE + ")\\s*-->";
 
   /* private */
-  static final String TEMPLATE = rgxTemplate(1);
+  static final String NESTED = rgxTemplate(1);
 
   /* private */
-  static final String HIDDEN_TMPL = "<!--\\s*(" + rgxTemplate(2) + ")\\s*-->";
+  static final String NESTED_CMT = "<!--\\s*(" + rgxTemplate(2) + ")\\s*-->";
+
+  /* private  - only used for error reporting (dangling end-of-template) */
+  static final String TMPL_END = TS + "end:" + NAME + NE;
 
   /* private */
   static final String INCLUDE = TS + "include:(" + NAME + ":)?" + NAME + NE;
 
   /* private */
-  static final String HIDDEN_INCLUDE = "<!--\\s*(" + INCLUDE + ")\\s*-->";
+  static final String INCLUDE_CMT = "<!--\\s*(" + INCLUDE + ")\\s*-->";
+
+  /* private  - only used for error reporting (ditch block not terminated) */
+  static final String DITCH_TOKEN = "<!--%%[^\\n\\r]*-->";
 
   /* private */
-  static final String DITCH_BLOCK = "<!--%%-->.*<!--%%-->";
+  static final String DITCH_BLOCK = DITCH_TOKEN + ".*" + DITCH_TOKEN;
 
   // Equivalent to prefixing the regular expression with "(?ms)"
   private static final int MS_MODIFIERS = Pattern.MULTILINE | Pattern.DOTALL;
 
   static final Pattern REGEX_VARIABLE = compile(VARIABLE);
-  static final Pattern REGEX_HIDDEN_VAR = compile(HIDDEN_VAR);
-  static final Pattern REGEX_TEMPLATE = compile(TEMPLATE, MS_MODIFIERS);
-  static final Pattern REGEX_HIDDEN_TMPL = compile(HIDDEN_TMPL, MS_MODIFIERS);
+  static final Pattern REGEX_VARIABLE_CMT = compile(VARIABLE_CMT);
+  static final Pattern REGEX_NESTED = compile(NESTED, MS_MODIFIERS);
+  static final Pattern REGEX_NESTED_CMT = compile(NESTED_CMT, MS_MODIFIERS);
   static final Pattern REGEX_INCLUDE = compile(INCLUDE);
-  static final Pattern REGEX_HIDDEN_INCLUDE = compile(HIDDEN_INCLUDE);
+  static final Pattern REGEX_INCLUDE_CMT = compile(INCLUDE_CMT);
   static final Pattern REGEX_DITCH_BLOCK = compile(DITCH_BLOCK, MS_MODIFIERS);
+  // ERROR REPORTING PURPOSES ONLY:
+  static final Pattern REGEX_TMPL_END = compile(TMPL_END);
+  static final Pattern REGEX_DITCH_TOKEN = compile(DITCH_TOKEN);
 
   static void printAll() {
-    System.out.println("VARIABLE ........: " + REGEX_VARIABLE);
-    System.out.println("HIDDEN_VAR ......: " + REGEX_HIDDEN_VAR);
-    System.out.println("TEMPLATE ........: " + REGEX_TEMPLATE);
-    System.out.println("HIDDEN_TMPL .....: " + REGEX_HIDDEN_TMPL);
-    System.out.println("IMPORT ..........: " + REGEX_INCLUDE);
-    System.out.println("HIDDEN_IMPORT ...: " + REGEX_HIDDEN_INCLUDE);
-    System.out.println("DITCH_BLOCK: ....: " + REGEX_DITCH_BLOCK);
+    System.out.println("VARIABLE .......: " + REGEX_VARIABLE);
+    System.out.println("VARIABLE_CMT ...: " + REGEX_VARIABLE_CMT);
+    System.out.println("NESTED .........: " + REGEX_NESTED);
+    System.out.println("NESTED_CMT .....: " + REGEX_NESTED_CMT);
+    System.out.println("INCLUDE ........: " + REGEX_INCLUDE);
+    System.out.println("INCLUDE_CMT ....: " + REGEX_INCLUDE_CMT);
+    System.out.println("DITCH_BLOCK: ...: " + REGEX_DITCH_BLOCK);
+    System.out.println("TMPL_END .......: " + REGEX_TMPL_END);
+    System.out.println("DITCH_TOKEN: ...: " + REGEX_DITCH_TOKEN);
   }
 
   private static final String rgxTemplate(int groupRef) {

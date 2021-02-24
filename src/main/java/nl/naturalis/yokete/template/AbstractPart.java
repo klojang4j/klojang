@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.view;
+package nl.naturalis.yokete.template;
 
 abstract class AbstractPart implements Part {
 

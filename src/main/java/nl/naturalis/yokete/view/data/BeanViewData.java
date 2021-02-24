@@ -7,7 +7,7 @@ import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.invoke.BeanReader;
 import nl.naturalis.common.invoke.NoSuchPropertyException;
-import nl.naturalis.yokete.view.Template;
+import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.view.ViewData;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.common.check.CommonChecks.notNull;

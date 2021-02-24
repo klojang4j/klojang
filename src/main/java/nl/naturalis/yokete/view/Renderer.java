@@ -2,6 +2,10 @@ package nl.naturalis.yokete.view;
 
 import java.io.PrintStream;
 import java.util.List;
+import nl.naturalis.yokete.template.Part;
+import nl.naturalis.yokete.template.TemplatePart;
+import nl.naturalis.yokete.template.TextPart;
+import nl.naturalis.yokete.template.VariablePart;
 
 /** @author Ayco Holleman */
 class Renderer {

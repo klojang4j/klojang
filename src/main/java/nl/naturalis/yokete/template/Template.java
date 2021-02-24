@@ -1,13 +1,16 @@
-package nl.naturalis.yokete.view;
+package nl.naturalis.yokete.template;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import nl.naturalis.common.CollectionMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.collection.UnmodifiableIntList;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static nl.naturalis.common.check.CommonChecks.instanceOf;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
@@ -16,76 +19,76 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
  * A {@code Template} captures the result of parsing a template file. It provides access to the
  * constituent parts of a text template: {@link VariablePart template variables}, {@link
  * TemplatePart nested templates} and {@link TextPart literal text}. {@code Template} instances are
- * immutable, expensive-to-create and heavy-weight objects. They should be cached, for example as a
- * static final field in your controller or resource class. Creating a new {@code Template} instance
- * from the same template file would be very inefficient.
+ * immutable, expensive-to-create and heavy-weight objects. They should be cached (for example as a
+ * static final field in your controller or resource class) and reused for as long as the web
+ * application is up. Creating a new {@code Template} instance for each new request would be very
+ * inefficient.
  *
  * @author Ayco Holleman
  */
 public class Template {
 
   /**
-   * The name of the root template: &#34;&#64ROOT&#34;. This is the {@code Template} that explicitly
-   * instantiated using one of the {@code parse(...)} methods. The templates nested inside it get
-   * their name from the contents of the file (e.g. ~%%begin:<b>mainTable</b>%).
+   * The name of the root template: &#34;&#64ROOT&#34;. This is the {@code Template} that is
+   * explicitly instantiated by calling one of the {@code parse(...)} methods. The templates nested
+   * inside it get their name from the contents of the file (e.g. {@code ~%%begin:invoices%} or
+   * {@code ~%%include:invoices:/templates/invoice-table.html%}).
    */
   public static final String ROOT_TEMPLATE_NAME = "@ROOT";
 
   /**
    * Parses the specified source text into a {@code Template} instance. Only use this constructor if
-   * the template does not {@code import} any nested templates using {@code
-   * ~%%import:path/to/other/resource%}.
+   * the template does not {@code include} other templates (using {@code
+   * ~%%include:path/to/other/resource%}).
    *
    * @param source The source text for the {@code Template}
    * @return a new {@code Template} instance
-   * @throws InvalidTemplateException
+   * @throws ParseException
    */
-  public static Template parse(String source) throws InvalidTemplateException {
-    return parse(source, null);
+  public static Template parse(String source) throws ParseException {
+    return parse(null, source);
   }
 
   /**
    * Parses the specified source text into a {@code Template} instance. The specified class will be
-   * used to {@code import} nested templates by calling {@link Class#getResourceAsStream(String)
+   * used to include other template files by calling {@link Class#getResourceAsStream(String)
    * getResourceAsStream} upon it.
    *
+   * @param clazz Any {@code Class} object that provides access to the tempate files by calling
+   *     {@code getResourceAsStream} on it
    * @param source The source text for the {@code Template}
-   * @param resourceClass The class to call {@code Class.getResourceAsStream} upon in order to
-   *     {@code import} nested templates.
    * @return a new {@code Template} instance
-   * @throws InvalidTemplateException
+   * @throws ParseException
    */
-  public static Template parse(String source, Class<?> resourceClass)
-      throws InvalidTemplateException {
-    TemplateParser parser = new TemplateParser(source, resourceClass);
-    return new Template(parser.parse());
+  public static Template parse(Class<?> clazz, String source) throws ParseException {
+    return new Parser(ROOT_TEMPLATE_NAME, clazz, source).parse();
   }
 
   /**
    * Loads the template file at the specified location by calling {@code
    * resourceClass.getResourceAsStream, path} and parses its contents into a {@code Template}
-   * instance. The specified class will be used to {@code import} nested templates in the same
-   * manner.
+   * instance. The specified class will also be used to {@code include} other template files.
    *
-   * @param resourceClass The class to call {@code getResourceAsStream} upon in order to load source
-   *     for the template and any {@code imported} nested templates
+   * @param clazz Any {@code Class} object that provides access to the tempate files by calling
+   *     {@code getResourceAsStream} on it
    * @param path The location of the template file
-   * @return
-   * @throws InvalidTemplateException
+   * @return a new {@code Template} instance
+   * @throws ParseException
    */
-  public static Template parse(Class<?> resourceClass, String path)
-      throws InvalidTemplateException {
-    TemplateParser parser = new TemplateParser(resourceClass, path);
-    return new Template(parser.parse());
+  public static Template parse(Class<?> clazz, Path path) throws ParseException {
+    return new Parser(ROOT_TEMPLATE_NAME, clazz, path).parse();
   }
 
-  static Template parse(String tmplName, String source, Class<?> clazz)
-      throws InvalidTemplateException {
-    TemplateParser parser = new TemplateParser(source, clazz);
-    return new Template(tmplName, parser.parse());
+  static Template parse(String tmplName, Class<?> clazz, String source) throws ParseException {
+    return new Parser(tmplName, clazz, source).parse();
+  }
+
+  static Template parse(String tmplName, Class<?> clazz, Path path) throws ParseException {
+    return new Parser(tmplName, clazz, path).parse();
   }
 
   private final String name;
+  private final Path path;
   private final List<Part> parts;
   private final Map<String, IntList> varIndices;
   private final IntList textIndices;
@@ -94,12 +97,9 @@ public class Template {
   private final int tmplCount;
   private final Set<String> names; // variable names + template names
 
-  private Template(List<Part> parts) {
-    this(ROOT_TEMPLATE_NAME, parts);
-  }
-
-  private Template(String name, List<Part> parts) {
+  Template(String name, Path path, List<Part> parts) {
     this.name = name;
+    this.path = path;
     this.parts = parts;
     this.varIndices = getVarIndices(parts);
     this.varCount = getVarCount(parts);
@@ -116,6 +116,18 @@ public class Template {
    */
   public String getName() {
     return name;
+  }
+
+  /**
+   * If the template was created by specifying the location of a template file, this method returns
+   * the path, else null. In other words, for {@code included} templates this method returns a
+   * non-null value. For nested templates this method returns null. For the root template the return
+   * value depends on which {@code parse} method was used to instantiate the template.
+   *
+   * @return
+   */
+  public Path getPath() {
+    return path;
   }
 
   /**
@@ -154,8 +166,7 @@ public class Template {
   }
 
   /**
-   * Returns a {@code Template} nested inside this {@code Template}, identified by the specified
-   * name.
+   * Returns the nested or included template identified by the specified name.
    *
    * @param name The name of the nested template
    * @return A {@code Template} nested inside this {@code Template}
@@ -170,9 +181,10 @@ public class Template {
   }
 
   /**
-   * Returns the names of all variables and nested templates within this {@code Template}.
+   * Returns all identifiers found in the template (variable names, nested template names, included
+   * template names).
    *
-   * @return The names of all variables and nested templates within this {@code Template}
+   * @return All identifiers found in the template
    */
   public Set<String> getAllNames() {
     return names;
@@ -188,7 +200,7 @@ public class Template {
   }
 
   /*
-   * Let's just make it really explicit that nothing is equal to a Template instance except the
+   * Let's make it really explicit that nothing is equal to a Template instance except the
    * instance itself.
    */
   @Override
@@ -201,12 +213,21 @@ public class Template {
     return System.identityHashCode(this);
   }
 
+  @Override
+  public String toString() {
+    return CollectionMethods.implode(parts, "");
+  }
+
+  public String toDebugString() {
+    return parts.stream().map(Part::toDebugString).collect(joining("\n"));
+  }
+
   private static Map<String, IntList> getVarIndices(List<Part> parts) {
     Map<String, IntList> indices = new HashMap<>();
     for (int i = 0; i < parts.size(); ++i) {
       if (parts.get(i).getClass() == VariablePart.class) {
-        String name = VariablePart.class.cast(parts.get(i)).getName();
-        indices.computeIfAbsent(name, k -> new IntArrayList(5, 5)).add(i);
+        String name = ((VariablePart) parts.get(i)).getName();
+        indices.computeIfAbsent(name, k -> new IntArrayList()).add(i);
       }
     }
     indices.entrySet().forEach(e -> e.setValue(UnmodifiableIntList.copyOf(e.getValue())));
@@ -221,7 +242,7 @@ public class Template {
     Map<String, Integer> indices = new HashMap<>();
     for (int i = 0; i < parts.size(); ++i) {
       if (parts.get(i).getClass() == TemplatePart.class) {
-        String name = TemplatePart.class.cast(parts.get(i)).getName();
+        String name = ((TemplatePart) parts.get(i)).getName();
         indices.put(name, i);
       }
     }
