@@ -1,17 +1,27 @@
 package nl.naturalis.yokete.template;
 
-import nl.naturalis.common.StringMethods;
+import static nl.naturalis.common.StringMethods.substrAfter;
+import static nl.naturalis.common.StringMethods.substrTo;
+import static nl.naturalis.yokete.template.Regex.NAME_END;
+import static nl.naturalis.yokete.template.Regex.TMPL_START;
 
 public class IncludedTemplatePart extends TemplatePart {
+
+  static String extractName(String path) {
+    return substrTo(substrAfter(path, "/", true), '.');
+  }
 
   public IncludedTemplatePart(Template template, int start, int end) {
     super(template, start, end);
   }
 
-  public String toDebugString() {
-    String type = StringMethods.rpad(getClass().getSimpleName(), TYPE_DISPLAY_WIDTH, ' ', " | ");
-    String name = StringMethods.rpad(getName(), NAME_DISPLAY_WIDTH, ' ', " | ");
-    String src = template.toString().replaceAll("\\s+", " ").trim();
-    return new StringBuilder(255).append(type).append(name).append(src).toString();
+  @Override
+  public String toString() {
+    String basename = extractName(template.getPath().toString());
+    StringBuilder sb = new StringBuilder(32).append(TMPL_START).append("include:");
+    if (!template.getName().equals(basename)) {
+      sb.append(template.getName());
+    }
+    return sb.append(template.getPath()).append(NAME_END).toString();
   }
 }

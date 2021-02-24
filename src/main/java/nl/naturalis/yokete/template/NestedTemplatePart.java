@@ -1,6 +1,7 @@
 package nl.naturalis.yokete.template;
 
-import nl.naturalis.common.StringMethods;
+import static nl.naturalis.yokete.template.Regex.NAME_END;
+import static nl.naturalis.yokete.template.Regex.TMPL_START;
 
 public class NestedTemplatePart extends TemplatePart {
 
@@ -8,10 +9,17 @@ public class NestedTemplatePart extends TemplatePart {
     super(template, start, end);
   }
 
-  public String toDebugString() {
-    String type = StringMethods.rpad(getClass().getSimpleName(), TYPE_DISPLAY_WIDTH, ' ', " | ");
-    String name = StringMethods.rpad(getName(), NAME_DISPLAY_WIDTH, ' ', " | ");
-    String src = template.toString().replaceAll("\\s+", " ").trim();
-    return new StringBuilder(255).append(type).append(name).append(src).toString();
+  public String toString() {
+    return new StringBuilder(100)
+        .append(TMPL_START)
+        .append("begin:")
+        .append(template.getName())
+        .append(NAME_END)
+        .append(template.toString())
+        .append(TMPL_START)
+        .append("end:")
+        .append(template.getName())
+        .append(NAME_END)
+        .toString();
   }
 }

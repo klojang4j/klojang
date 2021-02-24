@@ -10,7 +10,6 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.collection.UnmodifiableIntList;
-import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static nl.naturalis.common.check.CommonChecks.instanceOf;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
@@ -216,10 +215,6 @@ public class Template {
   @Override
   public String toString() {
     return CollectionMethods.implode(parts, "");
-  }
-
-  public String toDebugString() {
-    return parts.stream().map(Part::toDebugString).collect(joining("\n"));
   }
 
   private static Map<String, IntList> getVarIndices(List<Part> parts) {

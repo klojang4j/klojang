@@ -1,7 +1,5 @@
 package nl.naturalis.yokete.template;
 
-import nl.naturalis.common.StringMethods;
-
 class UnparsedPart extends AbstractPart {
 
   private final String contents;
@@ -22,12 +20,5 @@ class UnparsedPart extends AbstractPart {
   @Override
   public String toString() {
     return contents;
-  }
-
-  public String toDebugString() {
-    String type = StringMethods.rpad(getClass().getSimpleName(), TYPE_DISPLAY_WIDTH, ' ', " | ");
-    String name = StringMethods.rpad("", NAME_DISPLAY_WIDTH, ' ', " | ");
-    String src = contents.replaceAll("\\s+", " ").trim();
-    return new StringBuilder(255).append(type).append(name).append(src).toString();
   }
 }

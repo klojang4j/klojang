@@ -12,10 +12,7 @@ import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.IOMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.internal.VisibleForTesting;
-import nl.naturalis.yokete.YoketeRuntimeException;
 import nl.naturalis.yokete.view.EscapeType;
-import static nl.naturalis.common.StringMethods.substrAfter;
-import static nl.naturalis.common.StringMethods.substrTo;
 import static nl.naturalis.common.check.CommonChecks.*;
 import static nl.naturalis.yokete.template.ParseException.*;
 import static nl.naturalis.yokete.template.Regex.*;
@@ -62,8 +59,7 @@ class Parser {
     return new Template(tmplName, path, List.copyOf(parts));
   }
 
-  @VisibleForTesting
-  List<Part> parseNestedTemplates(String src, Set<String> names) throws ParseException {
+  private List<Part> parseNestedTemplates(String src, Set<String> names) throws ParseException {
     List<Part> parts = new ArrayList<>();
     Matcher matcher = REGEX_NESTED.matcher(src);
     int end = 0; // end index of the previous nested template
@@ -157,7 +153,7 @@ class Parser {
       String path = matcher.group(3);
       Check.on(emptyPath(this.src, absStart), path).is(notBlank());
       if (name == null) {
-        name = substrTo(substrAfter(path, "/", true), '.');
+        name = IncludedTemplatePart.extractName(path);
       }
       Check.on(emptyTemplateName(this.src, absStart), name).is(notBlank());
       Check.on(duplicateTemplateName(this.src, absStart, name), name).is(notIn(), names);

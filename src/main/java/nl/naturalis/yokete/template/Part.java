@@ -7,9 +7,6 @@ package nl.naturalis.yokete.template;
  */
 public interface Part {
 
-  static final int TYPE_DISPLAY_WIDTH = 20;
-  static final int NAME_DISPLAY_WIDTH = 20;
-
   /**
    * The start index of this part within the template.
    *
@@ -23,11 +20,4 @@ public interface Part {
    * @return The end index of this part within the template
    */
   int end();
-
-  /**
-   * Returns a detailed description of the part
-   *
-   * @return A detailed description of the part
-   */
-  String toDebugString();
 }
