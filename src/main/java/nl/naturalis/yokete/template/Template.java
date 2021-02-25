@@ -11,7 +11,6 @@ import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.collection.UnmodifiableIntList;
 import static java.util.stream.Collectors.toUnmodifiableSet;
-import static nl.naturalis.common.check.CommonChecks.instanceOf;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 /**
@@ -38,7 +37,7 @@ public class Template {
   /**
    * Parses the specified source text into a {@code Template} instance. Only use this constructor if
    * the template does not {@code include} other templates (using {@code
-   * ~%%include:path/to/other/resource%}).
+   * ~%%include:path/to/other/source/file%}).
    *
    * @param source The source text for the {@code Template}
    * @return a new {@code Template} instance
@@ -53,8 +52,8 @@ public class Template {
    * used to include other template files by calling {@link Class#getResourceAsStream(String)
    * getResourceAsStream} upon it.
    *
-   * @param clazz Any {@code Class} object that provides access to the tempate files by calling
-   *     {@code getResourceAsStream} on it
+   * @param clazz Any {@code Class} object that provides access to the included tempate files by
+   *     calling {@code getResourceAsStream} on it
    * @param source The source text for the {@code Template}
    * @return a new {@code Template} instance
    * @throws ParseException
@@ -64,9 +63,9 @@ public class Template {
   }
 
   /**
-   * Loads the template file at the specified location by calling {@code
-   * resourceClass.getResourceAsStream, path} and parses its contents into a {@code Template}
-   * instance. The specified class will also be used to {@code include} other template files.
+   * Loads the template file at the specified location by calling {@code clazz.getResourceAsStream,
+   * path} and parses its contents into a {@code Template} instance. The specified class will also
+   * be used to {@code include} other template files.
    *
    * @param clazz Any {@code Class} object that provides access to the tempate files by calling
    *     {@code getResourceAsStream} on it
@@ -93,7 +92,6 @@ public class Template {
   private final IntList textIndices;
   private final Map<String, Integer> tmplIndices;
   private final int varCount;
-  private final int tmplCount;
   private final Set<String> names; // variable names + template names
 
   Template(String name, Path path, List<Part> parts) {
@@ -103,7 +101,6 @@ public class Template {
     this.varIndices = getVarIndices(parts);
     this.varCount = getVarCount(parts);
     this.tmplIndices = getTmplIndices(parts);
-    this.tmplCount = getTmplCount(parts);
     this.names = getNames(parts);
     this.textIndices = getTextIndices(parts);
   }
@@ -130,9 +127,10 @@ public class Template {
   }
 
   /**
-   * Returns the constituent parts of the template. A template consists of {@link TextPart literal
-   * text}, {@link VariablePart template variables} and {@link TemplatePart nested templates}. The
-   * returned {@code List} is immutable.
+   * Returns the constituent parts of the template. A template falls apart in {@link TextPart
+   * literal text}, {@link VariablePart template variables}, {@link NestedTemplatePart nested
+   * templates} and {@link IncludedTemplatePart included templates}. The returned {@code List} is
+   * immutable.
    *
    * @return The constituent parts of the template file
    */
@@ -140,59 +138,91 @@ public class Template {
     return parts;
   }
 
+  /**
+   * Tells you which parts in the {@link #getParts() parts list} contain variables. One variable may
+   * occur multiple times in the same template. Therefore multiple parts may contain the same
+   * variable. Hence the returned {@code Map} maps each variable name to a list of {@code List}
+   * indices. The returned {@code Map} is immutable.
+   *
+   * @return
+   */
   public Map<String, IntList> getVarPartIndices() {
     return varIndices;
   }
 
+  /**
+   * Returns the names of all variables.
+   *
+   * @return The names of all variables
+   */
   public Set<String> getVariableNames() {
     return varIndices.keySet();
   }
 
+  /**
+   * Returns the sum total of all variables in the template. N.B. not the number of <i>unique</i>
+   * variable names.
+   *
+   * @return The sum total of all variables in the template
+   */
   public int countVariables() {
     return varCount;
   }
 
+  /**
+   * Tells you which parts in the {@link #getParts() parts list} contain templates (nested or
+   * included). The returned {@code Map} maps each template name to exactly one {@code List} index
+   * (template names must be unique within the parent template). The returned {@code Map} is
+   * immutable.
+   *
+   * @return
+   */
   public Map<String, Integer> getTemplatePartIndices() {
     return tmplIndices;
   }
 
+  /**
+   * Returns the names of all nested and included templates.
+   *
+   * @return The names of all nested and included templates
+   */
   public Set<String> getTemplateNames() {
     return tmplIndices.keySet();
   }
 
   public int countTemplates() {
-    return tmplCount;
+    return tmplIndices.size();
   }
 
   /**
-   * Returns the nested or included template identified by the specified name.
+   * Returns the nested or included template identified by the specified name. This method throws an
+   * {@link IllegalArgumentException} if no nested or included template has the specified name.
    *
    * @param name The name of the nested template
    * @return A {@code Template} nested inside this {@code Template}
    */
   public Template getTemplate(String name) {
-    Check.that(name).is(keyIn(), tmplIndices, "No such template: %s", name);
+    Check.that(name).is(keyIn(), tmplIndices, "No such template: \"%s\"", name);
     int partIndex = tmplIndices.get(name);
-    return Check.that(parts.get(partIndex))
-        .is(instanceOf(), TemplatePart.class, "%s is not a template", name)
-        .ok(TemplatePart.class::cast)
-        .getTemplate();
+    return ((TemplatePart) parts.get(partIndex)).getTemplate();
   }
 
   /**
-   * Returns all identifiers found in the template (variable names, nested template names, included
+   * Returns all names found in the template (variable names, nested template names, included
    * template names).
    *
-   * @return All identifiers found in the template
+   * @return All names found in the template
    */
   public Set<String> getAllNames() {
     return names;
   }
 
   /**
-   * Returns an {@link IntList} of all parts that contain literal text.
+   * Tells you which parts in the {@link #getParts() parts list} contain literal text. The returned
+   * {@link IntList} contains the {@code List} indexes of those parts. The returned {@code IntList}
+   * is immutable.
    *
-   * @return An {@link IntList} of all parts that contain literal text
+   * @return An {@link IntList} of all part indexes where literal text can be found
    */
   public IntList getTextPartIndices() {
     return textIndices;
@@ -236,16 +266,12 @@ public class Template {
   private static Map<String, Integer> getTmplIndices(List<Part> parts) {
     Map<String, Integer> indices = new HashMap<>();
     for (int i = 0; i < parts.size(); ++i) {
-      if (parts.get(i).getClass() == TemplatePart.class) {
+      if (parts.get(i) instanceof TemplatePart) {
         String name = ((TemplatePart) parts.get(i)).getName();
         indices.put(name, i);
       }
     }
     return Map.copyOf(indices);
-  }
-
-  private static int getTmplCount(List<Part> parts) {
-    return (int) parts.stream().filter(TemplatePart.class::isInstance).count();
   }
 
   private static Set<String> getNames(List<Part> parts) {
