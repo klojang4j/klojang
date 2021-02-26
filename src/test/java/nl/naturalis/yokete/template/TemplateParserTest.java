@@ -147,4 +147,12 @@ public class TemplateParserTest {
   }
 
   public void testDitchBlock00() {}
+
+  @Test
+  public void allTogetherNow00() throws ParseException {
+    Path path = Path.of("TemplateParserTest.allTogetherNow00.html");
+    Template template = Template.parse(getClass(), path);
+    System.out.println(template);
+    List<Part> parts = template.getParts();
+  }
 }

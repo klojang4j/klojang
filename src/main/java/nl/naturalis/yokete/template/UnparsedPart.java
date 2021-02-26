@@ -2,23 +2,23 @@ package nl.naturalis.yokete.template;
 
 class UnparsedPart extends AbstractPart {
 
-  private final String contents;
+  private final String text;
 
   UnparsedPart(String contents, int start, int end) {
     super(start, end);
-    this.contents = contents;
+    this.text = contents;
   }
 
-  String getContents() {
-    return contents;
+  String text() {
+    return text;
   }
 
   TextPart toTextPart() {
-    return new TextPart(contents, start(), end());
+    return new TextPart(text, start(), end());
   }
 
   @Override
   public String toString() {
-    return contents;
+    return text;
   }
 }

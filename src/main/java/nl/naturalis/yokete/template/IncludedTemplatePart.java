@@ -7,7 +7,7 @@ import static nl.naturalis.yokete.template.Regex.TMPL_START;
 
 public class IncludedTemplatePart extends TemplatePart {
 
-  static String extractName(String path) {
+  static String basename(String path) {
     return substrTo(substrAfter(path, "/", true), '.');
   }
 
@@ -17,7 +17,7 @@ public class IncludedTemplatePart extends TemplatePart {
 
   @Override
   public String toString() {
-    String basename = extractName(template.getPath().toString());
+    String basename = basename(template.getPath().toString());
     StringBuilder sb = new StringBuilder(32).append(TMPL_START).append("include:");
     if (!template.getName().equals(basename)) {
       sb.append(template.getName());

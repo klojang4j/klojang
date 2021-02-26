@@ -83,8 +83,8 @@ public class ParseException extends YoketeException {
     return exc1(INCLUDE_NOT_TERMINATED, src, pos);
   }
 
-  static ParseException ditchBlockNotTerminated(String src, int pos) {
-    return exc0(DITCH_BLOCK_NOT_TERMINATED, src, pos);
+  static Function<String, ParseException> ditchBlockNotTerminated(String src, int pos) {
+    return exc1(DITCH_BLOCK_NOT_TERMINATED, src, pos);
   }
 
   static ParseException danglingEndOfTemplate(String src, int pos) {

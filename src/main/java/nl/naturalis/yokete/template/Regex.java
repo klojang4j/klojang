@@ -61,10 +61,23 @@ class Regex {
   static final String INCLUDE_CMT = "<!--\\s*(" + INCLUDE + ")\\s*-->";
 
   /* private  - only used for error reporting (ditch block not terminated) */
-  static final String DITCH_TOKEN = "<!--%%[^\\n\\r]*-->";
+  static final String DITCH_TOKEN = "<!--%%\\V*-->";
 
   /* private */
-  static final String DITCH_BLOCK = DITCH_TOKEN + ".*" + DITCH_TOKEN;
+  /*
+   * m: multi-line ^ and $ match begin/end of line, not of entire string
+   * s: dot also matches newline chars
+   * U: un-greedy; used by ditch block to find next rather than last ditch token
+   *    following current ditch token
+   *
+   * Actually, however, the U modifier does not work (at least not as expected).
+   * The regex below __does__ the expected and desired thing on regex101.com,
+   * but not in Java's regex implementation. Therefore, for now, we'll just use
+   * the ditch token itself to programmatically wade through the source and find
+   * pairs of consecutive ditch tokens. Eveyrhing inside them (as well as the
+   * ditch tokens themselves of course) is going to be purged from the template.
+   */
+  static final String DITCH_BLOCK = "(?msU)" + DITCH_TOKEN + ".*" + DITCH_TOKEN;
 
   // Equivalent to prefixing the regular expression with "(?ms)"
   private static final int MS_MODIFIERS = Pattern.MULTILINE | Pattern.DOTALL;
@@ -75,10 +88,10 @@ class Regex {
   static final Pattern REGEX_NESTED_CMT = compile(NESTED_CMT, MS_MODIFIERS);
   static final Pattern REGEX_INCLUDE = compile(INCLUDE);
   static final Pattern REGEX_INCLUDE_CMT = compile(INCLUDE_CMT);
-  static final Pattern REGEX_DITCH_BLOCK = compile(DITCH_BLOCK, MS_MODIFIERS);
+  static final Pattern REGEX_DITCH_BLOCK = compile(DITCH_BLOCK);
+  static final Pattern REGEX_DITCH_TOKEN = compile(DITCH_TOKEN);
   // ERROR REPORTING PURPOSES ONLY:
   static final Pattern REGEX_TMPL_END = compile(TMPL_END);
-  static final Pattern REGEX_DITCH_TOKEN = compile(DITCH_TOKEN);
 
   static void printAll() {
     System.out.println("VARIABLE .......: " + REGEX_VARIABLE);

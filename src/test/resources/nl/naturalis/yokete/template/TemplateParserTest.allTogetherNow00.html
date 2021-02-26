@@ -1,0 +1,27 @@
+<html>
+<head>
+<script type="text/javascript">
+var selectedName = '~%selectedName%';
+var selectedId= ~%selectedId%;
+</script>
+</head>
+<body>
+	<table onclick="showPopup(~%selectedId%)">
+		<thead>
+			<tr><th onclick="showSelect('~%selectedName%')">Name</th><th>Age</th>
+		</thead>
+		<tbody>
+			<!--%% example row: -->
+			<tr><td>John</td><td>38</td></tr>
+			<!--%%-->
+			~%%include:tableRow.html%
+		</tbody>
+	</table>
+	~%%begin:pageButtons%
+		<button type="button">~%pageNo%</button>
+	~%%end:pageButtons%
+	<!--%% don't include for now -->
+		~%%include:super-duper-widget.html%
+	<!--%%-->
+</body>
+</html>
