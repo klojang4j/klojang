@@ -4,8 +4,8 @@ public abstract class TemplatePart extends AbstractPart implements NamedPart {
 
   protected final Template template;
 
-  public TemplatePart(Template template, int start, int end) {
-    super(start, end);
+  public TemplatePart(Template template, int start) {
+    super(start);
     this.template = template;
   }
 

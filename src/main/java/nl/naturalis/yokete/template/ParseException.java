@@ -8,7 +8,7 @@ import static nl.naturalis.common.ArrayMethods.prefix;
 
 public class ParseException extends YoketeException {
 
-  private static final String ERR_BASE = "Error at line %d, col. %d: ";
+  private static final String ERR_BASE = "Error at line %d, char %d: ";
 
   private static final String EMPTY_VARIABLE_NAME = ERR_BASE + "empty variable name";
 
@@ -71,8 +71,8 @@ public class ParseException extends YoketeException {
     return exc1(DUPLICATE_VAR_NAME, src, pos, name);
   }
 
-  static Function<String, ParseException> badEscapeType(String src, int pos, String name) {
-    return exc1(BAD_ESCAPE_TYPE, src, pos, name);
+  static ParseException badEscapeType(String src, int pos, String name) {
+    return exc0(BAD_ESCAPE_TYPE, src, pos, name);
   }
 
   static Function<String, ParseException> templateNotTerminated(String src, int pos) {
@@ -83,8 +83,8 @@ public class ParseException extends YoketeException {
     return exc1(INCLUDE_NOT_TERMINATED, src, pos);
   }
 
-  static Function<String, ParseException> ditchBlockNotTerminated(String src, int pos) {
-    return exc1(DITCH_BLOCK_NOT_TERMINATED, src, pos);
+  static ParseException ditchBlockNotTerminated(String src, int pos) {
+    return exc0(DITCH_BLOCK_NOT_TERMINATED, src, pos);
   }
 
   static ParseException danglingEndOfTemplate(String src, int pos) {

@@ -5,8 +5,8 @@ import static nl.naturalis.yokete.template.Regex.TMPL_START;
 
 public class NestedTemplatePart extends TemplatePart {
 
-  public NestedTemplatePart(Template template, int start, int end) {
-    super(template, start, end);
+  public NestedTemplatePart(Template template, int start) {
+    super(template, start);
   }
 
   public String toString() {

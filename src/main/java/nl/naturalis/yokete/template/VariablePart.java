@@ -9,8 +9,8 @@ public class VariablePart extends AbstractPart implements NamedPart {
   private final String name;
   private final EscapeType escapeType;
 
-  public VariablePart(EscapeType escapeType, String name, int start, int end) {
-    super(start, end);
+  public VariablePart(EscapeType escapeType, String name, int start) {
+    super(start);
     this.escapeType = escapeType;
     this.name = name;
   }

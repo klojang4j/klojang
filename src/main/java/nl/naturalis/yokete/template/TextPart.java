@@ -4,8 +4,8 @@ public class TextPart extends AbstractPart {
 
   private final String text;
 
-  public TextPart(String text, int start, int end) {
-    super(start, end);
+  public TextPart(String text, int start) {
+    super(start);
     this.text = text;
   }
 

@@ -53,15 +53,64 @@ class Parser {
     parts = uncomment(parts, REGEX_VARIABLE_CMT);
     parts = parse(parts, names, this::parseNested);
     parts = parse(parts, names, this::parseIncludes);
-    parts = parse(parts, names, this::parseVariables);
+    parts = parse(parts, names, this::parseVars);
     parts = collectTextParts(parts);
     return new Template(tmplName, path, List.copyOf(parts));
+  }
+
+  /*
+   * Ditch blocks consist of a pair of ditch tokens (<!--%%-->) and any text inside of
+   * the tokens. They are discarded without leaving a trace in the Template instance
+   * created by the Parser.
+   */
+  private static List<Part> purgeDitchBlocks(String src) throws ParseException {
+    Matcher m = REGEX_DITCH_TOKEN.matcher(src);
+    if (!m.find()) {
+      return Collections.singletonList(new UnparsedPart(src, 0));
+    }
+    List<Part> parts = new ArrayList<>();
+    int end = 0;
+    do {
+      if (m.start() > end) {
+        parts.add(new UnparsedPart(src.substring(end, m.start()), end));
+      }
+      if (!m.find()) {
+        throw ditchBlockNotTerminated(src, m.start());
+      }
+      end = m.end();
+    } while (m.find());
+    if (end < src.length()) {
+      parts.add(new UnparsedPart(src.substring(end), end));
+    }
+    return parts;
+  }
+
+  /*
+   * Turns "<!-- ~%firstName% -->" into an UnparsedPart containing "~%firstName%", which
+   * will then be picked up for further processing by parseVars().
+   */
+  private static List<Part> uncomment(List<Part> in, Pattern cmtPattern) {
+    List<Part> out = new ArrayList<>(in.size());
+    for (Part p : in) {
+      UnparsedPart unparsed = (UnparsedPart) p;
+      int end = 0;
+      for (Matcher m = match(cmtPattern, unparsed); m.find(); end = m.end()) {
+        if (m.start() > end) {
+          out.add(todo(unparsed, end, m.start()));
+        }
+        out.add(todo(unparsed, m.start(1), m.end(1)));
+      }
+      if (end < unparsed.text().length()) {
+        out.add(todo(unparsed, end, unparsed.text().length()));
+      }
+    }
+    return out;
   }
 
   @SuppressWarnings("static-method")
   private List<Part> parse(List<Part> in, Set<String> names, PartialParser parser)
       throws ParseException {
-    List<Part> out = new ArrayList<>(in.size() + 20);
+    List<Part> out = new ArrayList<>(in.size() + 10);
     for (Part p : in) {
       if (p.getClass() == UnparsedPart.class) {
         out.addAll(parser.apply((UnparsedPart) p, names));
@@ -74,23 +123,27 @@ class Parser {
 
   /* Text parts are all unparsed parts that remain after everything else has been parsed out */
   private List<Part> collectTextParts(List<Part> in) throws ParseException {
-    for (int i = 0; i < in.size(); ++i) {
-      if (in.get(i).getClass() == UnparsedPart.class) {
-        UnparsedPart up = (UnparsedPart) in.get(i);
-        checkGarbage(up);
-        in.set(i, up.toTextPart());
+    List<Part> out = new ArrayList<>(in.size());
+    for (Part p : in) {
+      if (p.getClass() == UnparsedPart.class) {
+        UnparsedPart unparsed = (UnparsedPart) p;
+        if (unparsed.text().strip().length() != 0) {
+          checkGarbage(unparsed);
+          out.add(unparsed.toTextPart());
+        }
+      } else {
+        out.add(p);
       }
     }
-    return in;
+    return out;
   }
 
-  private List<Part> parseNested(UnparsedPart raw, Set<String> names) throws ParseException {
+  private List<Part> parseNested(UnparsedPart unparsed, Set<String> names) throws ParseException {
     List<Part> parts = new ArrayList<>();
-    Matcher m = REGEX_NESTED.matcher(raw.text());
-    int offset = raw.start(), end = 0;
-    for (; m.find(); end = m.end()) {
+    int offset = unparsed.start(), end = 0;
+    for (Matcher m = match(REGEX_NESTED, unparsed); m.find(); end = m.end()) {
       if (m.start() > end) {
-        parts.add(todo(raw, end, m.start()));
+        parts.add(todo(unparsed, end, m.start()));
       }
       String name = m.group(1);
       String mySrc = m.group(2);
@@ -98,21 +151,20 @@ class Parser {
       Check.on(duplicateTemplateName(src, offset + m.start(1), name), name).is(notIn(), names);
       names.add(name);
       Template t = Template.parse(name, clazz, mySrc);
-      parts.add(new NestedTemplatePart(t, offset + m.start(), offset + m.end()));
+      parts.add(new NestedTemplatePart(t, offset + m.start()));
     }
-    if (end < raw.text().length()) {
-      parts.add(todo(raw, end, raw.text().length()));
+    if (end < unparsed.text().length()) {
+      parts.add(todo(unparsed, end, unparsed.text().length()));
     }
     return parts;
   }
 
-  private List<Part> parseIncludes(UnparsedPart raw, Set<String> names) throws ParseException {
+  private List<Part> parseIncludes(UnparsedPart unparsed, Set<String> names) throws ParseException {
     List<Part> parts = new ArrayList<>();
-    Matcher m = REGEX_INCLUDE.matcher(raw.text());
-    int offset = raw.start(), end = 0;
-    for (; m.find(); end = m.end()) {
+    int offset = unparsed.start(), end = 0;
+    for (Matcher m = match(REGEX_INCLUDE, unparsed); m.find(); end = m.end()) {
       if (m.start() > end) {
-        parts.add(todo(raw, end, m.start()));
+        parts.add(todo(unparsed, end, m.start()));
       }
       String name = m.group(2);
       String path = m.group(3);
@@ -125,32 +177,34 @@ class Parser {
       Check.on(missingClassObject(src, offset + m.start(3), name, path), clazz).is(notNull());
       names.add(name);
       Template t = Template.parse(name, clazz, Path.of(path));
-      parts.add(new IncludedTemplatePart(t, offset + m.start(), offset + m.end()));
+      parts.add(new IncludedTemplatePart(t, offset + m.start()));
     }
-    if (end < raw.text().length()) {
-      parts.add(todo(raw, end, raw.text().length()));
+    if (end < unparsed.text().length()) {
+      parts.add(todo(unparsed, end, unparsed.text().length()));
     }
     return parts;
   }
 
-  private List<Part> parseVariables(UnparsedPart raw, Set<String> names) throws ParseException {
+  private List<Part> parseVars(UnparsedPart unparsed, Set<String> names) throws ParseException {
     List<Part> parts = new ArrayList<>();
-    Matcher m = REGEX_VARIABLE.matcher(raw.text());
-    int offset = raw.start(), end = 0;
-    for (; m.find(); end = m.end()) {
+    int offset = unparsed.start(), end = 0;
+    for (Matcher m = match(REGEX_VARIABLE, unparsed); m.find(); end = m.end()) {
       if (m.start() > end) {
-        parts.add(todo(raw, end, m.start()));
+        parts.add(todo(unparsed, end, m.start()));
       }
-      String esc = m.group(2);
+      EscapeType escType;
+      try {
+        escType = EscapeType.parse(m.group(2));
+      } catch (IllegalArgumentException e) {
+        throw badEscapeType(src, offset + m.start(2), m.group(2));
+      }
       String name = m.group(3);
-      EscapeType escType =
-          Check.catching(badEscapeType(src, offset + m.start(2), esc), esc, EscapeType::parse).ok();
       Check.on(emptyVarName(src, offset + m.start(3)), name).is(notBlank());
       Check.on(duplicateVarName(src, offset + m.start(3), name), name).is(notIn(), names);
-      parts.add(new VariablePart(escType, name, offset + m.start(), offset + m.end()));
+      parts.add(new VariablePart(escType, name, offset + m.start()));
     }
-    if (end < raw.text().length()) {
-      parts.add(todo(raw, end, raw.text().length()));
+    if (end < unparsed.text().length()) {
+      parts.add(todo(unparsed, end, unparsed.text().length()));
     }
     return parts;
   }
@@ -168,57 +222,12 @@ class Parser {
     Check.on(includeNotTerminated(src, off + idx), idx).is(eq(), -1);
   }
 
-  private static List<Part> uncomment(List<Part> in, Pattern commentPattern) {
-    List<Part> out = new ArrayList<>(in.size());
-    for (int i = 0; i < in.size(); ++i) {
-      UnparsedPart unparsed = (UnparsedPart) in.get(i);
-      Matcher m = commentPattern.matcher(unparsed.text());
-      int end = 0;
-      for (; m.find(); end = m.end()) {
-        if (m.start() > end) {
-          // Create unparsed part for everything up to <!--
-          out.add(todo(unparsed, end, m.start()));
-        }
-        // Create unparsed part for variable/template. Parsing is done later.
-        out.add(todo(unparsed, m.start(1), m.end(1)));
-        // Jump past --> with next m.end()
-      }
-      if (end < unparsed.text().length()) {
-        // Create unparsed part for everything after last -->
-        out.add(todo(unparsed, end, unparsed.text().length()));
-      }
-    }
-    return out;
-  }
-
-  private static List<Part> purgeDitchBlocks(String src) throws ParseException {
-    Matcher m = REGEX_DITCH_TOKEN.matcher(src);
-    if (!m.find()) {
-      return Collections.singletonList(new UnparsedPart(src, 0, src.length()));
-    }
-    List<Part> parts = new ArrayList<>();
-    int end = 0;
-    do {
-      // Create unparsed part for everything up to <!--%%-->
-      if (m.start() > end) {
-        parts.add(new UnparsedPart(src.substring(end, m.start()), end, m.start()));
-      }
-      // Find the next occurrence of <!--%%--> and jump all the way past it, ignoring everything in
-      // between
-      end =
-          Check.on(ditchBlockNotTerminated(src, m.start()), m)
-              .has(Matcher::find, yes())
-              .ok(Matcher::end);
-    } while (m.find());
-    if (end < src.length()) {
-      // Create unparsed part for everything after last <!--%%-->
-      parts.add(new UnparsedPart(src.substring(end), end, src.length()));
-    }
-    return parts;
+  private static Matcher match(Pattern pattern, UnparsedPart unparsed) {
+    return pattern.matcher(unparsed.text());
   }
 
   private static UnparsedPart todo(UnparsedPart p, int from, int to) {
     String s = p.text().substring(from, to);
-    return new UnparsedPart(s, from + p.start(), to + p.start());
+    return new UnparsedPart(s, from + p.start());
   }
 }

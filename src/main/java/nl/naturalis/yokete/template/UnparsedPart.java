@@ -4,9 +4,9 @@ class UnparsedPart extends AbstractPart {
 
   private final String text;
 
-  UnparsedPart(String contents, int start, int end) {
-    super(start, end);
-    this.text = contents;
+  UnparsedPart(String text, int start) {
+    super(start);
+    this.text = text;
   }
 
   String text() {
@@ -14,7 +14,7 @@ class UnparsedPart extends AbstractPart {
   }
 
   TextPart toTextPart() {
-    return new TextPart(text, start(), end());
+    return new TextPart(text, start());
   }
 
   @Override

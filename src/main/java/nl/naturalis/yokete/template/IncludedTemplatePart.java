@@ -11,8 +11,8 @@ public class IncludedTemplatePart extends TemplatePart {
     return substrTo(substrAfter(path, "/", true), '.');
   }
 
-  public IncludedTemplatePart(Template template, int start, int end) {
-    super(template, start, end);
+  public IncludedTemplatePart(Template template, int start) {
+    super(template, start);
   }
 
   @Override
