@@ -13,7 +13,6 @@ import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.collection.UnmodifiableIntList;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
-import static nl.naturalis.common.StringMethods.*;
 
 /**
  * A {@code Template} captures the result of parsing a template file. It provides access to the
@@ -249,89 +248,13 @@ public class Template {
     return CollectionMethods.implode(parts, "");
   }
 
+  /**
+   * Prints out the constituent parts of this {@code Template}. Can be used to debug your template.
+   *
+   * @param out The {@code PrintStream} to which to print
+   */
   public void printParts(PrintStream out) {
-    int w0 = "PART TYPE".length();
-    int w1 = getMaxTmplName(this);
-    int w2 = getMaxVarName(this);
-    printDivider(out, w1, w0, w2);
-    out.print(rpad("TEMPLATE", w1, ' ', " | "));
-    out.print(rpad("PART TYPE", w0, ' ', " | "));
-    out.println(rpad("NAME", w2, ' ', " | "));
-    printDivider(out, w1, w0, w2);
-    printParts(this, out, w1, w0, w2);
-  }
-
-  private static void printParts(Template t, PrintStream out, int w0, int w1, int w2) {
-    for (Part p : t.getParts()) {
-      if (p instanceof VariablePart) {
-        printCell(out, t.getName(), w0);
-        printCell(out, "VARIABLE", w1);
-        String name = ((VariablePart) p).getName();
-        printCell(out, name, w2);
-        out.println(p.toString());
-        printDivider(out, w0, w1, w2);
-      } else if (p instanceof TextPart) {
-        printCell(out, t.getName(), w0);
-        printCell(out, "TEXT", w1);
-        printCell(out, w2);
-        out.println(p.toString().replaceAll("\\s+", " "));
-        printDivider(out, w0, w1, w2);
-      } else /* TemplatePart */ {
-        printCell(out, t.getName(), w0);
-        printCell(out, "TEMPLATE", w1);
-        String name = ((TemplatePart) p).getTemplate().getName();
-        printCell(out, name, w2);
-        String s = Regex.TMPL_START + "begin:" + name + Regex.NAME_END;
-        out.println(s);
-        printDivider(out, w0, w1, w2);
-        printParts(((TemplatePart) p).getTemplate(), out, w0, w1, w2);
-        printCell(out, t.getName(), w0);
-        printCell(out, "TEMPLATE", w1);
-        printCell(out, name, w2);
-        s = Regex.TMPL_START + "end:" + name + Regex.NAME_END;
-        out.println(s);
-        printDivider(out, w0, w1, w2);
-      }
-    }
-  }
-
-  private static void printCell(PrintStream out, int width) {
-    printCell(out, " ", width);
-  }
-
-  private static void printCell(PrintStream out, String val, int width) {
-    out.print(rpad(val, width, ' ', " | "));
-  }
-
-  private static void printDivider(PrintStream out, int w0, int w1, int w2) {
-    out.print(rpad("-", w0, '-', "-+-"));
-    out.print(rpad("-", w1, '-', "-+-"));
-    out.println(rpad("-", w2, '-', "-+"));
-  }
-
-  private static int getMaxTmplName(Template t) {
-    int i = Math.max("TEMPLATE".length(), t.getName().length());
-    for (Part p : t.getParts()) {
-      if (p instanceof TemplatePart) {
-        TemplatePart tp = (TemplatePart) p;
-        i = Math.max(i, tp.getTemplate().getName().length());
-        i = Math.max(i, getMaxTmplName(tp.getTemplate()));
-      }
-    }
-    return i;
-  }
-
-  private static int getMaxVarName(Template t) {
-    int i = "PART NAME".length();
-    for (Part p : t.getParts()) {
-      if (p instanceof VariablePart) {
-        i = Math.max(i, ((VariablePart) p).getName().length());
-      } else if (p instanceof TemplatePart) {
-        TemplatePart tp = (TemplatePart) p;
-        i = Math.max(i, getMaxVarName(tp.getTemplate()));
-      }
-    }
-    return i;
+    new PartsPrinter(this).printParts(out);
   }
 
   private static Map<String, IntList> getVarIndices(List<Part> parts) {
