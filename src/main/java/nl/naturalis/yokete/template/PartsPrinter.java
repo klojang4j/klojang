@@ -55,7 +55,7 @@ class PartsPrinter {
       } else /* TemplatePart */ {
         printCell(out, t.getName(), w0);
         printCell(out, "TEMPLATE", w1);
-        Template t2 = ((TemplatePart) p).getTemplate();
+        Template t2 = ((NestedTemplatePart) p).getTemplate();
         String name = t2.getName();
         printCell(out, name, w2);
         String s = Regex.TMPL_START + "begin:" + name + Regex.NAME_END;
@@ -90,8 +90,8 @@ class PartsPrinter {
   private static int getMaxTmplName(Template t) {
     int i = Math.max(HDR_TEMPLATE.length(), t.getName().length());
     for (Part p : t.getParts()) {
-      if (p instanceof TemplatePart) {
-        TemplatePart tp = (TemplatePart) p;
+      if (p instanceof NestedTemplatePart) {
+        NestedTemplatePart tp = (NestedTemplatePart) p;
         i = Math.max(i, tp.getTemplate().getName().length());
         i = Math.max(i, getMaxTmplName(tp.getTemplate()));
       }
@@ -104,8 +104,8 @@ class PartsPrinter {
     for (Part p : t.getParts()) {
       if (p instanceof VariablePart) {
         i = Math.max(i, ((VariablePart) p).getName().length());
-      } else if (p instanceof TemplatePart) {
-        TemplatePart tp = (TemplatePart) p;
+      } else if (p instanceof NestedTemplatePart) {
+        NestedTemplatePart tp = (NestedTemplatePart) p;
         i = Math.max(i, getMaxVarName(tp.getTemplate()));
       }
     }

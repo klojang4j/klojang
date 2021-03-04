@@ -3,7 +3,10 @@ package nl.naturalis.yokete.template;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import nl.naturalis.common.ExceptionMethods;
@@ -24,15 +27,17 @@ class Parser {
   private final Class<?> clazz;
   private final Path path;
   private final String src;
+  private final Set<String> namesInUse;
 
-  Parser(String tmplName, Class<?> clazz, String src) {
+  Parser(String tmplName, Class<?> clazz, String src, Set<String> namesInUse) {
     this.tmplName = tmplName;
     this.path = null;
     this.src = Check.notNull(src).ok();
     this.clazz = clazz;
+    this.namesInUse = namesInUse;
   }
 
-  Parser(String tmplName, Class<?> clazz, Path path) throws ParseException {
+  Parser(String tmplName, Class<?> clazz, Path path, Set<String> namesInUse) throws ParseException {
     this.tmplName = tmplName;
     this.clazz = Check.notNull(clazz).ok();
     this.path = path;
@@ -42,18 +47,18 @@ class Parser {
     } catch (IOException e) {
       throw ExceptionMethods.uncheck(e);
     }
+    this.namesInUse = namesInUse;
   }
 
   Template parse() throws ParseException {
     List<Part> parts = purgeDitchBlocks(src);
     // Accumulates template names for duplicate checks:
-    Set<String> names = new HashSet<>();
     parts = uncomment(parts, REGEX_NESTED_CMT);
     parts = uncomment(parts, REGEX_INCLUDE_CMT);
     parts = uncomment(parts, REGEX_VARIABLE_CMT);
-    parts = parse(parts, names, this::parseNested);
-    parts = parse(parts, names, this::parseIncludes);
-    parts = parse(parts, names, this::parseVars);
+    parts = parse(parts, namesInUse, this::parseInlineTmpls);
+    parts = parse(parts, namesInUse, this::parseIncludedTmpls);
+    parts = parse(parts, namesInUse, this::parseVars);
     parts = collectTextParts(parts);
     return new Template(tmplName, path, List.copyOf(parts));
   }
@@ -138,7 +143,8 @@ class Parser {
     return out;
   }
 
-  private List<Part> parseNested(UnparsedPart unparsed, Set<String> names) throws ParseException {
+  private List<Part> parseInlineTmpls(UnparsedPart unparsed, Set<String> names)
+      throws ParseException {
     List<Part> parts = new ArrayList<>();
     int offset = unparsed.start(), end = 0;
     for (Matcher m = match(REGEX_NESTED, unparsed); m.find(); end = m.end()) {
@@ -148,10 +154,12 @@ class Parser {
       String name = m.group(1);
       String mySrc = m.group(2);
       Check.on(emptyTemplateName(src, offset + m.start(1)), name).is(notBlank());
-      Check.on(duplicateTemplateName(src, offset + m.start(1), name), name).is(notIn(), names);
+      Check.on(duplicateTemplateName(src, offset + m.start(1), name), name)
+          .is(notIn(), names)
+          .is(notEqualTo(), Template.ROOT_TEMPLATE_NAME);
       names.add(name);
       Template t = Template.parse(name, clazz, mySrc);
-      parts.add(new NestedTemplatePart(t, offset + m.start()));
+      parts.add(new InlineTemplatePart(t, offset + m.start()));
     }
     if (end < unparsed.text().length()) {
       parts.add(todo(unparsed, end, unparsed.text().length()));
@@ -159,7 +167,8 @@ class Parser {
     return parts;
   }
 
-  private List<Part> parseIncludes(UnparsedPart unparsed, Set<String> names) throws ParseException {
+  private List<Part> parseIncludedTmpls(UnparsedPart unparsed, Set<String> names)
+      throws ParseException {
     List<Part> parts = new ArrayList<>();
     int offset = unparsed.start(), end = 0;
     for (Matcher m = match(REGEX_INCLUDE, unparsed); m.find(); end = m.end()) {
@@ -173,7 +182,9 @@ class Parser {
         name = IncludedTemplatePart.basename(path);
       }
       Check.on(emptyTemplateName(src, offset + m.start(2)), name).is(notBlank());
-      Check.on(duplicateTemplateName(src, offset + m.start(2), name), name).is(notIn(), names);
+      Check.on(duplicateTemplateName(src, offset + m.start(2), name), name)
+          .is(notIn(), names)
+          .is(notEqualTo(), Template.ROOT_TEMPLATE_NAME);
       Check.on(missingClassObject(src, offset + m.start(3), name, path), clazz).is(notNull());
       names.add(name);
       Template t = Template.parse(name, clazz, Path.of(path));

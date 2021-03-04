@@ -5,6 +5,7 @@ import java.util.Optional;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.view.RenderException;
+import nl.naturalis.yokete.view.TemplateStringifier;
 import nl.naturalis.yokete.view.ViewData;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.common.check.CommonChecks.notNull;
@@ -14,7 +15,7 @@ public class MapViewData extends AbstractViewData {
 
   private Map<String, Object> data;
 
-  public MapViewData(ViewDataStringifiers stringifiers) {
+  public MapViewData(TemplateStringifier stringifiers) {
     super(stringifiers);
   }
 

@@ -6,6 +6,7 @@ import java.util.Optional;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.view.RenderException;
+import nl.naturalis.yokete.view.TemplateStringifier;
 import nl.naturalis.yokete.view.ViewData;
 import static nl.naturalis.common.CollectionMethods.asList;
 import static nl.naturalis.common.check.CommonChecks.notNull;
@@ -20,9 +21,9 @@ public abstract class AbstractViewData implements ViewData {
    */
   protected static final Optional<?> NULL = Optional.of(new Object());
 
-  protected final ViewDataStringifiers stringifiers;
+  protected final TemplateStringifier stringifiers;
 
-  public AbstractViewData(ViewDataStringifiers stringifiers) {
+  public AbstractViewData(TemplateStringifier stringifiers) {
     this.stringifiers = stringifiers;
   }
 

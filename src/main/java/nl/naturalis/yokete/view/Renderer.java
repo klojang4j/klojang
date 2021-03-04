@@ -3,7 +3,7 @@ package nl.naturalis.yokete.view;
 import java.io.PrintStream;
 import java.util.List;
 import nl.naturalis.yokete.template.Part;
-import nl.naturalis.yokete.template.TemplatePart;
+import nl.naturalis.yokete.template.NestedTemplatePart;
 import nl.naturalis.yokete.template.TextPart;
 import nl.naturalis.yokete.template.VariablePart;
 
@@ -26,7 +26,7 @@ class Renderer {
       } else if (part.getClass() == VariablePart.class) {
         state.getVar(i).forEach(ps::append);
       } else /* TemplatePart */ {
-        TemplatePart tp = (TemplatePart) part;
+        NestedTemplatePart tp = (NestedTemplatePart) part;
         state.getSessions(tp.getTemplate()).forEach(s -> render(ps));
       }
     }
@@ -42,7 +42,7 @@ class Renderer {
       } else if (part.getClass() == VariablePart.class) {
         state.getVar(i).forEach(sb::append);
       } else /* TemplatePart */ {
-        TemplatePart tp = (TemplatePart) part;
+        NestedTemplatePart tp = (NestedTemplatePart) part;
         state.getSessions(tp.getTemplate()).forEach(s -> render(sb));
       }
     }

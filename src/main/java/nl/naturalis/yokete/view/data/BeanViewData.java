@@ -8,6 +8,7 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.invoke.BeanReader;
 import nl.naturalis.common.invoke.NoSuchPropertyException;
 import nl.naturalis.yokete.template.Template;
+import nl.naturalis.yokete.view.TemplateStringifier;
 import nl.naturalis.yokete.view.ViewData;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.common.check.CommonChecks.notNull;
@@ -19,7 +20,7 @@ public class BeanViewData extends AbstractViewData {
 
   private Object bean;
 
-  public BeanViewData(ViewDataStringifiers stringifiers) {
+  public BeanViewData(TemplateStringifier stringifiers) {
     super(stringifiers);
   }
 

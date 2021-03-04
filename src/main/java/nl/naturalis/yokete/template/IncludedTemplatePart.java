@@ -5,7 +5,7 @@ import static nl.naturalis.common.StringMethods.substrTo;
 import static nl.naturalis.yokete.template.Regex.NAME_END;
 import static nl.naturalis.yokete.template.Regex.TMPL_START;
 
-public class IncludedTemplatePart extends TemplatePart {
+public class IncludedTemplatePart extends NestedTemplatePart {
 
   static String basename(String path) {
     return substrTo(substrAfter(path, "/", true), '.');

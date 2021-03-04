@@ -8,6 +8,7 @@ import nl.naturalis.common.path.Path;
 import nl.naturalis.common.path.PathWalker;
 import nl.naturalis.common.path.PathWalker.DeadEndAction;
 import nl.naturalis.yokete.template.Template;
+import nl.naturalis.yokete.view.TemplateStringifier;
 import nl.naturalis.yokete.view.ViewData;
 import static java.util.stream.Collectors.toList;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
@@ -18,7 +19,7 @@ public class PathViewData extends AbstractViewData {
 
   private Object bean;
 
-  public PathViewData(ViewDataStringifiers stringifiers) {
+  public PathViewData(TemplateStringifier stringifiers) {
     super(stringifiers);
   }
 
