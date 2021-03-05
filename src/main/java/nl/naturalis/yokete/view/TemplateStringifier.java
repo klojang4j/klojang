@@ -7,7 +7,6 @@ import nl.naturalis.common.StringMethods;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.Template;
-import nl.naturalis.yokete.view.data.ApplicationStringifier;
 import static nl.naturalis.common.check.CommonChecks.in;
 import static nl.naturalis.common.check.CommonChecks.notIn;
 import static nl.naturalis.common.check.CommonChecks.notNull;
@@ -16,8 +15,16 @@ import static nl.naturalis.common.check.CommonChecks.nullPointer;
 public final class TemplateStringifier {
 
   public static interface VariableStringifier {
-    String stringify(Template thisOrNestedTemplate, String varName, Object value)
-        throws RenderException;
+    /**
+     * Stringifies the specified value.
+     *
+     * @param tmplName The name of the template containing the variable having the specfied value
+     * @param varName The name of the variable having the specified value
+     * @param value The value to be stringified
+     * @return A string represenation of the value
+     * @throws RenderException
+     */
+    String stringify(String tmplName, String varName, Object value) throws RenderException;
   }
 
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
@@ -41,8 +48,7 @@ public final class TemplateStringifier {
     }
 
     private VariableStringifier fbs;
-    private boolean useDefaultFbs;
-    private ApplicationStringifier as;
+    private ApplicationStringifier asf;
     private Map<Tuple<String, String>, Class<?>> varTypes = new HashMap<>();
     private Map<Tuple<String, String>, VariableStringifier> stringifiers = new HashMap<>();
 
@@ -52,15 +58,9 @@ public final class TemplateStringifier {
       return this;
     }
 
-    public Builder useDefaultFallbackStringifier() {
-      Check.that(fbs).is(nullPointer(), "Fallback stringifier already set");
-      useDefaultFbs = true;
-      return this;
-    }
-
     public Builder setApplicationStringifier(ApplicationStringifier stringifier) {
-      Check.that(as).is(nullPointer(), "Application stringifier already set");
-      as = Check.notNull(stringifier).ok();
+      Check.that(asf).is(nullPointer(), "Application stringifier already set");
+      asf = Check.notNull(stringifier).ok();
       return this;
     }
 
@@ -87,21 +87,24 @@ public final class TemplateStringifier {
     }
 
     public Builder setType(String tmplName, String varName, Class<?> type) {
-      Check.notNull(tmplName, "templateName");
+      Check.notNull(tmplName, "tmplName");
       Check.notNull(varName, "varName");
-      Check.that(as).is(notNull(), NO_APPLICATION_STRINGIFIER);
-      Check.notNull(type, "type").is(as::canStringify, CANNOT_STRINGIFY, type.getName());
-      Tuple<String, String> t = Tuple.of(tmplName, varName);
-      Check.that(t)
+      Check.that(asf).is(notNull(), NO_APPLICATION_STRINGIFIER);
+      Check.notNull(type, "type").is(asf::canStringify, CANNOT_STRINGIFY, type.getName());
+      Check.that(Tuple.of(tmplName, varName))
           .is(in(), varNames, NO_SUCH_VARIABLE, tmplName, varName)
           .is(notIn(), stringifiers.keySet(), STRINGIFIER_ALREADY_SET, tmplName, varName)
           .is(notIn(), varTypes.keySet(), TYPE_ALREADY_SET, tmplName, varName)
-          .then(x -> varTypes.put(x, type));
+          .then(tuple -> varTypes.put(tuple, type));
       return this;
     }
 
     public TemplateStringifier freeze() {
-      for (Tuple<String, String> t : varTypes.keySet()) {}
+      varTypes.forEach(
+          (tuple, type) -> {
+            VariableStringifier vsf = asf.getStringifier(type).toVariableStringifier();
+            stringifiers.put(tuple, vsf);
+          });
 
       return null;
     }
@@ -113,35 +116,22 @@ public final class TemplateStringifier {
     return new Builder(template);
   }
 
-  private final VariableStringifier fallbackStringifier;
-  private final ApplicationStringifier appStringifier;
+  private final VariableStringifier fbsf;
   private final Map<Tuple<String, String>, VariableStringifier> stringifiers;
   private final Map<Tuple<String, String>, Class<?>> varTypes;
 
   private TemplateStringifier(
       VariableStringifier fallbackStringifier,
-      boolean useDefaultFallbackStringifier,
-      ApplicationStringifier appStringifier,
       Map<Tuple<String, String>, VariableStringifier> stringifiers,
       Map<Tuple<String, String>, Class<?>> varTypes) {
-    if (fallbackStringifier != null) {
-      this.fallbackStringifier = fallbackStringifier;
-    } else if (useDefaultFallbackStringifier) {
-      this.fallbackStringifier =
-          (tmpl, var, val) -> {
-            if (val == null) {
-              return StringMethods.EMPTY;
-            }
-            Class<?> type = val.getClass();
-            if (appStringifier.canStringify(type)) {
-              return appStringifier.getStringifier(val.getClass()).get().stringify(type, val);
-            }
-            return val.toString();
-          };
-    } else {
-      this.fallbackStringifier = null;
-    }
+    this.fbsf = fallbackStringifier;
     this.stringifiers = stringifiers;
     this.varTypes = varTypes;
+  }
+
+  public void stringify(String tmplName, String varName, Object value) {
+    Check.notNull(tmplName, "tmplName");
+    Check.notNull(varName, "varName");
+    Tuple<String, String> t = Tuple.of(tmplName, varName);
   }
 }
