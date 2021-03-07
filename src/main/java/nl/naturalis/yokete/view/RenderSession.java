@@ -105,7 +105,7 @@ public class RenderSession {
     Check.on(s -> badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
     Template nested = template.getTemplate(name);
     names = ifEmpty(names, nested::getAllNames);
-    List<RenderSession> session = state.createOrGetSessions(nested, name, data.size());
+    List<RenderSession> session = state.getOrCreateNestedSessions(nested, data.size());
     for (int i = 0; i < session.size(); ++i) {
       session.get(i).setViewData(data.get(i), escapeType, names);
     }

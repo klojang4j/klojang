@@ -1,5 +1,6 @@
 package nl.naturalis.yokete.view;
 
+import java.time.LocalDateTime;
 import nl.naturalis.common.collection.TypeMap;
 import nl.naturalis.common.collection.UnmodifiableTypeMap;
 import nl.naturalis.yokete.view.TemplateStringifier.VariableStringifier;
@@ -9,26 +10,25 @@ import nl.naturalis.yokete.view.TemplateStringifier.VariableStringifier;
  * the can be inserted into an HTML template. Unlike the {@code TemplateStringifier}, however, its
  * stringification mechanism is not tied to any template variable in particular. Instead, the way it
  * stringifies a value is determined solely by the value's type. An {@code ApplicationStringifier}
- * does not, in fact, stringify any value itself. Instead, it is a container of {@link
+ * does not, in fact, stringify any value itself. Rather it is a container of {@link
  * TypeStringifier} instances, which can be retrieved by type (i.e. a {@link Class} object). The
  * {@code TypeStringifier} instances do the actual stringification.
  *
  * <p>The {@code ApplicationStringifier} class is built around a {@link TypeMap}, meaning that if
- * you request a stringifier for a particular type and that type is not in the {@code TypeMap} but
- * one of its super types is, you get that super type's stringifier. For example the {@code TypeMap}
- * contains stringifiers for {@link Number} and {@link Byte} and you request the {@code Byte}
- * stringifier you obviously get that one, but if you request an {@link Integer} stringifier, you
- * get the {@code Number} stringifier. This saves you from having to specify a stringifier for each
- * and every {@code Number} class if they are all stringified alike.
+ * the {@code TemplateStringifier} requests a stringifier for a particular type, and that type is
+ * not in the {@code TypeMap} but one of its super types is, then you get that super type's
+ * stringifier. For example, if the {@code TypeMap} contains stringifiers for {@link Number} and
+ * {@link Byte} and you request the {@code Byte} stringifier you obviously get that one, but if you
+ * request an {@link Integer} stringifier, you get the {@code Number} stringifier. This saves you
+ * from having to specify a stringifier for each and every {@code Number} class if they are all
+ * stringified alike.
  *
- * <p>An {@code ApplicationStringifier} is an immutable object and you should probably create just
- * one instance of it, near the beginning of your application. The {@code ApplicationStringifier} is
- * not meant to be used directly. Apart from exposing a {@link Builder} object that lets you
- * configure an instance, it does, in fact, not even <i>have</i> a public interface. Instead, the
- * (singleton) {@code ApplicationStringifier} is meant to be passed on to the individual {@code
- * TemplateStringifier} where its stringication capabalities may be enough to cover nearly
- * everything the data layer serves up. That is, only template variables with very particular
- * stringification needs would require a custom-made {@link VariableStringifier}.
+ * <p>An {@code ApplicationStringifier} is an immutable object. You should probably create just one
+ * instance of it and keep it around for as long as your application lasts. The {@code
+ * ApplicationStringifier} is not meant to be used directly. Apart from exposing a {@link Builder}
+ * object that lets you configure an instance, it does, in fact, not even <i>have</i> a public
+ * interface. Instead, the (singleton) {@code ApplicationStringifier} is meant to be used by {@code
+ * TemplateStringifier} instances
  *
  * @author Ayco Holleman
  */
@@ -37,27 +37,31 @@ public final class ApplicationStringifier {
   /**
    * Stringifies objects. Unless the {@link TemplateStringifier} contains a specialized {@link
    * VariableStringifier} for a particular template variable, it will request the {@code
-   * ApplicationStringifier} to provide a stringifier that can stringify the variable's value. It
-   * passes the value's type to the {@code ApplicationStringifier} and gets back a stringifier
-   * suitable for that type. Note, however, that there is no trace of this type-specificity within
-   * the {@code TypeStringifier} interface itself. The {@code TypeStringifier} interface is
-   * deliberately non-parametrized. This allows you {@link
-   * TemplateStringifier.Builder#setType(String, Class) register} two or more stringification
-   * variants for values of the same type. For example, if your application uses two date-time
-   * formats, you could register the stringifier that uses format X under key {@code
-   * LocalDateTime.class} while using an arbitrarily created tag interface (<code>
+   * ApplicationStringifier} to provide a stringifier that can stringify the variable's value based
+   * on its type. It passes the value's type to the {@code ApplicationStringifier} and gets back a
+   * stringifier suitable for that type.
+   *
+   * <p>Note, however, that there is no trace of this type-specificity within the {@code
+   * TypeStringifier} interface itself. The {@code TypeStringifier} interface is a deliberately
+   * non-parametrized type. This allows you to {@link TemplateStringifier.Builder#setType(String,
+   * Class) register} two or more stringification variants for values of the same type. For example,
+   * if your application uses two date-time formats to stringify {@link LocalDateTime} objects, you
+   * could register the stringifier that uses format X under key {@code LocalDateTime.class} while
+   * using an arbitrary tag interface (e.g. <code>
    * public interface DateTimeFormat2 { &#47;&#42; nothing here &#42;&#47; }</code>) to register the
    * stringifier that uses format Y.
+   *
+   * <p>Stringifier implementations <b>must</b> be able to handle null values and the <b>must
+   * not</b> return null.
    *
    * @author Ayco Holleman
    */
   @FunctionalInterface
   public static interface TypeStringifier {
     /**
-     * Converts this {@code TypeStringifier} to a {@link VariableStringifier} by simply ignoring the
-     * fact that the value to be stringified actually belonged to a particular template variable.
+     * Converts this {@code TypeStringifier} to a {@code VariableStringifier}.
      *
-     * @return
+     * @return A {@link VariableStringifier}
      */
     default VariableStringifier toVariableStringifier() {
       return (tmpl, var, val) -> stringify(val);

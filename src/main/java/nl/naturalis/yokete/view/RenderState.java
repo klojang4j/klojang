@@ -25,13 +25,13 @@ class RenderState {
     return template;
   }
 
-  List<RenderSession> createOrGetSessions(Template template, String tmplName, int amount)
+  List<RenderSession> getOrCreateNestedSessions(Template template, int amount)
       throws RenderException {
     List<RenderSession> mySessions = sessions.get(template);
     if (mySessions == null) {
       mySessions = initializedList(new RenderSession(template), amount);
     } else if (mySessions.size() != amount) {
-      throw repetitionMismatch(tmplName, mySessions.size(), amount);
+      throw repetitionMismatch(template.getName(), mySessions.size(), amount);
     }
     return mySessions;
   }

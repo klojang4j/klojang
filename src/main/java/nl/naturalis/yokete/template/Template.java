@@ -9,7 +9,8 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.collection.UnmodifiableIntList;
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toUnmodifiableSet;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 /**
@@ -26,10 +27,12 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
 public class Template {
 
   /**
-   * The name of the root template: &#34;&#64root&#34;. Any {@code Template} that is explicitly
-   * instantiated by calling one of the {@code parse(...)} methods has this name.
+   * The name of the root template: "%root". Any {@code Template} that is explicitly instantiated by
+   * calling one of the {@code parse(...)} methods has this name. The templates nested inside this
+   * template get their name from the template's source code (for example: {@code
+   * ~%%begin:myNestedTemplate%} or {@code ~%%include:/views/myNestedTemplate.html%}).
    */
-  public static final String ROOT_TEMPLATE_NAME = "@root";
+  public static final String ROOT_TEMPLATE_NAME = "%root";
 
   /**
    * Parses the specified source code (presumably an HTML page or an HTML snippet) into a {@code
@@ -253,9 +256,8 @@ public class Template {
   }
 
   /**
-   * Returns a depth-first view of all templates directly or indirectly nested inside this {@code
-   * Template}. This {@code Template} itself is also included in the returned {@code Set} (as the
-   * first element).
+   * Returns all templates directly or indirectly nested inside this {@code Template}. This {@code
+   * Template} itself is also included in the returned {@code Set} (as the first element).
    *
    * @return
    */
@@ -282,9 +284,9 @@ public class Template {
   }
 
   /**
-   * Returns a depth-first view of all templates nested inside this {@code Template}. Note that
-   * template names must be globally unique. That is, no two templates descending from the same
-   * ancestor template can have the same name, whatever the branch or depth of their ancestry.
+   * Returns the names of all templates nested directly or indirectlyt inside this {@code Template}.
+   * Note that template names must be globally unique. That is, no two templates descending from the
+   * same ancestor template can have the same name, whatever the branch or depth of their ancestry.
    *
    * @return A depth-first view of all templates nested inside this {@code Template}
    */
@@ -309,23 +311,41 @@ public class Template {
   }
 
   /**
-   * Returns the nested or included template identified by the specified name. This method throws an
-   * {@link IllegalArgumentException} if no nested or included template has the specified name.
+   * Returns the nested template identified by the specified name. This method throws an {@link
+   * IllegalArgumentException} if no nested template has the specified name.
    *
-   * @param name The name of the nested template
+   * @param name The name of a nested template
    * @return A {@code Template} nested inside this {@code Template}
    */
   public Template getTemplate(String name) {
-    Check.that(name).is(keyIn(), tmplIndices, "No such template: \"%s\"", name);
+    Check.notNull(name).is(keyIn(), tmplIndices, "No such template: \"%s\"", name);
     int partIndex = tmplIndices.get(name);
     return ((NestedTemplatePart) parts.get(partIndex)).getTemplate();
   }
 
   /**
-   * Returns all names found in the template (variable names, nested template names, included
-   * template names).
+   * Returns the nested template identified by the specified name. The template may be arbitrarily
+   * deeply nested, and you may also specify the name of this {@code Template} (which would return
+   * this {@code Template}. This method throws an {@link IllegalArgumentException} the no template
+   * with the specified name was found.
    *
-   * @return All names found in the template
+   * @param name The name of the template you are searching for
+   * @return The template
+   */
+  public Template getTemplateRecursive(String name) {
+    for (Template t : getTemplatesRecursive()) {
+      if (t.getName().equals(name)) {
+        return t;
+      }
+    }
+    return Check.fail("No such template: \"%s\"", name);
+  }
+
+  /**
+   * Returns all names found in this {@code Template} (both variable names and nested template
+   * names.
+   *
+   * @return All names found in {@code Template}
    */
   public Set<String> getAllNames() {
     return names;
