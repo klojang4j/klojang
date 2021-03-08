@@ -213,8 +213,7 @@ public class Template {
    * the "right-hand" side of the tuple) and the name of the template to which it belongs (on the
    * "left-hand" side of the tuple).
    *
-   * @return A depth-first view of all variable names in this {@code Template} and all templates
-   *     nested inside it
+   * @return All variable names in this {@code Template} and the templates nested inside it
    */
   public Set<Tuple<String, String>> getVariableNamesPerTemplate() {
     ArrayList<Tuple<String, String>> tuples = new ArrayList<>(getVariableNames().size() + 25);
@@ -230,9 +229,9 @@ public class Template {
   }
 
   /**
-   * Returns sum total of all variables in this template. Note that this method does <i>not</i>
-   * count the number of unique variable names (which would simply be {@link #getVariableNames()
-   * getVariableNames().size()}).
+   * Returns sum total of all variables in this {@code Template}. Note that this method does
+   * <i>not</i> count the number of unique variable names (which would simply be {@link
+   * #getVariableNames() getVariableNames().size()}).
    *
    * @return The sum total of all variables in the template
    */
@@ -256,8 +255,8 @@ public class Template {
   }
 
   /**
-   * Returns all templates directly or indirectly nested inside this {@code Template}. This {@code
-   * Template} itself is also included in the returned {@code Set} (as the first element).
+   * Returns this {@code Template} and all templates directly or indirectly nested inside this
+   * {@code Template}. This {@code Template} will be the first element in the returned {@code Set}.
    *
    * @return
    */
@@ -284,11 +283,14 @@ public class Template {
   }
 
   /**
-   * Returns the names of all templates nested directly or indirectlyt inside this {@code Template}.
-   * Note that template names must be globally unique. That is, no two templates descending from the
-   * same ancestor template can have the same name, whatever the branch or depth of their ancestry.
+   * Returns the names of this {@code Template} and all templates nested directly or indirectlyt
+   * inside this {@code Template}. Note that template names must be globally unique. That is, no two
+   * templates descending from the same ancestor template can have the same name, whatever the
+   * branch or depth of their ancestry. A {@link ParseException} is thrown if the source code for
+   * the {@code Template} violates this constraint.
    *
-   * @return A depth-first view of all templates nested inside this {@code Template}
+   * @return The names of this {@code Template} and all templates nested directly or indirectly
+   *     inside this {@code Template}
    */
   public Set<String> getTemplateNamesRecursive() {
     ArrayList<String> names = new ArrayList<>(getTemplateNames().size() + 10);
@@ -302,7 +304,7 @@ public class Template {
   }
 
   /**
-   * Equivalent to {@link #getTemplateNames() getTemplateNames().size()}.
+   * Returns the number of templates nested inside this {@code Template} (non-recursive).
    *
    * @return The number of nested templates
    */

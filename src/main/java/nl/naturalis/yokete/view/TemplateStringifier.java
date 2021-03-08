@@ -4,27 +4,33 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.text.StringEscapeUtils;
+import nl.naturalis.common.StringMethods;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.Template;
-import nl.naturalis.yokete.view.ApplicationStringifier.Builder;
-import nl.naturalis.yokete.view.ApplicationStringifier.TypeStringifier;
 import static nl.naturalis.common.check.CommonChecks.in;
 import static nl.naturalis.common.check.CommonChecks.notIn;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 import static nl.naturalis.common.check.CommonChecks.nullPointer;
+import static nl.naturalis.yokete.view.BadStringifierException.applicationStringifierNotNullResistant;
+import static nl.naturalis.yokete.view.BadStringifierException.applicationStringifierReturnedNull;
+import static nl.naturalis.yokete.view.BadStringifierException.templateStringifierNotNullResistant;
+import static nl.naturalis.yokete.view.BadStringifierException.templateStringifierReturnedNull;
 
 /**
  * A {@code TemplateStringifier} is responsible for stringifying the values served up by the data
- * access layer. An {@code TemplateStringifier} does not, in fact, stringify any value itself.
- * Rather it is a container of {@link VariableStringifier} instances, specialized to stringify
- * values for a particular template variable.If the value can be stringified simply by calling
- * {@code toString()} on it, or to an empty {@code String} if the value is null, you don't need to
- * provide a stringifier for the variable because this is default behaviour. Also, if the way the
- * value is to be stringified doesn't really depend on the variable, but more generally on the type
- * of the value, you should register the stringifier with the {@link ApplicationStringifier}. Only
- * if a variable has specific stringification requirements should you create a {@code
- * VariableStringifier} and register it with the {@code TemplateStringifier}.
+ * access layer. A {@code TemplateStringifier} does not, in fact, stringify any value itself. Rather
+ * it is a container of {@link VariableStringifier} instances, each one specialized in stringifying
+ * values for a single template variable.
+ *
+ * <p>If a variable's value can be stringified to an empty {@code String} if null, or by simply
+ * calling {@code toString()} on it, you don't need to provide a stringifier for the variable
+ * because this is default behaviour. Also, if the way the value is to be stringified doesn't really
+ * depend on the variable, but more generally on its type, you should register the stringifier with
+ * the {@link ApplicationStringifier}. Only if a variable has specific stringification requirements
+ * should you create a {@code VariableStringifier} and register it with the {@code
+ * TemplateStringifier}.
  *
  * <p>A {@code TemplateStringifier} is an immutable object. You should probably create just one
  * instance per {@link Template#ROOT_TEMPLATE_NAME root template} and keep it around for as lang as
@@ -35,7 +41,13 @@ import static nl.naturalis.common.check.CommonChecks.nullPointer;
 public final class TemplateStringifier {
 
   /**
-   * Stringifies the values for a particular template variable.
+   * Stringifies the values for a particular template variable. It is, in principle, not the
+   * stringifier's responsibility to also apply some form of escaping to the stringified value (e.g.
+   * HTML escaping). This is done by the {@link RenderSession}, which uses Apache's {@link
+   * StringEscapeUtils} for this purpose. However, the may be cases where you will want to do this
+   * yourself - for example, if you want to stringify null to a non-breaking space (&#38;nbsp;). In
+   * that case, make sure to explicitly disable escaping in the variable declaration, e.g. <code>
+   * ~%text:fullName%</code> (the "text" prefix corresponds to {@link EscapeType} {@code NONE}).
    *
    * @author Ayco Holleman
    */
@@ -95,8 +107,8 @@ public final class TemplateStringifier {
     }
 
     /**
-     * Sets the stringifier to be used for the specified variable. The variable is supposed to be
-     * defined in the root template rather than in one the the templates nested inside it.
+     * Sets the stringifier for the specified variable. The variable is supposed to be defined in
+     * the root template rather than in one the the templates nested inside it.
      *
      * @param varName The name of the variable for which to specify the stringifier
      * @param stringifier The stringifier
@@ -110,15 +122,15 @@ public final class TemplateStringifier {
      * Sets the stringifier for the specified variable within the specified template.
      *
      * @param tmplName The template containing the variable, which <i>must</i> be a descendant of
-     *     the root template for which the {@code TemplateStringifier} is being built. template for
-     *     which the
+     *     the template for which the {@code TemplateStringifier} is being built (usually a {@link
+     *     Template#ROOT_TEMPLATE_NAME root template})
      * @param varName The name of the variable for which to specify the stringifier
      * @param stringifier The stringifier
      * @return This {@code Builder} instance
      */
     public Builder setStringifier(
         String tmplName, String varName, VariableStringifier stringifier) {
-      Check.notNull(tmplName, "templateName");
+      Check.notNull(tmplName, "tmplName");
       Check.notNull(varName, "varName");
       Check.notNull(stringifier, "stringifier");
       Tuple<String, String> t = Tuple.of(tmplName, varName);
@@ -145,16 +157,15 @@ public final class TemplateStringifier {
     }
 
     /**
-     * Sets the type of the objects the specified variable receives from the data access layer. This
-     * serves two purposes:
+     * Explicitly sets the data type for the specified variable. This serves two purposes:
      *
      * <ol>
      *   <li>The {@code TemplateStringifier} can request the appropriate stringifier from the {@link
-     *       ApplicationStringifier} even if the value is null (in which case calling {@code
-     *       getClass()} on it would result in a {@code NullPointerException}).
-     *   <li>It gives you a way out if your application stringifies the same type in multiple ways.
-     *       An example would be {@link LocalDateTime} objects that must be stringified differently
-     *       in different parts of the application. See {@link TypeStringifier}.
+     *       ApplicationStringifier} even if the value to be stringified is null (in which case
+     *       calling {@code value.getClass()} would result in a {@code NullPointerException}).
+     *   <li>It lets you specify different application-level stringifiers for the same type. An
+     *       example would be {@link LocalDateTime} objects that must be formatted differently in
+     *       different parts of the application. See {@link ApplicationStringifier}.
      * </ol>
      *
      * @param tmplName The template containing the variable, which <i>must</i> be a descendant of
@@ -183,13 +194,12 @@ public final class TemplateStringifier {
      * @return A new, immutable {@code TemplateStringifier} instance
      */
     public TemplateStringifier freeze() {
-      varTypes.forEach(
-          (tuple, type) -> {
-            VariableStringifier vsf = asf.getStringifier(type).toVariableStringifier();
-            stringifiers.put(tuple, vsf);
-          });
-
-      return null;
+      // Swap template name and variable name swap because variable names have higher cardinality
+      Map<Tuple<String, String>, VariableStringifier> map0 = new HashMap<>(stringifiers.size());
+      stringifiers.forEach((tuple, stringifier) -> map0.put(tuple.swap(), stringifier));
+      Map<Tuple<String, String>, Class<?>> map1 = new HashMap<>(varTypes.size());
+      varTypes.forEach((tuple, type) -> map1.put(tuple.swap(), type));
+      return new TemplateStringifier(map0, map1, asf);
     }
   }
 
@@ -207,17 +217,54 @@ public final class TemplateStringifier {
   }
 
   private final Map<Tuple<String, String>, VariableStringifier> stringifiers;
+  private final Map<Tuple<String, String>, Class<?>> varTypes;
   private final ApplicationStringifier asf;
 
   private TemplateStringifier(
-      Map<Tuple<String, String>, VariableStringifier> stringifiers, ApplicationStringifier asf) {
-    this.stringifiers = stringifiers;
+      Map<Tuple<String, String>, VariableStringifier> stringifiers,
+      Map<Tuple<String, String>, Class<?>> varTypes,
+      ApplicationStringifier asf) {
+    this.stringifiers = Map.copyOf(stringifiers);
+    this.varTypes = Map.copyOf(varTypes);
     this.asf = asf;
   }
 
-  public void stringify(String tmplName, String varName, Object value) {
+  /**
+   * Stringifies the specified value for the specified variable in the specified template
+   *
+   * @param tmplName The name of the template containing the variable
+   * @param varName The name of th variable
+   * @param value The value to be stringified
+   * @return A string representation of the value
+   * @throws RenderException
+   */
+  public String stringify(String tmplName, String varName, Object value) throws RenderException {
     Check.notNull(tmplName, "tmplName");
     Check.notNull(varName, "varName");
-    Tuple<String, String> t = Tuple.of(tmplName, varName);
+    Tuple<String, String> tuple = Tuple.of(varName, tmplName);
+    VariableStringifier vsf = stringifiers.get(tuple);
+    if (vsf != null) {
+      try {
+        String s = vsf.stringify(tmplName, varName, value);
+        if (s == null) {
+          throw templateStringifierReturnedNull(tmplName, varName);
+        }
+      } catch (NullPointerException e) {
+        throw templateStringifierNotNullResistant(tmplName, varName);
+      }
+    }
+    Class<?> type = varTypes.get(tuple);
+    if (type != null) {
+      vsf = asf.getStringifier(type);
+      try {
+        String s = vsf.stringify(tmplName, varName, value);
+        if (s == null) {
+          throw applicationStringifierReturnedNull(type);
+        }
+      } catch (NullPointerException e) {
+        throw applicationStringifierNotNullResistant(type);
+      }
+    }
+    return value == null ? StringMethods.EMPTY : value.toString();
   }
 }

@@ -70,12 +70,12 @@ public class RenderSession {
   private void escape(int partIndex, List<String> val, EscapeType escapeType) {
     List<Part> parts = template.getParts();
     VariablePart part = (VariablePart) parts.get(partIndex);
-    EscapeType myEscapeType = part.getEscapeType();
-    if (myEscapeType == NOT_SPECIFIED) {
-      myEscapeType = escapeType;
+    EscapeType myEscType = part.getEscapeType();
+    if (myEscType == NOT_SPECIFIED) {
+      myEscType = escapeType;
     }
     List<String> escaped = new ArrayList<>(val.size());
-    val.stream().map(myEscapeType::apply).forEach(escaped::add);
+    val.stream().map(myEscType::apply).forEach(escaped::add);
     state.setVar(partIndex, escaped);
   }
 
