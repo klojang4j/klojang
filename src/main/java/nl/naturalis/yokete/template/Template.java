@@ -387,7 +387,7 @@ public class Template {
       }
     }
     indices.entrySet().forEach(e -> e.setValue(UnmodifiableIntList.copyOf(e.getValue())));
-    return Map.copyOf(indices);
+    return Collections.unmodifiableMap(indices);
   }
 
   private static Map<String, Integer> getTmplIndices(List<Part> parts) {
@@ -398,7 +398,7 @@ public class Template {
         indices.put(name, i);
       }
     }
-    return Map.copyOf(indices);
+    return Collections.unmodifiableMap(indices);
   }
 
   private static Set<String> getNames(List<Part> parts) {
