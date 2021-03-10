@@ -24,5 +24,19 @@ public class TemplateTest {
     assertEquals(2, t0_0_0.countVariables());
     assertEquals(1, t0_0_0.countNestedTemplates());
     assertEquals(List.of("name", "managerName"), List.copyOf(t0_0_0.getVariableNames()));
+    Template t0_0_0_0 = t0_0_0.getNestedTemplate("employees");
+    assertEquals(2, t0_0_0_0.countVariables());
+    assertEquals(1, t0_0_0_0.countNestedTemplates());
+    assertEquals(List.of("name", "age"), List.copyOf(t0_0_0_0.getVariableNames()));
+    Template t0_0_0_0_0 = t0_0_0_0.getNestedTemplate("roles");
+    assertEquals(1, t0_0_0_0_0.countVariables());
+    assertEquals(0, t0_0_0_0_0.countNestedTemplates());
+    assertEquals(List.of("role"), List.copyOf(t0_0_0_0_0.getVariableNames()));
+  }
+
+  @Test
+  public void test01() throws ParseException {
+    Template t0 = Template.parse(getClass(), Path.of("TemplateTest.main.html"));
+    // String s=t0.getVariableNamesRecursive()
   }
 }

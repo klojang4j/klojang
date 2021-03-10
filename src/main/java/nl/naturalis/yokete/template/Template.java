@@ -9,7 +9,7 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.collection.UnmodifiableIntList;
-import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.*;
 import static java.util.stream.Collectors.toUnmodifiableSet;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
@@ -216,28 +216,9 @@ public class Template {
   }
 
   /**
-   * Returns the names of all variables in this {@code Template} and the templates nested directly
-   * or indirectly inside it.
-   *
-   * @return The names of all variables in this {@code Template} and the templates nested directly
-   *     or indirectly inside it
-   */
-  public Set<String> getVariableNamesRecursive() {
-    ArrayList<String> names = new ArrayList<>(getVariableNames().size() + 25);
-    collectVarsRecursive(this, names);
-    return new LinkedHashSet<>(names);
-  }
-
-  private static void collectVarsRecursive(Template t0, ArrayList<String> names) {
-    names.addAll(t0.getVariableNames());
-    t0.getNestedTemplates().forEach(t -> collectVarsRecursive(t, names));
-  }
-
-  /**
-   * Returns the names of all variables in this {@code Template} and all templates nested directly
-   * or indirectly inside it. Each tuple in the returned {@code Set} contains the name of a variable
-   * (on the "right-hand" side of the tuple) and the template to which it belongs (on the
-   * "left-hand" side of the tuple).
+   * Returns, for this {@code Template} and all templates descending from it, the names of their
+   * variables. Each tuple in the returned {@code Set} contains a {@code Template} instance and a
+   * variable name.
    *
    * @return All variable names in this {@code Template} and the templates nested inside it
    */
@@ -266,24 +247,6 @@ public class Template {
         .map(NestedTemplatePart.class::cast)
         .map(NestedTemplatePart::getTemplate)
         .collect(toCollection(LinkedHashSet::new));
-  }
-
-  /**
-   * Returns this {@code Template} and all templates nested directly or indirectly inside it.
-   *
-   * @return This {@code Template} and all templates nested directly or indirectly inside it.
-   */
-  public Set<Template> getNestedTemplatesRecursive() {
-    ArrayList<Template> tmpls = new ArrayList<>(tmplIndices.size() + 10);
-    tmpls.add(this);
-    collectTmplsRecursive(this, tmpls);
-    return new LinkedHashSet<>(tmpls);
-  }
-
-  private static void collectTmplsRecursive(Template t0, ArrayList<Template> tmpls) {
-    Set<Template> myTmpls = t0.getNestedTemplates();
-    tmpls.addAll(myTmpls);
-    myTmpls.forEach(t -> collectTmplsRecursive(t, tmpls));
   }
 
   /**
@@ -329,10 +292,27 @@ public class Template {
   }
 
   /**
-   * Returns the names of all variables and nested templates within in this {@code Template}
+   * Returns this {@code Template} and all templates descending from it.
+   *
+   * @return This {@code Template} and all templates descending from it
+   */
+  public List<Template> getNestedTemplatesRecursive() {
+    ArrayList<Template> tmpls = new ArrayList<>(20);
+    tmpls.add(this);
+    collectTmplsRecursive(this, tmpls);
+    return tmpls;
+  }
+
+  private static void collectTmplsRecursive(Template t0, ArrayList<Template> tmpls) {
+    Set<Template> myTmpls = t0.getNestedTemplates();
+    tmpls.addAll(myTmpls);
+    myTmpls.forEach(t -> collectTmplsRecursive(t, tmpls));
+  }
+  /**
+   * Returns the names of all variables and nested templates in this {@code Template}
    * (non-recursive).
    *
-   * @return The names of all variables and nested templates within in this {@code Template}
+   * @return The names of all variables and nested templates in this {@code Template}
    */
   public Set<String> getNames() {
     return names;
