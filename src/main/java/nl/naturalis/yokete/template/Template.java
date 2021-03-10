@@ -60,7 +60,7 @@ public class Template {
    * @throws ParseException
    */
   public static Template parse(Class<?> clazz, String source) throws ParseException {
-    return parse(ROOT_TEMPLATE_NAME, clazz, source);
+    return new Parser(null, ROOT_TEMPLATE_NAME, clazz, source).parse();
   }
 
   /**
@@ -75,46 +75,51 @@ public class Template {
    * @throws ParseException
    */
   public static Template parse(Class<?> clazz, Path path) throws ParseException {
-    return parse(ROOT_TEMPLATE_NAME, clazz, path);
+    return new Parser(null, ROOT_TEMPLATE_NAME, clazz, path).parse();
   }
 
-  /* Used by the Parser */
-  static Template parse(String tmplName, Class<?> clazz, String source) throws ParseException {
-    return new Parser(tmplName, clazz, source, new HashSet<>()).parse();
-  }
-
-  /* Used by the Parser */
-  static Template parse(String tmplName, Class<?> clazz, Path path) throws ParseException {
-    return new Parser(tmplName, clazz, path, new HashSet<>()).parse();
-  }
-
+  private final Template parent;
   private final String name;
   private final Path path;
   private final List<Part> parts;
   private final Map<String, IntList> varIndices;
   private final IntList textIndices;
   private final Map<String, Integer> tmplIndices;
-  private final int varCount;
-  private final Set<String> names; // variable names + template names
+  /*
+   * All variable names and template names, requested so often by RenderSession it's worthwile
+   * storing separately.
+   */
+  private final Set<String> names;
 
-  Template(String name, Path path, List<Part> parts) {
+  Template(Template parent, String name, Path path, List<Part> parts) {
+    this.parent = parent;
     this.name = name;
     this.path = path;
     this.parts = parts;
     this.varIndices = getVarIndices(parts);
-    this.varCount = getVarCount(parts);
     this.tmplIndices = getTmplIndices(parts);
     this.names = getNames(parts);
     this.textIndices = getTextIndices(parts);
   }
 
   /**
-   * Returns the name of the template.
+   * Returns the name of this {@code Template}.
    *
-   * @return The name of the template
+   * @return The name of this {@code Template}
    */
   public String getName() {
     return name;
+  }
+
+  /**
+   * Returns the template inside which this {@code Template} is nested. If this is a root template
+   * (it was <i>created from</i> source code rather than <i>defined in</i> source code), this method
+   * returns {@code null}.
+   *
+   * @return The template inside which this {@code Template} is nested
+   */
+  public Template getParent() {
+    return parent;
   }
 
   /**
@@ -130,13 +135,13 @@ public class Template {
   }
 
   /**
-   * Returns the constituent parts of the template. A template is broken up into parts containing
-   * {@link TextPart literal text}, parts containing {@link VariablePart template variables} and
-   * parts containing {@link NestedTemplatePart nested templates} (which could either be {@link
-   * InlineTemplatePart inline templates} or {@link IncludedTemplatePart included templates}). Apart
-   * from the fact that the source code for an inline template resides within the parent template,
-   * while the source code for an included template resides in a different file, there is no
-   * functional difference between them.
+   * Returns the constituent parts of this {@code Template}. A template is broken up into parts
+   * containing {@link TextPart literal text}, parts containing {@link VariablePart template
+   * variables} and parts containing {@link NestedTemplatePart nested templates} (which could either
+   * be {@link InlineTemplatePart inline templates} or {@link IncludedTemplatePart included
+   * templates}). Apart from the fact that the source code for an inline template resides within the
+   * parent template, while the source code for an included template resides in a different file,
+   * there is no functional difference between them.
    *
    * <p>The returned {@code List} is immutable.
    *
@@ -207,7 +212,7 @@ public class Template {
    * @return The number of variables in this {@code Template}
    */
   public int countVariables() {
-    return varCount;
+    return (int) parts.stream().filter(VariablePart.class::isInstance).count();
   }
 
   /**
@@ -401,7 +406,8 @@ public class Template {
   }
 
   /**
-   * Prints out the constituent parts of this {@code Template}. Can be used to debug your template.
+   * Prints out the constituent parts of this {@code Template}. Can be useful when debugging your
+   * template.
    *
    * @param out The {@code PrintStream} to which to print
    */
@@ -423,10 +429,6 @@ public class Template {
     }
     indices.entrySet().forEach(e -> e.setValue(UnmodifiableIntList.copyOf(e.getValue())));
     return Map.copyOf(indices);
-  }
-
-  private static int getVarCount(List<Part> parts) {
-    return (int) parts.stream().filter(VariablePart.class::isInstance).count();
   }
 
   private static Map<String, Integer> getTmplIndices(List<Part> parts) {

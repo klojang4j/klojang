@@ -3,10 +3,7 @@ package nl.naturalis.yokete.template;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import nl.naturalis.common.ExceptionMethods;
@@ -23,21 +20,22 @@ class Parser {
   private static interface PartialParser
       extends ThrowingBiFunction<UnparsedPart, Set<String>, List<Part>, ParseException> {}
 
+  private final Template parent;
   private final String tmplName;
   private final Class<?> clazz;
   private final Path path;
   private final String src;
-  private final Set<String> namesInUse;
 
-  Parser(String tmplName, Class<?> clazz, String src, Set<String> namesInUse) {
+  Parser(Template parent, String tmplName, Class<?> clazz, String src) {
+    this.parent = parent;
     this.tmplName = tmplName;
     this.path = null;
     this.src = Check.notNull(src).ok();
     this.clazz = clazz;
-    this.namesInUse = namesInUse;
   }
 
-  Parser(String tmplName, Class<?> clazz, Path path, Set<String> namesInUse) throws ParseException {
+  Parser(Template parent, String tmplName, Class<?> clazz, Path path) throws ParseException {
+    this.parent = parent;
     this.tmplName = tmplName;
     this.clazz = Check.notNull(clazz).ok();
     this.path = path;
@@ -47,20 +45,20 @@ class Parser {
     } catch (IOException e) {
       throw ExceptionMethods.uncheck(e);
     }
-    this.namesInUse = namesInUse;
   }
 
   Template parse() throws ParseException {
     List<Part> parts = purgeDitchBlocks(src);
-    // Accumulates template names for duplicate checks:
     parts = uncomment(parts, REGEX_NESTED_CMT);
     parts = uncomment(parts, REGEX_INCLUDE_CMT);
     parts = uncomment(parts, REGEX_VARIABLE_CMT);
+    // Accumulates template names for duplicate checks:
+    Set<String> namesInUse = new HashSet<>();
     parts = parse(parts, namesInUse, this::parseInlineTmpls);
     parts = parse(parts, namesInUse, this::parseIncludedTmpls);
     parts = parse(parts, namesInUse, this::parseVars);
     parts = collectTextParts(parts);
-    return new Template(tmplName, path, List.copyOf(parts));
+    return new Template(parent, tmplName, path, List.copyOf(parts));
   }
 
   /*
@@ -158,8 +156,9 @@ class Parser {
           .is(notIn(), names)
           .is(notEqualTo(), Template.ROOT_TEMPLATE_NAME);
       names.add(name);
-      Template t = Template.parse(name, clazz, mySrc);
-      parts.add(new InlineTemplatePart(t, offset + m.start()));
+      Parser parser = new Parser(parent, name, clazz, mySrc);
+      Template nested = parser.parse();
+      parts.add(new InlineTemplatePart(nested, offset + m.start()));
     }
     if (end < unparsed.text().length()) {
       parts.add(todo(unparsed, end, unparsed.text().length()));
@@ -187,8 +186,9 @@ class Parser {
           .is(notEqualTo(), Template.ROOT_TEMPLATE_NAME);
       Check.on(missingClassObject(src, offset + m.start(3), name, path), clazz).is(notNull());
       names.add(name);
-      Template t = Template.parse(name, clazz, Path.of(path));
-      parts.add(new IncludedTemplatePart(t, offset + m.start()));
+      Parser parser = new Parser(parent, name, clazz, Path.of(path));
+      Template nested = parser.parse();
+      parts.add(new IncludedTemplatePart(nested, offset + m.start()));
     }
     if (end < unparsed.text().length()) {
       parts.add(todo(unparsed, end, unparsed.text().length()));
