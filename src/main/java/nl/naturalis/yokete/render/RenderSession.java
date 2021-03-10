@@ -4,18 +4,36 @@ import java.io.PrintStream;
 import java.util.*;
 import nl.naturalis.common.CollectionMethods;
 import nl.naturalis.common.check.Check;
+import nl.naturalis.common.collection.TypeMap;
+import nl.naturalis.common.collection.UnmodifiableTypeMap;
 import nl.naturalis.yokete.template.Part;
 import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.VariablePart;
 import static nl.naturalis.common.CollectionMethods.asList;
-import static nl.naturalis.common.ObjectMethods.ifEmpty;
 import static nl.naturalis.common.ObjectMethods.isEmpty;
 import static nl.naturalis.common.check.CommonChecks.*;
+import static nl.naturalis.common.check.CommonGetters.size;
 import static nl.naturalis.yokete.render.EscapeType.ESCAPE_NONE;
 import static nl.naturalis.yokete.render.EscapeType.NOT_SPECIFIED;
 import static nl.naturalis.yokete.render.RenderException.*;
 
 public class RenderSession {
+
+  private static final Object whatever = new Object();
+  /**
+   * Defines some types that are definitely not suitable as data for a template, because they don't
+   * have a meaningful, accessible internal structure. There are, of course, a lot of types that are
+   * (very) unlikely candidates as data sources for a template, but these ones we catch out
+   * explicitly. NB we don't care about the values, only about the keys. We should ideally also have
+   * a {@code TypeSet} interface in naturalis-common
+   */
+  private static final TypeMap<?> BAD_TEMPLATE_DATA =
+      UnmodifiableTypeMap.build()
+          .add(Number.class, whatever)
+          .add(CharSequence.class, whatever)
+          .add(Object[].class, whatever)
+          .add(Collection.class, whatever)
+          .freeze();
 
   final RenderUnit ru;
   final RenderState state;
@@ -65,7 +83,7 @@ public class RenderSession {
    * @param name The name of the variable to set
    * @param value The string values to concatenate
    * @param escapeType The escape type to use when rendering the variable
-   * @return
+   * @return This {@code RenderSession}
    * @throws RenderException
    */
   public RenderSession setVariable(String name, List<String> value, EscapeType escapeType)
@@ -97,25 +115,25 @@ public class RenderSession {
 
   /**
    * Populates the <i>nested</i> template with the specified name with values retrieved from the
-   * specified object. If the specified object is an array or a {@code Collection}, the template
-   * will be repeated for each object in the array or {@code Collection}. This can be used, for
-   * example, to generate an HTML table from a template that contains just a single row. If the
-   * specified object is an empty array or a {@code Collection}, the template will not be rendered
-   * at all. This allows for conditional rendering of templates.
+   * specified data object. Only variables and (doubly) nested templates whose name is present in
+   * the {@code names} argument will be populated. No escaping will be applied to the values
+   * retrieved from the data object.
    *
-   * @param name
-   * @param data
-   * @return
-   * @throws RenderException
+   * @param nestedTemplateName The name of the nested template
+   * @param data An object that provides data for all or some of the nested template's variables and
+   *     nested templates
+   * @param names The names of the variables and doubly-nested templates that you want to be
+   *     populated using the specified data object
    */
-  public RenderSession populate(String name, Object data) throws RenderException {
-    return repeat(name, asList(data), ESCAPE_NONE, null);
+  public RenderSession populate(String nestedTemplateName, Object data, String... names)
+      throws RenderException {
+    return populate(nestedTemplateName, data, ESCAPE_NONE, names);
   }
 
   /**
    * Populates the <i>nested</i> template with the specified name with values retrieved from the
-   * specified object. Only variables and (doubly) nested templates whose name is present in the
-   * {@code names} argument will be populated.
+   * specified data object. Only variables and (doubly) nested templates whose name is present in
+   * the {@code names} argument will be populated.
    *
    * <h4>Repeating Templates</h4>
    *
@@ -126,29 +144,34 @@ public class RenderSession {
    * <h4>Conditional Rendering</h4>
    *
    * <p>If the specified object is an <i>empty</i> array or a {@code Collection}, the template will
-   * not be rendered at all. This allows you to render the template only if certain conditions are
-   * met.
+   * not be rendered at all. This allows for conditional rendering (i.e. render the template only if
+   * certain conditions are met).
    *
-   * <h4>Templates Without Variables</h4>
+   * <h4>Text-only templates</h4>
    *
-   * <p>In rare cases you might have a nested template that does not contain any variables. In this
-   * case the {@code data} argument can be anything you like, including {@code null}. If you want
-   * the template to be repeated, specify something like {@code new Object[7]}. If you don't want it
-   * to be rendered at all, specify an empty {@code List} or {@code new Object[0]}.
+   * <p>In rare cases you might want to define a text-only nested template, i.e. a nested template
+   * that does not contain any variables or (doubly) nested templates. One reason could be that you
+   * want to conditionally render it. For text-only templates the {@code data} argument can be
+   * anything you like, including {@code null}. If you want such a template to be repeated, specify
+   * something like {@code new Object[7]}. If you don't want it to be rendered at all, specify an
+   * empty list or array.
    *
-   * @param name
-   * @param data
-   * @param escapeType
-   * @param names
-   * @return
+   * @param nestedTemplateName The name of the nested template
+   * @param data An object that provides data for all or some of the nested template's variables and
+   *     nested templates
+   * @param escapeType The escape to use for the variables within the nested template
+   * @param names The names of the variables and doubly-nested templates that you want to be
+   *     populated using the specified data object
+   * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession populate(String name, Object data, EscapeType escapeType, Set<String> names)
+  public RenderSession populate(
+      String nestedTemplateName, Object data, EscapeType escapeType, String... names)
       throws RenderException {
-    return repeat(name, asList(data), escapeType, names);
+    return repeat(nestedTemplateName, asList(data), escapeType, names);
   }
 
-  private RenderSession repeat(String name, List<?> data, EscapeType escapeType, Set<String> names)
+  private RenderSession repeat(String name, List<?> data, EscapeType escapeType, String... names)
       throws RenderException {
     Check.notNull(name, "name");
     Check.that(data, "data").is(noneNull());
@@ -163,7 +186,6 @@ public class RenderSession {
             ru.getAccessor().getAccessorForNestedTemplate(name),
             ru.getStringifier());
     List<RenderSession> session = state.getOrCreateNestedSessions(ru1, data.size());
-    names = ifEmpty(names, nestedTemplate::getNames);
     for (int i = 0; i < session.size(); ++i) {
       session.get(i).setData(data.get(i), escapeType, names);
     }
@@ -176,67 +198,81 @@ public class RenderSession {
    * rendered.
    *
    * @param name The name of a variable or nested template
+   * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public void dontRender(String name) throws RenderException {
+  public RenderSession dontRender(String name) throws RenderException {
     Check.on(invalidName(name), name).is(in(), ru.getTemplate().getNames());
     if (ru.getTemplate().containsVariable(name)) {
       setVariable(name, Collections.emptyList(), ESCAPE_NONE);
-    } else {
+    } else if (ru.getTemplate().containsNestedTemplate(name)) {
       populate(name, Collections.emptyList());
+    } else {
+      Check.fail(invalidName(name));
     }
+    return this;
   }
 
   /* METHODS FOR POPULATING WHATEVER IS IN THE PROVIDED ViewData OBJECT */
 
-  public RenderSession setData(Object data) throws RenderException {
-    return setData(data, ESCAPE_NONE, null);
-  }
-
   /**
-   * Populates all variables and nested templates for which a value c.q. nested object can be found
-   * in the specified object.
+   * Populates all variables and nested templates whose name is present in the {@code names}
+   * argument with values retrieved from the specified data object. No escaping will be applied to
+   * the values retrieved from the data object. Not specifying any name (or {@code null}) indicates
+   * that you want all variables and nested templates to be populated.
    *
-   * @param data
-   * @param escapeType
-   * @return
-   * @throws RenderException
-   */
-  public RenderSession setData(Object data, EscapeType escapeType) throws RenderException {
-    return setData(data, escapeType, null);
-  }
-
-  /**
-   * Populatesvariables and nested templates for which a value c.q. nested object can be found in
-   * the specified object. Only variables and nested templates whose name is present in the {@code
-   * names} argument will be processed. This allows you to call this method multiple times with the
-   * same {@code ViewData} object but different escape types. The {@code ViewData} object is itself
-   * not required to provide all values for all variables and nested templates. You can call this
-   * method multiple times with different {@code ViewData} objects, until all variables and nested
-   * templates are populated.
-   *
-   * @param data A {@code ViewData} instance that provides data for all or some of the template
-   *     variables and nested templates.
+   * @param data An object that provides data for all or some of the template variables and nested
+   *     templates
    * @param escapeType The escape type to use
-   * @param names The names of the variable <b>and/or</b> nested templates names that must be
-   *     processed
+   * @param names The names of the variables nested templates names that must be populated. Not
+   *     specifying any name (or {@code null}) indicates that you want all variables and nested
+   *     templates to be populated.
+   * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession setData(Object data, EscapeType escapeType, Set<String> names)
+  public RenderSession setData(Object data, String... names) throws RenderException {
+    return setData(data, ESCAPE_NONE, names);
+  }
+
+  /**
+   * Populates all variables and nested templates whose name is present in the {@code names}
+   * argument with values retrieved from the specified data object. This allows you to call this
+   * method multiple times with the same data object but different escape types for different
+   * variables. (The {@code escapeType} argument is ignored for nested templates.)
+   *
+   * <p>The data object is itself not required to provide all values for all variables and nested
+   * templates. You can call this method multiple times with different data objects, the template is
+   * fully populated.
+   *
+   * @param data An object that provides data for all or some of the template variables and nested
+   *     templates
+   * @param escapeType The escape type to use
+   * @param names The names of the variables nested templates names that must be populated. Not
+   *     specifying any name (or {@code null}) indicates that you want all variables and nested
+   *     templates to be populated.
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession setData(Object data, EscapeType escapeType, String... names)
       throws RenderException {
+    if (data == null) {
+      Template t = ru.getTemplate();
+      Check.on(nullData(t), t.getNames()).has(size(), eq(), 0);
+    }
+    Check.on(badData(data), BAD_TEMPLATE_DATA).is(notContainingKey(), data.getClass());
     processVars(data, escapeType, names);
     processTmpls(data, escapeType, names);
     return this;
   }
 
-  private void processVars(Object data, EscapeType escapeType, Set<String> names)
+  private void processVars(Object data, EscapeType escapeType, String[] names)
       throws RenderException {
     Set<String> varNames;
-    if (isEmpty(names) || names.equals(ru.getTemplate().getNames())) {
+    if (isEmpty(names)) {
       varNames = ru.getTemplate().getVariableNames();
     } else {
       varNames = new HashSet<>(ru.getTemplate().getVariableNames());
-      varNames.retainAll(names);
+      varNames.retainAll(Set.of(names));
     }
     String tmplName = ru.getTemplate().getName();
     for (String varName : varNames) {
@@ -251,14 +287,14 @@ public class RenderSession {
     }
   }
 
-  private void processTmpls(Object data, EscapeType escapeType, Set<String> names)
+  private void processTmpls(Object data, EscapeType escapeType, String[] names)
       throws RenderException {
     Set<String> tmplNames;
-    if (isEmpty(names) || names.equals(ru.getTemplate().getNames())) {
+    if (isEmpty(names)) {
       tmplNames = ru.getTemplate().getNestedTemplateNames();
     } else {
       tmplNames = new HashSet<>(ru.getTemplate().getNestedTemplateNames());
-      tmplNames.retainAll(names);
+      tmplNames.retainAll(Set.of(names));
     }
     for (String name : tmplNames) {
       Object nestedData = ru.getAccessor().getValue(data, name);

@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.data;
+package nl.naturalis.yokete.util;
 
 import java.io.InputStream;
 import java.io.Reader;

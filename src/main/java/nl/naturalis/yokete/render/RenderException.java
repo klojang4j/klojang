@@ -3,6 +3,7 @@ package nl.naturalis.yokete.render;
 import java.util.Set;
 import java.util.function.Function;
 import nl.naturalis.yokete.YoketeException;
+import nl.naturalis.yokete.template.Template;
 import static java.lang.String.format;
 import static nl.naturalis.common.ClassMethods.prettyClassName;
 
@@ -32,11 +33,13 @@ public class RenderException extends YoketeException {
   private static final String UNEXPECTED_TYPE = "Unexpected or illegal type for variable %s: %s";
 
   private static final String NESTED_MAP_EXPECTED =
-      "Error creating ViewData object for template \"%s\". Expected nested "
+      "Error creating data object for template \"%s\". Expected nested "
           + "Map<String, Object>. Got: %s";
 
-  private static final String NULL_VIEW_DATA =
-      "Error creating ViewData for template \"%s\": " + "Illegal null value at index %d";
+  private static final String NULL_DATA =
+      "Data for template %s must not be null because it contains at least one variable or nested template";
+
+  private static final String BAD_DATA = "Cannot use instance of opaque class %s as template data";
 
   public static Function<String, RenderException> noSuchVariable(String name) {
     return s -> new RenderException(format(NO_SUCH_VARIABLE, name));
@@ -81,8 +84,12 @@ public class RenderException extends YoketeException {
     return new RenderException(msg);
   }
 
-  public static RenderException nullViewData(String tmplName, int index) {
-    return new RenderException(format(NULL_VIEW_DATA, tmplName, index));
+  public static Function<String, RenderException> nullData(Template t) {
+    return s -> new RenderException(format(NULL_DATA, t.getName()));
+  }
+
+  public static Function<String, RenderException> badData(Object data) {
+    return s -> new RenderException(format(BAD_DATA, prettyClassName(data)));
   }
 
   RenderException(String message) {

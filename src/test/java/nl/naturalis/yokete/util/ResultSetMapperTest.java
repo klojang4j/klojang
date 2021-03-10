@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.data;
+package nl.naturalis.yokete.util;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
