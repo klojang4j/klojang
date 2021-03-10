@@ -38,7 +38,7 @@ public abstract class AbstractViewData implements ViewData {
     List rawValues = asList(raw.get());
     List<String> strValues = new ArrayList<>(rawValues.size());
     for (Object obj : rawValues) {
-      strValues.add(stringifiers.stringify(varName, obj));
+      strValues.add(stringifiers.stringify(template.getName(), varName, obj));
     }
     return Optional.of(strValues);
   }

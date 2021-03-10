@@ -7,31 +7,30 @@ import static nl.naturalis.yokete.view.RenderException.repetitionMismatch;
 
 class RenderState {
 
-  private final Template template;
+  private final RenderUnit ru;
   private final Set<String> vToDo; // variables that have not been set yet
   private final Set<String> tToDo; // templates that have not been populated yet
   private final IdentityHashMap<Template, List<RenderSession>> sessions;
   private final Map<Integer, List<String>> varValues;
 
-  RenderState(Template template) {
-    this.template = template;
-    this.sessions = new IdentityHashMap<>(template.countTemplates());
-    this.varValues = new HashMap<>(template.countTemplates());
-    this.vToDo = new HashSet<>(template.getVariableNames());
-    this.tToDo = new HashSet<>(template.getTemplateNames());
+  RenderState(RenderUnit ru) {
+    this.ru = ru;
+    this.sessions = new IdentityHashMap<>(ru.getTemplate().countNestedTemplates());
+    this.varValues = new HashMap<>(ru.getTemplate().countNestedTemplates());
+    this.vToDo = new HashSet<>(ru.getTemplate().getVariableNames());
+    this.tToDo = new HashSet<>(ru.getTemplate().getNestedTemplateNames());
   }
 
-  Template getTemplate() {
-    return template;
+  RenderUnit getRenderUnit() {
+    return ru;
   }
 
-  List<RenderSession> getOrCreateNestedSessions(Template template, int amount)
-      throws RenderException {
-    List<RenderSession> mySessions = sessions.get(template);
+  List<RenderSession> getOrCreateNestedSessions(RenderUnit ru, int amount) throws RenderException {
+    List<RenderSession> mySessions = sessions.get(ru.getTemplate());
     if (mySessions == null) {
-      mySessions = initializedList(new RenderSession(template), amount);
+      mySessions = initializedList(new RenderSession(ru), amount);
     } else if (mySessions.size() != amount) {
-      throw repetitionMismatch(template.getName(), mySessions.size(), amount);
+      throw repetitionMismatch(ru.getTemplate().getName(), mySessions.size(), amount);
     }
     return mySessions;
   }

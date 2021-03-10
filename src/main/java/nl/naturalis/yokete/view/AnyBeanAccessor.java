@@ -5,10 +5,9 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.invoke.AnyBeanReader;
 import nl.naturalis.common.invoke.NoSuchPropertyException;
 
-public class AnyBeanAccessor implements Accessor<Object> {
+public class AnyBeanAccessor implements Accessor {
 
   private final AnyBeanReader reader = new AnyBeanReader();
-
   private final UnaryOperator<String> mapper;
 
   public AnyBeanAccessor() {
@@ -26,5 +25,10 @@ public class AnyBeanAccessor implements Accessor<Object> {
     } catch (NoSuchPropertyException e) {
       return ABSENT;
     }
+  }
+
+  @Override
+  public Accessor getAccessorForNestedTemplate(String tmplName) {
+    return this;
   }
 }

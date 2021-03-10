@@ -118,26 +118,25 @@ public class Template {
   }
 
   /**
-   * If the template was created by specifying the location of a template file, this method returns
-   * the file path, else null. In other words, for {@code included} templates this method (by
-   * definition) returns a non-null value. For nested templates this method (by definition) returns
-   * null. For <i>this</i> {@code Template} the return value depends on which {@code parse} method
-   * was used to instantiate the template.
+   * If the template was created from a file, this method returns its path, else null. In other
+   * words, for {@code included} templates this method (by definition) returns a non-null value. For
+   * nested templates this method (by definition) returns null. For <i>this</i> {@code Template} the
+   * return value depends on which {@code parse} method was used to instantiate the template.
    *
-   * @return
+   * @return The file location (if any) of the source code for this {@code Template}
    */
   public Path getPath() {
     return path;
   }
 
   /**
-   * Returns the constituent parts of the template. A template in broken up into parts containing
+   * Returns the constituent parts of the template. A template is broken up into parts containing
    * {@link TextPart literal text}, parts containing {@link VariablePart template variables} and
    * parts containing {@link NestedTemplatePart nested templates} (which could either be {@link
-   * InlineTemplatePart inline templates} or {@link IncludedTemplatePart included templates}. Note
-   * that apart from the fact that the source code for an inline template resides within the parent
-   * template, while the source code for an included template resides in a different file, there is
-   * no functional difference at all between them.
+   * InlineTemplatePart inline templates} or {@link IncludedTemplatePart included templates}). Apart
+   * from the fact that the source code for an inline template resides within the parent template,
+   * while the source code for an included template resides in a different file, there is no
+   * functional difference between them.
    *
    * <p>The returned {@code List} is immutable.
    *
@@ -148,7 +147,7 @@ public class Template {
   }
 
   /**
-   * Returns the indexes of the parts in the {@link #getParts() parts list} that contain variables.
+   * Returns the indices of the parts in the {@link #getParts() parts list} that contain variables.
    * The returned {@code Map} maps variable names to an {@link IntList}, since one variable may
    * occur multiple times in the same template.
    *
@@ -159,10 +158,11 @@ public class Template {
   }
 
   /**
-   * Returns the indexes of the parts in the {@link #getParts() parts list} that contain nested
+   * Returns the indices of the parts in the {@link #getParts() parts list} that contain nested
    * templates. The returned {@code Map} maps each template name to exactly one {@code List} index,
-   * since template names must be unique within the parent template. The returned {@code Map} is
-   * immutable.
+   * since template names must be unique within the parent template. (In fact they must be
+   * recursively unique. That is, no two templates descending from the same parent template are
+   * allowed to have the same name.) The returned {@code Map} is immutable.
    *
    * @return The indexes of parts that contain nested templates
    */
@@ -171,7 +171,7 @@ public class Template {
   }
 
   /**
-   * Returns the indexes of the parts in the {@link #getParts() parts list} that contain literal
+   * Returns the indices of the parts in the {@link #getParts() parts list} that contain literal
    * text. Each element in the returned {@link IntList} is an index into the parts list.
    *
    * @return The indexes of parts that contain literal text
@@ -190,11 +190,32 @@ public class Template {
   }
 
   /**
-   * Returns a depth-first view of all variable names in this {@code Template}, and all templates
-   * nested inside it.
+   * Returns whether or not this {@code Template} contains a variable with the specified name.
    *
-   * @return A depth-first view of all variable names in this {@code Template}, and all templates
-   *     nested inside it
+   * @param name The name of the variable
+   * @return Whether or not this {@code Template} contains a variable with the specified name
+   */
+  public boolean containsVariable(String name) {
+    return varIndices.containsKey(name);
+  }
+
+  /**
+   * Returns the number of variables in this {@code Template}. Note that this method does not count
+   * the number of <i>unique</i> variable names (which would simply be {@link #getVariableNames()
+   * getVariableNames().size()}).
+   *
+   * @return The number of variables in this {@code Template}
+   */
+  public int countVariables() {
+    return varCount;
+  }
+
+  /**
+   * Returns the names of all variables in this {@code Template} and the templates nested directly
+   * or indirectly inside it.
+   *
+   * @return The names of all variables in this {@code Template} and the templates nested directly
+   *     or indirectly inside it
    */
   public Set<String> getVariableNamesRecursive() {
     ArrayList<String> names = new ArrayList<>(getVariableNames().size() + 25);
@@ -204,14 +225,14 @@ public class Template {
 
   private static void collectVarsRecursive(Template t0, ArrayList<String> names) {
     names.addAll(t0.getVariableNames());
-    t0.getTemplates().forEach(t -> collectVarsRecursive(t, names));
+    t0.getNestedTemplates().forEach(t -> collectVarsRecursive(t, names));
   }
 
   /**
-   * Returns a depth-first view of all variable names in this {@code Template} and all templates
-   * nested inside it. Each tuple in the returned {@code Set} contains the name of a variable (on
-   * the "right-hand" side of the tuple) and the name of the template to which it belongs (on the
-   * "left-hand" side of the tuple).
+   * Returns the names of all variables in this {@code Template} and all templates nested directly
+   * or indirectly inside it. Each tuple in the returned {@code Set} contains the name of a variable
+   * (on the "right-hand" side of the tuple) and the name of the template to which it belongs (on
+   * the "left-hand" side of the tuple).
    *
    * @return All variable names in this {@code Template} and the templates nested inside it
    */
@@ -225,26 +246,15 @@ public class Template {
     for (String s : t0.getVariableNames()) {
       tuples.add(Tuple.of(t0.getName(), s));
     }
-    t0.getTemplates().forEach(t -> collectVarsPerTemplate(t, tuples));
+    t0.getNestedTemplates().forEach(t -> collectVarsPerTemplate(t, tuples));
   }
 
   /**
-   * Returns sum total of all variables in this {@code Template}. Note that this method does
-   * <i>not</i> count the number of unique variable names (which would simply be {@link
-   * #getVariableNames() getVariableNames().size()}).
+   * Returns all templates nested inside this {@code Template} (non-recursive).
    *
-   * @return The sum total of all variables in the template
+   * @return All templates nested inside this {@code Template}
    */
-  public int countVariables() {
-    return varCount;
-  }
-
-  /**
-   * Returns all templates nested directly inside this {@code Template}.
-   *
-   * @return All templates nested directly inside this {@code Template}
-   */
-  public Set<Template> getTemplates() {
+  public Set<Template> getNestedTemplates() {
     return tmplIndices
         .values()
         .stream()
@@ -255,12 +265,11 @@ public class Template {
   }
 
   /**
-   * Returns this {@code Template} and all templates directly or indirectly nested inside this
-   * {@code Template}. This {@code Template} will be the first element in the returned {@code Set}.
+   * Returns this {@code Template} and all templates nested directly or indirectly inside it.
    *
-   * @return
+   * @return This {@code Template} and all templates nested directly or indirectly inside it.
    */
-  public Set<Template> getTemplatesRecursive() {
+  public Set<Template> getNestedTemplatesRecursive() {
     ArrayList<Template> tmpls = new ArrayList<>(tmplIndices.size() + 10);
     tmpls.add(this);
     collectTmplsRecursive(this, tmpls);
@@ -268,7 +277,7 @@ public class Template {
   }
 
   private static void collectTmplsRecursive(Template t0, ArrayList<Template> tmpls) {
-    Set<Template> myTmpls = t0.getTemplates();
+    Set<Template> myTmpls = t0.getNestedTemplates();
     tmpls.addAll(myTmpls);
     myTmpls.forEach(t -> collectTmplsRecursive(t, tmpls));
   }
@@ -278,29 +287,40 @@ public class Template {
    *
    * @return The names of all nested templates
    */
-  public Set<String> getTemplateNames() {
+  public Set<String> getNestedTemplateNames() {
     return tmplIndices.keySet();
   }
 
   /**
-   * Returns the names of this {@code Template} and all templates nested directly or indirectlyt
-   * inside this {@code Template}. Note that template names must be globally unique. That is, no two
-   * templates descending from the same ancestor template can have the same name, whatever the
-   * branch or depth of their ancestry. A {@link ParseException} is thrown if the source code for
-   * the {@code Template} violates this constraint.
+   * Returns whether or not this {@code Template} contains a nested template with the specified
+   * name.
+   *
+   * @param name The name of the nested template
+   * @return Whether or not this {@code Template} contains a nested template with the specified name
+   */
+  public boolean containsNestedTemplate(String name) {
+    return varIndices.containsKey(name);
+  }
+
+  /**
+   * Returns the names of this {@code Template} and all templates nested directly or indirectly
+   * inside it. Note that template names are globally unique. That is, no two templates descending
+   * from the same ancestor template can have the same name, whatever the branch or depth of their
+   * ancestry. A {@link ParseException} is thrown if the source code for the {@code Template}
+   * violates this constraint.
    *
    * @return The names of this {@code Template} and all templates nested directly or indirectly
-   *     inside this {@code Template}
+   *     inside it
    */
-  public Set<String> getTemplateNamesRecursive() {
-    ArrayList<String> names = new ArrayList<>(getTemplateNames().size() + 10);
+  public Set<String> getNestedTemplateNamesRecursive() {
+    ArrayList<String> names = new ArrayList<>(getNestedTemplateNames().size() + 10);
     collectTmplNamesRecursive(this, names);
     return new LinkedHashSet<>(names);
   }
 
   private static void collectTmplNamesRecursive(Template t0, ArrayList<String> names) {
-    names.addAll(t0.getTemplateNames());
-    t0.getTemplates().forEach(t -> collectTmplNamesRecursive(t, names));
+    names.addAll(t0.getNestedTemplateNames());
+    t0.getNestedTemplates().forEach(t -> collectTmplNamesRecursive(t, names));
   }
 
   /**
@@ -308,7 +328,7 @@ public class Template {
    *
    * @return The number of nested templates
    */
-  public int countTemplates() {
+  public int countNestedTemplates() {
     return tmplIndices.size();
   }
 
@@ -317,9 +337,9 @@ public class Template {
    * IllegalArgumentException} if no nested template has the specified name.
    *
    * @param name The name of a nested template
-   * @return A {@code Template} nested inside this {@code Template}
+   * @return The {@code Template} with the specified name
    */
-  public Template getTemplate(String name) {
+  public Template getNestedTemplate(String name) {
     Check.notNull(name).is(keyIn(), tmplIndices, "No such template: \"%s\"", name);
     int partIndex = tmplIndices.get(name);
     return ((NestedTemplatePart) parts.get(partIndex)).getTemplate();
@@ -327,15 +347,15 @@ public class Template {
 
   /**
    * Returns the nested template identified by the specified name. The template may be arbitrarily
-   * deeply nested, and you may also specify the name of this {@code Template} (which would return
-   * this {@code Template}. This method throws an {@link IllegalArgumentException} the no template
-   * with the specified name was found.
+   * deeply nested within this {@code Template}, and you may also specify the name of this {@code
+   * Template} (which would return this {@code Template}). This method throws an {@link
+   * IllegalArgumentException} if no nested template has the specified name.
    *
-   * @param name The name of the template you are searching for
-   * @return The template
+   * @param name The name of a nested template
+   * @return The {@code Template} with the specified name
    */
-  public Template getTemplateRecursive(String name) {
-    for (Template t : getTemplatesRecursive()) {
+  public Template geNestedtTemplateRecursive(String name) {
+    for (Template t : getNestedTemplatesRecursive()) {
       if (t.getName().equals(name)) {
         return t;
       }
@@ -344,29 +364,36 @@ public class Template {
   }
 
   /**
-   * Returns all names found in this {@code Template} (both variable names and nested template
-   * names.
+   * Returns the names of all variables and nested templates within in this {@code Template}
+   * (non-recursive).
    *
-   * @return All names found in {@code Template}
+   * @return The names of all variables and nested templates within in this {@code Template}
    */
-  public Set<String> getAllNames() {
+  public Set<String> getNames() {
     return names;
   }
 
-  /*
-   * Let's make it really explicit that nothing is equal to a Template instance except the
-   * instance itself.
+  /**
+   * The {@code Template} class explicitly overrides the {@code equals()} method such that the only
+   * object equal to a {@code Template} instance is the instance itself. Therefore you should be
+   * very wary of creating two {@code Template} from the same source file.
    */
   @Override
   public boolean equals(Object obj) {
     return this == obj;
   }
 
+  /** Returns {@code System.identityHashCode(this)}. */
   @Override
   public int hashCode() {
     return System.identityHashCode(this);
   }
 
+  /**
+   * More or less re-assembles to source code from the constituent parts of the {@code Template}.
+   * Note, however, that ditch block are ditched early on in the parsing process and there is no
+   * trace left of them in the resulting {@code Template} instance.
+   */
   @Override
   public String toString() {
     return CollectionMethods.implode(parts, "");

@@ -17,7 +17,7 @@ class Renderer {
   }
 
   void render(PrintStream ps) {
-    List<Part> parts = state.getTemplate().getParts();
+    List<Part> parts = state.getRenderUnit().getTemplate().getParts();
     for (int i = 0; i < parts.size(); ++i) {
       Part part = parts.get(i);
       if (part.getClass() == TextPart.class) {
@@ -33,7 +33,7 @@ class Renderer {
   }
 
   void render(StringBuilder sb) {
-    List<Part> parts = state.getTemplate().getParts();
+    List<Part> parts = state.getRenderUnit().getTemplate().getParts();
     for (int i = 0; i < parts.size(); ++i) {
       Part part = parts.get(i);
       if (part.getClass() == TextPart.class) {

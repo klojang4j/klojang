@@ -44,7 +44,7 @@ public class PathViewData extends AbstractViewData {
   }
 
   private PathWalker newPathWalker(Template template) {
-    List<Path> paths = template.getAllNames().stream().map(Path::new).collect(toList());
+    List<Path> paths = template.getNames().stream().map(Path::new).collect(toList());
     return new PathWalker(paths, DeadEndAction.RETURN_DEAD_END);
   }
 }

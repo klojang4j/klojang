@@ -51,7 +51,7 @@ public class BeanViewData extends AbstractViewData {
   private BeanReader createBeanReader(Tuple<Template, Class> key) {
     Template template = key.getLeft();
     Class clazz = key.getRight().getClass();
-    String[] props = template.getAllNames().stream().toArray(String[]::new);
+    String[] props = template.getNames().stream().toArray(String[]::new);
     return new BeanReader(clazz, props);
   }
 }

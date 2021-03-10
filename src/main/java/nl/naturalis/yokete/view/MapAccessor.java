@@ -11,7 +11,7 @@ import nl.naturalis.common.check.Check;
  *
  * @author Ayco Holleman
  */
-public class MapAccessor implements Accessor<Map<String, Object>> {
+public class MapAccessor implements Accessor {
 
   private final UnaryOperator<String> mapper;
 
@@ -34,9 +34,21 @@ public class MapAccessor implements Accessor<Map<String, Object>> {
   }
 
   @Override
-  public Object getValue(Map<String, Object> from, String varName) throws RenderException {
+  @SuppressWarnings("unchecked")
+  public Object getValue(Object from, String varName) throws RenderException {
     Check.notNull(from, "from");
     String key = Check.notNull(varName, "varName").ok(mapper::apply);
-    return from.getOrDefault(key, ABSENT);
+    Map<String, Object> map;
+    try {
+      map = (Map<String, Object>) from;
+    } catch (ClassCastException e) {
+      throw RenderException.unexpectedType(varName, from);
+    }
+    return map.getOrDefault(key, ABSENT);
+  }
+
+  @Override
+  public Accessor getAccessorForNestedTemplate(String tmplName) {
+    return this;
   }
 }

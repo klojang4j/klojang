@@ -74,14 +74,14 @@ public class TemplateParserTest {
     List<Part> parts = template.getParts();
     assertTrue(parts.get(1) instanceof NestedTemplatePart);
     Template t = ((NestedTemplatePart) parts.get(1)).getTemplate();
-    assertEquals(2, t.getAllNames().size());
-    assertTrue(t.getAllNames().contains("selectedName"));
-    assertTrue(t.getAllNames().contains("selectedAge"));
+    assertEquals(2, t.getNames().size());
+    assertTrue(t.getNames().contains("selectedName"));
+    assertTrue(t.getNames().contains("selectedAge"));
     assertTrue(parts.get(3) instanceof NestedTemplatePart);
     t = ((NestedTemplatePart) parts.get(3)).getTemplate();
-    assertEquals(2, t.getAllNames().size());
-    assertTrue(t.getAllNames().contains("name"));
-    assertTrue(t.getAllNames().contains("age"));
+    assertEquals(2, t.getNames().size());
+    assertTrue(t.getNames().contains("name"));
+    assertTrue(t.getNames().contains("age"));
   }
 
   @Test
@@ -92,14 +92,14 @@ public class TemplateParserTest {
     List<Part> parts = template.getParts();
     assertTrue(parts.get(1) instanceof NestedTemplatePart);
     Template t = ((NestedTemplatePart) parts.get(1)).getTemplate();
-    assertEquals(2, t.getAllNames().size());
-    assertTrue(t.getAllNames().contains("selectedName"));
-    assertTrue(t.getAllNames().contains("selectedAge"));
+    assertEquals(2, t.getNames().size());
+    assertTrue(t.getNames().contains("selectedName"));
+    assertTrue(t.getNames().contains("selectedAge"));
     assertTrue(parts.get(3) instanceof NestedTemplatePart);
     t = ((NestedTemplatePart) parts.get(3)).getTemplate();
-    assertEquals(2, t.getAllNames().size());
-    assertTrue(t.getAllNames().contains("name"));
-    assertTrue(t.getAllNames().contains("age"));
+    assertEquals(2, t.getNames().size());
+    assertTrue(t.getNames().contains("name"));
+    assertTrue(t.getNames().contains("age"));
   }
 
   @Test
@@ -112,16 +112,16 @@ public class TemplateParserTest {
     NestedTemplatePart tp = (NestedTemplatePart) parts.get(1);
     assertEquals("jsVars", tp.getName());
     Template t = tp.getTemplate();
-    assertEquals(2, t.getAllNames().size());
-    assertTrue(t.getAllNames().contains("selectedName"));
-    assertTrue(t.getAllNames().contains("selectedAge"));
+    assertEquals(2, t.getNames().size());
+    assertTrue(t.getNames().contains("selectedName"));
+    assertTrue(t.getNames().contains("selectedAge"));
     assertTrue(parts.get(3) instanceof NestedTemplatePart);
     tp = (NestedTemplatePart) parts.get(3);
     assertEquals("tableRow", tp.getName());
     t = tp.getTemplate();
-    assertEquals(2, t.getAllNames().size());
-    assertTrue(t.getAllNames().contains("name"));
-    assertTrue(t.getAllNames().contains("age"));
+    assertEquals(2, t.getNames().size());
+    assertTrue(t.getNames().contains("name"));
+    assertTrue(t.getNames().contains("age"));
   }
 
   @Test
@@ -134,16 +134,16 @@ public class TemplateParserTest {
     NestedTemplatePart tp = (NestedTemplatePart) parts.get(1);
     assertEquals("jsVars", tp.getName());
     Template t = tp.getTemplate();
-    assertEquals(2, t.getAllNames().size());
-    assertTrue(t.getAllNames().contains("selectedName"));
-    assertTrue(t.getAllNames().contains("selectedAge"));
+    assertEquals(2, t.getNames().size());
+    assertTrue(t.getNames().contains("selectedName"));
+    assertTrue(t.getNames().contains("selectedAge"));
     assertTrue(parts.get(3) instanceof NestedTemplatePart);
     tp = (NestedTemplatePart) parts.get(3);
     assertEquals("tableRow", tp.getName());
     t = tp.getTemplate();
-    assertEquals(2, t.getAllNames().size());
-    assertTrue(t.getAllNames().contains("name"));
-    assertTrue(t.getAllNames().contains("age"));
+    assertEquals(2, t.getNames().size());
+    assertTrue(t.getNames().contains("name"));
+    assertTrue(t.getNames().contains("age"));
   }
 
   public void testDitchBlock00() {}
