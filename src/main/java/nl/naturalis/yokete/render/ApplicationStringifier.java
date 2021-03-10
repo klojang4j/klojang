@@ -1,9 +1,9 @@
-package nl.naturalis.yokete.view;
+package nl.naturalis.yokete.render;
 
 import java.time.LocalDateTime;
 import nl.naturalis.common.collection.TypeMap;
 import nl.naturalis.common.collection.UnmodifiableTypeMap;
-import nl.naturalis.yokete.view.TemplateStringifier.VariableStringifier;
+import nl.naturalis.yokete.render.TemplateStringifier.VariableStringifier;
 /**
  * An {@code ApplicationStringifier} provides application-wide stringification services. Like the
  * {@link TemplateStringifier} its goal is to stringify the values served up by the data layer so

@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.view;
+package nl.naturalis.yokete.render;
 
 import java.io.PrintStream;
 import java.util.*;
@@ -11,9 +11,9 @@ import static nl.naturalis.common.CollectionMethods.asList;
 import static nl.naturalis.common.ObjectMethods.ifEmpty;
 import static nl.naturalis.common.ObjectMethods.isEmpty;
 import static nl.naturalis.common.check.CommonChecks.*;
-import static nl.naturalis.yokete.view.EscapeType.ESCAPE_NONE;
-import static nl.naturalis.yokete.view.EscapeType.NOT_SPECIFIED;
-import static nl.naturalis.yokete.view.RenderException.*;
+import static nl.naturalis.yokete.render.EscapeType.ESCAPE_NONE;
+import static nl.naturalis.yokete.render.EscapeType.NOT_SPECIFIED;
+import static nl.naturalis.yokete.render.RenderException.*;
 
 public class RenderSession {
 

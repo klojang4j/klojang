@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.view.data;
+package nl.naturalis.yokete.render.data;
 
 import java.util.HashMap;
 import java.util.List;
@@ -7,9 +7,9 @@ import java.util.Optional;
 import nl.naturalis.common.path.Path;
 import nl.naturalis.common.path.PathWalker;
 import nl.naturalis.common.path.PathWalker.DeadEndAction;
+import nl.naturalis.yokete.render.TemplateStringifier;
+import nl.naturalis.yokete.render.ViewData;
 import nl.naturalis.yokete.template.Template;
-import nl.naturalis.yokete.view.TemplateStringifier;
-import nl.naturalis.yokete.view.ViewData;
 import static java.util.stream.Collectors.toList;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
 

@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.view;
+package nl.naturalis.yokete.render;
 
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.check.Check;

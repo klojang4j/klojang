@@ -1,15 +1,15 @@
-package nl.naturalis.yokete.view.data;
+package nl.naturalis.yokete.render.data;
 
 import java.util.Map;
 import java.util.Optional;
 import nl.naturalis.common.check.Check;
+import nl.naturalis.yokete.render.RenderException;
+import nl.naturalis.yokete.render.TemplateStringifier;
+import nl.naturalis.yokete.render.ViewData;
 import nl.naturalis.yokete.template.Template;
-import nl.naturalis.yokete.view.RenderException;
-import nl.naturalis.yokete.view.TemplateStringifier;
-import nl.naturalis.yokete.view.ViewData;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.common.check.CommonChecks.notNull;
-import static nl.naturalis.yokete.view.RenderException.nestedMapExpected;
+import static nl.naturalis.yokete.render.RenderException.nestedMapExpected;
 
 public class MapViewData extends AbstractViewData {
 

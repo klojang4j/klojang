@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.view;
+package nl.naturalis.yokete.render;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -13,10 +13,10 @@ import static nl.naturalis.common.check.CommonChecks.in;
 import static nl.naturalis.common.check.CommonChecks.notIn;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 import static nl.naturalis.common.check.CommonChecks.nullPointer;
-import static nl.naturalis.yokete.view.BadStringifierException.applicationStringifierNotNullResistant;
-import static nl.naturalis.yokete.view.BadStringifierException.applicationStringifierReturnedNull;
-import static nl.naturalis.yokete.view.BadStringifierException.templateStringifierNotNullResistant;
-import static nl.naturalis.yokete.view.BadStringifierException.templateStringifierReturnedNull;
+import static nl.naturalis.yokete.render.BadStringifierException.applicationStringifierNotNullResistant;
+import static nl.naturalis.yokete.render.BadStringifierException.applicationStringifierReturnedNull;
+import static nl.naturalis.yokete.render.BadStringifierException.templateStringifierNotNullResistant;
+import static nl.naturalis.yokete.render.BadStringifierException.templateStringifierReturnedNull;
 
 /**
  * A {@code TemplateStringifier} is responsible for stringifying the values served up by the data

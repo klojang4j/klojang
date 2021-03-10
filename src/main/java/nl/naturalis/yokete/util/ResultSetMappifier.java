@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.data;
+package nl.naturalis.yokete.util;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;

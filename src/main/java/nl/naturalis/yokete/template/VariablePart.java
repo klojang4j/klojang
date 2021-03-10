@@ -1,6 +1,6 @@
 package nl.naturalis.yokete.template;
 
-import nl.naturalis.yokete.view.EscapeType;
+import nl.naturalis.yokete.render.EscapeType;
 import static nl.naturalis.yokete.template.Regex.NAME_END;
 import static nl.naturalis.yokete.template.Regex.VAR_START;
 

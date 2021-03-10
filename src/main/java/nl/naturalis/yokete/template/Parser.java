@@ -13,7 +13,7 @@ import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.IOMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.function.ThrowingBiFunction;
-import nl.naturalis.yokete.view.EscapeType;
+import nl.naturalis.yokete.render.EscapeType;
 import static nl.naturalis.common.check.CommonChecks.*;
 import static nl.naturalis.yokete.template.ParseException.*;
 import static nl.naturalis.yokete.template.Regex.*;

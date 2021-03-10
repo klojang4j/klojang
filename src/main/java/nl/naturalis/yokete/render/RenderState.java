@@ -1,9 +1,9 @@
-package nl.naturalis.yokete.view;
+package nl.naturalis.yokete.render;
 
 import java.util.*;
 import nl.naturalis.yokete.template.Template;
 import static nl.naturalis.common.CollectionMethods.initializedList;
-import static nl.naturalis.yokete.view.RenderException.repetitionMismatch;
+import static nl.naturalis.yokete.render.RenderException.repetitionMismatch;
 
 class RenderState {
 

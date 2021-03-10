@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.view;
+package nl.naturalis.yokete.render;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +18,7 @@ import nl.naturalis.yokete.template.Template;
  * </ol>
  *
  * <p>You can write your own {@code ViewData} implementations or use one of three implementations in
- * the {@link nl.naturalis.yokete.view.data} package.
+ * the {@link nl.naturalis.yokete.render.data} package.
  *
  * @author Ayco Holleman
  */

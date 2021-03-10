@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.view;
+package nl.naturalis.yokete.render;
 
 /**
  * A generic interface for objects that mediate between the data layer and view layer. Its purpose
@@ -8,7 +8,7 @@ package nl.naturalis.yokete.view;
  * this need not necessarily be so.
  *
  * <p>You can write your own {@code ViewData} implementations or use one of three implementations in
- * the {@link nl.naturalis.yokete.view.data} package.
+ * the {@link nl.naturalis.yokete.render.data} package.
  *
  * @author Ayco Holleman
  * @param <T> The type of objects that can be accessed by this {@code Accessor}

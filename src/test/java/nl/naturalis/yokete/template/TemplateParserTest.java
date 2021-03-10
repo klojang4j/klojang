@@ -3,7 +3,7 @@ package nl.naturalis.yokete.template;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import nl.naturalis.yokete.view.EscapeType;
+import nl.naturalis.yokete.render.EscapeType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
