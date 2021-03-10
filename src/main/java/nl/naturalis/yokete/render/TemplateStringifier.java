@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.apache.commons.text.StringEscapeUtils;
 import nl.naturalis.common.StringMethods;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
@@ -43,11 +42,12 @@ public final class TemplateStringifier {
   /**
    * Stringifies the values for a particular template variable. It is, in principle, not the
    * stringifier's responsibility to also apply some form of escaping to the stringified value (e.g.
-   * HTML escaping). This is done by the {@link RenderSession}, which uses Apache's {@link
-   * StringEscapeUtils} for this purpose. However, the may be cases where you will want to do this
-   * yourself - for example, if you want to stringify null to a non-breaking space (&#38;nbsp;). In
-   * that case, make sure to explicitly disable escaping in the variable declaration, e.g. <code>
-   * ~%text:fullName%</code> (the "text" prefix corresponds to {@link EscapeType} {@code NONE}).
+   * HTML escaping). This is done by the {@link RenderSession}. However, the may be cases where you
+   * will want to do this yourself. For example, if you must stringify {@code null} to a
+   * non-breaking space (&#38;nbsp;), you are in fact producing an already-escaped value. In that
+   * case, make sure to disable escaping in the variable declaration (e.g. <code>
+   * ~%text:fullName%</code> in stead of <code>~%html:fullName%</code>) to make sure the escaped
+   * value does not get escaped again.
    *
    * @author Ayco Holleman
    */

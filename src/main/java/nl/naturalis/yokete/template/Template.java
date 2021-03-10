@@ -236,22 +236,20 @@ public class Template {
   /**
    * Returns the names of all variables in this {@code Template} and all templates nested directly
    * or indirectly inside it. Each tuple in the returned {@code Set} contains the name of a variable
-   * (on the "right-hand" side of the tuple) and the name of the template to which it belongs (on
-   * the "left-hand" side of the tuple).
+   * (on the "right-hand" side of the tuple) and the template to which it belongs (on the
+   * "left-hand" side of the tuple).
    *
    * @return All variable names in this {@code Template} and the templates nested inside it
    */
   public Set<Tuple<Template, String>> getVariableNamesPerTemplate() {
-    ArrayList<Tuple<Template, String>> tuples = new ArrayList<>(getVariableNames().size() + 25);
+    ArrayList<Tuple<Template, String>> tuples = new ArrayList<>(25);
     collectVarsPerTemplate(this, tuples);
     return new LinkedHashSet<>(tuples);
   }
 
   private static void collectVarsPerTemplate(
       Template t0, ArrayList<Tuple<Template, String>> tuples) {
-    for (String s : t0.getVariableNames()) {
-      tuples.add(Tuple.of(t0, s));
-    }
+    t0.getVariableNames().stream().map(s -> Tuple.of(t0, s)).forEach(tuples::add);
     t0.getNestedTemplates().forEach(t -> collectVarsPerTemplate(t, tuples));
   }
 
@@ -309,27 +307,6 @@ public class Template {
   }
 
   /**
-   * Returns the names of this {@code Template} and all templates nested directly or indirectly
-   * inside it. Note that template names are globally unique. That is, no two templates descending
-   * from the same ancestor template can have the same name, whatever the branch or depth of their
-   * ancestry. A {@link ParseException} is thrown if the source code for the {@code Template}
-   * violates this constraint.
-   *
-   * @return The names of this {@code Template} and all templates nested directly or indirectly
-   *     inside it
-   */
-  public Set<String> getNestedTemplateNamesRecursive() {
-    ArrayList<String> names = new ArrayList<>(getNestedTemplateNames().size() + 10);
-    collectTmplNamesRecursive(this, names);
-    return new LinkedHashSet<>(names);
-  }
-
-  private static void collectTmplNamesRecursive(Template t0, ArrayList<String> names) {
-    names.addAll(t0.getNestedTemplateNames());
-    t0.getNestedTemplates().forEach(t -> collectTmplNamesRecursive(t, names));
-  }
-
-  /**
    * Returns the number of templates nested inside this {@code Template} (non-recursive).
    *
    * @return The number of nested templates
@@ -352,24 +329,6 @@ public class Template {
   }
 
   /**
-   * Returns the nested template identified by the specified name. The template may be arbitrarily
-   * deeply nested within this {@code Template}, and you may also specify the name of this {@code
-   * Template} (which would return this {@code Template}). This method throws an {@link
-   * IllegalArgumentException} if no nested template has the specified name.
-   *
-   * @param name The name of a nested template
-   * @return The {@code Template} with the specified name
-   */
-  public Template geNestedtTemplateRecursive(String name) {
-    for (Template t : getNestedTemplatesRecursive()) {
-      if (t.getName().equals(name)) {
-        return t;
-      }
-    }
-    return Check.fail("No such template: \"%s\"", name);
-  }
-
-  /**
    * Returns the names of all variables and nested templates within in this {@code Template}
    * (non-recursive).
    *
@@ -382,7 +341,7 @@ public class Template {
   /**
    * The {@code Template} class explicitly overrides the {@code equals()} method such that the only
    * object equal to a {@code Template} instance is the instance itself. Therefore you should be
-   * very wary of creating two {@code Template} from the same source file.
+   * wary of creating two {@code Template} instances from the same source file.
    */
   @Override
   public boolean equals(Object obj) {

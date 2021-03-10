@@ -27,7 +27,7 @@ public class RenderSession {
    * explicitly. NB we don't care about the values, only about the keys. We should ideally also have
    * a {@code TypeSet} interface in naturalis-common
    */
-  private static final TypeMap<?> BAD_TEMPLATE_DATA =
+  private static final TypeMap<?> BAD_DATA =
       UnmodifiableTypeMap.build()
           .add(Number.class, whatever)
           .add(CharSequence.class, whatever)
@@ -152,9 +152,9 @@ public class RenderSession {
    * <p>In rare cases you might want to define a text-only nested template, i.e. a nested template
    * that does not contain any variables or (doubly) nested templates. One reason could be that you
    * want to conditionally render it. For text-only templates the {@code data} argument can be
-   * anything you like, including {@code null}. If you want such a template to be repeated, specify
-   * something like {@code new Object[7]}. If you don't want it to be rendered at all, specify an
-   * empty list or array.
+   * anything you like, including {@code null}. If you want a text-only template to be repeated,
+   * specify something like {@code new Object[7]}. If you don't want it to be rendered at all,
+   * specify {@code new Object[0]} or an empty list.
    *
    * @param nestedTemplateName The name of the nested template
    * @param data An object that provides data for all or some of the nested template's variables and
@@ -259,7 +259,7 @@ public class RenderSession {
       Template t = ru.getTemplate();
       Check.on(nullData(t), t.getNames()).has(size(), eq(), 0);
     }
-    Check.on(badData(data), BAD_TEMPLATE_DATA).is(notContainingKey(), data.getClass());
+    Check.on(badData(data), BAD_DATA).is(notContainingKey(), data.getClass());
     processVars(data, escapeType, names);
     processTmpls(data, escapeType, names);
     return this;
