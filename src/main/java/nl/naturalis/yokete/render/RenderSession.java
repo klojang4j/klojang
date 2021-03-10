@@ -274,13 +274,12 @@ public class RenderSession {
       varNames = new HashSet<>(ru.getTemplate().getVariableNames());
       varNames.retainAll(Set.of(names));
     }
-    String tmplName = ru.getTemplate().getName();
     for (String varName : varNames) {
       Object val = ru.getAccessor().getValue(data, varName);
       List<?> vals = CollectionMethods.asList(val);
       List<String> strvals = new ArrayList<>(vals.size());
       for (Object v : vals) {
-        String s = ru.getStringifier().stringify(tmplName, varName, v);
+        String s = ru.getStringifier().stringify(ru.getTemplate(), varName, v);
         strvals.add(s);
       }
       setVariable(varName, strvals, escapeType);

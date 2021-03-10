@@ -56,13 +56,14 @@ public final class TemplateStringifier {
      * Stringifies the specified value. Stringifier implementations <b>must</b> be able to handle
      * null values and the <b>must not</b> return null.
      *
-     * @param tmplName The name of the template containing the variable having the specfied value
-     * @param varName The name of the variable having the specified value
+     * @param template The template containing the variable for which to stringify the specified
+     *     value
+     * @param varName The variable for which to stringify the specified value
      * @param value The value to be stringified
      * @return A string represenation of the value
      * @throws RenderException
      */
-    String stringify(String tmplName, String varName, Object value) throws RenderException;
+    String stringify(Template template, String varName, Object value) throws RenderException;
   }
 
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
@@ -83,16 +84,16 @@ public final class TemplateStringifier {
     private static final String STRINGIFIER_ALREADY_SET = "Stringifier already set for %s.%s";
 
     private final Template tmpl;
-    private final Set<Tuple<String, String>> varNames;
+    private final Set<Tuple<Template, String>> varNames;
+    private final Map<Tuple<Template, String>, Class<?>> varTypes = new HashMap<>();
+    private final Map<Tuple<Template, String>, VariableStringifier> stringifiers = new HashMap<>();
+
+    private ApplicationStringifier asf;
 
     private Builder(Template tmpl) {
       this.tmpl = tmpl;
       this.varNames = tmpl.getVariableNamesPerTemplate();
     }
-
-    private ApplicationStringifier asf;
-    private Map<Tuple<String, String>, Class<?>> varTypes = new HashMap<>();
-    private Map<Tuple<String, String>, VariableStringifier> stringifiers = new HashMap<>();
 
     /**
      * Sets the {@link ApplicationStringifier} to be used for non-variable-specific stringification.
@@ -115,13 +116,13 @@ public final class TemplateStringifier {
      * @return This {@code Builder} instance
      */
     public Builder setStringifier(String varName, VariableStringifier stringifier) {
-      return setStringifier(tmpl.getName(), varName, stringifier);
+      return setStringifier(tmpl, varName, stringifier);
     }
 
     /**
      * Sets the stringifier for the specified variable within the specified template.
      *
-     * @param tmplName The template containing the variable, which <i>must</i> be a descendant of
+     * @param template The template containing the variable, which <i>must</i> be a descendant of
      *     the template for which the {@code TemplateStringifier} is being built (usually a {@link
      *     Template#ROOT_TEMPLATE_NAME root template})
      * @param varName The name of the variable for which to specify the stringifier
@@ -129,15 +130,15 @@ public final class TemplateStringifier {
      * @return This {@code Builder} instance
      */
     public Builder setStringifier(
-        String tmplName, String varName, VariableStringifier stringifier) {
-      Check.notNull(tmplName, "tmplName");
+        Template template, String varName, VariableStringifier stringifier) {
+      Check.notNull(template, "tmplName");
       Check.notNull(varName, "varName");
       Check.notNull(stringifier, "stringifier");
-      Tuple<String, String> t = Tuple.of(tmplName, varName);
+      Tuple<Template, String> t = Tuple.of(template, varName);
       Check.that(t)
-          .is(in(), varNames, NO_SUCH_VARIABLE, tmplName, varName)
-          .is(notIn(), stringifiers.keySet(), STRINGIFIER_ALREADY_SET, tmplName, varName)
-          .is(notIn(), varTypes.keySet(), TYPE_ALREADY_SET, tmplName, varName)
+          .is(in(), varNames, NO_SUCH_VARIABLE, template, varName)
+          .is(notIn(), stringifiers.keySet(), STRINGIFIER_ALREADY_SET, template, varName)
+          .is(notIn(), varTypes.keySet(), TYPE_ALREADY_SET, template, varName)
           .then(x -> stringifiers.put(x, stringifier));
       return this;
     }
@@ -153,7 +154,7 @@ public final class TemplateStringifier {
      * @return This {@code Builder} instance
      */
     public Builder setType(String varName, Class<?> type) {
-      return setType(tmpl.getName(), varName, type);
+      return setType(tmpl, varName, type);
     }
 
     /**
@@ -168,22 +169,21 @@ public final class TemplateStringifier {
      *       different parts of the application. See {@link ApplicationStringifier}.
      * </ol>
      *
-     * @param tmplName The template containing the variable, which <i>must</i> be a descendant of
-     *     the root template for which the {@code TemplateStringifier} is being built. template for
-     *     which the
+     * @param template The template containing the variable, which <i>must</i> be a descendant of
+     *     the template for which the {@code TemplateStringifier} is being built
      * @param varName The name of the variable for which to specify the stringifier
      * @param type The type of the variable
      * @return This {@code Builder} instance
      */
-    public Builder setType(String tmplName, String varName, Class<?> type) {
-      Check.notNull(tmplName, "tmplName");
+    public Builder setType(Template template, String varName, Class<?> type) {
+      Check.notNull(template, "template");
       Check.notNull(varName, "varName");
       Check.that(asf).is(notNull(), NO_APPLICATION_STRINGIFIER);
       Check.notNull(type, "type").is(asf::canStringify, CANNOT_STRINGIFY, type.getName());
-      Check.that(Tuple.of(tmplName, varName))
-          .is(in(), varNames, NO_SUCH_VARIABLE, tmplName, varName)
-          .is(notIn(), stringifiers.keySet(), STRINGIFIER_ALREADY_SET, tmplName, varName)
-          .is(notIn(), varTypes.keySet(), TYPE_ALREADY_SET, tmplName, varName)
+      Check.that(Tuple.of(template, varName))
+          .is(in(), varNames, NO_SUCH_VARIABLE, template, varName)
+          .is(notIn(), stringifiers.keySet(), STRINGIFIER_ALREADY_SET, template, varName)
+          .is(notIn(), varTypes.keySet(), TYPE_ALREADY_SET, template, varName)
           .then(tuple -> varTypes.put(tuple, type));
       return this;
     }
@@ -195,9 +195,9 @@ public final class TemplateStringifier {
      */
     public TemplateStringifier freeze() {
       // Swap template name and variable name swap because variable names have higher cardinality
-      Map<Tuple<String, String>, VariableStringifier> map0 = new HashMap<>(stringifiers.size());
+      Map<Tuple<String, Template>, VariableStringifier> map0 = new HashMap<>(stringifiers.size());
       stringifiers.forEach((tuple, stringifier) -> map0.put(tuple.swap(), stringifier));
-      Map<Tuple<String, String>, Class<?>> map1 = new HashMap<>(varTypes.size());
+      Map<Tuple<String, Template>, Class<?>> map1 = new HashMap<>(varTypes.size());
       varTypes.forEach((tuple, type) -> map1.put(tuple.swap(), type));
       return new TemplateStringifier(map0, map1, asf);
     }
@@ -216,13 +216,13 @@ public final class TemplateStringifier {
     return new Builder(rootTemplate);
   }
 
-  private final Map<Tuple<String, String>, VariableStringifier> stringifiers;
-  private final Map<Tuple<String, String>, Class<?>> varTypes;
+  private final Map<Tuple<String, Template>, VariableStringifier> stringifiers;
+  private final Map<Tuple<String, Template>, Class<?>> varTypes;
   private final ApplicationStringifier asf;
 
   private TemplateStringifier(
-      Map<Tuple<String, String>, VariableStringifier> stringifiers,
-      Map<Tuple<String, String>, Class<?>> varTypes,
+      Map<Tuple<String, Template>, VariableStringifier> stringifiers,
+      Map<Tuple<String, Template>, Class<?>> varTypes,
       ApplicationStringifier asf) {
     this.stringifiers = Map.copyOf(stringifiers);
     this.varTypes = Map.copyOf(varTypes);
@@ -232,32 +232,32 @@ public final class TemplateStringifier {
   /**
    * Stringifies the specified value for the specified variable in the specified template
    *
-   * @param tmplName The name of the template containing the variable
+   * @param template The name of the template containing the variable
    * @param varName The name of th variable
    * @param value The value to be stringified
    * @return A string representation of the value
    * @throws RenderException
    */
-  public String stringify(String tmplName, String varName, Object value) throws RenderException {
-    Check.notNull(tmplName, "tmplName");
+  public String stringify(Template template, String varName, Object value) throws RenderException {
+    Check.notNull(template, "template");
     Check.notNull(varName, "varName");
-    Tuple<String, String> tuple = Tuple.of(varName, tmplName);
+    Tuple<String, Template> tuple = Tuple.of(varName, template);
     VariableStringifier vsf = stringifiers.get(tuple);
     if (vsf != null) {
       try {
-        String s = vsf.stringify(tmplName, varName, value);
+        String s = vsf.stringify(template, varName, value);
         if (s == null) {
-          throw templateStringifierReturnedNull(tmplName, varName);
+          throw templateStringifierReturnedNull(template, varName);
         }
       } catch (NullPointerException e) {
-        throw templateStringifierNotNullResistant(tmplName, varName);
+        throw templateStringifierNotNullResistant(template, varName);
       }
     }
     Class<?> type = varTypes.get(tuple);
     if (type != null) {
       vsf = asf.getStringifier(type);
       try {
-        String s = vsf.stringify(tmplName, varName, value);
+        String s = vsf.stringify(template, varName, value);
         if (s == null) {
           throw applicationStringifierReturnedNull(type);
         }

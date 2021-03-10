@@ -236,15 +236,16 @@ public class Template {
    *
    * @return All variable names in this {@code Template} and the templates nested inside it
    */
-  public Set<Tuple<String, String>> getVariableNamesPerTemplate() {
-    ArrayList<Tuple<String, String>> tuples = new ArrayList<>(getVariableNames().size() + 25);
+  public Set<Tuple<Template, String>> getVariableNamesPerTemplate() {
+    ArrayList<Tuple<Template, String>> tuples = new ArrayList<>(getVariableNames().size() + 25);
     collectVarsPerTemplate(this, tuples);
     return new LinkedHashSet<>(tuples);
   }
 
-  private static void collectVarsPerTemplate(Template t0, ArrayList<Tuple<String, String>> tuples) {
+  private static void collectVarsPerTemplate(
+      Template t0, ArrayList<Tuple<Template, String>> tuples) {
     for (String s : t0.getVariableNames()) {
-      tuples.add(Tuple.of(t0.getName(), s));
+      tuples.add(Tuple.of(t0, s));
     }
     t0.getNestedTemplates().forEach(t -> collectVarsPerTemplate(t, tuples));
   }
