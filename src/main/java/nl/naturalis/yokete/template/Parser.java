@@ -185,6 +185,8 @@ class Parser {
           .is(notIn(), names)
           .is(notEqualTo(), Template.ROOT_TEMPLATE_NAME);
       Check.on(missingClassObject(src, offset + m.start(3), name, path), clazz).is(notNull());
+      Check.on(invalidIncludePath(src, offset + m.start(3), path), clazz.getResource(path))
+          .is(notNull());
       names.add(name);
       Parser parser = new Parser(parent, name, clazz, Path.of(path));
       Template nested = parser.parse();

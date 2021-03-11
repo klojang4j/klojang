@@ -12,7 +12,7 @@ public class ParseException extends YoketeException {
 
   private static final String EMPTY_VARIABLE_NAME = ERR_BASE + "empty variable name";
 
-  private static final String INVALID_PATH = ERR_BASE + "invalid path: \"%s\"";
+  private static final String INVALID_PATH = "Invalid path: \"%s\"";
 
   private static final String INVALID_INCLUDE_PATH = ERR_BASE + INVALID_PATH;
 

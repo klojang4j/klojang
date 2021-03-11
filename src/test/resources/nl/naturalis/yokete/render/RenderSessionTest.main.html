@@ -12,12 +12,12 @@
 		</thead>
 		<tbody>
 		~%%begin:company%
-			<tr>
+			<tr onclick=showPopup('~%js:name%')>
 				<td>~%name%</td>
 				<td>~%poBox%</td>
 				<td>~%established%</td>
 				<td>~%director%</td>
-				<td>~%%include:departments:TemplateTest.departments.html%</td>
+				<td>~%%include:departments:RenderSessionTest.departments.html%</td>
 			</tr>	
 		~%%end:company%
 		</tbody>
