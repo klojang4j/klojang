@@ -3,6 +3,7 @@ package nl.naturalis.yokete.template;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import nl.naturalis.common.collection.IntList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static nl.naturalis.common.StringMethods.append;
 
@@ -15,7 +16,7 @@ public class TemplateTest {
     assertEquals(1, t0.countNestedTemplates());
     assertEquals("company", t0.getNestedTemplates().iterator().next().getName());
     Template t0_0 = t0.getNestedTemplate("company");
-    assertEquals(4, t0_0.countVariables());
+    assertEquals(5, t0_0.countVariables());
     assertEquals(1, t0_0.countNestedTemplates());
     assertEquals(
         List.of("name", "poBox", "established", "director"), List.copyOf(t0_0.getVariableNames()));
@@ -47,8 +48,12 @@ public class TemplateTest {
     assertEquals(expected, sb.toString());
   }
 
-  @Test
+  @Test // getVarPartIndices
   public void test02() throws ParseException {
     Template t0 = Template.parse(getClass(), Path.of("TemplateTest.main.html"));
+    IntList indices = t0.getNestedTemplate("company").getVarPartIndices().get("name");
+    assertEquals(2, indices.size());
+    indices = t0.getNestedTemplate("company").getVarPartIndices().get("poBox");
+    assertEquals(1, indices.size());
   }
 }

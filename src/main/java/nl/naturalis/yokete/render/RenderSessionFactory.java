@@ -8,19 +8,23 @@ import nl.naturalis.yokete.template.Template;
 
 public final class RenderSessionFactory {
 
-  final Template template;
-  final Accessor accessor;
-  final TemplateStringifier stringifier;
-
-  public RenderSessionFactory(
+  public static RenderSessionFactory getInstance(
       Template template, Accessor accessor, TemplateStringifier stringifier) {
-    this.template = Check.notNull(template).ok();
-    this.accessor = Check.notNull(accessor).ok();
-    this.stringifier = Check.notNull(stringifier).ok();
+    return new RenderSessionFactory(template, accessor, stringifier);
   }
+
+  private final Template template;
+  private final Accessor accessor;
+  private final TemplateStringifier stringifier;
 
   public RenderSession newRenderSession() {
     return new RenderSession(this);
+  }
+
+  RenderSessionFactory(Template template, Accessor accessor, TemplateStringifier stringifier) {
+    this.template = Check.notNull(template).ok();
+    this.accessor = Check.notNull(accessor).ok();
+    this.stringifier = Check.notNull(stringifier).ok();
   }
 
   RenderSession newChildSession(String nestedTemplateName) {
