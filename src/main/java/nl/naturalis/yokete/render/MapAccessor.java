@@ -1,26 +1,27 @@
 package nl.naturalis.yokete.render;
 
 import java.util.Map;
-import java.util.function.UnaryOperator;
 import nl.naturalis.common.check.Check;
+import nl.naturalis.yokete.template.Template;
 
 /**
  * A simple map-based {@code Accessor} implementation. The {@code Map} passed to the {@link
- * #getValue(Map, String) getValue} method is assumed to be a simple, two-dimensional key-value
+ * #access(Map, String) getValue} method is assumed to be a simple, two-dimensional key-value
  * store without nested structures.
  *
  * @author Ayco Holleman
  */
 public class MapAccessor implements Accessor {
 
-  private final UnaryOperator<String> mapper;
+  private final Template template;
+  private final NameMapper mapper;
 
   /**
    * Creates a {@code KeyValueAccessor} that assumes a one-to-once correspondence between template
    * variable names and map keys.
    */
-  public MapAccessor() {
-    this.mapper = x -> x;
+  public MapAccessor(Template template) {
+    this(template, NameMapper.NOOP);
   }
 
   /**
@@ -29,15 +30,16 @@ public class MapAccessor implements Accessor {
    *
    * @param nameMapper
    */
-  public MapAccessor(UnaryOperator<String> nameMapper) {
+  public MapAccessor(Template template, NameMapper nameMapper) {
+    this.template = Check.notNull(template).ok();
     this.mapper = Check.notNull(nameMapper).ok();
   }
 
   @Override
   @SuppressWarnings("unchecked")
-  public Object getValue(Object from, String varName) throws RenderException {
+  public Object access(Object from, String varName) throws RenderException {
     Check.notNull(from, "from");
-    String key = Check.notNull(varName, "varName").ok(mapper::apply);
+    String key = Check.notNull(varName, "varName").ok(s -> mapper.map(template, s));
     Map<String, Object> map;
     try {
       map = (Map<String, Object>) from;
@@ -48,7 +50,7 @@ public class MapAccessor implements Accessor {
   }
 
   @Override
-  public Accessor getAccessorForNestedTemplate(String tmplName) {
+  public Accessor getAccessorForTemplate(Template nested) {
     return this;
   }
 }

@@ -3,9 +3,8 @@ package nl.naturalis.yokete.template;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import nl.naturalis.yokete.render.EscapeType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static nl.naturalis.common.StringMethods.append;
 
 public class TemplateTest {
 
@@ -34,9 +33,22 @@ public class TemplateTest {
     assertEquals(List.of("role"), List.copyOf(t0_0_0_0_0.getVariableNames()));
   }
 
-  @Test
+  @Test // getVariableNamesPerTemplate
   public void test01() throws ParseException {
     Template t0 = Template.parse(getClass(), Path.of("TemplateTest.main.html"));
-    // String s=t0.getVariableNamesRecursive()
+    String expected =
+        "company:name;company:poBox;company:established;company:director;"
+            + "departments:name;departments:managerName;"
+            + "employees:name;employees:age;"
+            + "roles:role;";
+    StringBuilder sb = new StringBuilder(100);
+    t0.getVariableNamesPerTemplate()
+        .forEach(t -> append(sb, t.getLeft().getName(), ":", t.getRight(), ";"));
+    assertEquals(expected, sb.toString());
+  }
+
+  @Test
+  public void test02() throws ParseException {
+    Template t0 = Template.parse(getClass(), Path.of("TemplateTest.main.html"));
   }
 }

@@ -7,30 +7,31 @@ import static nl.naturalis.yokete.render.RenderException.repetitionMismatch;
 
 class RenderState {
 
-  private final RenderUnit ru;
+  private final RenderSessionFactory rsf;
   private final Set<String> vToDo; // variables that have not been set yet
   private final Set<String> tToDo; // templates that have not been populated yet
   private final IdentityHashMap<Template, List<RenderSession>> sessions;
   private final Map<Integer, List<String>> varValues;
 
-  RenderState(RenderUnit ru) {
-    this.ru = ru;
-    this.sessions = new IdentityHashMap<>(ru.getTemplate().countNestedTemplates());
-    this.varValues = new HashMap<>(ru.getTemplate().countNestedTemplates());
-    this.vToDo = new HashSet<>(ru.getTemplate().getVariableNames());
-    this.tToDo = new HashSet<>(ru.getTemplate().getNestedTemplateNames());
+  RenderState(RenderSessionFactory rsf) {
+    this.rsf = rsf;
+    this.sessions = new IdentityHashMap<>(rsf.getTemplate().countNestedTemplates());
+    this.varValues = new HashMap<>(rsf.getTemplate().countNestedTemplates());
+    this.vToDo = new HashSet<>(rsf.getTemplate().getVariableNames());
+    this.tToDo = new HashSet<>(rsf.getTemplate().getNestedTemplateNames());
   }
 
-  RenderUnit getRenderUnit() {
-    return ru;
+  RenderSessionFactory getRenderUnit() {
+    return rsf;
   }
 
-  List<RenderSession> getOrCreateNestedSessions(RenderUnit ru, int amount) throws RenderException {
-    List<RenderSession> mySessions = sessions.get(ru.getTemplate());
+  List<RenderSession> getOrCreateNestedSessions(String tmplName, int amount)
+      throws RenderException {
+    List<RenderSession> mySessions = sessions.get(rsf.getTemplate());
     if (mySessions == null) {
-      mySessions = initializedList(new RenderSession(ru), amount);
+      mySessions = initializedList(rsf.newChildSession(tmplName), amount);
     } else if (mySessions.size() != amount) {
-      throw repetitionMismatch(ru.getTemplate().getName(), mySessions.size(), amount);
+      throw repetitionMismatch(rsf.getTemplate().getName(), mySessions.size(), amount);
     }
     return mySessions;
   }

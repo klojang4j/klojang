@@ -41,7 +41,7 @@ public class PathAccessor implements Accessor {
         template
             .getNames()
             .stream()
-            .map(n -> nameMapper.map(template, n))
+            .map(varName -> nameMapper.map(template, varName))
             .map(Path::new)
             .collect(toList());
     this.walker = new PathWalker(paths, RETURN_DEAD_END);
@@ -50,7 +50,7 @@ public class PathAccessor implements Accessor {
   }
 
   @Override
-  public Object getValue(Object from, String varName) throws RenderException {
+  public Object access(Object from, String varName) throws RenderException {
     if (from != mruObj) {
       walker.readValues(from, mruData);
       mruObj = from;
@@ -61,8 +61,7 @@ public class PathAccessor implements Accessor {
   }
 
   @Override
-  public Accessor getAccessorForNestedTemplate(String tmplName) {
-    Template nested = template.getNestedTemplate(tmplName);
+  public Accessor getAccessorForTemplate(Template nested) {
     return new PathAccessor(nested, mapper);
   }
 }

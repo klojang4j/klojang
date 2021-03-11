@@ -2,7 +2,6 @@ package nl.naturalis.yokete.render;
 
 import java.io.PrintStream;
 import java.util.*;
-import nl.naturalis.common.CollectionMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.TypeMap;
 import nl.naturalis.common.collection.UnmodifiableTypeMap;
@@ -20,12 +19,14 @@ import static nl.naturalis.yokete.render.RenderException.*;
 public class RenderSession {
 
   private static final Object whatever = new Object();
-  /**
-   * Defines some types that are definitely not suitable as data for a template, because they don't
-   * have a meaningful, accessible internal structure. There are, of course, a lot of types that are
+
+  /*
+   * Defines types that are definitely not suitable as data for a template, because they don't have
+   * a meaningful, accessible internal structure. There are of course plenty of types that are
    * (very) unlikely candidates as data sources for a template, but these ones we catch out
-   * explicitly. NB we don't care about the values, only about the keys. We should ideally also have
-   * a {@code TypeSet} interface in naturalis-common
+   * explicitly, as they are likely to be accidentally used by clients. NB we don't care about the
+   * values in the TypeMap, only about the keys. We should ideally also have a {@code TypeSet}
+   * interface in naturalis-common.
    */
   private static final TypeMap<?> BAD_DATA =
       UnmodifiableTypeMap.build()
@@ -35,12 +36,12 @@ public class RenderSession {
           .add(Collection.class, whatever)
           .freeze();
 
-  final RenderUnit ru;
+  final RenderSessionFactory factory;
   final RenderState state;
 
-  RenderSession(RenderUnit renderUnit) {
-    this.ru = renderUnit;
-    this.state = new RenderState(renderUnit);
+  RenderSession(RenderSessionFactory rsf) {
+    this.factory = rsf;
+    this.state = new RenderState(rsf);
   }
 
   /* METHODS FOR SETTING A SINGLE TEMPLATE VARIABLE */
@@ -50,8 +51,8 @@ public class RenderSession {
    * declared with an inline {@link EscapeType} (e.g. {@code ~%html:fullName%}) no escaping will be
    * applied to the value.
    *
-   * @param name
-   * @param value
+   * @param name The name of the variable to set
+   * @param value The value of the variable
    * @throws RenderException
    */
   public RenderSession setVariable(String name, String value) throws RenderException {
@@ -60,13 +61,16 @@ public class RenderSession {
 
   /**
    * Sets a single variable within the template to the specified value using the specified escape
-   * type. The specified escape type will not override the inline escape type of a variable (e.g.
-   * {@code ~%html:fullName%}), but it will be used if the variable was declared without an inline
-   * escape type ({@code ~%fullName%}).
+   * type. If the variable was declared with an inline escape type that differs from the specified
+   * escape type, the variable will still be set, but escaped using the inline escape type. This
+   * allows you to declare all variables inside HTML tags (most likely the overwhelming majority)
+   * without an inline escape type, while only specifying an inline escape type for variables inside
+   * <code>&lt;script&gt;</code> tags (namely "js"). This makes your template easier to write and
+   * less cluttered.
    *
    * @param name The name of the variable to set
    * @param value The value of the variable
-   * @param escapeType The escape type to use when rendering the variable
+   * @param escapeType The escape type to use if the variable did not declare an inline escape type
    * @return This {@code RenderSession}
    * @throws RenderException
    */
@@ -82,7 +86,7 @@ public class RenderSession {
    *
    * @param name The name of the variable to set
    * @param value The string values to concatenate
-   * @param escapeType The escape type to use when rendering the variable
+   * @param escapeType The escape type to use if the variable did not declare an inline escape type
    * @return This {@code RenderSession}
    * @throws RenderException
    */
@@ -92,15 +96,15 @@ public class RenderSession {
     Check.that(value, "value").is(noneNull());
     Check.notNull(escapeType, "escapeType");
     Check.on(alreadySet(name), state.isSet(name)).is(no());
-    Check.on(noSuchVariable(name), name).is(in(), ru.getTemplate().getVariableNames());
+    Check.on(noSuchVariable(name), name).is(in(), factory.getTemplate().getVariableNames());
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
-    ru.getTemplate().getVarPartIndices().get(name).forEach(i -> escape(i, value, escapeType));
+    factory.getTemplate().getVarPartIndices().get(name).forEach(i -> escape(i, value, escapeType));
     state.done(name);
     return this;
   }
 
   private void escape(int partIndex, List<String> val, EscapeType escapeType) {
-    List<Part> parts = ru.getTemplate().getParts();
+    List<Part> parts = factory.getTemplate().getParts();
     VariablePart part = (VariablePart) parts.get(partIndex);
     EscapeType myEscType = part.getEscapeType();
     if (myEscType == NOT_SPECIFIED) {
@@ -177,15 +181,9 @@ public class RenderSession {
     Check.that(data, "data").is(noneNull());
     Check.notNull(escapeType, "escapeType");
     Check.on(alreadyPopulated(name), state.isPopulated(name)).is(no());
-    Check.on(noSuchTemplate(name), name).is(in(), ru.getTemplate().getNestedTemplateNames());
+    Check.on(noSuchTemplate(name), name).is(in(), factory.getTemplate().getNestedTemplateNames());
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
-    Template nestedTemplate = ru.getTemplate().getNestedTemplate(name);
-    RenderUnit ru1 =
-        new RenderUnit(
-            nestedTemplate,
-            ru.getAccessor().getAccessorForNestedTemplate(name),
-            ru.getStringifier());
-    List<RenderSession> session = state.getOrCreateNestedSessions(ru1, data.size());
+    List<RenderSession> session = state.getOrCreateNestedSessions(name, data.size());
     for (int i = 0; i < session.size(); ++i) {
       session.get(i).setData(data.get(i), escapeType, names);
     }
@@ -202,13 +200,12 @@ public class RenderSession {
    * @throws RenderException
    */
   public RenderSession dontRender(String name) throws RenderException {
-    Check.on(invalidName(name), name).is(in(), ru.getTemplate().getNames());
-    if (ru.getTemplate().containsVariable(name)) {
+    if (factory.getTemplate().containsVariable(name)) {
       setVariable(name, Collections.emptyList(), ESCAPE_NONE);
-    } else if (ru.getTemplate().containsNestedTemplate(name)) {
+    } else if (factory.getTemplate().containsNestedTemplate(name)) {
       populate(name, Collections.emptyList());
     } else {
-      Check.fail(invalidName(name));
+      Check.failOn(invalidName(name));
     }
     return this;
   }
@@ -256,7 +253,7 @@ public class RenderSession {
   public RenderSession setData(Object data, EscapeType escapeType, String... names)
       throws RenderException {
     if (data == null) {
-      Template t = ru.getTemplate();
+      Template t = factory.getTemplate();
       Check.on(nullData(t), t.getNames()).has(size(), eq(), 0);
     }
     Check.on(badData(data), BAD_DATA).is(notContainingKey(), data.getClass());
@@ -269,19 +266,13 @@ public class RenderSession {
       throws RenderException {
     Set<String> varNames;
     if (isEmpty(names)) {
-      varNames = ru.getTemplate().getVariableNames();
+      varNames = factory.getTemplate().getVariableNames();
     } else {
-      varNames = new HashSet<>(ru.getTemplate().getVariableNames());
+      varNames = new HashSet<>(factory.getTemplate().getVariableNames());
       varNames.retainAll(Set.of(names));
     }
     for (String varName : varNames) {
-      Object val = ru.getAccessor().getValue(data, varName);
-      List<?> vals = CollectionMethods.asList(val);
-      List<String> strvals = new ArrayList<>(vals.size());
-      for (Object v : vals) {
-        String s = ru.getStringifier().stringify(ru.getTemplate(), varName, v);
-        strvals.add(s);
-      }
+      List<String> strvals = factory.stringify(data, varName);
       setVariable(varName, strvals, escapeType);
     }
   }
@@ -290,13 +281,13 @@ public class RenderSession {
       throws RenderException {
     Set<String> tmplNames;
     if (isEmpty(names)) {
-      tmplNames = ru.getTemplate().getNestedTemplateNames();
+      tmplNames = factory.getTemplate().getNestedTemplateNames();
     } else {
-      tmplNames = new HashSet<>(ru.getTemplate().getNestedTemplateNames());
+      tmplNames = new HashSet<>(factory.getTemplate().getNestedTemplateNames());
       tmplNames.retainAll(Set.of(names));
     }
     for (String name : tmplNames) {
-      Object nestedData = ru.getAccessor().getValue(data, name);
+      Object nestedData = factory.getAccessor().access(data, name);
       populate(name, nestedData, escapeType, names);
     }
   }
