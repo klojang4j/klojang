@@ -72,8 +72,8 @@ public class RenderException extends YoketeException {
     return s -> new RenderException(BAD_ESCAPE_TYPE);
   }
 
-  public static RenderException notRenderable(Set<String> vToDo, Set<String> tToDo) {
-    String msg = format(NOT_RENDERABLE, vToDo, tToDo);
+  public static RenderException notRenderable(Set<String> vToDo) {
+    String msg = format(NOT_RENDERABLE, vToDo);
     return new RenderException(msg);
   }
 

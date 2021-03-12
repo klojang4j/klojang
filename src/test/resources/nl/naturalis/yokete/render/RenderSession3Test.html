@@ -17,7 +17,16 @@
 				<td>~%poBox%</td>
 				<td>~%established%</td>
 				<td>~%director%</td>
-				<td>~%%include:departments:RenderSessionTest.departments.html%</td>
+				<td>
+					<table>
+					~%%begin:departments%
+						<tr>
+							<td>~%name%</td>
+							<td>~%manager%</td>
+						</tr>
+					~%%end:departments%
+					</table>
+				</td>
 			</tr>	
 		~%%end:company%
 		</tbody>

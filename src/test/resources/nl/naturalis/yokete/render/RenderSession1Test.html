@@ -1,4 +1,7 @@
 <html>
+<head>
+<title>~%title%</title>
+</head>
 <body>
 	<table>
 		<thead>
@@ -12,12 +15,18 @@
 		</thead>
 		<tbody>
 		~%%begin:company%
-			<tr onclick="showPopup('~%js:name%');">
-				<td>~%name%</td>
-				<td>~%poBox%</td>
-				<td>~%established%</td>
+			<tr>
 				<td>~%director%</td>
-				<td>~%%include:departments:RenderSessionTest.departments.html%</td>
+				<td>
+					<table>
+					~%%begin:departments%
+						<tr>
+							<td>~%name%</td>
+							<td>~%manager%</td>
+						</tr>
+					~%%end:departments%
+					</table>
+				</td>
 			</tr>	
 		~%%end:company%
 		</tbody>

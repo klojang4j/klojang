@@ -9,7 +9,6 @@ class RenderState {
 
   private final RenderSessionFactory rsf;
   private final Set<String> vToDo; // variables that have not been set yet
-  private final Set<String> tToDo; // templates that have not been populated yet
   private final IdentityHashMap<Template, List<RenderSession>> sessions;
   private final Map<Integer, List<String>> varValues;
 
@@ -18,7 +17,6 @@ class RenderState {
     this.sessions = new IdentityHashMap<>(rsf.getTemplate().countNestedTemplates());
     this.varValues = new HashMap<>(rsf.getTemplate().countNestedTemplates());
     this.vToDo = new HashSet<>(rsf.getTemplate().getVariableNames());
-    this.tToDo = new HashSet<>(rsf.getTemplate().getNestedTemplateNames());
   }
 
   RenderSessionFactory getRenderUnit() {
@@ -29,7 +27,7 @@ class RenderState {
       throws RenderException {
     List<RenderSession> mySessions = sessions.get(rsf.getTemplate());
     if (mySessions == null) {
-      mySessions = initializedList(rsf.newChildSession(tmplName), amount);
+      mySessions = initializedList(i -> rsf.newChildSession(tmplName), amount);
     } else if (mySessions.size() != amount) {
       throw repetitionMismatch(rsf.getTemplate().getName(), mySessions.size(), amount);
     }
@@ -56,23 +54,11 @@ class RenderState {
     vToDo.remove(var);
   }
 
-  boolean isPopulated(String tmplName) {
-    return !tToDo.contains(tmplName);
-  }
-
-  void populated(String tmpl) {
-    tToDo.remove(tmpl);
-  }
-
   Set<String> getUnsetVariables() {
     return vToDo;
   }
 
-  Set<String> getUnpopulatedTemplates() {
-    return tToDo;
-  }
-
   boolean isRenderable() {
-    return vToDo.isEmpty() && tToDo.isEmpty();
+    return vToDo.isEmpty();
   }
 }
