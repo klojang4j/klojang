@@ -20,22 +20,19 @@ class Parser {
   private static interface PartialParser
       extends ThrowingBiFunction<UnparsedPart, Set<String>, List<Part>, ParseException> {}
 
-  private final Template parent;
   private final String tmplName;
   private final Class<?> clazz;
   private final Path path;
   private final String src;
 
-  Parser(Template parent, String tmplName, Class<?> clazz, String src) {
-    this.parent = parent;
+  Parser(String tmplName, Class<?> clazz, String src) {
     this.tmplName = tmplName;
     this.path = null;
     this.src = Check.notNull(src).ok();
     this.clazz = clazz;
   }
 
-  Parser(Template parent, String tmplName, Class<?> clazz, Path path) throws ParseException {
-    this.parent = parent;
+  Parser(String tmplName, Class<?> clazz, Path path) throws ParseException {
     this.tmplName = tmplName;
     this.clazz = Check.notNull(clazz).ok();
     this.path = path;
@@ -58,7 +55,7 @@ class Parser {
     parts = parse(parts, namesInUse, this::parseIncludedTmpls);
     parts = parse(parts, namesInUse, this::parseVars);
     parts = collectTextParts(parts);
-    return new Template(parent, tmplName, path, List.copyOf(parts));
+    return new Template(tmplName, path, List.copyOf(parts));
   }
 
   /*
@@ -156,7 +153,7 @@ class Parser {
           .is(notIn(), names)
           .is(notEqualTo(), Template.ROOT_TEMPLATE_NAME);
       names.add(name);
-      Parser parser = new Parser(parent, name, clazz, mySrc);
+      Parser parser = new Parser(name, clazz, mySrc);
       Template nested = parser.parse();
       parts.add(new InlineTemplatePart(nested, offset + m.start()));
     }
@@ -188,7 +185,7 @@ class Parser {
       Check.on(invalidIncludePath(src, offset + m.start(3), path), clazz.getResource(path))
           .is(notNull());
       names.add(name);
-      Parser parser = new Parser(parent, name, clazz, Path.of(path));
+      Parser parser = new Parser(name, clazz, Path.of(path));
       Template nested = parser.parse();
       parts.add(new IncludedTemplatePart(nested, offset + m.start()));
     }

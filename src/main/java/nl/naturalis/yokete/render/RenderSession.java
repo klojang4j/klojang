@@ -95,8 +95,9 @@ public class RenderSession {
     Check.notNull(name, "name");
     Check.that(value, "value").is(noneNull());
     Check.notNull(escapeType, "escapeType");
-    Check.on(alreadySet(name), state.isSet(name)).is(no());
-    Check.on(noSuchVariable(name), name).is(in(), factory.getTemplate().getVariableNames());
+    Template t = factory.getTemplate();
+    Check.on(alreadySet(t, name), state.isSet(name)).is(no());
+    Check.on(noSuchVariable(t, name), name).is(in(), t.getVariableNames());
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
     factory.getTemplate().getVarPartIndices().get(name).forEach(i -> escape(i, value, escapeType));
     state.done(name);
@@ -183,9 +184,9 @@ public class RenderSession {
     Check.on(alreadyPopulated(name), state.isPopulated(name)).is(no());
     Check.on(noSuchTemplate(name), name).is(in(), factory.getTemplate().getNestedTemplateNames());
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
-    List<RenderSession> session = state.getOrCreateNestedSessions(name, data.size());
-    for (int i = 0; i < session.size(); ++i) {
-      session.get(i).setData(data.get(i), escapeType, names);
+    List<RenderSession> sessions = state.getOrCreateNestedSessions(name, data.size());
+    for (int i = 0; i < sessions.size(); ++i) {
+      sessions.get(i).setData(data.get(i), escapeType, names);
     }
     state.populated(name);
     return this;

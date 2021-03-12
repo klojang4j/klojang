@@ -32,7 +32,7 @@ public class Template {
    * template get their name from the template's source code (for example: {@code
    * ~%%begin:myNestedTemplate%} or {@code ~%%include:/views/myNestedTemplate.html%}).
    */
-  public static final String ROOT_TEMPLATE_NAME = "%root";
+  public static final String ROOT_TEMPLATE_NAME = "@root";
 
   /**
    * Parses the specified source code (presumably an HTML page or an HTML snippet) into a {@code
@@ -60,7 +60,7 @@ public class Template {
    * @throws ParseException
    */
   public static Template parse(Class<?> clazz, String source) throws ParseException {
-    return new Parser(null, ROOT_TEMPLATE_NAME, clazz, source).parse();
+    return new Parser(ROOT_TEMPLATE_NAME, clazz, source).parse();
   }
 
   /**
@@ -75,10 +75,9 @@ public class Template {
    * @throws ParseException
    */
   public static Template parse(Class<?> clazz, Path path) throws ParseException {
-    return new Parser(null, ROOT_TEMPLATE_NAME, clazz, path).parse();
+    return new Parser(ROOT_TEMPLATE_NAME, clazz, path).parse();
   }
 
-  private final Template parent;
   private final String name;
   private final Path path;
   private final List<Part> parts;
@@ -91,8 +90,9 @@ public class Template {
    */
   private final Set<String> names;
 
-  Template(Template parent, String name, Path path, List<Part> parts) {
-    this.parent = parent;
+  private Template parent;
+
+  Template(String name, Path path, List<Part> parts) {
     this.name = name;
     this.path = path;
     this.parts = parts;
@@ -100,6 +100,13 @@ public class Template {
     this.tmplIndices = getTmplIndices(parts);
     this.names = getNames(parts);
     this.textIndices = getTextIndices(parts);
+    this.tmplIndices
+        .values()
+        .stream()
+        .map(parts::get)
+        .map(NestedTemplatePart.class::cast)
+        .map(NestedTemplatePart::getTemplate)
+        .forEach(t -> t.parent = this);
   }
 
   /**

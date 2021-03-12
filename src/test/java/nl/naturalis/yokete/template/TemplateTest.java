@@ -56,4 +56,23 @@ public class TemplateTest {
     indices = t0.getNestedTemplate("company").getVarPartIndices().get("poBox");
     assertEquals(1, indices.size());
   }
+
+  @Test // getVarPartIndices
+  public void test03() throws ParseException {
+    Template t0 = Template.parse(getClass(), Path.of("TemplateTest.main.html"));
+    t0.getNestedTemplatesRecursive()
+        .forEach(t -> System.out.println(TemplateUtils.getFQName(t, "test")));
+  }
+
+  @Test // getNestedTemplates
+  public void test04() throws ParseException {
+    Template t0 = Template.parse(getClass(), Path.of("TemplateTest.main.html"));
+    t0.getNestedTemplates().forEach(t -> System.out.println(t.getName()));
+    t0 = t0.getNestedTemplate("company");
+    t0.getNestedTemplates().forEach(t -> System.out.println(t.getName()));
+    t0 = t0.getNestedTemplate("departments");
+    t0.getNestedTemplates().forEach(t -> System.out.println(t.getName()));
+    t0 = t0.getNestedTemplate("employees");
+    t0.getNestedTemplates().forEach(t -> System.out.println(t.getName()));
+  }
 }

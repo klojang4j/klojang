@@ -4,6 +4,7 @@ import java.util.Set;
 import java.util.function.Function;
 import nl.naturalis.yokete.YoketeException;
 import nl.naturalis.yokete.template.Template;
+import nl.naturalis.yokete.template.TemplateUtils;
 import static java.lang.String.format;
 import static nl.naturalis.common.ClassMethods.prettyClassName;
 
@@ -15,7 +16,7 @@ public class RenderException extends YoketeException {
 
   private static final String INVALID_NAME = "No such variable or nested template: \"%s\"";
 
-  private static final String ALREADY_SET = "Variable %s has already been set";
+  private static final String ALREADY_SET = "Variable already set: \"%s\"";
 
   private static final String ALREADY_POPULATED = "Template %s has already been populated";
 
@@ -41,8 +42,9 @@ public class RenderException extends YoketeException {
 
   private static final String BAD_DATA = "Cannot use instance of opaque class %s as template data";
 
-  public static Function<String, RenderException> noSuchVariable(String name) {
-    return s -> new RenderException(format(NO_SUCH_VARIABLE, name));
+  public static Function<String, RenderException> noSuchVariable(Template t, String name) {
+    String fqn = TemplateUtils.getFQName(t, name);
+    return s -> new RenderException(format(NO_SUCH_VARIABLE, fqn));
   }
 
   public static Function<String, RenderException> noSuchTemplate(String name) {
@@ -53,8 +55,9 @@ public class RenderException extends YoketeException {
     return s -> new RenderException(format(INVALID_NAME, name));
   }
 
-  public static Function<String, RenderException> alreadySet(String name) {
-    return s -> new RenderException(format(ALREADY_SET, name));
+  public static Function<String, RenderException> alreadySet(Template t, String name) {
+    String fqn = TemplateUtils.getFQName(t, name);
+    return s -> new RenderException(format(ALREADY_SET, fqn));
   }
 
   public static Function<String, RenderException> alreadyPopulated(String name) {
