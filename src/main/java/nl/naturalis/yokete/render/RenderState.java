@@ -7,29 +7,29 @@ import static nl.naturalis.yokete.render.RenderException.repetitionMismatch;
 
 class RenderState {
 
-  private final RenderSessionFactory rsf;
+  private final RenderSessionFactory factory;
   private final Set<String> vToDo; // variables that have not been set yet
   private final IdentityHashMap<Template, List<RenderSession>> sessions;
   private final Map<Integer, List<String>> varValues;
 
-  RenderState(RenderSessionFactory rsf) {
-    this.rsf = rsf;
-    this.sessions = new IdentityHashMap<>(rsf.getTemplate().countNestedTemplates());
-    this.varValues = new HashMap<>(rsf.getTemplate().countNestedTemplates());
-    this.vToDo = new HashSet<>(rsf.getTemplate().getVariableNames());
+  RenderState(RenderSessionFactory factory) {
+    this.factory = factory;
+    this.sessions = new IdentityHashMap<>(factory.getTemplate().countNestedTemplates());
+    this.varValues = new HashMap<>(factory.getTemplate().countNestedTemplates());
+    this.vToDo = new HashSet<>(factory.getTemplate().getVariableNames());
   }
 
-  RenderSessionFactory getRenderUnit() {
-    return rsf;
+  RenderSessionFactory getSessionFactory() {
+    return factory;
   }
 
   List<RenderSession> getOrCreateNestedSessions(String tmplName, int amount)
       throws RenderException {
-    List<RenderSession> mySessions = sessions.get(rsf.getTemplate());
+    List<RenderSession> mySessions = sessions.get(factory.getTemplate());
     if (mySessions == null) {
-      mySessions = initializedList(i -> rsf.newChildSession(tmplName), amount);
+      mySessions = initializedList(i -> factory.newChildSession(tmplName), amount);
     } else if (mySessions.size() != amount) {
-      throw repetitionMismatch(rsf.getTemplate().getName(), mySessions.size(), amount);
+      throw repetitionMismatch(factory.getTemplate().getName(), mySessions.size(), amount);
     }
     return mySessions;
   }
