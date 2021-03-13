@@ -37,7 +37,7 @@ class RenderState {
     return mySessions;
   }
 
-  List<RenderSession> getSessions(Template template) {
+  List<RenderSession> getChildSessions(Template template) {
     return sessions.get(template);
   }
 

@@ -318,7 +318,7 @@ public class RenderSession {
 
   /* RENDER METHODS */
 
-  void render(PrintStream ps) throws RenderException {
+  public void render(PrintStream ps) throws RenderException {
     Check.notNull(ps);
     if (!state.isRenderable()) {
       throw notRenderable(state.getUnsetVars());
@@ -327,7 +327,7 @@ public class RenderSession {
     renderer.render(ps);
   }
 
-  void render(StringBuilder sb) throws RenderException {
+  public void render(StringBuilder sb) throws RenderException {
     Check.notNull(sb);
     if (!state.isRenderable()) {
       throw notRenderable(state.getUnsetVars());
@@ -336,7 +336,7 @@ public class RenderSession {
     renderer.render(sb);
   }
 
-  StringBuilder render() throws RenderException {
+  public StringBuilder render() throws RenderException {
     if (!state.isRenderable()) {
       throw notRenderable(state.getUnsetVars());
     }
