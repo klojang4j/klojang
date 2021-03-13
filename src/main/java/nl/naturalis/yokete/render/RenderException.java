@@ -27,9 +27,7 @@ public class RenderException extends YoketeException {
 
   private static final String BAD_ESCAPE_TYPE = "NOT_SPECIFIED is not a valid escape type";
 
-  private static final String NOT_RENDERABLE =
-      "Not all variables and/or templates populated yet. Variables to do: %s. "
-          + "Templates to do: %s";
+  private static final String NOT_RENDERABLE = "Cannot render yet. Not all variables set: %s. ";
 
   private static final String UNEXPECTED_TYPE = "Unexpected or illegal type for variable %s: %s";
 
@@ -72,8 +70,8 @@ public class RenderException extends YoketeException {
     return s -> new RenderException(BAD_ESCAPE_TYPE);
   }
 
-  public static RenderException notRenderable(Set<String> vToDo) {
-    String msg = format(NOT_RENDERABLE, vToDo);
+  public static RenderException notRenderable(Set<String> varsToDo) {
+    String msg = format(NOT_RENDERABLE, varsToDo);
     return new RenderException(msg);
   }
 

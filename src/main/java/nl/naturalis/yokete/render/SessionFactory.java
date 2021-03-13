@@ -46,8 +46,7 @@ public final class SessionFactory {
     this.stringifier = Check.notNull(stringifier).ok();
   }
 
-  RenderSession newChildSession(String nestedTemplateName) {
-    Template nested = template.getNestedTemplate(nestedTemplateName);
+  RenderSession newChildSession(Template nested) {
     Accessor acc = accessor.getAccessorForTemplate(nested);
     SessionFactory factory = new SessionFactory(nested, acc, stringifier);
     return factory.newRenderSession();

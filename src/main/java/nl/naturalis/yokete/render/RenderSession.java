@@ -205,7 +205,7 @@ public class RenderSession {
     Check.notNull(escapeType, "escapeType");
     Check.on(noSuchTemplate(name), name).is(in(), factory.getTemplate().getNestedTemplateNames());
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
-    List<RenderSession> sessions = state.getOrCreateNestedSessions(name, data.size());
+    List<RenderSession> sessions = state.getChildSessions(name, data.size());
     for (int i = 0; i < sessions.size(); ++i) {
       sessions.get(i).fillWith(data.get(i), escapeType, names);
     }
@@ -321,7 +321,7 @@ public class RenderSession {
   void render(PrintStream ps) throws RenderException {
     Check.notNull(ps);
     if (!state.isRenderable()) {
-      throw notRenderable(state.getUnsetVariables());
+      throw notRenderable(state.getUnsetVars());
     }
     Renderer renderer = new Renderer(state);
     renderer.render(ps);
@@ -330,7 +330,7 @@ public class RenderSession {
   void render(StringBuilder sb) throws RenderException {
     Check.notNull(sb);
     if (!state.isRenderable()) {
-      throw notRenderable(state.getUnsetVariables());
+      throw notRenderable(state.getUnsetVars());
     }
     Renderer renderer = new Renderer(state);
     renderer.render(sb);
@@ -338,9 +338,13 @@ public class RenderSession {
 
   StringBuilder render() throws RenderException {
     if (!state.isRenderable()) {
-      throw notRenderable(state.getUnsetVariables());
+      throw notRenderable(state.getUnsetVars());
     }
     Renderer renderer = new Renderer(state);
     return renderer.render();
+  }
+
+  RenderState getState() {
+    return state;
   }
 }
