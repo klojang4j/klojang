@@ -12,26 +12,26 @@ public class TemplateTest {
   @Test
   public void test00() throws ParseException {
     Template t0 = Template.parse(getClass(), Path.of("TemplateTest.main.html"));
-    assertEquals(0, t0.countVariables());
+    assertEquals(0, t0.countVars());
     assertEquals(1, t0.countNestedTemplates());
     assertEquals("company", t0.getNestedTemplates().iterator().next().getName());
     Template t0_0 = t0.getNestedTemplate("company");
-    assertEquals(5, t0_0.countVariables());
+    assertEquals(5, t0_0.countVars());
     assertEquals(1, t0_0.countNestedTemplates());
     assertEquals(
-        List.of("name", "poBox", "established", "director"), List.copyOf(t0_0.getVariableNames()));
+        List.of("name", "poBox", "established", "director"), List.copyOf(t0_0.getVars()));
     Template t0_0_0 = t0_0.getNestedTemplate("departments");
-    assertEquals(2, t0_0_0.countVariables());
+    assertEquals(2, t0_0_0.countVars());
     assertEquals(1, t0_0_0.countNestedTemplates());
-    assertEquals(List.of("name", "managerName"), List.copyOf(t0_0_0.getVariableNames()));
+    assertEquals(List.of("name", "managerName"), List.copyOf(t0_0_0.getVars()));
     Template t0_0_0_0 = t0_0_0.getNestedTemplate("employees");
-    assertEquals(2, t0_0_0_0.countVariables());
+    assertEquals(2, t0_0_0_0.countVars());
     assertEquals(1, t0_0_0_0.countNestedTemplates());
-    assertEquals(List.of("name", "age"), List.copyOf(t0_0_0_0.getVariableNames()));
+    assertEquals(List.of("name", "age"), List.copyOf(t0_0_0_0.getVars()));
     Template t0_0_0_0_0 = t0_0_0_0.getNestedTemplate("roles");
-    assertEquals(1, t0_0_0_0_0.countVariables());
+    assertEquals(1, t0_0_0_0_0.countVars());
     assertEquals(0, t0_0_0_0_0.countNestedTemplates());
-    assertEquals(List.of("role"), List.copyOf(t0_0_0_0_0.getVariableNames()));
+    assertEquals(List.of("role"), List.copyOf(t0_0_0_0_0.getVars()));
   }
 
   @Test // getVariableNamesPerTemplate
@@ -43,7 +43,7 @@ public class TemplateTest {
             + "employees:name;employees:age;"
             + "roles:role;";
     StringBuilder sb = new StringBuilder(100);
-    t0.getVariableNamesPerTemplate()
+    t0.getVarsPerTemplate()
         .forEach(t -> append(sb, t.getLeft().getName(), ":", t.getRight(), ";"));
     assertEquals(expected, sb.toString());
   }

@@ -197,7 +197,7 @@ public class Template {
    *
    * @return The names of all variables in this {@code Template}
    */
-  public Set<String> getVariableNames() {
+  public Set<String> getVars() {
     return varIndices.keySet();
   }
 
@@ -207,18 +207,18 @@ public class Template {
    * @param name The name of the variable
    * @return Whether or not this {@code Template} contains a variable with the specified name
    */
-  public boolean containsVariable(String name) {
-    return varIndices.containsKey(name);
+  public boolean hasVar(String name) {
+    return Check.notNull(name).ok(varIndices::containsKey);
   }
 
   /**
    * Returns the number of variables in this {@code Template}. Note that this method does not count
-   * the number of <i>unique</i> variable names (which would simply be {@link #getVariableNames()
+   * the number of <i>unique</i> variable names (which would simply be {@link #getVars()
    * getVariableNames().size()}).
    *
    * @return The number of variables in this {@code Template}
    */
-  public int countVariables() {
+  public int countVars() {
     return (int) parts.stream().filter(VariablePart.class::isInstance).count();
   }
 
@@ -229,7 +229,7 @@ public class Template {
    *
    * @return All variable names in this {@code Template} and the templates nested inside it
    */
-  public Set<Tuple<Template, String>> getVariableNamesPerTemplate() {
+  public Set<Tuple<Template, String>> getVarsPerTemplate() {
     ArrayList<Tuple<Template, String>> tuples = new ArrayList<>(25);
     collectVarsPerTemplate(this, tuples);
     return new LinkedHashSet<>(tuples);
@@ -237,7 +237,7 @@ public class Template {
 
   private static void collectVarsPerTemplate(
       Template t0, ArrayList<Tuple<Template, String>> tuples) {
-    t0.getVariableNames().stream().map(s -> Tuple.of(t0, s)).forEach(tuples::add);
+    t0.getVars().stream().map(s -> Tuple.of(t0, s)).forEach(tuples::add);
     t0.getNestedTemplates().forEach(t -> collectVarsPerTemplate(t, tuples));
   }
 
@@ -272,7 +272,7 @@ public class Template {
    * @param name The name of the nested template
    * @return Whether or not this {@code Template} contains a nested template with the specified name
    */
-  public boolean containsNestedTemplate(String name) {
+  public boolean hasNestedTemplate(String name) {
     return varIndices.containsKey(name);
   }
 
@@ -344,7 +344,7 @@ public class Template {
   /**
    * More or less re-assembles to source code from the constituent parts of the {@code Template}.
    * Note, however, that ditch block are ditched early on in the parsing process and there is no
-   * trace left of them in the resulting {@code Template} instance.
+   * trace of them left in the resulting {@code Template} instance.
    */
   @Override
   public String toString() {

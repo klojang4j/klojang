@@ -36,10 +36,10 @@ public class RenderSession {
           .add(Collection.class, whatever)
           .freeze();
 
-  final RenderSessionFactory factory;
+  final SessionFactory factory;
   final RenderState state;
 
-  RenderSession(RenderSessionFactory rsf) {
+  RenderSession(SessionFactory rsf) {
     this.factory = rsf;
     this.state = new RenderState(rsf);
   }
@@ -97,14 +97,14 @@ public class RenderSession {
     Check.notNull(escapeType, "escapeType");
     Template t = factory.getTemplate();
     Check.on(alreadySet(t, name), state.isSet(name)).is(no());
-    Check.on(noSuchVariable(t, name), name).is(in(), t.getVariableNames());
+    Check.on(noSuchVariable(t, name), name).is(in(), t.getVars());
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
-    factory.getTemplate().getVarPartIndices().get(name).forEach(i -> escape(i, value, escapeType));
+    factory.getTemplate().getVarPartIndices().get(name).forEach(i -> setVar(i, value, escapeType));
     state.done(name);
     return this;
   }
 
-  private void escape(int partIndex, List<String> val, EscapeType escapeType) {
+  private void setVar(int partIndex, List<String> val, EscapeType escapeType) {
     List<Part> parts = factory.getTemplate().getParts();
     VariablePart part = (VariablePart) parts.get(partIndex);
     EscapeType myEscType = part.getEscapeType();
@@ -192,16 +192,16 @@ public class RenderSession {
 
   /**
    * Shortcut for specifying that you don't want the specified variable or nested template to be
-   * rendered.
+   * rendered. See {@link #populate(String, Object, EscapeType, String...)}.
    *
    * @param name The name of a variable or nested template
    * @return This {@code RenderSession}
    * @throws RenderException
    */
   public RenderSession dontRender(String name) throws RenderException {
-    if (factory.getTemplate().containsVariable(name)) {
+    if (factory.getTemplate().hasVar(name)) {
       setVariable(name, Collections.emptyList(), ESCAPE_NONE);
-    } else if (factory.getTemplate().containsNestedTemplate(name)) {
+    } else if (factory.getTemplate().hasNestedTemplate(name)) {
       populate(name, Collections.emptyList());
     } else {
       Check.failOn(invalidName(name));
@@ -265,9 +265,9 @@ public class RenderSession {
       throws RenderException {
     Set<String> varNames;
     if (isEmpty(names)) {
-      varNames = factory.getTemplate().getVariableNames();
+      varNames = factory.getTemplate().getVars();
     } else {
-      varNames = new HashSet<>(factory.getTemplate().getVariableNames());
+      varNames = new HashSet<>(factory.getTemplate().getVars());
       varNames.retainAll(Set.of(names));
     }
     for (String varName : varNames) {

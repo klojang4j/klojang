@@ -7,19 +7,19 @@ import static nl.naturalis.yokete.render.RenderException.repetitionMismatch;
 
 class RenderState {
 
-  private final RenderSessionFactory factory;
-  private final Set<String> vToDo; // variables that have not been set yet
+  private final SessionFactory factory;
+  private final Set<String> toDo; // variables that have not been set yet
   private final IdentityHashMap<Template, List<RenderSession>> sessions;
   private final Map<Integer, List<String>> varValues;
 
-  RenderState(RenderSessionFactory factory) {
+  RenderState(SessionFactory factory) {
     this.factory = factory;
     this.sessions = new IdentityHashMap<>(factory.getTemplate().countNestedTemplates());
     this.varValues = new HashMap<>(factory.getTemplate().countNestedTemplates());
-    this.vToDo = new HashSet<>(factory.getTemplate().getVariableNames());
+    this.toDo = new HashSet<>(factory.getTemplate().getVars());
   }
 
-  RenderSessionFactory getSessionFactory() {
+  SessionFactory getSessionFactory() {
     return factory;
   }
 
@@ -47,18 +47,18 @@ class RenderState {
   }
 
   boolean isSet(String var) {
-    return !vToDo.contains(var);
+    return !toDo.contains(var);
   }
 
   void done(String var) {
-    vToDo.remove(var);
+    toDo.remove(var);
   }
 
   Set<String> getUnsetVariables() {
-    return vToDo;
+    return toDo;
   }
 
   boolean isRenderable() {
-    return vToDo.isEmpty();
+    return toDo.isEmpty();
   }
 }

@@ -6,11 +6,16 @@ import nl.naturalis.common.CollectionMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.Template;
 
-public final class RenderSessionFactory {
+/**
+ * A factory class for {@link RenderSession} objects.
+ *
+ * @author Ayco Holleman
+ */
+public final class SessionFactory {
 
-  public static RenderSessionFactory getInstance(
+  public static SessionFactory getInstance(
       Template template, Accessor accessor, TemplateStringifier stringifier) {
-    return new RenderSessionFactory(template, accessor, stringifier);
+    return new SessionFactory(template, accessor, stringifier);
   }
 
   private final Template template;
@@ -21,7 +26,7 @@ public final class RenderSessionFactory {
     return new RenderSession(this);
   }
 
-  RenderSessionFactory(Template template, Accessor accessor, TemplateStringifier stringifier) {
+  SessionFactory(Template template, Accessor accessor, TemplateStringifier stringifier) {
     this.template = Check.notNull(template).ok();
     this.accessor = Check.notNull(accessor).ok();
     this.stringifier = Check.notNull(stringifier).ok();
@@ -30,8 +35,8 @@ public final class RenderSessionFactory {
   RenderSession newChildSession(String nestedTemplateName) {
     Template nested = template.getNestedTemplate(nestedTemplateName);
     Accessor acc = accessor.getAccessorForTemplate(nested);
-    RenderSessionFactory rsf = new RenderSessionFactory(nested, acc, stringifier);
-    return new RenderSession(rsf);
+    SessionFactory factory = new SessionFactory(nested, acc, stringifier);
+    return factory.newRenderSession();
   }
 
   List<String> stringify(Object data, String varName) throws RenderException {

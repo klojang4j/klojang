@@ -92,7 +92,7 @@ public final class TemplateStringifier {
 
     private Builder(Template tmpl) {
       this.tmpl = tmpl;
-      this.varNames = tmpl.getVariableNamesPerTemplate();
+      this.varNames = tmpl.getVarsPerTemplate();
     }
 
     /**
