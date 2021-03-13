@@ -16,7 +16,7 @@ public class RenderSessionTest {
     Template tmpl = Template.parse(getClass(), Path.of("RenderSessionTest.main.html"));
     Accessor acc = new MapAccessor(tmpl);
     TemplateStringifier tsf = TemplateStringifier.forTemplate(tmpl).freeze();
-    SessionFactory factory = SessionFactory.getInstance(tmpl, acc, tsf);
+    SessionFactory factory = SessionFactory.configure(tmpl, acc, tsf);
 
     Map<String, Object> data = new HashMap<>();
     Map<String, Object> company = new HashMap<>();
@@ -72,6 +72,6 @@ public class RenderSessionTest {
     emps1.add(emp);
 
     RenderSession session = factory.newRenderSession();
-    session.setData(data);
+    session.fillWith(data);
   }
 }

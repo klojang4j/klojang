@@ -13,7 +13,16 @@ import nl.naturalis.yokete.template.Template;
  */
 public final class SessionFactory {
 
-  public static SessionFactory getInstance(
+  /**
+   * Configures and returns a {@code SessionFactory}.
+   *
+   * @param template The template for which the {@code SessionFactory} will create render sessions.
+   * @param accessor The {@code Accessor} implementation to use for obtaining values from the data
+   *     passed to the various {@code RenderSession} methods.
+   * @param stringifier The stringifier to use to stringify those values
+   * @return A {@code SessionFactory} instance
+   */
+  public static SessionFactory configure(
       Template template, Accessor accessor, TemplateStringifier stringifier) {
     return new SessionFactory(template, accessor, stringifier);
   }
@@ -22,6 +31,11 @@ public final class SessionFactory {
   private final Accessor accessor;
   private final TemplateStringifier stringifier;
 
+  /**
+   * Initiates a new {@code RenderSession}.
+   *
+   * @return
+   */
   public RenderSession newRenderSession() {
     return new RenderSession(this);
   }

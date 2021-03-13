@@ -16,6 +16,28 @@ import static nl.naturalis.yokete.render.EscapeType.ESCAPE_NONE;
 import static nl.naturalis.yokete.render.EscapeType.NOT_SPECIFIED;
 import static nl.naturalis.yokete.render.RenderException.*;
 
+/**
+ * A {@code RenderSession} is responsible for populating a template and rendering it. A template can
+ * only be rendered once all its variables, and all variables in the templates descending from it,
+ * have been set. Populating the template can be done in multiple passes. Once a template is fully
+ * populated, the {@code RenderSession} effectively becomes immutable. You can render it as often as
+ * you like, but you cannot overwrite its variables.
+ *
+ * <p>A {@code RenderSession} is a throw-away object that should go out of scope as quickly as
+ * possible. It is cheap to instantiate, but can gain a lot of state as the template gets populated.
+ * Therefore, make sure it doesn't survive your request method. A possible exception could be
+ * templates that render relatively static content, especially if the cost of populating them is
+ * high.
+ *
+ * <h4>Thead Safety</h4>
+ *
+ * A {@code RenderSession} carries a lot of state across its methods and is therefore in principle
+ * not thread-safe. However, as long as different threads populate different parts of the template
+ * (e.g. one thread populates the main table and another thread does the rest), they cannot get in
+ * each other's way.
+ *
+ * @author Ayco Holleman
+ */
 public class RenderSession {
 
   private static final Object whatever = new Object();
@@ -36,8 +58,8 @@ public class RenderSession {
           .add(Collection.class, whatever)
           .freeze();
 
-  final SessionFactory factory;
-  final RenderState state;
+  private final SessionFactory factory;
+  private final RenderState state;
 
   RenderSession(SessionFactory rsf) {
     this.factory = rsf;
@@ -185,7 +207,7 @@ public class RenderSession {
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
     List<RenderSession> sessions = state.getOrCreateNestedSessions(name, data.size());
     for (int i = 0; i < sessions.size(); ++i) {
-      sessions.get(i).setData(data.get(i), escapeType, names);
+      sessions.get(i).fillWith(data.get(i), escapeType, names);
     }
     return this;
   }
@@ -214,8 +236,8 @@ public class RenderSession {
   /**
    * Populates all variables and nested templates whose name is present in the {@code names}
    * argument with values retrieved from the specified data object. No escaping will be applied to
-   * the values retrieved from the data object. Not specifying any name (or {@code null}) indicates
-   * that you want all variables and nested templates to be populated.
+   * the values retrieved from the data object. See {@link #fillWith(Object, EscapeType,
+   * String...)}.
    *
    * @param data An object that provides data for all or some of the template variables and nested
    *     templates
@@ -226,19 +248,22 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession setData(Object data, String... names) throws RenderException {
-    return setData(data, ESCAPE_NONE, names);
+  public RenderSession fillWith(Object data, String... names) throws RenderException {
+    return fillWith(data, ESCAPE_NONE, names);
   }
 
   /**
    * Populates all variables and nested templates whose name is present in the {@code names}
    * argument with values retrieved from the specified data object. This allows you to call this
-   * method multiple times with the same data object but different escape types for different
-   * variables. (The {@code escapeType} argument is ignored for nested templates.)
+   * method multiple times with the same data object, but with different escape types for different
+   * variables.
    *
-   * <p>The data object is itself not required to provide all values for all variables and nested
-   * templates. You can call this method multiple times with different data objects, the template is
-   * fully populated.
+   * <p>If the {@code names} argument is {@code null} or empty, this method will attempt to populate
+   * <i>all</i> all variables and nested templates using the specified data object. Note, however,
+   * that the data object is itself explicitly not required to provide all values for all variables
+   * and nested templates (see {@link Accessor#access(Object, String)}). This in turn enables you
+   * call this method multiple times with different data objects, until the template is fully
+   * populated.
    *
    * @param data An object that provides data for all or some of the template variables and nested
    *     templates
@@ -249,7 +274,7 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession setData(Object data, EscapeType escapeType, String... names)
+  public RenderSession fillWith(Object data, EscapeType escapeType, String... names)
       throws RenderException {
     if (data == null) {
       Template t = factory.getTemplate();
