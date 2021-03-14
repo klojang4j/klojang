@@ -29,12 +29,14 @@ public class ResultSetReaderFactory {
   }
 
   // Maps SQL types to the ResultSet methods, like ResultSet.getString(columnLabel);
-  private final Map<Integer, Tuple<MethodHandle, Class<?>>> methodHandleLookup;
+  private final Map<Integer, Tuple<MethodHandle, Class<?>>> mhCache;
 
   private ResultSetReaderFactory() {
     Map<Integer, Tuple<MethodHandle, Class<?>>> tmp = new HashMap<>();
     try {
-      MethodType mt = MethodType.methodType(String.class, String.class);
+
+      /* String ResultSet.getString(int columnIndex) */
+      MethodType mt = MethodType.methodType(String.class, int.class);
       MethodHandle mh = lookup().findVirtual(ResultSet.class, "getString", mt);
       tmp.put(Types.VARCHAR, only(mh));
       tmp.put(Types.LONGVARCHAR, only(mh));
@@ -43,29 +45,35 @@ public class ResultSetReaderFactory {
       tmp.put(Types.CHAR, only(mh));
       tmp.put(Types.CLOB, only(mh));
 
-      mt = MethodType.methodType(int.class, String.class);
+      /* int ResultSet.getInt(int columnIndex) */
+      mt = MethodType.methodType(int.class, int.class);
       mh = lookup().findVirtual(ResultSet.class, "getInt", mt);
       tmp.put(Types.INTEGER, only(mh));
       tmp.put(Types.SMALLINT, only(mh)); // don't bother with short
 
-      mt = MethodType.methodType(float.class, String.class);
+      /* float ResultSet.getFloat(int columnIndex) */
+      mt = MethodType.methodType(float.class, int.class);
       mh = lookup().findVirtual(ResultSet.class, "getFloat", mt);
       tmp.put(Types.FLOAT, only(mh));
 
-      mt = MethodType.methodType(double.class, String.class);
+      /* double ResultSet.getDouble(int columnIndex) */
+      mt = MethodType.methodType(double.class, int.class);
       mh = lookup().findVirtual(ResultSet.class, "getDouble", mt);
       tmp.put(Types.DOUBLE, only(mh));
       tmp.put(Types.REAL, only(mh));
 
-      mt = MethodType.methodType(long.class, String.class);
+      /* long ResultSet.getLong(int columnIndex) */
+      mt = MethodType.methodType(long.class, int.class);
       mh = lookup().findVirtual(ResultSet.class, "getLong", mt);
       tmp.put(Types.BIGINT, only(mh));
 
+      /* byte ResultSet.getByte(int columnIndex) */
       mt = MethodType.methodType(byte.class, int.class);
       mh = lookup().findVirtual(ResultSet.class, "getByte", mt);
       tmp.put(Types.TINYINT, only(mh));
 
-      mt = MethodType.methodType(Object.class, String.class, Class.class);
+      /* <T> T ResultSet.getObject(int columnIndex, Class<T> convertTo) */
+      mt = MethodType.methodType(Object.class, int.class, Class.class);
       mh = lookup().findVirtual(ResultSet.class, "getObject", mt);
       tmp.put(Types.DATE, Tuple.of(mh, LocalDate.class));
       tmp.put(Types.TIMESTAMP, Tuple.of(mh, LocalDateTime.class));
@@ -78,26 +86,30 @@ public class ResultSetReaderFactory {
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw ExceptionMethods.uncheck(e);
     }
-    methodHandleLookup = Map.copyOf(tmp);
+    mhCache = Map.copyOf(tmp);
   }
 
   private static Tuple<MethodHandle, Class<?>> only(MethodHandle mh) {
     return Tuple.of(mh, null);
   }
 
-  public ResultSetMappifier getMappifier(ResultSetMetaData rsmd) throws SQLException {
-    int sz = Check.notNull(rsmd).ok().getColumnCount();
-    Map<String, Tuple<MethodHandle, Class<?>>> invokers = new HashMap<>(sz);
+  public ResultSetMappifier getMappifier(ResultSet rs) throws SQLException {
+    ResultSetMetaData rsmd = Check.notNull(rs).ok().getMetaData();
+    int sz = rsmd.getColumnCount();
+    RsReadInfo[] infos = new RsReadInfo[sz];
     for (int idx = 0; idx < sz; ++idx) {
-      Integer sqlType = Integer.valueOf(rsmd.getColumnType(idx));
-      Tuple<MethodHandle, Class<?>> tuple = methodHandleLookup.get(sqlType);
+      int jdbcIdx = idx + 1; // JDBC is one-based!
+      int sqlType = rsmd.getColumnType(jdbcIdx);
+      Tuple<MethodHandle, Class<?>> tuple = mhCache.get(sqlType);
       if (tuple != null) {
-        String label = rsmd.getColumnLabel(idx);
-        invokers.put(label, tuple);
+        String label = rsmd.getColumnLabel(jdbcIdx);
+        MethodHandle rsMethod = tuple.getLeft();
+        Class<?> secondArg = tuple.getRight();
+        infos[idx] = new RsReadInfo(jdbcIdx, label, sqlType, rsMethod, secondArg);
       } else {
         Check.fail("Unsupported data type: %s", rsmd.getColumnTypeName(idx));
       }
     }
-    return new ResultSetMappifier(Map.copyOf(invokers));
+    return new ResultSetMappifier(infos);
   }
 }

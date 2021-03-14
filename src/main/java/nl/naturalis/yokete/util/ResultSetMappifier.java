@@ -1,28 +1,53 @@
 package nl.naturalis.yokete.util;
 
-import java.lang.invoke.MethodHandle;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import static nl.naturalis.common.check.CommonChecks.gt;
 
 public class ResultSetMappifier {
 
-  private final Map<String, Tuple<MethodHandle, Class<?>>> invokers;
+  private final RsReadInfo[] infos;
 
-  ResultSetMappifier(Map<String, Tuple<MethodHandle, Class<?>>> invokers) {
-    this.invokers = invokers;
+  ResultSetMappifier(RsReadInfo[] infos) {
+    this.infos = infos;
+  }
+
+  /**
+   * The {@code mappify} methods do not verify whether they can actually mappify the {@code
+   * ResultSet} instance that is passed to them. They assume that it has the same metadata (column
+   * count and column types) as the {@code ResultSet} that was used to create the mappifier.
+   * Strictly speaking, though, they don't know that. If they get passed a {@code ResultSet} with a
+   * different layout, all sorts of errors might ensue, including an {@link
+   * ArrayIndexOutOfBoundsException}. If you want to be absolutely sure that won't happen, you can
+   * call this method first.
+   *
+   * @param rs
+   * @return
+   * @throws SQLException
+   */
+  public boolean canMappify(ResultSet rs) throws SQLException {
+    ResultSetMetaData rsmd = rs.getMetaData();
+    if (rsmd.getColumnCount() != infos.length) {
+      return false;
+    }
+    for (int i = 0; i < infos.length; ++i) {
+      if (infos[i].type != rsmd.getColumnType(i + 1)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public Map<String, Object> mappify(ResultSet rs) {
     Check.notNull(rs);
     try {
-      return mappifyOne(rs);
+      return RsReadInfo.toMap(rs, infos);
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
     }
@@ -33,8 +58,8 @@ public class ResultSetMappifier {
     Check.that(limit, "limit").is(gt(), 0);
     List<Map<String, Object>> all = new ArrayList<>(limit);
     try {
-      for (int i = 0; rs.next() && i < limit; i++) {
-        all.add(mappifyOne(rs));
+      for (int i = 0; rs.next() && i < limit; ++i) {
+        all.add(RsReadInfo.toMap(rs, infos));
       }
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
@@ -48,28 +73,11 @@ public class ResultSetMappifier {
     List<Map<String, Object>> all = new ArrayList<>(expectedSize);
     try {
       while (rs.next()) {
-        all.add(mappifyOne(rs));
+        all.add(RsReadInfo.toMap(rs, infos));
       }
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
     }
     return all;
-  }
-
-  private Map<String, Object> mappifyOne(ResultSet rs) throws Throwable {
-    Map<String, Object> map = new HashMap<>(invokers.size());
-    for (Map.Entry<String, Tuple<MethodHandle, Class<?>>> e : invokers.entrySet()) {
-      String columnLabel = e.getKey();
-      MethodHandle mh = e.getValue().getLeft();
-      Class<?> clazz = e.getValue().getRight();
-      Object value;
-      if (clazz == null) {
-        value = mh.invoke(rs, columnLabel);
-      } else {
-        value = mh.invoke(rs, columnLabel, clazz);
-      }
-      map.put(columnLabel, value);
-    }
-    return map;
   }
 }

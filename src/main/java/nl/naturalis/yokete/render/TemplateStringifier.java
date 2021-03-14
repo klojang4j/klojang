@@ -40,6 +40,13 @@ import static nl.naturalis.yokete.render.BadStringifierException.templateStringi
 public final class TemplateStringifier {
 
   /**
+   * A simple, brute-force {@code TemplateStringifier} that always stringifies {@code null} to an
+   * empty string and otherwise calls {@code toString()} on the value to be stringified. Unlikely to
+   * be satisfactory in the end, but useful in the early stages of development.
+   */
+  public static final TemplateStringifier SIMPLETON = new Builder(null).freeze();
+
+  /**
    * Stringifies the values for a particular template variable. It is, in principle, not the
    * stringifier's responsibility to also apply some form of escaping to the stringified value (e.g.
    * HTML escaping). This is done by the {@link RenderSession}. However, the may be cases where you
@@ -92,7 +99,11 @@ public final class TemplateStringifier {
 
     private Builder(Template tmpl) {
       this.tmpl = tmpl;
-      this.varNames = tmpl.getVarsPerTemplate();
+      if (tmpl == null) { // will *only* be the case for the SIMPLETON stringifier
+        this.varNames = null;
+      } else {
+        this.varNames = tmpl.getVarsPerTemplate();
+      }
     }
 
     /**
