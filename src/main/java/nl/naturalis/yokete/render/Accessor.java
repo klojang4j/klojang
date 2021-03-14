@@ -21,10 +21,11 @@ public interface Accessor {
    *
    * <p>Implementations must distinguish between true {@code null} values and the variable not being
    * present in the source data at all. True {@code null} values are valid valid values that will be
-   * stringified somehow by a {@link Stringifier} (e.g. to an empty string). If the variable is not
-   * present in the source data, this method must return {@link #ABSENT}. If a {@link RenderSession}
-   * receives this value for a particular variable, it will skip setting that variable. In the end,
-   * of course, all template variables must be set before the template can be rendered.
+   * stringified somehow by a {@link Stringifier} (e.g. to an empty string). If the variable
+   * is not present in the source data, this method must return {@link #ABSENT}. If a {@link
+   * RenderSession} receives this value for a particular variable, it will skip setting that
+   * variable. In the end, of course, all template variables must be set before the template can be
+   * rendered.
    *
    * @param data The object (supposedly) containing the value
    * @param varName The name of the template variable

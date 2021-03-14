@@ -1,31 +1,27 @@
 package nl.naturalis.yokete.render;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import nl.naturalis.common.collection.TypeMap;
 import nl.naturalis.common.collection.UnmodifiableTypeMap;
-import nl.naturalis.yokete.render.TemplateStringifier.VariableStringifier;
+import nl.naturalis.common.function.ThrowingFunction;
 /**
- * An {@code ApplicationStringifier} provides application-wide stringification services. Like the
- * {@link TemplateStringifier} its goal is to stringify the values served up by the data layer so
- * the can be inserted into an HTML template. Unlike the {@code TemplateStringifier}, however, the
- * way it stringifies values is not tied to any template variable in particular. It is determined
- * determined solely by the value's type.
+ * An {@code ApplicationStringifier} provides generic, application-wide, type-based stringifiers.
+ * Unless a template variable has very specific stringification requirements, its values will be
+ * stringified based on its type. You could, For example, have a {@link Number} stringifier, a
+ * {@link LocalDate} stringifier, etc.
  *
- * <p>The {@code ApplicationStringifier} class is built around a {@link TypeMap}, meaning that if
- * the {@code TemplateStringifier} requests a stringifier for a particular type, and that type is
- * not in the {@code TypeMap} but one of its super types is, then you get that super type's
- * stringifier. For example, if the {@code TypeMap} contains stringifiers for {@link Number} and
- * {@link Byte} and you request the {@code Byte} stringifier you obviously get that one, but if you
- * request an {@link Integer} stringifier, you get the {@code Number} stringifier. This saves you
- * from having to specify a stringifier for each and every {@code Number} class if they are all
- * stringified alike.
+ * <p>The {@code ApplicationStringifier} class is built around a {@link TypeMap}. If a stringifier
+ * is requested for a some type, and that type is not in the {@code TypeMap} but one of its super
+ * types is, then you get that super type's stringifier. For example, if the {@code TypeMap}
+ * contains a {@code Number} stringifier and you request an {@code Integer} stringifier, you get the
+ * {@code Number} stringifier. This saves you from having to specify a stringifier for each and
+ * every subclass of {@code Number} if they are all stringified in the same way.
  *
- * <p>An {@code ApplicationStringifier} is an immutable object. You should probably create just one
- * instance of it and keep it around for as long as your application lasts. The {@code
- * ApplicationStringifier} is not meant to be used directly. Apart from exposing a {@link Builder}
- * object that lets you configure an instance, it does, in fact, not even <i>have</i> a public
- * interface. Instead, the (singleton) {@code ApplicationStringifier} is meant to be passed on to
- * {@code TemplateStringifier} instances.
+ * <p>The {@code ApplicationStringifier} class is not meant to be used directly. It does, in fact,
+ * not have a public interface. Instead, you should configure a singleton instance of it and {@link
+ * StringifierFactory#setApplicationStringifier(ApplicationStringifier) register} the instance with
+ * one or more {@link StringifierFactory} instances.
  *
  * <h4>Providing alternative stringifications for a single type</h4>
  *
@@ -37,16 +33,31 @@ import nl.naturalis.yokete.render.TemplateStringifier.VariableStringifier;
  *
  * <ul>
  *   <li>Register the stringifier that uses date format X under key {@code LocalDateTime.class}
- *   <li>Register the stringifier that used date format Y under some home-grown tag interface (let's
- *       say {@code DateFormat2})
+ *   <li>Register the stringifier that used date format Y under an arbitrary tag interface (let's
+ *       say {@code LocalDateTime2})
  *   <li>Then, when configuring a {@code TemplateStringifier}, {@link
- *       TemplateStringifier.Builder#setType(String, String, Class) set} the type of date variables
- *       that must be formatted according to date format Y to {@code DateTimeFormat2.class}.
+ *       StringifierFactory#setType(String, String, Class) set} the type of date variables that must
+ *       be formatted according to date format Y to {@code LocalDateTime2.class}.
  * </ul>
+ *
+ * In fact, this particular scenario is so plausible that the {@code ApplicationStringifier} class
+ * already contains these tag interfaces.
  *
  * @author Ayco Holleman
  */
 public final class ApplicationStringifier {
+
+  /** Can be used to register an alternative stringifier for {@link LocalDate} objects */
+  public static interface LocalDate2 {};
+
+  /** Can be used to register an alternative stringifier for {@link LocalDate} objects */
+  public static interface LocalDate3 {};
+
+  /** Can be used to register an alternative stringifier for {@link LocalDateTime} objects */
+  public static interface LocalDateTime2 {};
+
+  /** Can be used to register an alternative stringifier for {@link LocalDateTime} objects */
+  public static interface LocalDateTime3 {};
 
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
 
@@ -56,7 +67,8 @@ public final class ApplicationStringifier {
    * @author Ayco Holleman
    */
   public static final class Builder {
-    private final UnmodifiableTypeMap.Builder<VariableStringifier> bldr;
+    private final UnmodifiableTypeMap.Builder<ThrowingFunction<Object, String, RenderException>>
+        bldr;
 
     private Builder() {
       this.bldr = UnmodifiableTypeMap.build();
@@ -66,9 +78,13 @@ public final class ApplicationStringifier {
      * Registers a stringifier for the specified type.
      *
      * @param type The type for which to register the stringifier
-     * @param stringifier The stringifier
+     * @param stringifier A function that takes an {@code Object} and returns a {@code String} while
+     *     potentially throwing a {@code RenderException} in the process. As with {@link
+     *     Stringifier} implementations, the function <b>must</b> be able to handle null values and
+     *     it <b>must never</b> return null
      */
-    public void register(Class<?> type, VariableStringifier stringifier) {
+    public void register(
+        Class<?> type, ThrowingFunction<Object, String, RenderException> stringifier) {
       bldr.add(type, stringifier);
     }
 
@@ -95,9 +111,10 @@ public final class ApplicationStringifier {
     return new Builder();
   }
 
-  private final TypeMap<VariableStringifier> typeMap;
+  private final TypeMap<ThrowingFunction<Object, String, RenderException>> typeMap;
 
-  private ApplicationStringifier(TypeMap<VariableStringifier> typeMap) {
+  private ApplicationStringifier(
+      TypeMap<ThrowingFunction<Object, String, RenderException>> typeMap) {
     this.typeMap = typeMap;
   }
 
@@ -105,7 +122,8 @@ public final class ApplicationStringifier {
     return typeMap.containsKey(type);
   }
 
-  VariableStringifier getStringifier(Class<?> type) {
-    return typeMap.get(type);
+  Stringifier getStringifier(Class<?> type) {
+    // Just ignore template (x) and var name (y) and do your thing on the value (z)
+    return (x, y, z) -> typeMap.get(type).apply(z);
   }
 }

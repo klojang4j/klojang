@@ -16,8 +16,8 @@ public class RenderSession1Test {
 
     Template tmpl = Template.parse(getClass(), Path.of("RenderSession1Test.html"));
     Accessor acc = new MapAccessor(tmpl);
-    TemplateStringifier tsf = TemplateStringifier.configure(tmpl).freeze();
-    SessionFactory factory = SessionFactory.configure(tmpl, acc, tsf);
+    Stringifier sf = Stringifier.SIMPLETON;
+    SessionFactory factory = SessionFactory.configure(tmpl, acc, sf);
 
     Map<String, Object> data = new HashMap<>();
 

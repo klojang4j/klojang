@@ -23,13 +23,13 @@ public final class SessionFactory {
    * @return A {@code SessionFactory} instance
    */
   public static SessionFactory configure(
-      Template template, Accessor accessor, TemplateStringifier stringifier) {
+      Template template, Accessor accessor, Stringifier stringifier) {
     return new SessionFactory(template, accessor, stringifier);
   }
 
   private final Template template;
   private final Accessor accessor;
-  private final TemplateStringifier stringifier;
+  private final Stringifier stringifier;
 
   /**
    * Initiates a new {@code RenderSession}.
@@ -40,7 +40,7 @@ public final class SessionFactory {
     return new RenderSession(this);
   }
 
-  SessionFactory(Template template, Accessor accessor, TemplateStringifier stringifier) {
+  SessionFactory(Template template, Accessor accessor, Stringifier stringifier) {
     this.template = Check.notNull(template).ok();
     this.accessor = Check.notNull(accessor).ok();
     this.stringifier = Check.notNull(stringifier).ok();
@@ -71,7 +71,7 @@ public final class SessionFactory {
     return accessor;
   }
 
-  TemplateStringifier getStringifier() {
+  Stringifier getStringifier() {
     return stringifier;
   }
 }
