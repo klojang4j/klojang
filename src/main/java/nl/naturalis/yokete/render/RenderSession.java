@@ -1,6 +1,6 @@
 package nl.naturalis.yokete.render;
 
-import java.io.PrintStream;
+import java.io.OutputStream;
 import java.util.*;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.TypeMap;
@@ -286,6 +286,17 @@ public class RenderSession {
     return this;
   }
 
+  /**
+   * Verifies that the template is fully populated. Once your application becomes production-ready,
+   * you should either call one of the {@code renderSafe} methods, or make any call to a {@code
+   * Render} dependent on whether {@code isRenderable()} returns {@code true}.
+   *
+   * @return Whether or not the template is fully populated
+   */
+  public boolean isRenderable() {
+    return state.isRenderable();
+  }
+
   private void processVars(Object data, EscapeType escapeType, String[] names)
       throws RenderException {
     Set<String> varNames;
@@ -318,28 +329,75 @@ public class RenderSession {
 
   /* RENDER METHODS */
 
-  public void render(PrintStream ps) throws RenderException {
-    Check.notNull(ps);
-    if (!state.isRenderable()) {
-      throw notRenderable(state.getUnsetVars());
-    }
+  /**
+   * Writes the render result to the specified output stream. If the template is not fully
+   * populated, you will see raw variable declations in the output.
+   *
+   * @param out The output stream to which to write the render result
+   */
+  public void render(OutputStream out) {
+    Check.notNull(out);
     Renderer renderer = new Renderer(state);
-    renderer.render(ps);
+    renderer.render(out);
   }
 
-  public void render(StringBuilder sb) throws RenderException {
+  /**
+   * Appends the render result to the specified {@code StringBuilder}. If the template is not fully
+   * populated, you will see raw variable declations in the output.
+   *
+   * @param sb A {@code StringBuilder} to which to append the render result
+   */
+  public void render(StringBuilder sb) {
     Check.notNull(sb);
-    if (!state.isRenderable()) {
-      throw notRenderable(state.getUnsetVars());
-    }
     Renderer renderer = new Renderer(state);
     renderer.render(sb);
   }
 
-  public StringBuilder render() throws RenderException {
-    if (!state.isRenderable()) {
-      throw notRenderable(state.getUnsetVars());
-    }
+  /**
+   * Returns a {@code StringBuilder} containing the render result. If the template is not fully
+   * populated, you will see raw variable declations in the output.
+   *
+   * @return A {@code StringBuilder} containing the render result
+   */
+  public StringBuilder render() {
+    Renderer renderer = new Renderer(state);
+    return renderer.render();
+  }
+
+  /**
+   * Writes the render result to the specified output stream. If the template is not fully
+   * populated, a {@code RenderException} is thrown and the output stream is left untouched.
+   *
+   * @param out The output stream to which to write the render result
+   */
+  public void renderSafe(OutputStream out) throws RenderException {
+    Check.notNull(out);
+    Check.on(notRenderable(state.getUnsetVars()), isRenderable()).is(yes());
+    Renderer renderer = new Renderer(state);
+    renderer.render(out);
+  }
+
+  /**
+   * Appends the render result to the specified {@code StringBuilder}. If the template is not fully
+   * populated, a {@code RenderException} is thrown and the {@code StringBuilder} is left untouched.
+   *
+   * @param sb A {@code StringBuilder} to which to append the render result
+   */
+  public void renderSafe(StringBuilder sb) throws RenderException {
+    Check.notNull(sb);
+    Check.on(notRenderable(state.getUnsetVars()), isRenderable()).is(yes());
+    Renderer renderer = new Renderer(state);
+    renderer.render(sb);
+  }
+
+  /**
+   * Returns a {@code StringBuilder} containing the render result. If the template is not fully
+   * populated, a {@code RenderException} is thrown.
+   *
+   * @return A {@code StringBuilder} containing the render result
+   */
+  public StringBuilder renderSafe() throws RenderException {
+    Check.on(notRenderable(state.getUnsetVars()), isRenderable()).is(yes());
     Renderer renderer = new Renderer(state);
     return renderer.render();
   }

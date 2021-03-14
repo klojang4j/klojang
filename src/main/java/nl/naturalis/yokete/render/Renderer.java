@@ -1,9 +1,10 @@
 package nl.naturalis.yokete.render;
 
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.List;
-import nl.naturalis.yokete.template.Part;
 import nl.naturalis.yokete.template.NestedTemplatePart;
+import nl.naturalis.yokete.template.Part;
 import nl.naturalis.yokete.template.TextPart;
 import nl.naturalis.yokete.template.VariablePart;
 
@@ -15,7 +16,8 @@ class Renderer {
     this.state = state;
   }
 
-  void render(PrintStream ps) {
+  void render(OutputStream out) {
+    PrintStream ps = out instanceof PrintStream ? (PrintStream) out : new PrintStream(out);
     render(state, ps);
   }
 
@@ -37,7 +39,13 @@ class Renderer {
         TextPart tp = (TextPart) part;
         ps.append(tp.getText());
       } else if (part.getClass() == VariablePart.class) {
-        state0.getVar(i).forEach(ps::append);
+        if (state0.getVar(i) == null) {
+          // The variable has not been set yet. Just print the raw
+          // variable declaration
+          ps.append(part.toString());
+        } else {
+          state0.getVar(i).forEach(ps::append);
+        }
       } else /* TemplatePart */ {
         NestedTemplatePart ntp = (NestedTemplatePart) part;
         /*
@@ -62,7 +70,11 @@ class Renderer {
         TextPart tp = (TextPart) part;
         sb.append(tp.getText());
       } else if (part.getClass() == VariablePart.class) {
-        state0.getVar(i).forEach(sb::append);
+        if (state0.getVar(i) == null) {
+          sb.append(part.toString());
+        } else {
+          state0.getVar(i).forEach(sb::append);
+        }
       } else /* TemplatePart */ {
         NestedTemplatePart tp = (NestedTemplatePart) part;
         /*

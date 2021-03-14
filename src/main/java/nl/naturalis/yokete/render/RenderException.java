@@ -70,9 +70,9 @@ public class RenderException extends YoketeException {
     return s -> new RenderException(BAD_ESCAPE_TYPE);
   }
 
-  public static RenderException notRenderable(Set<String> varsToDo) {
+  public static Function<String, RenderException> notRenderable(Set<String> varsToDo) {
     String msg = format(NOT_RENDERABLE, varsToDo);
-    return new RenderException(msg);
+    return s -> new RenderException(msg);
   }
 
   public static RenderException unexpectedType(String var, Object val) {
