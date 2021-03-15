@@ -161,7 +161,7 @@ public class Template {
   /**
    * Returns the indices of the parts in the {@link #getParts() parts list} that contain variables.
    * The returned {@code Map} maps variable names to an {@link IntList}, since one variable may
-   * occur multiple times in the same template.
+   * occur multiple times in the same template. The returned {@code Map} is immutable.
    *
    * @return The indexes of parts that contain variables
    */
@@ -184,7 +184,8 @@ public class Template {
 
   /**
    * Returns the indices of the parts in the {@link #getParts() parts list} that contain literal
-   * text. Each element in the returned {@link IntList} is an index into the parts list.
+   * text. Each element in the returned {@link IntList} is an index into the parts list. The
+   * returned {@code IntList} is immutable.
    *
    * @return The indexes of parts that contain literal text
    */
@@ -193,7 +194,8 @@ public class Template {
   }
 
   /**
-   * Returns the names of all variables in this {@code Template}.
+   * Returns the names of all variables in this {@code Template}. The returned {@code Set} is
+   * immutable.
    *
    * @return The names of all variables in this {@code Template}
    */
@@ -225,7 +227,7 @@ public class Template {
   /**
    * Returns, for this {@code Template} and all templates descending from it, the names of their
    * variables. Each tuple in the returned {@code Set} contains a {@code Template} instance and a
-   * variable name.
+   * variable name. The returned {@code Set} is created on demand and mutable.
    *
    * @return All variable names in this {@code Template} and the templates nested inside it
    */
@@ -242,7 +244,8 @@ public class Template {
   }
 
   /**
-   * Returns all templates nested inside this {@code Template} (non-recursive).
+   * Returns all templates nested inside this {@code Template} (non-recursive). The returned {@code
+   * Set} is created on demand and mutable.
    *
    * @return All templates nested inside this {@code Template}
    */
@@ -257,7 +260,8 @@ public class Template {
   }
 
   /**
-   * Returns the names of all templates nested inside this {@code Template} (non-recursive).
+   * Returns the names of all templates nested inside this {@code Template} (non-recursive). The
+   * returned {@code Set} is immutable.
    *
    * @return The names of all nested templates
    */
@@ -299,15 +303,17 @@ public class Template {
   }
 
   /**
-   * Returns this {@code Template} and all templates descending from it.
+   * Returns this {@code Template} and all templates descending from it. The returned {@code List}
+   * is created on demand and mutable.
    *
    * @return This {@code Template} and all templates descending from it
    */
-  public List<Template> getNestedTemplatesRecursive() {
+  public Set<Template> getNestedTemplatesRecursive() {
     ArrayList<Template> tmpls = new ArrayList<>(20);
     tmpls.add(this);
     collectTmplsRecursive(this, tmpls);
-    return tmpls;
+    // Return a Set, to make the API consistent and predictable
+    return new LinkedHashSet<>(tmpls);
   }
 
   private static void collectTmplsRecursive(Template t0, ArrayList<Template> tmpls) {
@@ -317,7 +323,7 @@ public class Template {
   }
   /**
    * Returns the names of all variables and nested templates in this {@code Template}
-   * (non-recursive).
+   * (non-recursive). The returned {@code Set} is immutable.
    *
    * @return The names of all variables and nested templates in this {@code Template}
    */

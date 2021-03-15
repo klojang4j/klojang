@@ -10,6 +10,7 @@ import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.VariablePart;
 import static nl.naturalis.common.CollectionMethods.asList;
 import static nl.naturalis.common.ObjectMethods.isEmpty;
+import static nl.naturalis.common.ObjectMethods.n2e;
 import static nl.naturalis.common.check.CommonChecks.*;
 import static nl.naturalis.common.check.CommonGetters.size;
 import static nl.naturalis.yokete.render.EscapeType.ESCAPE_NONE;
@@ -103,8 +104,21 @@ public class RenderSession {
 
   /**
    * Sets the specified variable to the concatenation of the strings within the specified {@code
-   * List}. If the {@code List} is empty, the variable will not be rendered at all. This is
-   * analogous to how to {@code populate} methods work, although it is arguably more useful there.
+   * List}. If the {@code List} is empty, the variable will not be rendered at all. No escaping is
+   * applied to the strings in the {@code List}.
+   *
+   * @param name The name of the variable to set
+   * @param value The string values to concatenate
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession setVariable(String name, List<String> value) throws RenderException {
+    return setVariable(name, value, ESCAPE_NONE);
+  }
+
+  /**
+   * Sets the specified variable to the concatenation of the strings within the specified {@code
+   * List}. If the {@code List} is empty, the variable will not be rendered at all.
    *
    * @param name The name of the variable to set
    * @param value The string values to concatenate
@@ -114,6 +128,32 @@ public class RenderSession {
    */
   public RenderSession setVariable(String name, List<String> value, EscapeType escapeType)
       throws RenderException {
+    return setVariable(name, value, escapeType, null, null, null);
+  }
+
+  /**
+   * Sets the specified variable to the concatenation of the strings within the specified {@code
+   * List}. Each string will be prefixed with the specified prefix, suffixed with the specified
+   * suffix, and separated by the specified separator. If the {@code List} is empty, the variable
+   * will not be rendered at all.
+   *
+   * @param name The name of the variable to set
+   * @param value The string values to concatenate
+   * @param escapeType The escape type to use if the variable did not declare an inline escape type
+   * @param prefix The prefix to use for each string
+   * @param separator The suffix to use for each string
+   * @param suffix The separator to use between the stringd
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession setVariable(
+      String name,
+      List<String> value,
+      EscapeType escapeType,
+      String prefix,
+      String separator,
+      String suffix)
+      throws RenderException {
     Check.notNull(name, "name");
     Check.that(value, "value").is(noneNull());
     Check.notNull(escapeType, "escapeType");
@@ -121,7 +161,31 @@ public class RenderSession {
     Check.on(alreadySet(t, name), state.isSet(name)).is(no());
     Check.on(noSuchVariable(t, name), name).is(in(), t.getVars());
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
-    factory.getTemplate().getVarPartIndices().get(name).forEach(i -> setVar(i, value, escapeType));
+    List<String> strings;
+    if (value.isEmpty()) {
+      strings = value;
+    } else {
+      prefix = n2e(prefix);
+      separator = n2e(separator);
+      suffix = n2e(suffix);
+      if (prefix.isEmpty() && separator.isEmpty() && suffix.isEmpty()) {
+        strings = value;
+      } else {
+        strings = new ArrayList<>(value.size());
+        for (int i = 0; i < value.size(); ++i) {
+          if (i == 0) {
+            strings.add(prefix + value.get(i) + suffix);
+          } else {
+            strings.add(separator + prefix + value.get(i) + suffix);
+          }
+        }
+      }
+    }
+    factory
+        .getTemplate()
+        .getVarPartIndices()
+        .get(name)
+        .forEach(i -> setVar(i, strings, escapeType));
     state.done(name);
     return this;
   }
@@ -139,6 +203,64 @@ public class RenderSession {
   }
 
   /* METHODS FOR POPULATING A SINGLE NESTED TEMPLATE */
+
+  /**
+   * Suppresses the rendering of the specified variable or nested template. The same can be achieved
+   * using {@code setVariable(name, Collections.emptyList())} resp. {@code populate(name,
+   * Collections.emptyList())}. Note that "just not mentioning" the variable or nested template
+   * while in a render session does not have the effect of it not being rendered. Instead, if you
+   * call one of the {@code renderSafe} methods, you will get a {@code RenderException}, and if you
+   * call one of the {@code render} methods, you will will see the raw variable c.q. template in the
+   * output.
+   *
+   * @param name The name of a variable or nested template
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession dontRender(String name) throws RenderException {
+    if (factory.getTemplate().hasVar(name)) {
+      setVariable(name, Collections.emptyList());
+    } else if (factory.getTemplate().hasNestedTemplate(name)) {
+      populate(name, Collections.emptyList());
+    } else {
+      Check.failOn(invalidName(name));
+    }
+    return this;
+  }
+
+  /**
+   * Suppresses the rendering of all variables that have not been set yet, and of all nested
+   * templates that have not been populated yet. Nested templates that are partially populated will
+   * be rendered, but the variables with them that have not been set yet will not be rendered.
+   *
+   * @return This {@code RenderSession}
+   */
+  public RenderSession skipRest() {
+    skipRest(this);
+    return this;
+  }
+
+  private static void skipRest(RenderSession s0) {
+    try {
+      for (String var : s0.state.getUnsetVars()) {
+        s0.dontRender(var);
+      }
+    } catch (RenderException e) {
+      // won't happen because we *know* we're dealing with valid variable names
+    }
+    Set<Template> busy = s0.state.getChildSessions().keySet();
+    Set<Template> todo = new HashSet<>(s0.factory.getTemplate().getNestedTemplates());
+    todo.removeAll(busy);
+    try {
+      for (Template t : todo) {
+        s0.dontRender(t.getName());
+      }
+    } catch (RenderException e) {
+    }
+    for (Template t : busy) {
+      s0.state.getChildSessions(t).forEach(s -> skipRest(s));
+    }
+  }
 
   /**
    * Populates the <i>nested</i> template with the specified name with values retrieved from the
@@ -198,35 +320,49 @@ public class RenderSession {
     return repeat(nestedTemplateName, asList(data), escapeType, names);
   }
 
-  private RenderSession repeat(String name, List<?> data, EscapeType escapeType, String... names)
+  /**
+   * Convenience method for populating a nested template that contains exactly one variable.
+   * Ordinarily nested templates are populated with a complex {code Object} and an {@link Accessor}
+   * that retrieves variable values from it. With this method, however, you specify the variable's
+   * value directly. The value can still be an array or {@code Collection}, causing the template to
+   * be repeat itself. See {@link #populate(String, Object, EscapeType, String...)}.
+   *
+   * @param nestedTemplateName The name of the nested template, which must contain exactly one
+   *     variable
+   * @param escapeType The escape to use for the variable within the nested template
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession populateMono(String nestedTemplateName, Object value, EscapeType escapeType)
       throws RenderException {
-    Check.notNull(name, "name");
-    Check.that(data, "data").is(noneNull());
+    String name = nestedTemplateName;
+    Check.notNull(name, "nestedTemplateName");
+    Check.notNull(value, "value");
     Check.notNull(escapeType, "escapeType");
     Check.on(noSuchTemplate(name), name).is(in(), factory.getTemplate().getNestedTemplateNames());
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
-    List<RenderSession> sessions = state.getChildSessions(name, data.size());
-    for (int i = 0; i < sessions.size(); ++i) {
-      sessions.get(i).fillWith(data.get(i), escapeType, names);
+    Template t = factory.getTemplate().getNestedTemplate(name);
+    Check.on(noMonoTemlate(t), t).has(Template::countVars, eq(), 1);
+    List<?> values = asList(value);
+    String monoVar = t.getVars().iterator().next();
+    List<RenderSession> sessions = state.createChildSessions(t, values.size());
+    for (int i = 0; i < values.size(); ++i) {
+      String escaped = factory.getStringifier().stringify(t, monoVar, values.get(i));
+      sessions.get(i).setVariable(monoVar, escaped, ESCAPE_NONE);
     }
     return this;
   }
 
-  /**
-   * Shortcut for specifying that you don't want the specified variable or nested template to be
-   * rendered. See {@link #populate(String, Object, EscapeType, String...)}.
-   *
-   * @param name The name of a variable or nested template
-   * @return This {@code RenderSession}
-   * @throws RenderException
-   */
-  public RenderSession dontRender(String name) throws RenderException {
-    if (factory.getTemplate().hasVar(name)) {
-      setVariable(name, Collections.emptyList(), ESCAPE_NONE);
-    } else if (factory.getTemplate().hasNestedTemplate(name)) {
-      populate(name, Collections.emptyList());
-    } else {
-      Check.failOn(invalidName(name));
+  private RenderSession repeat(String name, List<?> data, EscapeType escapeType, String... names)
+      throws RenderException {
+    Check.notNull(name, "nestedTemplateName");
+    Check.that(data, "data").is(noneNull());
+    Check.notNull(escapeType, "escapeType");
+    Check.on(noSuchTemplate(name), name).is(in(), factory.getTemplate().getNestedTemplateNames());
+    Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
+    List<RenderSession> sessions = state.createChildSessions(name, data.size());
+    for (int i = 0; i < sessions.size(); ++i) {
+      sessions.get(i).fillWith(data.get(i), escapeType, names);
     }
     return this;
   }

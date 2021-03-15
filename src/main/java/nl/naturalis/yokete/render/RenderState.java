@@ -25,16 +25,24 @@ class RenderState {
     return factory;
   }
 
-  List<RenderSession> getChildSessions(String tmplName, int amount) throws RenderException {
-    List<RenderSession> mySessions = sessions.get(factory.getTemplate());
+  List<RenderSession> createChildSessions(String tmplName, int amount) throws RenderException {
+    Template nested = factory.getTemplate().getNestedTemplate(tmplName);
+    return createChildSessions(nested, amount);
+  }
+
+  List<RenderSession> createChildSessions(Template nested, int amount) throws RenderException {
+    List<RenderSession> mySessions = sessions.get(nested);
     if (mySessions == null) {
-      Template nested = factory.getTemplate().getNestedTemplate(tmplName);
       mySessions = initializedList(i -> factory.newChildSession(nested), amount);
       sessions.put(nested, mySessions);
     } else if (mySessions.size() != amount) {
       throw repetitionMismatch(factory.getTemplate().getName(), mySessions.size(), amount);
     }
     return mySessions;
+  }
+
+  Map<Template, List<RenderSession>> getChildSessions() {
+    return sessions;
   }
 
   List<RenderSession> getChildSessions(Template template) {

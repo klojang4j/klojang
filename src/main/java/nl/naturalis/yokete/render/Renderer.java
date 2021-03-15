@@ -39,25 +39,19 @@ class Renderer {
         TextPart tp = (TextPart) part;
         ps.append(tp.getText());
       } else if (part.getClass() == VariablePart.class) {
-        if (state0.getVar(i) == null) {
-          // The variable has not been set yet. Just print the raw
-          // variable declaration
-          ps.append(part.toString());
+        if (state0.getVar(i) == null) { // Oops, user forgot that one
+          ps.append(part.toString()); // Just print raw variable declaration
         } else {
           state0.getVar(i).forEach(ps::append);
         }
       } else /* TemplatePart */ {
         NestedTemplatePart ntp = (NestedTemplatePart) part;
-        /*
-         * For each of the render state's child sessions, render the
-         * nested template using the child session's render state, thus
-         * recursing down to the lowest-level templates.
-         */
-        state0
-            .getChildSessions(ntp.getTemplate())
-            .stream()
-            .map(RenderSession::getState)
-            .forEach(state -> render(state, ps));
+        List<RenderSession> sessions = state0.getChildSessions(ntp.getTemplate());
+        if (sessions == null) { // Oops, user forgot that one
+          ps.append(part.toString()); // Just print raw template
+        } else {
+          sessions.stream().map(RenderSession::getState).forEach(state -> render(state, ps));
+        }
       }
     }
   }
@@ -76,17 +70,13 @@ class Renderer {
           state0.getVar(i).forEach(sb::append);
         }
       } else /* TemplatePart */ {
-        NestedTemplatePart tp = (NestedTemplatePart) part;
-        /*
-         * For each of the specified render state's child sessions, render
-         * the nested template using the child session's state, thus recursing
-         * down to the lowest-level templates
-         */
-        state0
-            .getChildSessions(tp.getTemplate())
-            .stream()
-            .map(RenderSession::getState)
-            .forEach(state -> render(state, sb));
+        NestedTemplatePart ntp = (NestedTemplatePart) part;
+        List<RenderSession> sessions = state0.getChildSessions(ntp.getTemplate());
+        if (sessions == null) { // Oops, user forgot that one
+          sb.append(part.toString());
+        } else {
+          sessions.stream().map(RenderSession::getState).forEach(state -> render(state, sb));
+        }
       }
     }
   }

@@ -40,6 +40,9 @@ public class RenderException extends YoketeException {
 
   private static final String BAD_DATA = "Cannot use instance of opaque class %s as template data";
 
+  private static final String NO_MONO_TEMPLATE =
+      "populateMono not allowed for non-mono template \"%s\" (contains %d variables)";
+
   public static Function<String, RenderException> noSuchVariable(Template t, String name) {
     String fqn = TemplateUtils.getFQName(t, name);
     return s -> new RenderException(format(NO_SUCH_VARIABLE, fqn));
@@ -91,6 +94,10 @@ public class RenderException extends YoketeException {
 
   public static Function<String, RenderException> badData(Object data) {
     return s -> new RenderException(format(BAD_DATA, prettyClassName(data)));
+  }
+
+  public static Function<String, RenderException> noMonoTemlate(Template t) {
+    return s -> new RenderException(format(NO_MONO_TEMPLATE, t.getName(), t.countVars()));
   }
 
   RenderException(String message) {
