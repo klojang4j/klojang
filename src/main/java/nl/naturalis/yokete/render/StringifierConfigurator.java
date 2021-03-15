@@ -29,7 +29,7 @@ import static nl.naturalis.common.check.CommonChecks.nullPointer;
  *
  * @author Ayco Holleman
  */
-public final class StringifierFactory {
+public final class StringifierConfigurator {
 
   private static final String CANNOT_STRINGIFY =
       "Type %s cannot be stringified by ApplicationStringifier";
@@ -39,66 +39,55 @@ public final class StringifierFactory {
   private static final String TYPE_ALREADY_SET = "Type already set for %s.%s";
   private static final String STRINGIFIER_ALREADY_SET = "Stringifier already set for %s.%s";
 
-  /**
-   * Returns a {@link StringifierFactory} object that lets you configure a {@link Stringifier}
-   * instance.
-   *
-   * @param template The template for which to configure the {@code Stringifier}
-   * @return A {@link StringifierFactory} object that lets you configure a {@link Stringifier}
-   *     instance
-   */
-  public static StringifierFactory newInstance(Template template) {
-    return new StringifierFactory(Check.notNull(template).ok());
-  }
-
   private final Template tmpl;
   private final Set<Tuple<Template, String>> varNames;
   private final Map<Tuple<Template, String>, Class<?>> varTypes = new HashMap<>();
   private final Map<Tuple<Template, String>, Stringifier> stringifiers = new HashMap<>();
 
-  private ApplicationStringifier asf;
+  private ApplicationStringifier appStringifier;
 
-  private StringifierFactory(Template tmpl) {
+  StringifierConfigurator(Template tmpl) {
     this.tmpl = tmpl;
     this.varNames = tmpl.getVarsPerTemplate();
   }
 
   /**
-   * Sets the {@link ApplicationStringifier} to be used for generic, type-base, variable-independent
+   * Sets the {@link ApplicationStringifier} to be used for type-based, variable-independent
    * stringification.
    *
    * @param stringifier The {@code ApplicationStringifier}
    * @return This {@code StringifierFactory}
    */
-  public StringifierFactory setApplicationStringifier(ApplicationStringifier stringifier) {
-    Check.that(asf).is(nullPointer(), "Application stringifier already set");
-    asf = Check.notNull(stringifier).ok();
+  public StringifierConfigurator setApplicationStringifier(ApplicationStringifier stringifier) {
+    Check.that(appStringifier).is(nullPointer(), "Application stringifier already set");
+    appStringifier = Check.notNull(stringifier).ok();
     return this;
   }
 
   /**
-   * Sets the stringifier for the specified variable. The variable is supposed to be defined in the
-   * root template rather than in one the the templates nested inside it.
+   * Sets the stringifier for the specified variable. The variable must be declared in the template
+   * being configured, rather than in one the templates nested inside it.
    *
-   * @param varName The name of the variable for which to specify the stringifier
+   * @param varName The name of the variable
    * @param stringifier The stringifier
    * @return This {@code StringifierFactory}
    */
-  public StringifierFactory register(String varName, Stringifier stringifier) {
+  public StringifierConfigurator register(String varName, Stringifier stringifier) {
     return register(tmpl, varName, stringifier);
   }
 
   /**
-   * Registers the specified variable within the specified template.
+   * Sets the stringifier for the specified variable within the specified template. The specified
+   * {@code Template} must either be the {@code Template} that is being configured or one of the
+   * templates nested inside it.
    *
-   * @param template The template containing the variable, which <i>must</i> be a descendant of the
-   *     template for which the {@code TemplateStringifier} is being built (usually a {@link
-   *     Template#ROOT_TEMPLATE_NAME root template})
-   * @param varName The name of the variable for which to specify the stringifier
+   * @param template The template containing the variable
+   * @param varName The name of the variable
    * @param stringifier The stringifier
    * @return This {@code StringifierFactory}
    */
-  public StringifierFactory register(Template template, String varName, Stringifier stringifier) {
+  public StringifierConfigurator register(
+      Template template, String varName, Stringifier stringifier) {
     Check.notNull(template, "tmplName");
     Check.notNull(varName, "varName");
     Check.notNull(stringifier, "stringifier");
@@ -112,42 +101,45 @@ public final class StringifierFactory {
   }
 
   /**
-   * Sets the type of the objects the specified variable receives from the data access layer. The
-   * variable is supposed to be defined in the root template rather than in one the the templates
-   * nested inside it.
+   * Explicitly sets the type of the specified variable. The variable must be declared in the
+   * template being configured, rather than in one the templates nested inside it.
    *
    * @see #setType(String, String, Class)
-   * @param varName The name of the variable for which to specify the stringifier
+   * @param varName The name of the variable
    * @param type The type of the variable
    * @return This {@code StringifierFactory}
    */
-  public StringifierFactory setType(String varName, Class<?> type) {
+  public StringifierConfigurator setType(String varName, Class<?> type) {
     return setType(tmpl, varName, type);
   }
 
   /**
-   * Explicitly sets the data type for the specified variable. This serves two purposes:
+   * Explicitly sets the type for the specified variable. This serves two purposes:
+   *
+   * <p>
    *
    * <ol>
-   *   <li>The {@code TemplateStringifier} can request the appropriate stringifier from the {@link
-   *       ApplicationStringifier} even if the value to be stringified is null (in which case
-   *       calling {@code value.getClass()} would result in a {@code NullPointerException}).
+   *   <li>It enables Yokete request type-specific stringifier from the {@link
+   *       ApplicationStringifier} even if the variable's value is null (in which case calling
+   *       {@code value.getClass()} would cause a {@code NullPointerException}).
    *   <li>It lets you specify different application-level stringifiers for the same type. An
    *       example would be {@link LocalDateTime} objects that must be formatted differently in
    *       different parts of the application. See {@link ApplicationStringifier}.
    * </ol>
    *
-   * @param template The template containing the variable, which <i>must</i> be a descendant of the
-   *     template for which the {@code TemplateStringifier} is being built
-   * @param varName The name of the variable for which to specify the stringifier
+   * <p>The specified {@code Template} must either be the {@code Template} that is being configured
+   * or one of the templates descending from it.
+   *
+   * @param template The template containing the variable
+   * @param varName The name of the variable
    * @param type The type of the variable
    * @return This {@code StringifierFactory}
    */
-  public StringifierFactory setType(Template template, String varName, Class<?> type) {
+  public StringifierConfigurator setType(Template template, String varName, Class<?> type) {
     Check.notNull(template, "template");
     Check.notNull(varName, "varName");
-    Check.that(asf).is(notNull(), NO_APPLICATION_STRINGIFIER);
-    Check.notNull(type, "type").is(asf::canStringify, CANNOT_STRINGIFY, type.getName());
+    Check.that(appStringifier).is(notNull(), NO_APPLICATION_STRINGIFIER);
+    Check.notNull(type, "type").is(appStringifier::canStringify, CANNOT_STRINGIFY, type.getName());
     Check.that(Tuple.of(template, varName))
         .is(in(), varNames, NO_SUCH_VARIABLE, template, varName)
         .is(notIn(), stringifiers.keySet(), STRINGIFIER_ALREADY_SET, template, varName)
@@ -161,12 +153,12 @@ public final class StringifierFactory {
    *
    * @return A new, immutable {@code Stringifier} instance
    */
-  public Stringifier createStringifier() {
+  public Stringifier freeze() {
     // Swap template name and variable name swap because variable names have higher cardinality
     Map<Tuple<String, Template>, Stringifier> map0 = new HashMap<>(stringifiers.size());
     stringifiers.forEach((tuple, stringifier) -> map0.put(tuple.swap(), stringifier));
     Map<Tuple<String, Template>, Class<?>> map1 = new HashMap<>(varTypes.size());
     varTypes.forEach((tuple, type) -> map1.put(tuple.swap(), type));
-    return new TemplateStringifier(map0, map1, asf);
+    return new TemplateStringifier(map0, map1, appStringifier);
   }
 }

@@ -10,7 +10,7 @@ import static nl.naturalis.yokete.render.BadStringifierException.applicationStri
 import static nl.naturalis.yokete.render.BadStringifierException.templateStringifierNotNullResistant;
 import static nl.naturalis.yokete.render.BadStringifierException.templateStringifierReturnedNull;
 
-final class TemplateStringifier implements Stringifier {
+class TemplateStringifier implements Stringifier {
 
   private final Map<Tuple<String, Template>, Stringifier> stringifiers;
   private final Map<Tuple<String, Template>, Class<?>> varTypes;
