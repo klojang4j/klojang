@@ -6,8 +6,8 @@ import nl.naturalis.yokete.template.Template;
 
 /**
  * A simple map-based {@code Accessor} implementation. The {@code Map} passed to the {@link
- * #access(Map, String) getValue} method is assumed to be a simple, two-dimensional key-value
- * store without nested structures.
+ * #access(Map, String) getValue} method is assumed to be a simple, two-dimensional key-value store
+ * without nested structures.
  *
  * @author Ayco Holleman
  */
@@ -44,7 +44,7 @@ public class MapAccessor implements Accessor {
     try {
       map = (Map<String, Object>) from;
     } catch (ClassCastException e) {
-      throw RenderException.unexpectedType(varName, from);
+      throw RenderException.inaccessible(this, template, varName, from);
     }
     return map.getOrDefault(key, ABSENT);
   }

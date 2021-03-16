@@ -7,6 +7,7 @@ import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.TemplateUtils;
 import static java.lang.String.format;
 import static nl.naturalis.common.ClassMethods.prettyClassName;
+import static nl.naturalis.common.ClassMethods.prettySimpleClassName;
 
 public class RenderException extends YoketeException {
 
@@ -14,37 +15,37 @@ public class RenderException extends YoketeException {
 
   private static final String NO_SUCH_TEMPLATE = "No such nested template: \"%s\"";
 
-  private static final String INVALID_NAME = "No such variable or nested template: \"%s\"";
+  private static final String NO_SUCH_NAME = "No such variable or nested template: \"%s\"";
 
   private static final String ALREADY_SET = "Variable already set: \"%s\"";
 
-  private static final String ALREADY_POPULATED = "Template %s has already been populated";
-
   private static final String REPETITION_MISMATCH =
-      "When populating a template in mulitple passes you must always provide the "
-          + "same number of ViewData objects. Received %d ViewData objects in first "
-          + "round for template \"%s\". Now got %d.";
+      "Template \"%s\" has already been partially populated, but with a different amount "
+          + "of source data objects. When filling up a template in mulitple passes you must "
+          + "always provide the same number of source data objects. Received %d source data "
+          + "objects in first round; now got %d";
 
   private static final String BAD_ESCAPE_TYPE = "NOT_SPECIFIED is not a valid escape type";
 
   private static final String NOT_RENDERABLE = "Cannot render yet. Not all variables set: %s. ";
 
-  private static final String UNEXPECTED_TYPE = "Unexpected or illegal type for variable %s: %s";
-
-  private static final String NESTED_MAP_EXPECTED =
-      "Error creating data object for template \"%s\". Expected nested "
-          + "Map<String, Object>. Got: %s";
+  private static final String INACCESSIBLE = "Value of %s (%s) is inaccessible for %s";
 
   private static final String NULL_DATA =
       "Data for template %s must not be null because it contains at least one variable or nested template";
 
   private static final String BAD_DATA = "Cannot use instance of opaque class %s as template data";
 
-  private static final String NO_MONO_TEMPLATE =
-      "populateMono not allowed for non-mono template \"%s\" (contains %d variables)";
+  private static final String NOT_MONO =
+      "populateMono only allowed for single-variable template; \"%s\" contains %d variables and/or nested templates";
 
-  public static Function<String, RenderException> noSuchVariable(Template t, String name) {
-    String fqn = TemplateUtils.getFQName(t, name);
+  private static final String NO_TEXT_ONLY_TEMPLATE =
+      "fillNone only allowed for text-only templates; \"%s\" contains %d variables and/or nested templates";
+
+  private static final String INVALID_VALUE = "Invalid value for %s: %s";
+
+  public static Function<String, RenderException> noSuchVariable(Template t, String var) {
+    String fqn = TemplateUtils.getFQName(t, var);
     return s -> new RenderException(format(NO_SUCH_VARIABLE, fqn));
   }
 
@@ -52,17 +53,13 @@ public class RenderException extends YoketeException {
     return s -> new RenderException(format(NO_SUCH_TEMPLATE, name));
   }
 
-  public static Function<String, RenderException> invalidName(String name) {
-    return s -> new RenderException(format(INVALID_NAME, name));
+  public static Function<String, RenderException> noSuchName(String name) {
+    return s -> new RenderException(format(NO_SUCH_NAME, name));
   }
 
-  public static Function<String, RenderException> alreadySet(Template t, String name) {
-    String fqn = TemplateUtils.getFQName(t, name);
+  public static Function<String, RenderException> alreadySet(Template t, String var) {
+    String fqn = TemplateUtils.getFQName(t, var);
     return s -> new RenderException(format(ALREADY_SET, fqn));
-  }
-
-  public static Function<String, RenderException> alreadyPopulated(String name) {
-    return s -> new RenderException(format(ALREADY_POPULATED, name));
   }
 
   public static RenderException repetitionMismatch(String name, int expected, int actual) {
@@ -78,13 +75,9 @@ public class RenderException extends YoketeException {
     return s -> new RenderException(msg);
   }
 
-  public static RenderException unexpectedType(String var, Object val) {
-    String msg = format(UNEXPECTED_TYPE, var, prettyClassName(val));
-    return new RenderException(msg);
-  }
-
-  public static RenderException nestedMapExpected(String tmplName, Object found) {
-    String msg = format(NESTED_MAP_EXPECTED, tmplName, prettyClassName(found));
+  public static RenderException inaccessible(Accessor acc, Template t, String var, Object val) {
+    String fqn = TemplateUtils.getFQName(t, var);
+    String msg = format(INACCESSIBLE, fqn, prettyClassName(val), prettySimpleClassName(acc));
     return new RenderException(msg);
   }
 
@@ -96,8 +89,17 @@ public class RenderException extends YoketeException {
     return s -> new RenderException(format(BAD_DATA, prettyClassName(data)));
   }
 
-  public static Function<String, RenderException> noMonoTemlate(Template t) {
-    return s -> new RenderException(format(NO_MONO_TEMPLATE, t.getName(), t.countVars()));
+  public static Function<String, RenderException> notTextOnly(Template t) {
+    return s ->
+        new RenderException(format(NO_TEXT_ONLY_TEMPLATE, t.getName(), t.getNames().size()));
+  }
+
+  public static Function<String, RenderException> notMono(Template t) {
+    return s -> new RenderException(format(NOT_MONO, t.getName(), t.getNames().size()));
+  }
+
+  public static Function<String, RenderException> invalidValue(String name, Object value) {
+    return s -> new RenderException(format(INVALID_VALUE, name, value));
   }
 
   RenderException(String message) {

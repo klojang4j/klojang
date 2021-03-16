@@ -1,11 +1,13 @@
 package nl.naturalis.yokete.render;
 
 import java.io.OutputStream;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Predicate;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
-import nl.naturalis.common.collection.TypeMap;
-import nl.naturalis.common.collection.UnmodifiableTypeMap;
 import nl.naturalis.yokete.template.Part;
 import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.VariablePart;
@@ -20,11 +22,11 @@ import static nl.naturalis.yokete.render.EscapeType.NOT_SPECIFIED;
 import static nl.naturalis.yokete.render.RenderException.*;
 
 /**
- * A {@code RenderSession} is responsible for populating a template and rendering it. A template can
- * only be rendered once all its variables, and all variables in the templates descending from it,
- * have been set. Populating the template can be done in multiple passes. Once a template is fully
- * populated, the {@code RenderSession} effectively becomes immutable. You can render it as often as
- * you like, but you cannot overwrite its variables.
+ * A {@code RenderSession} is responsible for populating a template and rendering it. Populating the
+ * template can be done in multiple passes. It can only be rendered once all its variables, and all
+ * variables in the templates descending from it, have been set. Once a template is fully populated,
+ * the {@code RenderSession} effectively becomes immutable. You can render it as often as you like,
+ * but you cannot overwrite its variables.
  *
  * <p>A {@code RenderSession} is a throw-away object that should go out of scope as quickly as
  * possible. It is cheap to instantiate, but can gain a lot of state as the template gets populated.
@@ -43,24 +45,6 @@ import static nl.naturalis.yokete.render.RenderException.*;
  */
 public class RenderSession {
 
-  private static final Object whatever = new Object();
-
-  /*
-   * Defines types that are definitely not suitable as data for a template, because they don't have
-   * a meaningful, accessible internal structure. There are of course plenty of types that are
-   * (very) unlikely candidates as data sources for a template, but these ones we catch out
-   * explicitly, as they are likely to be accidentally used by clients. NB we don't care about the
-   * values in the TypeMap, only about the keys. We should ideally also have a {@code TypeSet}
-   * interface in naturalis-common.
-   */
-  private static final TypeMap<?> BAD_DATA =
-      UnmodifiableTypeMap.build()
-          .add(Number.class, whatever)
-          .add(CharSequence.class, whatever)
-          .add(Object[].class, whatever)
-          .add(Collection.class, whatever)
-          .freeze();
-
   private final SessionFactory factory;
   private final RenderState state;
 
@@ -72,75 +56,80 @@ public class RenderSession {
   /* METHODS FOR SETTING A SINGLE TEMPLATE VARIABLE */
 
   /**
-   * Sets a single variable within the template to the specified value. Unless the variable was
-   * declared with an inline {@link EscapeType} (e.g. {@code ~%html:fullName%}) no escaping will be
-   * applied to the value.
+   * Sets the specified variable to the specified value. Unless the variable was declared with an
+   * inline {@link EscapeType} (e.g. {@code ~%html:fullName%}) no escaping will be applied to the
+   * value.
    *
    * @param name The name of the variable to set
    * @param value The value of the variable
    * @throws RenderException
    */
-  public RenderSession setVariable(String name, Object value) throws RenderException {
-    return setVariable(name, asList(value), ESCAPE_NONE);
+  public RenderSession set(String name, Object value) throws RenderException {
+    return set(name, asList(value), ESCAPE_NONE);
   }
 
   /**
-   * Sets a single variable within the template to the specified value using the specified escape
-   * type. If the variable was declared with an inline escape type that differs from the specified
-   * escape type, the variable will still be set, but escaped using the inline escape type. This
-   * allows you to declare all variables inside HTML tags (most likely the overwhelming majority)
-   * without an inline escape type, while only specifying an inline escape type for variables inside
-   * <code>&lt;script&gt;</code> tags (namely "js"). This makes your template easier to write and
-   * less cluttered.
+   * Sets the specified variable to the specified value using the specified escape type. If the
+   * variable was declared with an inline escape type that differs from the specified escape type,
+   * the inline escape type will prevail. This allows you to declare variables inside HTML tags
+   * (most likely the overwhelming majority) without an inline escape type, while only specifying an
+   * inline escape type for variables inside <code>&lt;script&gt;</code> tags (namely "js"). This
+   * makes your template easier to read and write.
    *
    * @param name The name of the variable to set
    * @param value The value of the variable
+   * @param escapeType The escape type to use if the variable has no inline escape type
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession set(String name, Object value, EscapeType escapeType)
+      throws RenderException {
+    return set(name, asList(value), escapeType);
+  }
+
+  /**
+   * Sets the specified variable to the concatenation of the values within the specified {@code
+   * List}. Unless the variable was declared with an inline {@link EscapeType} no escaping will be
+   * applied to the value. The values in the {@code List} are first stringified, then escaped, then
+   * concatenated. If the {@code List} is empty, the variable will not be rendered at all (that is,
+   * an empty string will be inserted at the location of the variable within the template).
+   *
+   * @param name The name of the variable to set
+   * @param values The string values to concatenate
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession set(String name, List<?> values) throws RenderException {
+    return set(name, values, ESCAPE_NONE);
+  }
+
+  /**
+   * Sets the specified variable to the concatenation of the values within the specified {@code
+   * List}. The values in the {@code List} are first stringified, then escaped, then concatenated.
+   * If the {@code List} is empty, the variable will not be rendered at all (that is, an empty
+   * string will be inserted at the location of the variable within the template).
+   *
+   * @param name The name of the variable to set
+   * @param values The string values to concatenate
    * @param escapeType The escape type to use if the variable did not declare an inline escape type
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession setVariable(String name, Object value, EscapeType escapeType)
+  public RenderSession set(String name, List<?> values, EscapeType escapeType)
       throws RenderException {
-    return setVariable(name, asList(value), escapeType);
+    return set(name, values, escapeType, null, null, null);
   }
 
   /**
-   * Sets the specified variable to the concatenation of the strings within the specified {@code
-   * List}. If the {@code List} is empty, the variable will not be rendered at all. No escaping is
-   * applied to the strings in the {@code List}.
+   * Sets the specified variable to the concatenation of the values within the specified {@code
+   * List}. Each value will be prefixed with the specified prefix, suffixed with the specified
+   * suffix, and separated from the previous one by the specified separator. The values in the
+   * {@code List} are first stringified, then escaped, then enriched with prefix, suffix and
+   * separator, and then concatenated. If the {@code List} is empty, the variable will not be
+   * rendered at all.
    *
    * @param name The name of the variable to set
-   * @param value The string values to concatenate
-   * @return This {@code RenderSession}
-   * @throws RenderException
-   */
-  public RenderSession setVariable(String name, List<?> value) throws RenderException {
-    return setVariable(name, value, ESCAPE_NONE);
-  }
-
-  /**
-   * Sets the specified variable to the concatenation of the strings within the specified {@code
-   * List}. If the {@code List} is empty, the variable will not be rendered at all.
-   *
-   * @param name The name of the variable to set
-   * @param value The string values to concatenate
-   * @param escapeType The escape type to use if the variable did not declare an inline escape type
-   * @return This {@code RenderSession}
-   * @throws RenderException
-   */
-  public RenderSession setVariable(String name, List<?> value, EscapeType escapeType)
-      throws RenderException {
-    return setVariable(name, value, escapeType, null, null, null);
-  }
-
-  /**
-   * Sets the specified variable to the concatenation of the strings within the specified {@code
-   * List}. Each string will be prefixed with the specified prefix, suffixed with the specified
-   * suffix, and separated by the specified separator. If the {@code List} is empty, the variable
-   * will not be rendered at all.
-   *
-   * @param name The name of the variable to set
-   * @param value The string values to concatenate
+   * @param values The string values to concatenate
    * @param escapeType The escape type to use if the variable did not declare an inline escape type
    * @param prefix The prefix to use for each string
    * @param separator The suffix to use for each string
@@ -148,26 +137,26 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession setVariable(
+  public RenderSession set(
       String name,
-      List<?> value,
+      List<?> values,
       EscapeType escapeType,
       String prefix,
       String separator,
       String suffix)
       throws RenderException {
-    Check.notNull(name, "name");
-    Check.that(value, "value").is(noneNull());
-    Check.notNull(escapeType, "escapeType");
+    Check.on(invalidValue("name", name), name).is(notNull());
+    Check.on(invalidValue("values", values), values).is(noneNull());
+    Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
     Template t = factory.getTemplate();
     Check.on(alreadySet(t, name), state.isSet(name)).is(no());
     Check.on(noSuchVariable(t, name), name).is(in(), t.getVars());
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
     IntList indices = factory.getTemplate().getVarPartIndices().get(name);
-    if (value.isEmpty()) {
+    if (values.isEmpty()) {
       indices.forEach(i -> state.setVar(i, EMPTY_STRING_ARRAY));
     } else {
-      String[] strings = factory.toString(name, value);
+      String[] strings = factory.toString(name, values);
       indices.forEach(i -> setVar(i, strings, escapeType, prefix, separator, suffix));
     }
     state.done(name);
@@ -220,68 +209,10 @@ public class RenderSession {
   /* METHODS FOR POPULATING A SINGLE NESTED TEMPLATE */
 
   /**
-   * Suppresses the rendering of the specified variable or nested template. The same can be achieved
-   * using {@code setVariable(name, Collections.emptyList())} resp. {@code populate(name,
-   * Collections.emptyList())}. Note that "just not mentioning" the variable or nested template
-   * while in a render session does not have the effect of it not being rendered. Instead, if you
-   * call one of the {@code renderSafe} methods, you will get a {@code RenderException}, and if you
-   * call one of the {@code render} methods, you will will see the raw variable c.q. template in the
-   * output.
-   *
-   * @param name The name of a variable or nested template
-   * @return This {@code RenderSession}
-   * @throws RenderException
-   */
-  public RenderSession dontRender(String name) throws RenderException {
-    if (factory.getTemplate().hasVar(name)) {
-      setVariable(name, Collections.emptyList());
-    } else if (factory.getTemplate().hasNestedTemplate(name)) {
-      populate(name, Collections.emptyList());
-    } else {
-      Check.failOn(invalidName(name));
-    }
-    return this;
-  }
-
-  /**
-   * Suppresses the rendering of all variables that have not been set yet, and of all nested
-   * templates that have not been populated yet. Nested templates that are partially populated will
-   * be rendered, but the variables with them that have not been set yet will not be rendered.
-   *
-   * @return This {@code RenderSession}
-   */
-  public RenderSession skipRest() {
-    skipRest(this);
-    return this;
-  }
-
-  private static void skipRest(RenderSession s0) {
-    try {
-      for (String var : s0.state.getUnsetVars()) {
-        s0.setVariable(var, Collections.emptyList());
-      }
-    } catch (RenderException e) {
-      // won't happen because we know we're dealing with valid variable names
-    }
-    Set<Template> busy = s0.state.getChildSessions().keySet();
-    Set<Template> todo = new HashSet<>(s0.factory.getTemplate().getNestedTemplates());
-    todo.removeAll(busy);
-    try {
-      for (Template t : todo) {
-        s0.populate(t.getName(), Collections.emptyList());
-      }
-    } catch (RenderException e) {
-    }
-    for (Template t : busy) {
-      s0.state.getChildSessions(t).forEach(s -> skipRest(s));
-    }
-  }
-
-  /**
-   * Populates the <i>nested</i> template with the specified name with values retrieved from the
-   * specified data object. Only variables and (doubly) nested templates whose name is present in
-   * the {@code names} argument will be populated. No escaping will be applied to the values
-   * retrieved from the data object.
+   * Populates the nested template with the specified name with values retrieved from the specified
+   * data object. Only variables and (doubly) nested templates whose name is present in the {@code
+   * names} argument will be populated. No escaping will be applied to the values retrieved from the
+   * data object.
    *
    * @param nestedTemplateName The name of the nested template
    * @param data An object that provides data for all or some of the nested template's variables and
@@ -289,36 +220,27 @@ public class RenderSession {
    * @param names The names of the variables and doubly-nested templates that you want to be
    *     populated using the specified data object
    */
-  public RenderSession populate(String nestedTemplateName, Object data, String... names)
+  public RenderSession fill(String nestedTemplateName, Object data, String... names)
       throws RenderException {
-    return populate(nestedTemplateName, data, ESCAPE_NONE, names);
+    return fill(nestedTemplateName, data, ESCAPE_NONE, names);
   }
 
   /**
-   * Populates the <i>nested</i> template with the specified name with values retrieved from the
-   * specified data object. Only variables and (doubly) nested templates whose name is present in
-   * the {@code names} argument will be populated.
+   * Populates the nested template with the specified name with values retrieved from the specified
+   * data object. Only variables and (doubly) nested templates whose name is present in the {@code
+   * names} argument will be populated.
    *
    * <h4>Repeating Templates</h4>
    *
    * <p>If the specified object is an array or a {@code Collection}, the template will be repeated
    * for each object in the array or {@code Collection}. This can be used, for example, to generate
-   * an HTML table from a template that contains just a single row.
+   * an HTML table from a nested template that contains just a single row.
    *
    * <h4>Conditional Rendering</h4>
    *
-   * <p>If the specified object is an <i>empty</i> array or a {@code Collection}, the template will
-   * not be rendered at all. This allows for conditional rendering (i.e. render the template only if
-   * certain conditions are met).
-   *
-   * <h4>Text-only templates</h4>
-   *
-   * <p>In rare cases you might want to define a text-only nested template, i.e. a nested template
-   * that does not contain any variables or (doubly) nested templates. One reason could be that you
-   * want to conditionally render it. For text-only templates the {@code data} argument can be
-   * anything you like, including {@code null}. If you want a text-only template to be repeated,
-   * specify something like {@code new Object[7]}. If you don't want it to be rendered at all,
-   * specify {@code new Object[0]} or an empty list.
+   * <p>If the specified object is an empty array or an empty {@code Collection}, the template will
+   * not be rendered at all. This allows you to conditionally render the template (i.e. render the
+   * template only if certain conditions are met).
    *
    * @param nestedTemplateName The name of the nested template
    * @param data An object that provides data for all or some of the nested template's variables and
@@ -329,10 +251,48 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession populate(
+  public RenderSession fill(
       String nestedTemplateName, Object data, EscapeType escapeType, String... names)
       throws RenderException {
     return repeat(nestedTemplateName, asList(data), escapeType, names);
+  }
+
+  /**
+   * Enables/disables rendering of text-only nested templates. In other words: nested templates
+   * without any variables or doubly nested templates. One reason you might want to define such a
+   * template is that you want to conditionally render it. In principle you could achieve the same
+   * by calling {@code fill(nestedTemplateName, new Object[repeats])} because whatever value you
+   * pass is ignored in case of text-only templates. However, this is cleaner and it bypasses some
+   * unnecessary code. To disable rendering, specify 0 (zero) for the {@code repeats} argument.
+   *
+   * @param nestedTemplateName The name of the nested template. Must be a text-only template,
+   *     otherwise a {@code RenderException} is thrown
+   * @param repeats The number of times you want the template to be repeated in the render result
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession fillNone(String nestedTemplateName, int repeats) throws RenderException {
+    String name = nestedTemplateName;
+    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
+    Check.on(invalidValue("repeats", repeats), repeats).is(gte(), 0);
+    Check.on(noSuchTemplate(name), name).is(validTemplateName());
+    Template t = factory.getTemplate().getNestedTemplate(name);
+    Check.on(notTextOnly(t), t.getNames()).has(size(), eq(), 0);
+    state.createChildSessions(t, repeats);
+    return this;
+  }
+
+  /**
+   * Convenience method for populating a nested template that contains exactly one variable. See
+   * {@link #fillMono(String, Object, EscapeType)}.
+   *
+   * @param nestedTemplateName The name of the nested template, which <i>must</i> contain exactly
+   *     one variable
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession fillMono(String nestedTemplateName, Object value) throws RenderException {
+    return fillMono(nestedTemplateName, value, ESCAPE_NONE);
   }
 
   /**
@@ -340,81 +300,133 @@ public class RenderSession {
    * Ordinarily nested templates are populated with a complex {code Object} and an {@link Accessor}
    * that retrieves variable values from it. With this method, however, you specify the variable's
    * value directly. The value can still be an array or {@code Collection}, causing the template to
-   * be repeat itself. See {@link #populate(String, Object, EscapeType, String...)}.
+   * be repeat itself. See {@link #fill(String, Object, EscapeType, String...)}.
    *
-   * @param nestedTemplateName The name of the nested template, which must contain exactly one
-   *     variable
+   * @param nestedTemplateName The name of the nested template, which <i>must</i> contain exactly
+   *     one variable
    * @param escapeType The escape to use for the variable within the nested template
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession populateMono(String nestedTemplateName, Object value, EscapeType escapeType)
+  public RenderSession fillMono(String nestedTemplateName, Object value, EscapeType escapeType)
       throws RenderException {
     String name = nestedTemplateName;
-    Check.notNull(name, "nestedTemplateName");
-    Check.notNull(value, "value");
-    Check.notNull(escapeType, "escapeType");
-    Check.on(noSuchTemplate(name), name).is(in(), factory.getTemplate().getNestedTemplateNames());
+    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
+    Check.on(invalidValue("value", value), value).is(notNull());
+    Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
+    Check.on(noSuchTemplate(name), name).is(validTemplateName());
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
     Template t = factory.getTemplate().getNestedTemplate(name);
-    Check.on(noMonoTemlate(t), t).has(Template::countVars, eq(), 1);
+    Check.on(notMono(t), t)
+        .has(Template::countVars, eq(), 1)
+        .has(Template::countNestedTemplates, eq(), 0);
     List<?> values = asList(value);
     String monoVar = t.getVars().iterator().next();
     List<RenderSession> sessions = state.createChildSessions(t, values.size());
     for (int i = 0; i < values.size(); ++i) {
       String escaped = factory.getStringifier().stringify(t, monoVar, values.get(i));
-      sessions.get(i).setVariable(monoVar, escaped, ESCAPE_NONE);
+      sessions.get(i).set(monoVar, escaped, ESCAPE_NONE);
     }
     return this;
   }
 
   private RenderSession repeat(String name, List<?> data, EscapeType escapeType, String... names)
       throws RenderException {
-    Check.notNull(name, "nestedTemplateName");
-    Check.that(data, "data").is(noneNull());
-    Check.notNull(escapeType, "escapeType");
-    Check.on(noSuchTemplate(name), name).is(in(), factory.getTemplate().getNestedTemplateNames());
+    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
+    Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
+    Check.on(invalidValue("data", data), data).is(noneNull());
+    Check.on(noSuchTemplate(name), name).is(validTemplateName());
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
     List<RenderSession> sessions = state.createChildSessions(name, data.size());
     for (int i = 0; i < sessions.size(); ++i) {
-      sessions.get(i).fillWith(data.get(i), escapeType, names);
+      sessions.get(i).populate(data.get(i), escapeType, names);
     }
     return this;
   }
 
-  /* METHODS FOR POPULATING WHATEVER IS IN THE PROVIDED ViewData OBJECT */
+  /* CONVENIENCE METHODS */
 
   /**
-   * Populates all variables and nested templates whose name is present in the {@code names}
-   * argument with values retrieved from the specified data object. No escaping will be applied to
-   * the values retrieved from the data object. See {@link #fillWith(Object, EscapeType,
-   * String...)}.
+   * Disables rendering of the specified variable or nested template. The same can be achieved using
+   * {@code set(name, Collections.emptyList())} resp. {@code fill(name, Collections.emptyList())}.
    *
-   * @param data An object that provides data for all or some of the template variables and nested
-   *     templates
-   * @param escapeType The escape type to use
-   * @param names The names of the variables nested templates names that must be populated. Not
-   *     specifying any name (or {@code null}) indicates that you want all variables and nested
-   *     templates to be populated.
+   * @param name The name of a variable or nested template
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillWith(Object data, String... names) throws RenderException {
-    return fillWith(data, ESCAPE_NONE, names);
+  public RenderSession skip(String name) throws RenderException {
+    Check.on(invalidValue("name", name), name).is(notNull());
+    if (factory.getTemplate().hasVar(name)) {
+      set(name, Collections.emptyList());
+    } else if (factory.getTemplate().hasNestedTemplate(name)) {
+      fill(name, Collections.emptyList());
+    } else {
+      Check.failOn(noSuchName(name));
+    }
+    return this;
   }
 
   /**
-   * Populates all variables and nested templates whose name is present in the {@code names}
-   * argument with values retrieved from the specified data object. This allows you to call this
-   * method multiple times with the same data object, but with different escape types for different
-   * variables.
+   * Disables rendering of all variables that have not been set yet, and of all nested templates
+   * that have not been filled up yet. Nested templates that are partially populated will be
+   * rendered, but unset variables within them will not be rendered. Calling this method prevents
+   * the presence of raw variables and templates in the render result.
    *
-   * <p>If the {@code names} argument is {@code null} or empty, this method will attempt to populate
-   * <i>all</i> all variables and nested templates using the specified data object. Note, however,
-   * that the data object is itself explicitly not required to provide all values for all variables
-   * and nested templates (see {@link Accessor#access(Object, String)}). This in turn enables you
-   * call this method multiple times with different data objects, until the template is fully
-   * populated.
+   * @return This {@code RenderSession}
+   */
+  public RenderSession skipRest() {
+    skip0(this);
+    return this;
+  }
+
+  private static void skip0(RenderSession s0) {
+    try {
+      for (String var : s0.state.getUnsetVars()) {
+        s0.set(var, Collections.emptyList());
+      }
+    } catch (RenderException e) {
+      // won't happen because we _know_ we're dealing with valid variable names
+    }
+    Set<Template> inProgress = s0.state.getChildSessions().keySet();
+    Set<Template> todo = new HashSet<>(s0.factory.getTemplate().getNestedTemplates());
+    todo.removeAll(inProgress);
+    try {
+      for (Template t : todo) {
+        s0.fill(t.getName(), Collections.emptyList());
+      }
+    } catch (RenderException e) {
+    }
+    for (Template t : inProgress) {
+      s0.state.getChildSessions(t).forEach(RenderSession::skip0);
+    }
+  }
+
+  /**
+   * Creates a new {@code RenderSession} for the specified nested template. Note that child sessions
+   * are automatically created for source data objects that reflect the template's structure.
+   * However, this method lests you "manually" recurse into the template.
+   *
+   * <p>Unless you have some special purpose for it, you should not call {@code render} or {@code
+   * renderSafe} on the child session. Anything you do in the child session will become visible once
+   * you render the main session.
+   *
+   * @param nestedTemplateName The name of a variable or nested template
+   * @return A child session of the current session
+   * @throws RenderException
+   */
+  public RenderSession createChildSession(String nestedTemplateName) throws RenderException {
+    String name = nestedTemplateName;
+    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
+    Check.on(noSuchTemplate(name), name).is(validTemplateName());
+    return state.createChildSessions(name, 1).get(0);
+  }
+
+  /* METHODS FOR POPULATING WHATEVER IS IN THE PROVIDED OBJECT */
+
+  /**
+   * Populates the entire template, except for the variables and nested templates in the {@code
+   * names} array, with values retrieved from the specified object. No escaping will be applied to
+   * the retrievd values. See {@link #populate(Object, EscapeType, String...)}.
    *
    * @param data An object that provides data for all or some of the template variables and nested
    *     templates
@@ -425,27 +437,44 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillWith(Object data, EscapeType escapeType, String... names)
+  public RenderSession populate(Object data, String... names) throws RenderException {
+    return populate(data, ESCAPE_NONE, names);
+  }
+
+  /**
+   * Populates the entire template, except for the variables and nested templates in the {@code
+   * names} array, with values retrieved from the specified object. This allows you to call this
+   * method multiple times with the <i>same</i> source data, but with different escape types for
+   * different variables. If the {@code names} array is {@code null} or empty, this method will
+   * attempt to populate all variables and nested templates. The source data object is, however,
+   * explicitly not required to provide all values for all variables and nested templates (see
+   * {@link Accessor#access(Object, String)}). This allows you to call this method multiple times
+   * with <i>different</i> source data, until the template is fully populated.
+   *
+   * @param data An object that provides data for all or some of the template variables and nested
+   *     templates
+   * @param escapeType The escape type to use
+   * @param names The names of the variables nested templates names that must be populated. Not
+   *     specifying any name (or {@code null}) indicates that you want all variables and nested
+   *     templates to be populated.
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession populate(Object data, EscapeType escapeType, String... names)
       throws RenderException {
     if (data == null) {
-      Template t = factory.getTemplate();
-      Check.on(nullData(t), t.getNames()).has(size(), eq(), 0);
+      Check.on(notMono(factory.getTemplate()), factory.getTemplate())
+          .has(Template::countVars, eq(), 1)
+          .has(Template::countNestedTemplates, eq(), 0);
+      /*
+       * The entire template is in fact static HTML.
+       * Bit wasteful, but why not support it.
+       */
+      return this;
     }
-    Check.on(badData(data), BAD_DATA).is(notContainingKey(), data.getClass());
     processVars(data, escapeType, names);
     processTmpls(data, escapeType, names);
     return this;
-  }
-
-  /**
-   * Verifies that the template is fully populated. Once your application becomes production-ready,
-   * you should either call one of the {@code renderSafe} methods, or make any call to a {@code
-   * Render} dependent on whether {@code isRenderable()} returns {@code true}.
-   *
-   * @return Whether or not the template is fully populated
-   */
-  public boolean isRenderable() {
-    return state.isRenderable();
   }
 
   private void processVars(Object data, EscapeType escapeType, String[] names)
@@ -459,7 +488,7 @@ public class RenderSession {
     }
     for (String varName : varNames) {
       Object value = factory.getAccessor().access(data, varName);
-      setVariable(varName, value, escapeType);
+      set(varName, value, escapeType);
     }
   }
 
@@ -474,55 +503,60 @@ public class RenderSession {
     }
     for (String name : tmplNames) {
       Object nestedData = factory.getAccessor().access(data, name);
-      populate(name, nestedData, escapeType, names);
+      fill(name, nestedData, escapeType, names);
     }
   }
 
   /* RENDER METHODS */
 
   /**
+   * Verifies that the template is fully populated.
+   *
+   * @return Whether or not the template is fully populated
+   */
+  public boolean isRenderable() {
+    return state.isRenderable();
+  }
+
+  /**
    * Writes the render result to the specified output stream. If the template is not fully
-   * populated, you will see raw variable declations in the output.
+   * populated, you will see raw variables and templates in the output. If this method throws a
+   * {@code RenderException} it is guaranteed not to have written anything to the output stream.
    *
    * @param out The output stream to which to write the render result
+   * @throws RenderException
    */
-  public void render(OutputStream out) {
-    Check.notNull(out);
+  public void render(OutputStream out) throws RenderException {
+    Check.on(invalidValue("out", out), out).is(notNull());
     Renderer renderer = new Renderer(state);
     renderer.render(out);
   }
 
   /**
    * Appends the render result to the specified {@code StringBuilder}. If the template is not fully
-   * populated, you will see raw variable declations in the output.
+   * populated, you will see raw variables and templates in the output. If this method throws a
+   * {@code RenderException} it is guaranteed not to have written anything to the {@code
+   * StringBuilder}.
    *
-   * @param sb A {@code StringBuilder} to which to append the render result
+   * @param sb The {@code StringBuilder} to which to append the render result
+   * @throws RenderException
    */
-  public void render(StringBuilder sb) {
-    Check.notNull(sb);
+  public void render(StringBuilder sb) throws RenderException {
+    Check.on(invalidValue("sb", sb), sb).is(notNull());
     Renderer renderer = new Renderer(state);
     renderer.render(sb);
   }
 
   /**
-   * Returns a {@code StringBuilder} containing the render result. If the template is not fully
-   * populated, you will see raw variable declations in the output.
-   *
-   * @return A {@code StringBuilder} containing the render result
-   */
-  public StringBuilder render() {
-    Renderer renderer = new Renderer(state);
-    return renderer.render();
-  }
-
-  /**
    * Writes the render result to the specified output stream. If the template is not fully
-   * populated, a {@code RenderException} is thrown and the output stream is left untouched.
+   * populated, a {@code RenderException} is thrown and the output stream is left untouched. If this
+   * method throws a {@code RenderException} for any other reason, it is also guaranteed not to have
+   * written anything to the output stream.
    *
    * @param out The output stream to which to write the render result
    */
   public void renderSafe(OutputStream out) throws RenderException {
-    Check.notNull(out);
+    Check.on(invalidValue("out", out), out).is(notNull());
     Check.on(notRenderable(state.getUnsetVars()), isRenderable()).is(yes());
     Renderer renderer = new Renderer(state);
     renderer.render(out);
@@ -531,29 +565,23 @@ public class RenderSession {
   /**
    * Appends the render result to the specified {@code StringBuilder}. If the template is not fully
    * populated, a {@code RenderException} is thrown and the {@code StringBuilder} is left untouched.
+   * If this method throws a {@code RenderException} for any other reason, it is also guaranteed not
+   * to have written anything to the {@code StringBuilder}.
    *
-   * @param sb A {@code StringBuilder} to which to append the render result
+   * @param sb The {@code StringBuilder} to which to append the render result
    */
   public void renderSafe(StringBuilder sb) throws RenderException {
-    Check.notNull(sb);
+    Check.on(invalidValue("sb", sb), sb).is(notNull());
     Check.on(notRenderable(state.getUnsetVars()), isRenderable()).is(yes());
     Renderer renderer = new Renderer(state);
     renderer.render(sb);
   }
 
-  /**
-   * Returns a {@code StringBuilder} containing the render result. If the template is not fully
-   * populated, a {@code RenderException} is thrown.
-   *
-   * @return A {@code StringBuilder} containing the render result
-   */
-  public StringBuilder renderSafe() throws RenderException {
-    Check.on(notRenderable(state.getUnsetVars()), isRenderable()).is(yes());
-    Renderer renderer = new Renderer(state);
-    return renderer.render();
-  }
-
   RenderState getState() {
     return state;
+  }
+
+  private Predicate<String> validTemplateName() {
+    return s -> factory.getTemplate().getNestedTemplateNames().contains(s);
   }
 }

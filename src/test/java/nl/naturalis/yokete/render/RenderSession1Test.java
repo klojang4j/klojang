@@ -47,7 +47,7 @@ public class RenderSession1Test {
     depts.add(dept);
 
     RenderSession session = factory.newRenderSession();
-    session.fillWith(data);
+    session.populate(data);
 
     session.render(System.out);
   }
