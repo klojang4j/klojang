@@ -63,6 +63,18 @@ public final class SessionFactory {
     return strvals;
   }
 
+  String[] toString(String varName, List<?> values) throws RenderException {
+    String[] strs = new String[values.size()];
+    for (int i = 0; i < values.size(); ++i) {
+      strs[i] = stringifier.stringify(template, varName, values.get(i));
+    }
+    return strs;
+  }
+
+  String toString(String varName, Object value) throws RenderException {
+    return stringifier.stringify(template, varName, value);
+  }
+
   Template getTemplate() {
     return template;
   }

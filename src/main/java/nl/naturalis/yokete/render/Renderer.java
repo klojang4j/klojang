@@ -2,6 +2,7 @@ package nl.naturalis.yokete.render;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.List;
 import nl.naturalis.yokete.template.NestedTemplatePart;
 import nl.naturalis.yokete.template.Part;
@@ -42,7 +43,7 @@ class Renderer {
         if (state0.getVar(i) == null) { // Oops, user forgot that one
           ps.append(part.toString()); // Just print raw variable declaration
         } else {
-          state0.getVar(i).forEach(ps::append);
+          Arrays.stream(state0.getVar(i)).forEach(ps::append);
         }
       } else /* TemplatePart */ {
         NestedTemplatePart ntp = (NestedTemplatePart) part;
@@ -67,7 +68,7 @@ class Renderer {
         if (state0.getVar(i) == null) {
           sb.append(part.toString());
         } else {
-          state0.getVar(i).forEach(sb::append);
+          Arrays.stream(state0.getVar(i)).forEach(sb::append);
         }
       } else /* TemplatePart */ {
         NestedTemplatePart ntp = (NestedTemplatePart) part;

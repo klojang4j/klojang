@@ -3,11 +3,13 @@ package nl.naturalis.yokete.render;
 import java.io.OutputStream;
 import java.util.*;
 import nl.naturalis.common.check.Check;
+import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.collection.TypeMap;
 import nl.naturalis.common.collection.UnmodifiableTypeMap;
 import nl.naturalis.yokete.template.Part;
 import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.VariablePart;
+import static nl.naturalis.common.ArrayMethods.EMPTY_STRING_ARRAY;
 import static nl.naturalis.common.CollectionMethods.asList;
 import static nl.naturalis.common.ObjectMethods.isEmpty;
 import static nl.naturalis.common.ObjectMethods.n2e;
@@ -78,8 +80,8 @@ public class RenderSession {
    * @param value The value of the variable
    * @throws RenderException
    */
-  public RenderSession setVariable(String name, String value) throws RenderException {
-    return setVariable(name, List.of(value), ESCAPE_NONE);
+  public RenderSession setVariable(String name, Object value) throws RenderException {
+    return setVariable(name, asList(value), ESCAPE_NONE);
   }
 
   /**
@@ -97,9 +99,9 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession setVariable(String name, String value, EscapeType escapeType)
+  public RenderSession setVariable(String name, Object value, EscapeType escapeType)
       throws RenderException {
-    return setVariable(name, List.of(value), escapeType);
+    return setVariable(name, asList(value), escapeType);
   }
 
   /**
@@ -112,7 +114,7 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession setVariable(String name, List<String> value) throws RenderException {
+  public RenderSession setVariable(String name, List<?> value) throws RenderException {
     return setVariable(name, value, ESCAPE_NONE);
   }
 
@@ -126,7 +128,7 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession setVariable(String name, List<String> value, EscapeType escapeType)
+  public RenderSession setVariable(String name, List<?> value, EscapeType escapeType)
       throws RenderException {
     return setVariable(name, value, escapeType, null, null, null);
   }
@@ -148,7 +150,7 @@ public class RenderSession {
    */
   public RenderSession setVariable(
       String name,
-      List<String> value,
+      List<?> value,
       EscapeType escapeType,
       String prefix,
       String separator,
@@ -161,45 +163,58 @@ public class RenderSession {
     Check.on(alreadySet(t, name), state.isSet(name)).is(no());
     Check.on(noSuchVariable(t, name), name).is(in(), t.getVars());
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
-    List<String> strings;
+    IntList indices = factory.getTemplate().getVarPartIndices().get(name);
     if (value.isEmpty()) {
-      strings = value;
+      indices.forEach(i -> state.setVar(i, EMPTY_STRING_ARRAY));
     } else {
-      prefix = n2e(prefix);
-      separator = n2e(separator);
-      suffix = n2e(suffix);
-      if (prefix.isEmpty() && separator.isEmpty() && suffix.isEmpty()) {
-        strings = value;
-      } else {
-        strings = new ArrayList<>(value.size());
-        for (int i = 0; i < value.size(); ++i) {
-          if (i == 0) {
-            strings.add(prefix + value.get(i) + suffix);
-          } else {
-            strings.add(separator + prefix + value.get(i) + suffix);
-          }
-        }
-      }
+      String[] strings = factory.toString(name, value);
+      indices.forEach(i -> setVar(i, strings, escapeType, prefix, separator, suffix));
     }
-    factory
-        .getTemplate()
-        .getVarPartIndices()
-        .get(name)
-        .forEach(i -> setVar(i, strings, escapeType));
     state.done(name);
     return this;
   }
 
-  private void setVar(int partIndex, List<String> val, EscapeType escapeType) {
+  private void setVar(
+      int partIndex,
+      String[] strvals,
+      EscapeType escapeType,
+      String prefix,
+      String separator,
+      String suffix) {
     List<Part> parts = factory.getTemplate().getParts();
     VariablePart part = (VariablePart) parts.get(partIndex);
     EscapeType myEscType = part.getEscapeType();
     if (myEscType == NOT_SPECIFIED) {
       myEscType = escapeType;
     }
-    List<String> escaped = new ArrayList<>(val.size());
-    val.stream().map(myEscType::apply).forEach(escaped::add);
-    state.setVar(partIndex, escaped);
+    prefix = n2e(prefix);
+    separator = n2e(separator);
+    suffix = n2e(suffix);
+    boolean escape = myEscType != ESCAPE_NONE;
+    boolean enrich = !prefix.isEmpty() || !separator.isEmpty() || !suffix.isEmpty();
+    for (int i = 0; i < strvals.length; ++i) {
+      String s = strvals[i];
+      if (escape) {
+        if (enrich) {
+          if (i == 0) {
+            s = prefix + myEscType.apply(s) + suffix;
+          } else {
+            s = separator + prefix + myEscType.apply(s) + suffix;
+          }
+        } else {
+          s = myEscType.apply(s);
+        }
+        strvals[i] = s;
+      } else if (enrich) {
+        if (i == 0) {
+          s = prefix + s + suffix;
+        } else {
+          s = separator + prefix + s + suffix;
+        }
+        strvals[i] = s;
+      }
+    }
+    state.setVar(partIndex, strvals);
   }
 
   /* METHODS FOR POPULATING A SINGLE NESTED TEMPLATE */
@@ -243,17 +258,17 @@ public class RenderSession {
   private static void skipRest(RenderSession s0) {
     try {
       for (String var : s0.state.getUnsetVars()) {
-        s0.dontRender(var);
+        s0.setVariable(var, Collections.emptyList());
       }
     } catch (RenderException e) {
-      // won't happen because we *know* we're dealing with valid variable names
+      // won't happen because we know we're dealing with valid variable names
     }
     Set<Template> busy = s0.state.getChildSessions().keySet();
     Set<Template> todo = new HashSet<>(s0.factory.getTemplate().getNestedTemplates());
     todo.removeAll(busy);
     try {
       for (Template t : todo) {
-        s0.dontRender(t.getName());
+        s0.populate(t.getName(), Collections.emptyList());
       }
     } catch (RenderException e) {
     }
@@ -443,8 +458,8 @@ public class RenderSession {
       varNames.retainAll(Set.of(names));
     }
     for (String varName : varNames) {
-      List<String> strvals = factory.stringify(data, varName);
-      setVariable(varName, strvals, escapeType);
+      Object value = factory.getAccessor().access(data, varName);
+      setVariable(varName, value, escapeType);
     }
   }
 

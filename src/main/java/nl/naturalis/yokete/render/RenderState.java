@@ -11,7 +11,7 @@ class RenderState {
   private final SessionFactory factory;
   private final Set<String> todo; // variables that have not been set yet
   private final IdentityHashMap<Template, List<RenderSession>> sessions;
-  private final Map<Integer, List<String>> varValues;
+  private final Map<Integer, String[]> varValues;
 
   RenderState(SessionFactory factory) {
     this.factory = factory;
@@ -49,11 +49,11 @@ class RenderState {
     return sessions.get(template);
   }
 
-  List<String> getVar(int partIndex) {
+  String[] getVar(int partIndex) {
     return varValues.get(partIndex);
   }
 
-  void setVar(int partIndex, List<String> value) {
+  void setVar(int partIndex, String[] value) {
     varValues.put(partIndex, value);
   }
 
