@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import nl.naturalis.common.StringMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.yokete.template.Part;
@@ -23,10 +24,10 @@ import static nl.naturalis.yokete.render.RenderException.*;
 
 /**
  * A {@code RenderSession} is responsible for populating a template and rendering it. Populating the
- * template can be done in multiple passes. It can only be rendered once all its variables, and all
- * variables in the templates descending from it, have been set. Once a template is fully populated,
- * the {@code RenderSession} effectively becomes immutable. You can render it as often as you like,
- * but you cannot overwrite its variables.
+ * template can be done in multiple passes. By default template variables and nested templates are
+ * not rendered. As soon as you render the template (by calling of the {@code render} methods), the
+ * {@code RenderSession} effectively becomes immutable. You can render the template again, as often
+ * as you like, but the values of its variables are fixed.
  *
  * <p>A {@code RenderSession} is a throw-away object that should go out of scope as quickly as
  * possible. It is cheap to instantiate, but can gain a lot of state as the template gets populated.
@@ -146,7 +147,7 @@ public class RenderSession {
       String suffix)
       throws RenderException {
     Check.on(invalidValue("name", name), name).is(notNull());
-    Check.on(invalidValue("values", values), values).is(noneNull());
+    Check.on(invalidValue("values", values), values).is(notNull());
     Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
     Template t = factory.getTemplate();
     Check.on(alreadySet(t, name), state.isSet(name)).is(no());
@@ -239,8 +240,11 @@ public class RenderSession {
    * <h4>Conditional Rendering</h4>
    *
    * <p>If the specified object is an empty array or an empty {@code Collection}, the template will
-   * not be rendered at all. This allows you to conditionally render the template (i.e. render the
-   * template only if certain conditions are met).
+   * not be rendered at all. This allows for conditional rendering (i.e. render the template only if
+   * certain conditions are met). Note, however, that the same can be achieved more easily by just
+   * not processing the template. If you never call the {@code fill} method for a nested template it
+   * will not be rendered either, because by default neither template variables nor nested templates
+   * are rendered.
    *
    * @param nestedTemplateName The name of the nested template
    * @param data An object that provides data for all or some of the nested template's variables and
@@ -263,15 +267,16 @@ public class RenderSession {
    * template is that you want to conditionally render it. In principle you could achieve the same
    * by calling {@code fill(nestedTemplateName, new Object[repeats])} because whatever value you
    * pass is ignored in case of text-only templates. However, this is cleaner and it bypasses some
-   * unnecessary code. To disable rendering, specify 0 (zero) for the {@code repeats} argument.
+   * unnecessary code. To disable rendering, specify 0 (zero) for the {@code repeats} argument, or
+   * just don't call this method.
    *
-   * @param nestedTemplateName The name of the nested template. Must be a text-only template,
+   * @param nestedTemplateName The name of the nested template. <b>Must</b> be a text-only template,
    *     otherwise a {@code RenderException} is thrown
    * @param repeats The number of times you want the template to be repeated in the render result
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillNone(String nestedTemplateName, int repeats) throws RenderException {
+  public RenderSession show(String nestedTemplateName, int repeats) throws RenderException {
     String name = nestedTemplateName;
     Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
     Check.on(invalidValue("repeats", repeats), repeats).is(gte(), 0);
@@ -345,61 +350,6 @@ public class RenderSession {
   }
 
   /* CONVENIENCE METHODS */
-
-  /**
-   * Disables rendering of the specified variable or nested template. The same can be achieved using
-   * {@code set(name, Collections.emptyList())} resp. {@code fill(name, Collections.emptyList())}.
-   *
-   * @param name The name of a variable or nested template
-   * @return This {@code RenderSession}
-   * @throws RenderException
-   */
-  public RenderSession skip(String name) throws RenderException {
-    Check.on(invalidValue("name", name), name).is(notNull());
-    if (factory.getTemplate().hasVar(name)) {
-      set(name, Collections.emptyList());
-    } else if (factory.getTemplate().hasNestedTemplate(name)) {
-      fill(name, Collections.emptyList());
-    } else {
-      Check.failOn(noSuchName(name));
-    }
-    return this;
-  }
-
-  /**
-   * Disables rendering of all variables that have not been set yet, and of all nested templates
-   * that have not been filled up yet. Nested templates that are partially populated will be
-   * rendered, but unset variables within them will not be rendered. Calling this method prevents
-   * the presence of raw variables and templates in the render result.
-   *
-   * @return This {@code RenderSession}
-   */
-  public RenderSession skipRest() {
-    skip0(this);
-    return this;
-  }
-
-  private static void skip0(RenderSession s0) {
-    try {
-      for (String var : s0.state.getUnsetVars()) {
-        s0.set(var, Collections.emptyList());
-      }
-    } catch (RenderException e) {
-      // won't happen because we _know_ we're dealing with valid variable names
-    }
-    Set<Template> inProgress = s0.state.getChildSessions().keySet();
-    Set<Template> todo = new HashSet<>(s0.factory.getTemplate().getNestedTemplates());
-    todo.removeAll(inProgress);
-    try {
-      for (Template t : todo) {
-        s0.fill(t.getName(), Collections.emptyList());
-      }
-    } catch (RenderException e) {
-    }
-    for (Template t : inProgress) {
-      s0.state.getChildSessions(t).forEach(RenderSession::skip0);
-    }
-  }
 
   /**
    * Creates a new {@code RenderSession} for the specified nested template. Note that child sessions
@@ -510,54 +460,50 @@ public class RenderSession {
   /* RENDER METHODS */
 
   /**
-   * Verifies that the template is fully populated.
+   * Verifies that <i>every</i> variable in the template, however deeply nested, has been
+   * <i>explicitly</i> set.
    *
    * @return Whether or not the template is fully populated
    */
-  public boolean isRenderable() {
-    return state.isRenderable();
+  public boolean isReady() {
+    return state.isReady();
   }
 
   /**
-   * Writes the render result to the specified output stream. If the template is not fully
-   * populated, you will see raw variables and templates in the output. If this method throws a
-   * {@code RenderException} it is guaranteed not to have written anything to the output stream.
+   * Writes the render result to the specified output stream.
    *
    * @param out The output stream to which to write the render result
    * @throws RenderException
    */
-  public void render(OutputStream out) throws RenderException {
-    Check.on(invalidValue("out", out), out).is(notNull());
+  public void render(OutputStream out) {
+    Check.notNull(out);
+    skipRest();
     Renderer renderer = new Renderer(state);
     renderer.render(out);
   }
 
   /**
-   * Appends the render result to the specified {@code StringBuilder}. If the template is not fully
-   * populated, you will see raw variables and templates in the output. If this method throws a
-   * {@code RenderException} it is guaranteed not to have written anything to the {@code
-   * StringBuilder}.
+   * Appends the render result to the specified {@code StringBuilder}.
    *
    * @param sb The {@code StringBuilder} to which to append the render result
    * @throws RenderException
    */
   public void render(StringBuilder sb) throws RenderException {
-    Check.on(invalidValue("sb", sb), sb).is(notNull());
+    Check.notNull(sb);
+    skipRest();
     Renderer renderer = new Renderer(state);
     renderer.render(sb);
   }
 
   /**
    * Writes the render result to the specified output stream. If the template is not fully
-   * populated, a {@code RenderException} is thrown and the output stream is left untouched. If this
-   * method throws a {@code RenderException} for any other reason, it is also guaranteed not to have
-   * written anything to the output stream.
+   * populated, a {@code RenderException} is thrown and the output stream is left untouched.
    *
    * @param out The output stream to which to write the render result
    */
   public void renderSafe(OutputStream out) throws RenderException {
     Check.on(invalidValue("out", out), out).is(notNull());
-    Check.on(notRenderable(state.getUnsetVars()), isRenderable()).is(yes());
+    Check.on(notRenderable(state.getUnsetVars()), isReady()).is(yes());
     Renderer renderer = new Renderer(state);
     renderer.render(out);
   }
@@ -565,14 +511,12 @@ public class RenderSession {
   /**
    * Appends the render result to the specified {@code StringBuilder}. If the template is not fully
    * populated, a {@code RenderException} is thrown and the {@code StringBuilder} is left untouched.
-   * If this method throws a {@code RenderException} for any other reason, it is also guaranteed not
-   * to have written anything to the {@code StringBuilder}.
    *
    * @param sb The {@code StringBuilder} to which to append the render result
    */
   public void renderSafe(StringBuilder sb) throws RenderException {
     Check.on(invalidValue("sb", sb), sb).is(notNull());
-    Check.on(notRenderable(state.getUnsetVars()), isRenderable()).is(yes());
+    Check.on(notRenderable(state.getUnsetVars()), isReady()).is(yes());
     Renderer renderer = new Renderer(state);
     renderer.render(sb);
   }
@@ -583,5 +527,35 @@ public class RenderSession {
 
   private Predicate<String> validTemplateName() {
     return s -> factory.getTemplate().getNestedTemplateNames().contains(s);
+  }
+
+  /*
+   * Explicitly sets all remaining unset variables to an empty string in order to saturate the
+   * template. A template can be rendered again and again but the values of its variables are fixed
+   * forever.
+   */
+  private void skipRest() {
+    skip0(this);
+  }
+
+  private static void skip0(RenderSession s0) {
+    try {
+      for (String var : s0.state.getUnsetVars()) {
+        s0.set(var, StringMethods.EMPTY);
+      }
+    } catch (RenderException e) {
+    }
+    Set<Template> inProgress = s0.state.getChildSessions().keySet();
+    Set<Template> todo = new HashSet<>(s0.factory.getTemplate().getNestedTemplates());
+    todo.removeAll(inProgress);
+    try {
+      for (Template t : todo) {
+        s0.fill(t.getName(), Collections.emptyList());
+      }
+    } catch (RenderException e) {
+    }
+    for (Template t : inProgress) {
+      s0.state.getChildSessions(t).forEach(RenderSession::skip0);
+    }
   }
 }

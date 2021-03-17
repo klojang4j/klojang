@@ -16,10 +16,9 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
 /**
  * A {@code Template} captures the result of parsing a template file. It provides access to the
  * constituent parts of a text template: {@link VariablePart template variables}, {@link
- * NestedTemplatePart nested templates} and {@link TextPart literal text}. {@code Template}
+ * NestedTemplatePart nested templates} and {@link TextPart text-only parts}. {@code Template}
  * instances are immutable, expensive-to-create and heavy-weight objects. They should be created
- * once per source file and then cached and reused for as long as the web application is up. (For
- * example, you could cache them into a static final field in your controller or resource class.)
+ * once per source file, cached somewhere, and then reused for as long as your application lasts.
  * Creating a new {@code Template} instance for each new request would be very inefficient.
  *
  * @author Ayco Holleman

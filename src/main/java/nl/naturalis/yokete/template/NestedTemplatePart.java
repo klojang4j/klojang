@@ -1,5 +1,12 @@
 package nl.naturalis.yokete.template;
 
+/**
+ * Super class of {@link InlineTemplatePart} and {@link IncludedTemplatePart}. Except that inline
+ * templates are defined within the parent template while included templates are defined in an
+ * external files, there is no functional difference between them.
+ *
+ * @author Ayco Holleman
+ */
 public abstract class NestedTemplatePart extends AbstractPart implements NamedPart {
 
   protected final Template template;

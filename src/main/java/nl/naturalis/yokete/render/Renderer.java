@@ -26,12 +26,6 @@ class Renderer {
     render(state, sb);
   }
 
-  StringBuilder render() {
-    StringBuilder sb = new StringBuilder(1024);
-    render(sb);
-    return sb;
-  }
-
   private static void render(RenderState state0, PrintStream ps) {
     List<Part> parts = state0.getSessionFactory().getTemplate().getParts();
     for (int i = 0; i < parts.size(); ++i) {
@@ -40,17 +34,13 @@ class Renderer {
         TextPart tp = (TextPart) part;
         ps.append(tp.getText());
       } else if (part.getClass() == VariablePart.class) {
-        if (state0.getVar(i) == null) { // Oops, user forgot that one
-          ps.append(part.toString()); // Just print raw variable declaration
-        } else {
+        if (state0.getVar(i) != null) {
           Arrays.stream(state0.getVar(i)).forEach(ps::append);
         }
       } else /* TemplatePart */ {
         NestedTemplatePart ntp = (NestedTemplatePart) part;
         List<RenderSession> sessions = state0.getChildSessions(ntp.getTemplate());
-        if (sessions == null) { // Oops, user forgot that one
-          ps.append(part.toString()); // Just print raw template
-        } else {
+        if (sessions != null) {
           sessions.stream().map(RenderSession::getState).forEach(state -> render(state, ps));
         }
       }
@@ -65,17 +55,13 @@ class Renderer {
         TextPart tp = (TextPart) part;
         sb.append(tp.getText());
       } else if (part.getClass() == VariablePart.class) {
-        if (state0.getVar(i) == null) {
-          sb.append(part.toString());
-        } else {
+        if (state0.getVar(i) != null) {
           Arrays.stream(state0.getVar(i)).forEach(sb::append);
         }
       } else /* TemplatePart */ {
         NestedTemplatePart ntp = (NestedTemplatePart) part;
         List<RenderSession> sessions = state0.getChildSessions(ntp.getTemplate());
-        if (sessions == null) { // Oops, user forgot that one
-          sb.append(part.toString());
-        } else {
+        if (sessions != null) {
           sessions.stream().map(RenderSession::getState).forEach(state -> render(state, sb));
         }
       }

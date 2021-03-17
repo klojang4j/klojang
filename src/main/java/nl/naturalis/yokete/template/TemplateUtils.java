@@ -3,6 +3,11 @@ package nl.naturalis.yokete.template;
 import java.util.ArrayList;
 import nl.naturalis.common.check.Check;
 
+/**
+ * Utility class extending extending the functionality of the {@link Template} class.
+ *
+ * @author Ayco Holleman
+ */
 public class TemplateUtils {
 
   private TemplateUtils() {}

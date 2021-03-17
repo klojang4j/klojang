@@ -1,5 +1,6 @@
 package nl.naturalis.yokete.render;
 
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import nl.naturalis.yokete.YoketeException;
@@ -31,24 +32,21 @@ public class RenderException extends YoketeException {
 
   private static final String INACCESSIBLE = "Value of %s (%s) is inaccessible for %s";
 
-  private static final String NULL_DATA =
-      "Data for template %s must not be null because it contains at least one variable or nested template";
-
-  private static final String BAD_DATA = "Cannot use instance of opaque class %s as template data";
-
   private static final String NOT_MONO =
       "populateMono only allowed for single-variable template; \"%s\" contains %d variables and/or nested templates";
 
-  private static final String NO_TEXT_ONLY_TEMPLATE =
+  private static final String NO_TEXT_ONLY =
       "fillNone only allowed for text-only templates; \"%s\" contains %d variables and/or nested templates";
 
-  private static final String INVALID_VALUE = "Invalid value for %s: %s";
+  private static final String INVALID_VALUE = "Invalid value for \"%s\": %s";
 
+  /** Thrown when specifying a non-existent variable name. */
   public static Function<String, RenderException> noSuchVariable(Template t, String var) {
     String fqn = TemplateUtils.getFQName(t, var);
     return s -> new RenderException(format(NO_SUCH_VARIABLE, fqn));
   }
 
+  /** Thrown when specifying a non-existent template name. */
   public static Function<String, RenderException> noSuchTemplate(String name) {
     return s -> new RenderException(format(NO_SUCH_TEMPLATE, name));
   }
@@ -62,8 +60,10 @@ public class RenderException extends YoketeException {
     return s -> new RenderException(format(ALREADY_SET, fqn));
   }
 
-  public static RenderException repetitionMismatch(String name, int expected, int actual) {
-    return new RenderException(format(REPETITION_MISMATCH, expected, name, actual));
+  public static RenderException repetitionMismatch(
+      Template t, List<RenderSession> sessions, int repeats) {
+    String fqn = TemplateUtils.getFQName(t);
+    return new RenderException(format(REPETITION_MISMATCH, fqn, sessions.size(), repeats));
   }
 
   public static Function<String, RenderException> badEscapeType() {
@@ -81,17 +81,8 @@ public class RenderException extends YoketeException {
     return new RenderException(msg);
   }
 
-  public static Function<String, RenderException> nullData(Template t) {
-    return s -> new RenderException(format(NULL_DATA, t.getName()));
-  }
-
-  public static Function<String, RenderException> badData(Object data) {
-    return s -> new RenderException(format(BAD_DATA, prettyClassName(data)));
-  }
-
   public static Function<String, RenderException> notTextOnly(Template t) {
-    return s ->
-        new RenderException(format(NO_TEXT_ONLY_TEMPLATE, t.getName(), t.getNames().size()));
+    return s -> new RenderException(format(NO_TEXT_ONLY, t.getName(), t.getNames().size()));
   }
 
   public static Function<String, RenderException> notMono(Template t) {

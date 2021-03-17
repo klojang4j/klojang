@@ -6,6 +6,11 @@ import nl.naturalis.common.StringMethods;
 import nl.naturalis.yokete.YoketeException;
 import static nl.naturalis.common.ArrayMethods.prefix;
 
+/**
+ * Thrown while parsing the source code for a template.
+ *
+ * @author Ayco Holleman
+ */
 public class ParseException extends YoketeException {
 
   private static final String ERR_BASE = "Error at line %d, char %d: ";

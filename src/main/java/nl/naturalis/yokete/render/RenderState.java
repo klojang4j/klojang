@@ -31,14 +31,14 @@ class RenderState {
   }
 
   List<RenderSession> createChildSessions(Template nested, int amount) throws RenderException {
-    List<RenderSession> mySessions = sessions.get(nested);
-    if (mySessions == null) {
-      mySessions = initializedList(i -> factory.newChildSession(nested), amount);
-      sessions.put(nested, mySessions);
-    } else if (mySessions.size() != amount) {
-      throw repetitionMismatch(factory.getTemplate().getName(), mySessions.size(), amount);
+    List<RenderSession> children = sessions.get(nested);
+    if (children == null) {
+      children = initializedList(i -> factory.newChildSession(nested), amount);
+      sessions.put(nested, children);
+    } else if (children.size() != amount) {
+      throw repetitionMismatch(factory.getTemplate(), children, amount);
     }
-    return mySessions;
+    return children;
   }
 
   Map<Template, List<RenderSession>> getChildSessions() {
@@ -71,13 +71,14 @@ class RenderState {
     return names;
   }
 
-  private void collectUnsetVars(RenderState state0, Set<String> names) {
+  private static void collectUnsetVars(RenderState state0, Set<String> names) {
     state0
         .todo
         .stream()
         .map(n -> TemplateUtils.getFQName(state0.factory.getTemplate(), n))
         .forEach(names::add);
-    sessions
+    state0
+        .sessions
         .values()
         .stream()
         .flatMap(List::stream)
@@ -85,15 +86,20 @@ class RenderState {
         .forEach(state -> collectUnsetVars(state, names));
   }
 
-  boolean isRenderable() {
-    if (todo.size() > 0) {
+  boolean isReady() {
+    return ready(this);
+  }
+
+  private static boolean ready(RenderState state0) {
+    if (state0.todo.size() > 0) {
       return false;
     }
-    return sessions
+    return state0
+        .sessions
         .values()
         .stream()
         .flatMap(List::stream)
         .map(RenderSession::getState)
-        .allMatch(RenderState::isRenderable);
+        .allMatch(RenderState::ready);
   }
 }
