@@ -516,7 +516,7 @@ public class RenderSession {
    */
   public void renderSafe(OutputStream out) throws RenderException {
     Check.on(invalidValue("out", out), out).is(notNull());
-    Check.on(notRenderable(state.getUnsetVars()), isReady()).is(yes());
+    Check.on(notReady(state.getUnsetVars()), isReady()).is(yes());
     Renderer renderer = new Renderer(state);
     renderer.render(out);
   }
@@ -529,7 +529,7 @@ public class RenderSession {
    */
   public void renderSafe(StringBuilder sb) throws RenderException {
     Check.on(invalidValue("sb", sb), sb).is(notNull());
-    Check.on(notRenderable(state.getUnsetVars()), isReady()).is(yes());
+    Check.on(notReady(state.getUnsetVars()), isReady()).is(yes());
     Renderer renderer = new Renderer(state);
     renderer.render(sb);
   }

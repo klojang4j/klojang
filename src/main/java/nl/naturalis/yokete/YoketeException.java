@@ -1,5 +1,10 @@
 package nl.naturalis.yokete;
 
+/**
+ * Base class for checked exceptions emanating from the Yokete package.
+ *
+ * @author Ayco Holleman
+ */
 public class YoketeException extends Exception {
 
   public YoketeException(String message) {

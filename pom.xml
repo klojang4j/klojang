@@ -23,6 +23,7 @@
 		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
 		<maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
 		<maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>
+		<maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
 		<git-commit-id-plugin.version>4.0.3</git-commit-id-plugin.version>
 
 		<!-- ==================================================================== -->
@@ -128,14 +129,6 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-dependency-plugin</artifactId>
 					<version>${maven-dependency-plugin.version}</version>
-                    <!-- following is needed until 3.1.2 is released -->
-					<!-- dependencies>
-						<dependency>
-							<groupId>org.apache.maven.shared</groupId>
-							<artifactId>maven-dependency-analyzer</artifactId>
-							<version>1.11.1</version>
-						</dependency>
-					</dependencies -->
 				</plugin>
 				<plugin>
 					<groupId>pl.project13.maven</groupId>
@@ -146,6 +139,11 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>${maven-surefire-plugin.version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<version>${maven-javadoc-plugin.version}</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -222,6 +220,42 @@
                     <release>11</release>
                 </configuration>
             </plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<configuration>
+					<failOnError>false</failOnError>
+					<failOnWarnings>false</failOnWarnings>
+					<quiet>true</quiet>
+					<doclint>none</doclint>
+				</configuration>
+				<executions>
+					<execution>
+						<id>attach</id>
+						<goals>
+							<goal>aggregate-jar</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>create-apidocs</id>
+						<goals>
+							<goal>aggregate</goal>
+						</goals>
+						<inherited>false</inherited>
+						<phase>install</phase>
+						<configuration>
+							<doctitle>Yoketi ${project.version}</doctitle>
+							<description>
+								Web Templates API
+							</description>
+							<detectLinks>true</detectLinks>
+							<show>protected</show>
+							<!-- excludes>src/test/**/*</excludes-->
+							<sourcepath>src/main/java</sourcepath>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 
 	</build>

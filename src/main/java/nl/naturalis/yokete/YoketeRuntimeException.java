@@ -1,5 +1,10 @@
 package nl.naturalis.yokete;
 
+/**
+ * Base class for runtime exceptions emanating from the Yokete package.
+ *
+ * @author Ayco Holleman
+ */
 public class YoketeRuntimeException extends RuntimeException {
 
   public YoketeRuntimeException(String message) {

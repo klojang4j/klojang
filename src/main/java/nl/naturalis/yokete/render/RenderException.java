@@ -10,6 +10,11 @@ import static java.lang.String.format;
 import static nl.naturalis.common.ClassMethods.prettyClassName;
 import static nl.naturalis.common.ClassMethods.prettySimpleClassName;
 
+/**
+ * Thrown from a {@link RenderSession} under various circumstances.
+ *
+ * @author Ayco Holleman
+ */
 public class RenderException extends YoketeException {
 
   private static final String NO_SUCH_VARIABLE = "No such variable: \"%s\"";
@@ -51,44 +56,68 @@ public class RenderException extends YoketeException {
     return s -> new RenderException(format(NO_SUCH_TEMPLATE, name));
   }
 
+  /** Thrown when specifying a non-existent variable and/or template name. */
   public static Function<String, RenderException> noSuchName(String name) {
     return s -> new RenderException(format(NO_SUCH_NAME, name));
   }
 
+  /** Thrown if you attempt to set a variable more than once. */
   public static Function<String, RenderException> alreadySet(Template t, String var) {
     String fqn = TemplateUtils.getFQName(t, var);
     return s -> new RenderException(format(ALREADY_SET, fqn));
   }
 
+  /**
+   * Thrown during a multi-pass {@link RenderSession#fill(String, Object, EscapeType, String...)
+   * fill} of a nested template if, in the second pass, you don't specify the same number of source
+   * data objects as in the first pass. The number of source data objects you specify in the first
+   * call to {@code fill} determines how often the template is going to repeat itself. Obviously
+   * that fixes it for subsequent calls to {@code fill}.
+   */
   public static RenderException repetitionMismatch(
       Template t, List<RenderSession> sessions, int repeats) {
     String fqn = TemplateUtils.getFQName(t);
     return new RenderException(format(REPETITION_MISMATCH, fqn, sessions.size(), repeats));
   }
 
+  /** Thrown if you specify {@link EscapeType#NOT_SPECIFIED NOT_SPECIFIED} as the escape type. */
   public static Function<String, RenderException> badEscapeType() {
     return s -> new RenderException(BAD_ESCAPE_TYPE);
   }
 
-  public static Function<String, RenderException> notRenderable(Set<String> varsToDo) {
+  /**
+   * Thrown by {@link RenderSession#renderSafe(java.io.OutputStream)} if not all variables have been
+   * explicitly set.
+   */
+  public static Function<String, RenderException> notReady(Set<String> varsToDo) {
     String msg = format(NOT_RENDERABLE, varsToDo);
     return s -> new RenderException(msg);
   }
 
+  /** Thrown if an {@code Accessor} cannot access the request value. */
   public static RenderException inaccessible(Accessor acc, Template t, String var, Object val) {
     String fqn = TemplateUtils.getFQName(t, var);
     String msg = format(INACCESSIBLE, fqn, prettyClassName(val), prettySimpleClassName(acc));
     return new RenderException(msg);
   }
 
+  /**
+   * Thrown if you call {@link RenderSession#show(String) RenderSession.show} for a nested template
+   * that is not a text-only template.
+   */
   public static Function<String, RenderException> notTextOnly(Template t) {
     return s -> new RenderException(format(NO_TEXT_ONLY, t.getName(), t.getNames().size()));
   }
 
+  /**
+   * Thrown if you call {@link RenderSession#fillMono(String, Object) RenderSession.fillMono} for a
+   * nested template that does not contain exactly one variable (and zero doubly-nested templates).
+   */
   public static Function<String, RenderException> notMono(Template t) {
     return s -> new RenderException(format(NOT_MONO, t.getName(), t.getNames().size()));
   }
 
+  /** Generic error condition. */
   public static Function<String, RenderException> invalidValue(String name, Object value) {
     return s -> new RenderException(format(INVALID_VALUE, name, value));
   }
