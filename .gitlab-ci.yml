@@ -43,7 +43,7 @@ pages:
     - mkdir public
     - cp -r target/apidocs/* public/.
     script:
-    - echo "Publishing javadocs"
+    - echo "Publishing javadoc"
     artifacts:
         expire_in: 2 days
         paths:
