@@ -29,7 +29,7 @@ import static nl.naturalis.common.check.CommonChecks.nullPointer;
  *
  * @author Ayco Holleman
  */
-public final class StringifierConfigurator {
+public final class StringifierConfig {
 
   private static final String CANNOT_STRINGIFY =
       "Type %s cannot be stringified by ApplicationStringifier";
@@ -46,7 +46,7 @@ public final class StringifierConfigurator {
 
   private ApplicationStringifier appStringifier;
 
-  StringifierConfigurator(Template tmpl) {
+  StringifierConfig(Template tmpl) {
     this.tmpl = tmpl;
     this.varNames = tmpl.getVarsPerTemplate();
   }
@@ -58,7 +58,7 @@ public final class StringifierConfigurator {
    * @param stringifier The {@code ApplicationStringifier}
    * @return This {@code StringifierFactory}
    */
-  public StringifierConfigurator setApplicationStringifier(ApplicationStringifier stringifier) {
+  public StringifierConfig setApplicationStringifier(ApplicationStringifier stringifier) {
     Check.that(appStringifier).is(nullPointer(), "Application stringifier already set");
     appStringifier = Check.notNull(stringifier).ok();
     return this;
@@ -72,7 +72,7 @@ public final class StringifierConfigurator {
    * @param stringifier The stringifier
    * @return This {@code StringifierFactory}
    */
-  public StringifierConfigurator register(String varName, Stringifier stringifier) {
+  public StringifierConfig register(String varName, Stringifier stringifier) {
     return register(tmpl, varName, stringifier);
   }
 
@@ -86,7 +86,7 @@ public final class StringifierConfigurator {
    * @param stringifier The stringifier
    * @return This {@code StringifierFactory}
    */
-  public StringifierConfigurator register(
+  public StringifierConfig register(
       Template template, String varName, Stringifier stringifier) {
     Check.notNull(template, "tmplName");
     Check.notNull(varName, "varName");
@@ -109,7 +109,7 @@ public final class StringifierConfigurator {
    * @param type The type of the variable
    * @return This {@code StringifierFactory}
    */
-  public StringifierConfigurator setType(String varName, Class<?> type) {
+  public StringifierConfig setType(String varName, Class<?> type) {
     return setType(tmpl, varName, type);
   }
 
@@ -135,7 +135,7 @@ public final class StringifierConfigurator {
    * @param type The type of the variable
    * @return This {@code StringifierFactory}
    */
-  public StringifierConfigurator setType(Template template, String varName, Class<?> type) {
+  public StringifierConfig setType(Template template, String varName, Class<?> type) {
     Check.notNull(template, "template");
     Check.notNull(varName, "varName");
     Check.that(appStringifier).is(notNull(), NO_APPLICATION_STRINGIFIER);

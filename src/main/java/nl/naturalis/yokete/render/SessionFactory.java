@@ -57,7 +57,7 @@ public final class SessionFactory {
     List<?> values = CollectionMethods.asList(value);
     List<String> strvals = new ArrayList<>(values.size());
     for (Object val : values) {
-      String strval = stringifier.stringify(template, varName, val);
+      String strval = stringifier.toString(template, varName, val);
       strvals.add(strval);
     }
     return strvals;
@@ -66,13 +66,13 @@ public final class SessionFactory {
   String[] toString(String varName, List<?> values) throws RenderException {
     String[] strs = new String[values.size()];
     for (int i = 0; i < values.size(); ++i) {
-      strs[i] = stringifier.stringify(template, varName, values.get(i));
+      strs[i] = stringifier.toString(template, varName, values.get(i));
     }
     return strs;
   }
 
   String toString(String varName, Object value) throws RenderException {
-    return stringifier.stringify(template, varName, value);
+    return stringifier.toString(template, varName, value);
   }
 
   Template getTemplate() {

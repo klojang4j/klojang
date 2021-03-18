@@ -22,8 +22,8 @@ import nl.naturalis.common.function.ThrowingFunction;
  *
  * <p>The {@code ApplicationStringifier} class is not meant to be used directly. It does, in fact,
  * not even have a public interface. Instead, you should configure a (singleton) instance and {@link
- * StringifierConfigurator#setApplicationStringifier(ApplicationStringifier) register} it with one
- * or more {@link StringifierConfigurator} instances.
+ * StringifierConfig#setApplicationStringifier(ApplicationStringifier) register} it with one
+ * or more {@link StringifierConfig} instances.
  *
  * <h4>Providing alternative stringifications for a single type</h4>
  *
@@ -38,7 +38,7 @@ import nl.naturalis.common.function.ThrowingFunction;
  *   <li>Register the stringifier that used date format Y under an arbitrary tag interface (let's
  *       say {@code LocalDateTime2})
  *   <li>Then, when configuring a template-specific {@code Stringifier}, {@link
- *       StringifierConfigurator#setType(String, String, Class) set} the type of date variables that
+ *       StringifierConfig#setType(String, String, Class) set} the type of date variables that
  *       must be formatted according to date format Y to {@code LocalDateTime2.class}.
  * </ul>
  *
@@ -68,11 +68,11 @@ public final class ApplicationStringifier {
    *
    * @author Ayco Holleman
    */
-  public static final class Configurator {
+  public static final class Config {
     private final UnmodifiableTypeMap.Builder<ThrowingFunction<Object, String, RenderException>>
         bldr;
 
-    private Configurator() {
+    private Config() {
       this.bldr = UnmodifiableTypeMap.build();
     }
 
@@ -103,14 +103,14 @@ public final class ApplicationStringifier {
   /* +++++++++++++++++++++[ END BUILDER CLASS ]++++++++++++++++++ */
 
   /**
-   * Returns a {@link Configurator} object that lets you configure an {@code ApplicationStringifier}
+   * Returns a {@link Config} object that lets you configure an {@code ApplicationStringifier}
    * instance.
    *
    * @return A {@code Configurator} object that lets you configure an {@code ApplicationStringifier}
    *     instance
    */
-  public static Configurator configure() {
-    return new Configurator();
+  public static Config configure() {
+    return new Config();
   }
 
   private final TypeMap<ThrowingFunction<Object, String, RenderException>> typeMap;

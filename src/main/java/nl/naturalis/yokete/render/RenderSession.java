@@ -341,7 +341,7 @@ public class RenderSession {
     String monoVar = t.getVars().iterator().next();
     List<RenderSession> sessions = state.createChildSessions(t, values.size());
     for (int i = 0; i < values.size(); ++i) {
-      String escaped = factory.getStringifier().stringify(t, monoVar, values.get(i));
+      String escaped = factory.getStringifier().toString(t, monoVar, values.get(i));
       sessions.get(i).set(monoVar, escaped, ESCAPE_NONE);
     }
     return this;
@@ -407,9 +407,9 @@ public class RenderSession {
   /**
    * Populates the <i>entire</i> template, except for variables and nested templates whose name is
    * present in the {@code names} array. This allows you to call this method multiple times with the
-   * <i>same</i> source data, but with different escape types for different variables. If the {@code
-   * names} array is {@code null} or empty, this method will attempt to populate all variables and
-   * nested templates. Note, however, that the source data object is explicitly not required to
+   * same source data, but with different escape types for different variables. If the {@code names}
+   * array is {@code null} or empty, this method will attempt to populate all variables and nested
+   * templates. Note, however, that the source data object is itself explicitly not required to
    * provide all values for all variables (see {@link Accessor#access(Object, String)}). This again
    * allows you to call this method multiple times with <i>different</i> source data, until the
    * template is fully populated.

@@ -26,14 +26,14 @@ class TemplateStringifier implements Stringifier {
   }
 
   @Override
-  public String stringify(Template template, String varName, Object value) throws RenderException {
+  public String toString(Template template, String varName, Object value) throws RenderException {
     Check.notNull(template, "template");
     Check.notNull(varName, "varName");
     Tuple<String, Template> tuple = Tuple.of(varName, template);
     Stringifier vsf = stringifiers.get(tuple);
     if (vsf != null) {
       try {
-        String s = vsf.stringify(template, varName, value);
+        String s = vsf.toString(template, varName, value);
         if (s == null) {
           throw templateStringifierReturnedNull(template, varName);
         }
@@ -45,7 +45,7 @@ class TemplateStringifier implements Stringifier {
     if (type != null) {
       vsf = asf.getStringifier(type);
       try {
-        String s = vsf.stringify(template, varName, value);
+        String s = vsf.toString(template, varName, value);
         if (s == null) {
           throw applicationStringifierReturnedNull(type);
         }

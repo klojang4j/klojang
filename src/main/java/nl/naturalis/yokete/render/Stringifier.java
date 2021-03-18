@@ -7,7 +7,7 @@ import static nl.naturalis.common.ObjectMethods.ifNotNull;
 
 /**
  * Stringifies values for a particular template. A {@link RenderSession} will call the stringifier's
- * {@link #stringify(Template, String, Object) stringify} method to stringify values obtained (via
+ * {@link #toString(Template, String, Object) stringify} method to stringify values obtained (via
  * an {@link Accessor} object) from the data access layer. A {@code Stringifier} must be capable of
  * stringifying values for <i>all</i> variables in the {@link Template#ROOT_TEMPLATE_NAME root
  * template} and <i>all</i> templates nested inside it. Although the {@code stringify} method of
@@ -16,7 +16,7 @@ import static nl.naturalis.common.ObjectMethods.ifNotNull;
  * In other words, you need one {@code Stringifier} per root template.
  *
  * <p>You can implement your own {@code Stringifier} or you can use a {@link
- * StringifierConfigurator} to configure a {@code Stringifier} instance. Using a {@code
+ * StringifierConfig} to configure a {@code Stringifier} instance. Using a {@code
  * StringifierConfigurator} is probably easier and it should be capable of meeting any
  * stringification requirements you may have.
  *
@@ -41,15 +41,15 @@ public interface Stringifier {
   public static final Stringifier SIMPLETON = (x, y, z) -> ifNotNull(z, Object::toString, "");
 
   /**
-   * Returns a {@link StringifierConfigurator} that lets you configure a {@link Stringifier}
+   * Returns a {@link StringifierConfig} that lets you configure a {@link Stringifier}
    * instance.
    *
    * @param template The template for which to configure the {@code Stringifier}
-   * @return A {@link StringifierConfigurator} object that lets you configure a {@link Stringifier}
+   * @return A {@link StringifierConfig} object that lets you configure a {@link Stringifier}
    *     instance
    */
-  static StringifierConfigurator configure(Template template) {
-    return new StringifierConfigurator(Check.notNull(template).ok());
+  static StringifierConfig configure(Template template) {
+    return new StringifierConfig(Check.notNull(template).ok());
   }
 
   /**
@@ -63,5 +63,5 @@ public interface Stringifier {
    * @return A string represenation of the value
    * @throws RenderException
    */
-  String stringify(Template template, String varName, Object value) throws RenderException;
+  String toString(Template template, String varName, Object value) throws RenderException;
 }
