@@ -244,7 +244,7 @@
 						<inherited>false</inherited>
 						<phase>install</phase>
 						<configuration>
-							<doctitle>Yoketi ${project.version}</doctitle>
+							<doctitle>Yokete ${project.version}</doctitle>
 							<description>
 								Web Templates API
 							</description>

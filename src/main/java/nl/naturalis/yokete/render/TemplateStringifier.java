@@ -7,8 +7,8 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.Template;
 import static nl.naturalis.yokete.render.BadStringifierException.applicationStringifierNotNullResistant;
 import static nl.naturalis.yokete.render.BadStringifierException.applicationStringifierReturnedNull;
-import static nl.naturalis.yokete.render.BadStringifierException.templateStringifierNotNullResistant;
-import static nl.naturalis.yokete.render.BadStringifierException.templateStringifierReturnedNull;
+import static nl.naturalis.yokete.render.BadStringifierException.stringifierNotNullResistant;
+import static nl.naturalis.yokete.render.BadStringifierException.stringifierReturnedNull;
 
 class TemplateStringifier implements Stringifier {
 
@@ -35,10 +35,10 @@ class TemplateStringifier implements Stringifier {
       try {
         String s = vsf.toString(template, varName, value);
         if (s == null) {
-          throw templateStringifierReturnedNull(template, varName);
+          throw stringifierReturnedNull(template, varName);
         }
       } catch (NullPointerException e) {
-        throw templateStringifierNotNullResistant(template, varName);
+        throw stringifierNotNullResistant(template, varName);
       }
     }
     Class<?> type = varTypes.get(tuple);
