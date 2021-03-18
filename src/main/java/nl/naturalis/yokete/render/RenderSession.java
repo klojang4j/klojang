@@ -210,26 +210,26 @@ public class RenderSession {
   /* METHODS FOR POPULATING A SINGLE NESTED TEMPLATE */
 
   /**
-   * Populates the nested template with the specified name with values retrieved from the specified
-   * data object. Only variables and (doubly) nested templates whose name is present in the {@code
-   * names} argument will be populated. No escaping will be applied to the values retrieved from the
-   * data object.
+   * Populates a <i>nested</i> template. The template is populated with values retrieved from the
+   * specified source data. Only variables and (doubly) nested templates whose name is present in
+   * the {@code names} argument will be populated. No escaping will be applied to the values
+   * retrieved from the data object. See {@link #fill(String, Object, EscapeType, String...)}.
    *
    * @param nestedTemplateName The name of the nested template
-   * @param data An object that provides data for all or some of the nested template's variables and
-   *     nested templates
+   * @param sourceData An object that provides data for all or some of the nested template's
+   *     variables and nested templates
    * @param names The names of the variables and doubly-nested templates that you want to be
    *     populated using the specified data object
    */
-  public RenderSession fill(String nestedTemplateName, Object data, String... names)
+  public RenderSession fill(String nestedTemplateName, Object sourceData, String... names)
       throws RenderException {
-    return fill(nestedTemplateName, data, ESCAPE_NONE, names);
+    return fill(nestedTemplateName, sourceData, ESCAPE_NONE, names);
   }
 
   /**
-   * Populates the nested template with the specified name with values retrieved from the specified
-   * data object. Only variables and (doubly) nested templates whose name is present in the {@code
-   * names} argument will be populated.
+   * Populates a <i>nested</i> template. The template is populated with values retrieved from the
+   * specified source data. Only variables and (doubly) nested templates whose name is present in
+   * the {@code names} argument will be populated.
    *
    * <h4>Repeating Templates</h4>
    *
@@ -240,15 +240,14 @@ public class RenderSession {
    * <h4>Conditional Rendering</h4>
    *
    * <p>If the specified object is an empty array or an empty {@code Collection}, the template will
-   * not be rendered at all. This allows for conditional rendering (i.e. render the template only if
+   * not be rendered at all. This allows for conditional rendering (render the template only if
    * certain conditions are met). Note, however, that the same can be achieved more easily by just
-   * not processing the template. If you never call the {@code fill} method for a nested template it
-   * will not be rendered either, because by default neither template variables nor nested templates
-   * are rendered.
+   * never calling the {@code fill} method for the template it will not be rendered either. By
+   * default neither template variables nor nested templates are rendered.
    *
    * @param nestedTemplateName The name of the nested template
-   * @param data An object that provides data for all or some of the nested template's variables and
-   *     nested templates
+   * @param sourceData An object that provides data for all or some of the nested template's
+   *     variables and nested templates
    * @param escapeType The escape to use for the variables within the nested template
    * @param names The names of the variables and doubly-nested templates that you want to be
    *     populated using the specified data object
@@ -256,19 +255,32 @@ public class RenderSession {
    * @throws RenderException
    */
   public RenderSession fill(
-      String nestedTemplateName, Object data, EscapeType escapeType, String... names)
+      String nestedTemplateName, Object sourceData, EscapeType escapeType, String... names)
       throws RenderException {
-    return repeat(nestedTemplateName, asList(data), escapeType, names);
+    return repeat(nestedTemplateName, asList(sourceData), escapeType, names);
+  }
+
+  /**
+   * Enables rendering of text-only nested templates. Equivalent to {@link #show(String, int)
+   * show(nestedTemplateName, 1)}.
+   *
+   * @param nestedTemplateName The name of the nested template. <b>Must</b> be a text-only template,
+   *     otherwise a {@code RenderException} is thrown
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession show(String nestedTemplateName) throws RenderException {
+    return show(nestedTemplateName, 1);
   }
 
   /**
    * Enables/disables rendering of text-only nested templates. In other words: nested templates
    * without any variables or doubly nested templates. One reason you might want to define such a
    * template is that you want to conditionally render it. In principle you could achieve the same
-   * by calling {@code fill(nestedTemplateName, new Object[repeats])} because whatever value you
-   * pass is ignored in case of text-only templates. However, this is cleaner and it bypasses some
-   * unnecessary code. To disable rendering, specify 0 (zero) for the {@code repeats} argument, or
-   * just don't call this method.
+   * by calling {@code fill(nestedTemplateName, new Object[repeats])}, because whatever value you
+   * pass is ignored in case of text-only templates. However, this is cleaner and cheaper. To
+   * disable rendering, specify 0 (zero) for the {@code repeats} argument, or just don't call this
+   * method.
    *
    * @param nestedTemplateName The name of the nested template. <b>Must</b> be a text-only template,
    *     otherwise a {@code RenderException} is thrown
@@ -303,9 +315,9 @@ public class RenderSession {
   /**
    * Convenience method for populating a nested template that contains exactly one variable.
    * Ordinarily nested templates are populated with a complex {code Object} and an {@link Accessor}
-   * that retrieves variable values from it. With this method, however, you specify the variable's
-   * value directly. The value can still be an array or {@code Collection}, causing the template to
-   * be repeat itself. See {@link #fill(String, Object, EscapeType, String...)}.
+   * that retrieves values from it. With this method, however, you specify the variable's value
+   * directly. The value can still be an array or {@code Collection}, causing the template to repeat
+   * itself. See {@link #fill(String, Object, EscapeType, String...)}.
    *
    * @param nestedTemplateName The name of the nested template, which <i>must</i> contain exactly
    *     one variable
@@ -353,8 +365,8 @@ public class RenderSession {
 
   /**
    * Creates a new {@code RenderSession} for the specified nested template. Note that child sessions
-   * are automatically created for source data objects that reflect the template's structure.
-   * However, this method lests you "manually" recurse into the template.
+   * are automatically created for source data objects that reflect the template's structure. This
+   * method lests you "manually" recurse into the template.
    *
    * <p>Unless you have some special purpose for it, you should not call {@code render} or {@code
    * renderSafe} on the child session. Anything you do in the child session will become visible once
@@ -374,12 +386,13 @@ public class RenderSession {
   /* METHODS FOR POPULATING WHATEVER IS IN THE PROVIDED OBJECT */
 
   /**
-   * Populates the entire template, except for the variables and nested templates in the {@code
-   * names} array, with values retrieved from the specified object. No escaping will be applied to
-   * the retrievd values. See {@link #populate(Object, EscapeType, String...)}.
+   * Populates the <i>entire</i> template, except for variables and nested templates whose name is
+   * present in the {@code names} array. The template is populated with values retrieved from the
+   * specified source data. No escaping will be applied to the retrieved values. See {@link
+   * #populate(Object, EscapeType, String...)}.
    *
-   * @param data An object that provides data for all or some of the template variables and nested
-   *     templates
+   * @param sourceData An object that provides data for all or some of the template variables and
+   *     nested templates
    * @param escapeType The escape type to use
    * @param names The names of the variables nested templates names that must be populated. Not
    *     specifying any name (or {@code null}) indicates that you want all variables and nested
@@ -387,19 +400,19 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession populate(Object data, String... names) throws RenderException {
-    return populate(data, ESCAPE_NONE, names);
+  public RenderSession populate(Object sourceData, String... names) throws RenderException {
+    return populate(sourceData, ESCAPE_NONE, names);
   }
 
   /**
-   * Populates the entire template, except for the variables and nested templates in the {@code
-   * names} array, with values retrieved from the specified object. This allows you to call this
-   * method multiple times with the <i>same</i> source data, but with different escape types for
-   * different variables. If the {@code names} array is {@code null} or empty, this method will
-   * attempt to populate all variables and nested templates. The source data object is, however,
-   * explicitly not required to provide all values for all variables and nested templates (see
-   * {@link Accessor#access(Object, String)}). This allows you to call this method multiple times
-   * with <i>different</i> source data, until the template is fully populated.
+   * Populates the <i>entire</i> template, except for variables and nested templates whose name is
+   * present in the {@code names} array. This allows you to call this method multiple times with the
+   * <i>same</i> source data, but with different escape types for different variables. If the {@code
+   * names} array is {@code null} or empty, this method will attempt to populate all variables and
+   * nested templates. Note, however, that the source data object is explicitly not required to
+   * provide all values for all variables (see {@link Accessor#access(Object, String)}). This again
+   * allows you to call this method multiple times with <i>different</i> source data, until the
+   * template is fully populated.
    *
    * @param data An object that provides data for all or some of the template variables and nested
    *     templates
@@ -460,8 +473,8 @@ public class RenderSession {
   /* RENDER METHODS */
 
   /**
-   * Verifies that <i>every</i> variable in the template, however deeply nested, has been
-   * <i>explicitly</i> set.
+   * Verifies that is fully populated. If this is not the case, calling {@link
+   * #renderSafe(OutputStream) renderSafe} will throw a {@link RenderException}.
    *
    * @return Whether or not the template is fully populated
    */
@@ -477,7 +490,7 @@ public class RenderSession {
    */
   public void render(OutputStream out) {
     Check.notNull(out);
-    skipRest();
+    saturate();
     Renderer renderer = new Renderer(state);
     renderer.render(out);
   }
@@ -490,7 +503,7 @@ public class RenderSession {
    */
   public void render(StringBuilder sb) throws RenderException {
     Check.notNull(sb);
-    skipRest();
+    saturate();
     Renderer renderer = new Renderer(state);
     renderer.render(sb);
   }
@@ -534,11 +547,11 @@ public class RenderSession {
    * template. A template can be rendered again and again but the values of its variables are fixed
    * forever.
    */
-  private void skipRest() {
-    skip0(this);
+  private void saturate() {
+    saturate0(this);
   }
 
-  private static void skip0(RenderSession s0) {
+  private static void saturate0(RenderSession s0) {
     try {
       for (String var : s0.state.getUnsetVars()) {
         s0.set(var, StringMethods.EMPTY);
@@ -555,7 +568,7 @@ public class RenderSession {
     } catch (RenderException e) {
     }
     for (Template t : inProgress) {
-      s0.state.getChildSessions(t).forEach(RenderSession::skip0);
+      s0.state.getChildSessions(t).forEach(RenderSession::saturate0);
     }
   }
 }
