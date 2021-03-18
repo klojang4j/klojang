@@ -1,11 +1,52 @@
-image: alpine:latest
-
-pages:
-  stage: test
-  script:
-  - echo 'Nothing to do'
-  artifacts:
+cache:
     paths:
-    - public
-  only:
-  - master
+    - make/.m2/repository
+variables:
+    MAVEN_CLI_OPTS: --quiet --batch-mode --settings make/.m2/settings.xml -Dmaven.repo.local=make/.m2/repository
+stages:
+- validate
+- test
+- mvn_deploy
+- publish_javadocs
+check_style:
+    stage: validate
+    image: maven:3-jdk-11
+    script:
+    - mvn checkstyle:check -Dcheckstyle.config.location=google_checks.xml
+    allow_failure: true
+maven_test:
+    stage: test
+    image: maven:3-jdk-11
+    script:
+    - mvn ${MAVEN_CLI_OPTS} test -Dcheckstyle.skip
+    artifacts:
+        expire_in: 2 days
+        reports:
+            junit:
+            - target/surefire-reports/TEST-*.xml
+maven_deploy:
+    stage: mvn_deploy
+    image: maven:3-jdk-11
+    script:
+    - mvn deploy $MAVEN_CLI_OPTS -Dcheckstyle.skip -DskipTests
+    - test -d target/apidocs
+    artifacts:
+        expire_in: 2 days
+        paths:
+        - target/apidocs
+pages:
+    stage: publish_javadocs
+    image: alpine:latest
+    before_script:
+    - test -d target/apidocs
+    - rm -rf public  
+    - mkdir public
+    - cp -r target/apidocs/* public/.
+    script:
+    - echo "Publishing javadocs"
+    artifacts:
+        expire_in: 2 days
+        paths:
+        - public
+    only:
+    - master
