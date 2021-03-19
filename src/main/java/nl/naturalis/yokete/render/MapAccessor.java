@@ -50,7 +50,7 @@ public class MapAccessor implements Accessor {
   }
 
   @Override
-  public Accessor getAccessorForTemplate(Template nested) {
+  public Accessor getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
     return this;
   }
 }

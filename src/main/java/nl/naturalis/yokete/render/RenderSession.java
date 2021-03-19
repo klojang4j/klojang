@@ -47,12 +47,20 @@ import static nl.naturalis.yokete.render.Accessor.*;
  */
 public class RenderSession {
 
+  // Dummy session used to render text-only templates
+  static final RenderSession TEXT_ONLY_RENDER_SESSION = new RenderSession();
+
   private final SessionFactory factory;
   private final RenderState state;
 
   RenderSession(SessionFactory rsf) {
     this.factory = rsf;
     this.state = new RenderState(rsf);
+  }
+
+  private RenderSession() {
+    factory = null;
+    state = null;
   }
 
   /* METHODS FOR SETTING A SINGLE TEMPLATE VARIABLE */
@@ -273,6 +281,20 @@ public class RenderSession {
     return repeat(nestedTemplateName, asList(sourceData), escapeType, names);
   }
 
+  private RenderSession repeat(String name, List<?> data, EscapeType escapeType, String... names)
+      throws RenderException {
+    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
+    Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
+    Check.on(invalidValue("data", data), data).is(noneNull());
+    Check.on(noSuchTemplate(name), name).is(validTemplateName());
+    Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
+    List<RenderSession> sessions = state.createChildSessions(name, data);
+    for (int i = 0; i < sessions.size(); ++i) {
+      sessions.get(i).populate(data.get(i), escapeType, names);
+    }
+    return this;
+  }
+
   /**
    * Enables rendering of text-only nested templates. Equivalent to {@link #show(String, int)
    * show(nestedTemplateName, 1)}.
@@ -290,10 +312,9 @@ public class RenderSession {
    * Enables/disables rendering of text-only nested templates. In other words: nested templates
    * without any variables or doubly nested templates. One reason you might want to define such a
    * template is that you want to conditionally render it. In principle you could achieve the same
-   * by calling {@code fill(nestedTemplateName, new Object[repeats])}, because whatever value you
-   * pass is ignored in case of text-only templates. However, this is cleaner and cheaper. To
-   * disable rendering, specify 0 (zero) for the {@code repeats} argument, or just don't call this
-   * method.
+   * by calling {@code fill(nestedTemplateName, null}. However, this is cleaner and it bypasses some
+   * unnecessary code. To disable rendering, specify 0 (zero) for the {@code repeats} argument, or
+   * just don't call this method.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> be a text-only template,
    *     otherwise a {@code RenderException} is thrown
@@ -327,7 +348,7 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly one variable.
-   * Ordinarily nested templates are populated with a complex {code Object} and an {@link Accessor}
+   * Ordinarily nested templates are populated with a complex {@code Object} and an {@link Accessor}
    * that retrieves values from it. With this method, however, you specify the variable's value
    * directly. The value can still be an array or {@code Collection}, causing the template to repeat
    * itself. See {@link #fill(String, Object, EscapeType, String...)}.
@@ -352,48 +373,12 @@ public class RenderSession {
         .has(Template::countNestedTemplates, eq(), 0);
     List<?> values = asList(value);
     String monoVar = t.getVars().iterator().next();
-    List<RenderSession> sessions = state.createChildSessions(t, values.size());
+    List<RenderSession> sessions = state.createChildSessions(t, values);
     for (int i = 0; i < values.size(); ++i) {
       String escaped = factory.getStringifier().toString(t, monoVar, values.get(i));
       sessions.get(i).set(monoVar, escaped, ESCAPE_NONE);
     }
     return this;
-  }
-
-  private RenderSession repeat(String name, List<?> data, EscapeType escapeType, String... names)
-      throws RenderException {
-    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
-    Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
-    Check.on(invalidValue("data", data), data).is(noneNull());
-    Check.on(noSuchTemplate(name), name).is(validTemplateName());
-    Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
-    List<RenderSession> sessions = state.createChildSessions(name, data.size());
-    for (int i = 0; i < sessions.size(); ++i) {
-      sessions.get(i).populate(data.get(i), escapeType, names);
-    }
-    return this;
-  }
-
-  /* CONVENIENCE METHODS */
-
-  /**
-   * Creates a new {@code RenderSession} for the specified nested template. Note that child sessions
-   * are automatically created for source data objects that reflect the template's structure. This
-   * method lests you "manually" recurse into the template.
-   *
-   * <p>Unless you have some special purpose for it, you should not call {@code render} or {@code
-   * renderSafe} on the child session. Anything you do in the child session will become visible once
-   * you render the main session.
-   *
-   * @param nestedTemplateName The name of a variable or nested template
-   * @return A child session of the current session
-   * @throws RenderException
-   */
-  public RenderSession createChildSession(String nestedTemplateName) throws RenderException {
-    String name = nestedTemplateName;
-    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
-    Check.on(noSuchTemplate(name), name).is(validTemplateName());
-    return state.createChildSessions(name, 1).get(0);
   }
 
   /* METHODS FOR POPULATING WHATEVER IS IN THE PROVIDED OBJECT */

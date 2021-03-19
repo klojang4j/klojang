@@ -3,6 +3,8 @@ package nl.naturalis.yokete.render;
 import java.util.List;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.Template;
+import static nl.naturalis.common.check.CommonChecks.notNull;
+import static nl.naturalis.yokete.render.RenderException.*;
 
 /**
  * A factory class for {@link RenderSession} objects.
@@ -44,9 +46,10 @@ public final class SessionFactory {
     this.stringifier = Check.notNull(stringifier).ok();
   }
 
-  RenderSession newChildSession(Template nested) {
-    Accessor acc = accessor.getAccessorForTemplate(nested);
-    SessionFactory factory = new SessionFactory(nested, acc, stringifier);
+  RenderSession newChildSession(Template nestedTmpl, Object nestedData) throws RenderException {
+    Accessor acc = accessor.getAccessorForTemplate(nestedTmpl, nestedData);
+    Check.on(nullAccessor(nestedTmpl), nestedTmpl).is(notNull());
+    SessionFactory factory = new SessionFactory(nestedTmpl, acc, stringifier);
     return factory.newRenderSession();
   }
 

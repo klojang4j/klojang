@@ -77,11 +77,15 @@ public interface Accessor {
 
   /**
    * Returns an {@code Accessor} object that can access data destined for the specified nested
-   * template.
+   * template. Note that this method will never be called for text-only templates (see {@link
+   * RenderSession#show(String, int)}). A text-only template by definition does not contain any
+   * variables or doubly nested templates, so there's nothing to access. So for text-only templates
+   * (and only for text-only templatest) this method is allowed to return {@code null}
    *
-   * @param nested The nested template
+   * @param nestedTemplate The nested template
+   * @param nestedSourceData The data for the nested template
    * @return An {@code Accessor} object that can access data destined for the specified nested
    *     template
    */
-  Accessor getAccessorForTemplate(Template nested);
+  Accessor getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData);
 }

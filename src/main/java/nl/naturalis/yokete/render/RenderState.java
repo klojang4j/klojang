@@ -5,6 +5,7 @@ import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.TemplateUtils;
 import static nl.naturalis.common.CollectionMethods.initializedList;
 import static nl.naturalis.yokete.render.RenderException.repetitionMismatch;
+import static nl.naturalis.yokete.render.RenderSession.TEXT_ONLY_RENDER_SESSION;
 
 class RenderState {
 
@@ -25,20 +26,42 @@ class RenderState {
     return factory;
   }
 
-  List<RenderSession> createChildSessions(String tmplName, int amount) throws RenderException {
+  List<RenderSession> createChildSessions(String tmplName, List<?> data) throws RenderException {
     Template nested = factory.getTemplate().getNestedTemplate(tmplName);
-    return createChildSessions(nested, amount);
+    return createChildSessions(nested, data);
   }
 
-  List<RenderSession> createChildSessions(Template nested, int amount) throws RenderException {
-    List<RenderSession> children = sessions.get(nested);
+  List<RenderSession> createChildSessions(Template t, List<?> data) throws RenderException {
+    if (t.getNames().isEmpty()) { // this is a text-only template
+      return createChildSessions(t, data.size());
+    }
+    List<RenderSession> children = sessions.get(t);
     if (children == null) {
-      children = initializedList(i -> factory.newChildSession(nested), amount);
-      sessions.put(nested, children);
-    } else if (children.size() != amount) {
-      throw repetitionMismatch(factory.getTemplate(), children, amount);
+      if (data.isEmpty()) {
+        children = Collections.emptyList();
+      } else {
+        RenderSession[] rs = new RenderSession[data.size()];
+        for (int i = 0; i < data.size(); ++i) {
+          rs[i] = factory.newChildSession(t, data.get(i));
+        }
+        children = List.of(rs);
+      }
+      sessions.put(t, children);
+    } else if (children.size() != data.size()) {
+      throw repetitionMismatch(factory.getTemplate(), children, data.size());
     }
     return children;
+  }
+
+  // Must only be called for text-only templates
+  List<RenderSession> createChildSessions(Template t, int repeats) throws RenderException {
+    List<RenderSession> children = sessions.get(t);
+    if (children == null) {
+      children = initializedList(TEXT_ONLY_RENDER_SESSION, repeats);
+      sessions.put(t, children);
+      return children;
+    }
+    throw RenderException.multiPassNotAllowed(t);
   }
 
   Map<Template, List<RenderSession>> getChildSessions() {

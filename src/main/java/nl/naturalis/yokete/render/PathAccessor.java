@@ -61,7 +61,7 @@ public class PathAccessor implements Accessor {
   }
 
   @Override
-  public Accessor getAccessorForTemplate(Template nested) {
-    return new PathAccessor(nested, mapper);
+  public Accessor getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
+    return new PathAccessor(nestedTemplate, mapper);
   }
 }

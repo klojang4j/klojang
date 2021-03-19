@@ -37,11 +37,19 @@ public class RenderException extends YoketeException {
 
   private static final String INACCESSIBLE = "Value of %s (%s) is inaccessible for %s";
 
+  private static final String NULL_ACCESSOR =
+      "Accessor.getAccessorForTemplate() returned " + "null for nested template \"%s\"";
+
   private static final String NOT_MONO =
-      "populateMono only allowed for single-variable template; \"%s\" contains %d variables and/or nested templates";
+      "populateMono() can only called for single-variable template; \"%s\" contains %d "
+          + "variables and/or nested templates";
 
   private static final String NO_TEXT_ONLY =
-      "fillNone only allowed for text-only templates; \"%s\" contains %d variables and/or nested templates";
+      "show() can only called for text-only templates; \"%s\" contains %d variables and/or "
+          + "nested templates";
+
+  private static final String MULTI_PASS_NOT_ALLOWED =
+      "show() can be called at most once per text-only template (template specified: \"%s\")";
 
   private static final String INVALID_VALUE = "Invalid value for \"%s\": %s";
 
@@ -101,12 +109,29 @@ public class RenderException extends YoketeException {
     return new RenderException(msg);
   }
 
+  /** Thrown if {@link Accessor#getAccessorForTemplate(Template, Object)} returned null */
+  public static Function<String, RenderException> nullAccessor(Template t) {
+    String fqn = TemplateUtils.getFQName(t);
+    String msg = format(NULL_ACCESSOR, fqn);
+    return s -> new RenderException(msg);
+  }
+
   /**
    * Thrown if you call {@link RenderSession#show(String) RenderSession.show} for a nested template
    * that is not a text-only template.
    */
   public static Function<String, RenderException> notTextOnly(Template t) {
-    return s -> new RenderException(format(NO_TEXT_ONLY, t.getName(), t.getNames().size()));
+    String fqn = TemplateUtils.getFQName(t);
+    return s -> new RenderException(format(NO_TEXT_ONLY, fqn, t.getNames().size()));
+  }
+
+  /**
+   * Thrown if you call {@link RenderSession#show(String) RenderSession.show} more than once for
+   * text-only template.
+   */
+  public static RenderException multiPassNotAllowed(Template t) {
+    String fqn = TemplateUtils.getFQName(t);
+    return new RenderException(format(MULTI_PASS_NOT_ALLOWED, fqn));
   }
 
   /**
