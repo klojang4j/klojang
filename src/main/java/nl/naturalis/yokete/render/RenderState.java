@@ -3,15 +3,17 @@ package nl.naturalis.yokete.render;
 import java.util.*;
 import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.TemplateUtils;
-import static nl.naturalis.common.CollectionMethods.initializedList;
 import static nl.naturalis.yokete.render.RenderException.repetitionMismatch;
-import static nl.naturalis.yokete.render.RenderSession.TEXT_ONLY_RENDER_SESSION;
 
 class RenderState {
 
+  private static final RenderSession[] ZERO_SESSIONS = new RenderSession[0];
+  private static final RenderSession[] ONE_SESSION = new RenderSession[1];
+  private static final RenderSession[] TWO_SESSIONS = new RenderSession[2];
+
   private final SessionFactory factory;
   private final Set<String> todo; // variables that have not been set yet
-  private final IdentityHashMap<Template, List<RenderSession>> sessions;
+  private final IdentityHashMap<Template, RenderSession[]> sessions;
   private final Map<Integer, String[]> varValues;
 
   RenderState(SessionFactory factory) {
@@ -26,49 +28,53 @@ class RenderState {
     return factory;
   }
 
-  List<RenderSession> createChildSessions(String tmplName, List<?> data) throws RenderException {
+  RenderSession[] createChildSessions(String tmplName, List<?> data) throws RenderException {
     Template nested = factory.getTemplate().getNestedTemplate(tmplName);
     return createChildSessions(nested, data);
   }
 
-  List<RenderSession> createChildSessions(Template t, List<?> data) throws RenderException {
+  RenderSession[] createChildSessions(Template t, List<?> data) throws RenderException {
     if (t.getNames().isEmpty()) { // this is a text-only template
       return createChildSessions(t, data.size());
     }
-    List<RenderSession> children = sessions.get(t);
+    RenderSession[] children = sessions.get(t);
     if (children == null) {
       if (data.isEmpty()) {
-        children = Collections.emptyList();
+        children = ZERO_SESSIONS;
       } else {
-        RenderSession[] rs = new RenderSession[data.size()];
+        children = new RenderSession[data.size()];
         for (int i = 0; i < data.size(); ++i) {
-          rs[i] = factory.newChildSession(t, data.get(i));
+          children[i] = factory.newChildSession(t, data.get(i));
         }
-        children = List.of(rs);
       }
       sessions.put(t, children);
-    } else if (children.size() != data.size()) {
+    } else if (children.length != data.size()) {
       throw repetitionMismatch(factory.getTemplate(), children, data.size());
     }
     return children;
   }
 
-  // Must only be called for text-only templates
-  List<RenderSession> createChildSessions(Template t, int repeats) throws RenderException {
-    List<RenderSession> children = sessions.get(t);
+  // Will only be called for text-only templates
+  RenderSession[] createChildSessions(Template t, int repeats) throws RenderException {
+    RenderSession[] children = sessions.get(t);
     if (children == null) {
-      children = initializedList(TEXT_ONLY_RENDER_SESSION, repeats);
+      children =
+          repeats == 0
+              ? ZERO_SESSIONS
+              : repeats == 1
+                  ? ONE_SESSION
+                  : repeats == 2 ? TWO_SESSIONS : new RenderSession[repeats];
       sessions.put(t, children);
       return children;
     }
     throw RenderException.multiPassNotAllowed(t);
   }
 
-  Map<Template, List<RenderSession>> getChildSessions() {
+  Map<Template, RenderSession[]> getChildSessions() {
     return sessions;
   }
 
-  List<RenderSession> getChildSessions(Template template) {
+  RenderSession[] getChildSessions(Template template) {
     return sessions.get(template);
   }
 
@@ -104,7 +110,7 @@ class RenderState {
         .sessions
         .values()
         .stream()
-        .flatMap(List::stream)
+        .flatMap(Arrays::stream)
         .map(RenderSession::getState)
         .forEach(state -> collectUnsetVars(state, names));
   }
@@ -121,7 +127,7 @@ class RenderState {
         .sessions
         .values()
         .stream()
-        .flatMap(List::stream)
+        .flatMap(Arrays::stream)
         .map(RenderSession::getState)
         .allMatch(RenderState::ready);
   }

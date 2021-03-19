@@ -1,6 +1,5 @@
 package nl.naturalis.yokete.render;
 
-import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import nl.naturalis.yokete.YoketeException;
@@ -83,9 +82,9 @@ public class RenderException extends YoketeException {
    * that fixes it for subsequent calls to {@code fill}.
    */
   public static RenderException repetitionMismatch(
-      Template t, List<RenderSession> sessions, int repeats) {
+      Template t, RenderSession[] sessions, int repeats) {
     String fqn = TemplateUtils.getFQName(t);
-    return new RenderException(format(REPETITION_MISMATCH, fqn, sessions.size(), repeats));
+    return new RenderException(format(REPETITION_MISMATCH, fqn, sessions.length, repeats));
   }
 
   /** Thrown if you specify {@link EscapeType#NOT_SPECIFIED NOT_SPECIFIED} as the escape type. */

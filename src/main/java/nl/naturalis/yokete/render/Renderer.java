@@ -4,10 +4,13 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
-import nl.naturalis.yokete.template.NestedTemplatePart;
-import nl.naturalis.yokete.template.Part;
-import nl.naturalis.yokete.template.TextPart;
-import nl.naturalis.yokete.template.VariablePart;
+import java.util.stream.IntStream;
+import nl.naturalis.common.check.Check;
+import nl.naturalis.yokete.template.*;
+import static nl.naturalis.common.check.CommonChecks.eq;
+import static nl.naturalis.common.check.CommonChecks.illegalState;
+import static nl.naturalis.common.check.CommonChecks.instanceOf;
+import static nl.naturalis.common.check.CommonGetters.size;
 
 class Renderer {
 
@@ -39,9 +42,17 @@ class Renderer {
         }
       } else /* TemplatePart */ {
         NestedTemplatePart ntp = (NestedTemplatePart) part;
-        List<RenderSession> sessions = state0.getChildSessions(ntp.getTemplate());
+        RenderSession[] sessions = state0.getChildSessions(ntp.getTemplate());
         if (sessions != null) {
-          sessions.stream().map(RenderSession::getState).forEach(state -> render(state, ps));
+          Template t = ntp.getTemplate();
+          if (t.getNames().isEmpty()) {
+            // This is a text-only template. The RenderSession[] array will
+            // contain only null values and we are only interested in the
+            // length of the array to determine the number of repetitions
+            String text = ((TextPart) t.getParts().get(0)).getText();
+            IntStream.range(0, sessions.length).forEach(x -> ps.append(text));
+          }
+          Arrays.stream(sessions).map(RenderSession::getState).forEach(state -> render(state, ps));
         }
       }
     }
@@ -60,9 +71,14 @@ class Renderer {
         }
       } else /* TemplatePart */ {
         NestedTemplatePart ntp = (NestedTemplatePart) part;
-        List<RenderSession> sessions = state0.getChildSessions(ntp.getTemplate());
+        RenderSession[] sessions = state0.getChildSessions(ntp.getTemplate());
         if (sessions != null) {
-          sessions.stream().map(RenderSession::getState).forEach(state -> render(state, sb));
+          Template t = ntp.getTemplate();
+          if (t.getNames().isEmpty()) {
+            String text = ((TextPart) t.getParts().get(0)).getText();
+            IntStream.range(0, sessions.length).forEach(x -> sb.append(text));
+          }
+          Arrays.stream(sessions).map(RenderSession::getState).forEach(state -> render(state, sb));
         }
       }
     }

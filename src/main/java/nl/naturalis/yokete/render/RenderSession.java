@@ -1,10 +1,7 @@
 package nl.naturalis.yokete.render;
 
 import java.io.OutputStream;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import nl.naturalis.common.StringMethods;
 import nl.naturalis.common.check.Check;
@@ -18,10 +15,10 @@ import static nl.naturalis.common.ObjectMethods.isEmpty;
 import static nl.naturalis.common.ObjectMethods.n2e;
 import static nl.naturalis.common.check.CommonChecks.*;
 import static nl.naturalis.common.check.CommonGetters.size;
+import static nl.naturalis.yokete.render.Accessor.UNDEFINED;
 import static nl.naturalis.yokete.render.EscapeType.ESCAPE_NONE;
 import static nl.naturalis.yokete.render.EscapeType.NOT_SPECIFIED;
 import static nl.naturalis.yokete.render.RenderException.*;
-import static nl.naturalis.yokete.render.Accessor.*;
 
 /**
  * A {@code RenderSession} is responsible for populating a template and rendering it. Populating the
@@ -47,20 +44,12 @@ import static nl.naturalis.yokete.render.Accessor.*;
  */
 public class RenderSession {
 
-  // Dummy session used to render text-only templates
-  static final RenderSession TEXT_ONLY_RENDER_SESSION = new RenderSession();
-
   private final SessionFactory factory;
   private final RenderState state;
 
   RenderSession(SessionFactory rsf) {
     this.factory = rsf;
     this.state = new RenderState(rsf);
-  }
-
-  private RenderSession() {
-    factory = null;
-    state = null;
   }
 
   /* METHODS FOR SETTING A SINGLE TEMPLATE VARIABLE */
@@ -172,8 +161,8 @@ public class RenderSession {
     Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
     Template t = factory.getTemplate();
     Check.on(noSuchVariable(t, varName), varName).is(in(), t.getVars());
-    Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
     Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
+    Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
     IntList indices = factory.getTemplate().getVarPartIndices().get(varName);
     if (values.isEmpty()) {
       indices.forEach(i -> state.setVar(i, EMPTY_STRING_ARRAY));
@@ -288,15 +277,15 @@ public class RenderSession {
     Check.on(invalidValue("data", data), data).is(noneNull());
     Check.on(noSuchTemplate(name), name).is(validTemplateName());
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
-    List<RenderSession> sessions = state.createChildSessions(name, data);
-    for (int i = 0; i < sessions.size(); ++i) {
-      sessions.get(i).populate(data.get(i), escapeType, names);
+    RenderSession[] sessions = state.createChildSessions(name, data);
+    for (int i = 0; i < sessions.length; ++i) {
+      sessions[i].populate(data.get(i), escapeType, names);
     }
     return this;
   }
 
   /**
-   * Enables rendering of text-only nested templates. Equivalent to {@link #show(String, int)
+   * Enables rendering of a text-only nested template. Equivalent to {@link #show(String, int)
    * show(nestedTemplateName, 1)}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> be a text-only template,
@@ -309,7 +298,7 @@ public class RenderSession {
   }
 
   /**
-   * Enables/disables rendering of text-only nested templates. In other words: nested templates
+   * Enables/disables rendering of a text-only nested template. In other words: a nested template
    * without any variables or doubly nested templates. One reason you might want to define such a
    * template is that you want to conditionally render it. In principle you could achieve the same
    * by calling {@code fill(nestedTemplateName, null}. However, this is cleaner and it bypasses some
@@ -337,8 +326,8 @@ public class RenderSession {
    * Convenience method for populating a nested template that contains exactly one variable. See
    * {@link #fillMono(String, Object, EscapeType)}.
    *
-   * @param nestedTemplateName The name of the nested template, which <i>must</i> contain exactly
-   *     one variable
+   * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
+   *     variable
    * @return This {@code RenderSession}
    * @throws RenderException
    */
@@ -353,8 +342,8 @@ public class RenderSession {
    * directly. The value can still be an array or {@code Collection}, causing the template to repeat
    * itself. See {@link #fill(String, Object, EscapeType, String...)}.
    *
-   * @param nestedTemplateName The name of the nested template, which <i>must</i> contain exactly
-   *     one variable
+   * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
+   *     variable
    * @param escapeType The escape to use for the variable within the nested template
    * @return This {@code RenderSession}
    * @throws RenderException
@@ -373,10 +362,10 @@ public class RenderSession {
         .has(Template::countNestedTemplates, eq(), 0);
     List<?> values = asList(value);
     String monoVar = t.getVars().iterator().next();
-    List<RenderSession> sessions = state.createChildSessions(t, values);
-    for (int i = 0; i < values.size(); ++i) {
+    RenderSession[] sessions = state.createChildSessions(t, values);
+    for (int i = 0; i < sessions.length; ++i) {
       String escaped = factory.getStringifier().toString(t, monoVar, values.get(i));
-      sessions.get(i).set(monoVar, escaped, ESCAPE_NONE);
+      sessions[i].set(monoVar, escaped, ESCAPE_NONE);
     }
     return this;
   }
@@ -424,13 +413,9 @@ public class RenderSession {
   public RenderSession populate(Object data, EscapeType escapeType, String... names)
       throws RenderException {
     if (data == null) {
-      Check.on(notMono(factory.getTemplate()), factory.getTemplate())
-          .has(Template::countVars, eq(), 1)
-          .has(Template::countNestedTemplates, eq(), 0);
-      /*
-       * The entire template is in fact static HTML.
-       * Bit wasteful, but why not support it.
-       */
+      Check.on(notTextOnly(factory.getTemplate()), factory.getTemplate().getNames())
+          .has(size(), eq(), 0);
+      // The entire template is in fact static HTML. Bit wasteful, but why not support it?
       return this;
     }
     processVars(data, escapeType, names);
@@ -568,7 +553,7 @@ public class RenderSession {
     } catch (RenderException e) {
     }
     for (Template t : inProgress) {
-      s0.state.getChildSessions(t).forEach(RenderSession::saturate0);
+      Arrays.stream(s0.state.getChildSessions(t)).forEach(RenderSession::saturate0);
     }
   }
 }
