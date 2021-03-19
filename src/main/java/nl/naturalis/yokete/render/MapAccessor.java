@@ -46,7 +46,7 @@ public class MapAccessor implements Accessor {
     } catch (ClassCastException e) {
       throw RenderException.inaccessible(this, template, varName, from);
     }
-    return map.getOrDefault(key, ABSENT);
+    return map.getOrDefault(key, UNDEFINED);
   }
 
   @Override

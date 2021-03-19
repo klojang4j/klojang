@@ -21,6 +21,7 @@ import static nl.naturalis.common.check.CommonGetters.size;
 import static nl.naturalis.yokete.render.EscapeType.ESCAPE_NONE;
 import static nl.naturalis.yokete.render.EscapeType.NOT_SPECIFIED;
 import static nl.naturalis.yokete.render.RenderException.*;
+import static nl.naturalis.yokete.render.Accessor.*;
 
 /**
  * A {@code RenderSession} is responsible for populating a template and rendering it. Populating the
@@ -61,12 +62,21 @@ public class RenderSession {
    * inline {@link EscapeType} (e.g. {@code ~%html:fullName%}) no escaping will be applied to the
    * value.
    *
-   * @param name The name of the variable to set
+   * @param varName The name of the variable to set
    * @param value The value of the variable
    * @throws RenderException
    */
-  public RenderSession set(String name, Object value) throws RenderException {
-    return set(name, asList(value), ESCAPE_NONE);
+  public RenderSession set(String varName, Object value) throws RenderException {
+    if (value == UNDEFINED) {
+      /*
+       * Unless the user is manually going through, and accessing the properties of some source data
+       * object, specifying UNDEFINED misses the point of that constant, but since we can't know
+       * this, we'll have to accept that value and process it as it is meant to be processed (namely
+       * ignore it).
+       */
+      return this;
+    }
+    return set(varName, asList(value), ESCAPE_NONE);
   }
 
   /**
@@ -77,15 +87,18 @@ public class RenderSession {
    * inline escape type for variables inside <code>&lt;script&gt;</code> tags (namely "js"). This
    * makes your template easier to read and write.
    *
-   * @param name The name of the variable to set
+   * @param varName The name of the variable to set
    * @param value The value of the variable
    * @param escapeType The escape type to use if the variable has no inline escape type
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession set(String name, Object value, EscapeType escapeType)
+  public RenderSession set(String varName, Object value, EscapeType escapeType)
       throws RenderException {
-    return set(name, asList(value), escapeType);
+    if (value == UNDEFINED) {
+      return this;
+    }
+    return set(varName, asList(value), escapeType);
   }
 
   /**
@@ -95,13 +108,13 @@ public class RenderSession {
    * concatenated. If the {@code List} is empty, the variable will not be rendered at all (that is,
    * an empty string will be inserted at the location of the variable within the template).
    *
-   * @param name The name of the variable to set
+   * @param varName The name of the variable to set
    * @param values The string values to concatenate
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession set(String name, List<?> values) throws RenderException {
-    return set(name, values, ESCAPE_NONE);
+  public RenderSession set(String varName, List<?> values) throws RenderException {
+    return set(varName, values, ESCAPE_NONE);
   }
 
   /**
@@ -110,15 +123,15 @@ public class RenderSession {
    * If the {@code List} is empty, the variable will not be rendered at all (that is, an empty
    * string will be inserted at the location of the variable within the template).
    *
-   * @param name The name of the variable to set
+   * @param varName The name of the variable to set
    * @param values The string values to concatenate
    * @param escapeType The escape type to use if the variable did not declare an inline escape type
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession set(String name, List<?> values, EscapeType escapeType)
+  public RenderSession set(String varName, List<?> values, EscapeType escapeType)
       throws RenderException {
-    return set(name, values, escapeType, null, null, null);
+    return set(varName, values, escapeType, null, null, null);
   }
 
   /**
@@ -129,7 +142,7 @@ public class RenderSession {
    * separator, and then concatenated. If the {@code List} is empty, the variable will not be
    * rendered at all.
    *
-   * @param name The name of the variable to set
+   * @param varName The name of the variable to set
    * @param values The string values to concatenate
    * @param escapeType The escape type to use if the variable did not declare an inline escape type
    * @param prefix The prefix to use for each string
@@ -139,28 +152,28 @@ public class RenderSession {
    * @throws RenderException
    */
   public RenderSession set(
-      String name,
+      String varName,
       List<?> values,
       EscapeType escapeType,
       String prefix,
       String separator,
       String suffix)
       throws RenderException {
-    Check.on(invalidValue("name", name), name).is(notNull());
+    Check.on(invalidValue("name", varName), varName).is(notNull());
     Check.on(invalidValue("values", values), values).is(notNull());
     Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
     Template t = factory.getTemplate();
-    Check.on(alreadySet(t, name), state.isSet(name)).is(no());
-    Check.on(noSuchVariable(t, name), name).is(in(), t.getVars());
+    Check.on(noSuchVariable(t, varName), varName).is(in(), t.getVars());
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
-    IntList indices = factory.getTemplate().getVarPartIndices().get(name);
+    Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
+    IntList indices = factory.getTemplate().getVarPartIndices().get(varName);
     if (values.isEmpty()) {
       indices.forEach(i -> state.setVar(i, EMPTY_STRING_ARRAY));
     } else {
-      String[] strings = factory.toString(name, values);
+      String[] strings = factory.toString(varName, values);
       indices.forEach(i -> setVar(i, strings, escapeType, prefix, separator, suffix));
     }
-    state.done(name);
+    state.done(varName);
     return this;
   }
 
@@ -264,7 +277,7 @@ public class RenderSession {
    * Enables rendering of text-only nested templates. Equivalent to {@link #show(String, int)
    * show(nestedTemplateName, 1)}.
    *
-   * @param nestedTemplateName The name of the nested template. <b>Must</b> be a text-only template,
+   * @param nestedTemplateName The name of the nested template. <i>Must</i> be a text-only template,
    *     otherwise a {@code RenderException} is thrown
    * @return This {@code RenderSession}
    * @throws RenderException
@@ -282,7 +295,7 @@ public class RenderSession {
    * disable rendering, specify 0 (zero) for the {@code repeats} argument, or just don't call this
    * method.
    *
-   * @param nestedTemplateName The name of the nested template. <b>Must</b> be a text-only template,
+   * @param nestedTemplateName The name of the nested template. <i>Must</i> be a text-only template,
    *     otherwise a {@code RenderException} is thrown
    * @param repeats The number of times you want the template to be repeated in the render result
    * @return This {@code RenderSession}
@@ -466,7 +479,9 @@ public class RenderSession {
     }
     for (String name : tmplNames) {
       Object nestedData = factory.getAccessor().access(data, name);
-      fill(name, nestedData, escapeType, names);
+      if (nestedData != null && nestedData != UNDEFINED) {
+        fill(name, nestedData, escapeType, names);
+      }
     }
   }
 

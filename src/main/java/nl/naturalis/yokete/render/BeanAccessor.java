@@ -15,7 +15,7 @@ public class BeanAccessor implements Accessor {
     try {
       return reader.read(from, varName);
     } catch (NoSuchPropertyException e) {
-      return ABSENT;
+      return UNDEFINED;
     }
   }
 

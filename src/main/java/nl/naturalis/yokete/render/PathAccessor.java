@@ -56,8 +56,8 @@ public class PathAccessor implements Accessor {
       mruObj = from;
     }
     String key = mapper.map(template, varName);
-    Object val = mruData.getOrDefault(key, ABSENT);
-    return val == DEAD_END ? ABSENT : val;
+    Object val = mruData.getOrDefault(key, UNDEFINED);
+    return val == DEAD_END ? UNDEFINED : val;
   }
 
   @Override

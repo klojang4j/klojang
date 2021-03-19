@@ -1,8 +1,6 @@
 package nl.naturalis.yokete.render;
 
-import java.util.ArrayList;
 import java.util.List;
-import nl.naturalis.common.CollectionMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.Template;
 
@@ -52,27 +50,12 @@ public final class SessionFactory {
     return factory.newRenderSession();
   }
 
-  List<String> stringify(Object data, String varName) throws RenderException {
-    Object value = accessor.access(data, varName);
-    List<?> values = CollectionMethods.asList(value);
-    List<String> strvals = new ArrayList<>(values.size());
-    for (Object val : values) {
-      String strval = stringifier.toString(template, varName, val);
-      strvals.add(strval);
-    }
-    return strvals;
-  }
-
   String[] toString(String varName, List<?> values) throws RenderException {
     String[] strs = new String[values.size()];
     for (int i = 0; i < values.size(); ++i) {
       strs[i] = stringifier.toString(template, varName, values.get(i));
     }
     return strs;
-  }
-
-  String toString(String varName, Object value) throws RenderException {
-    return stringifier.toString(template, varName, value);
   }
 
   Template getTemplate() {
