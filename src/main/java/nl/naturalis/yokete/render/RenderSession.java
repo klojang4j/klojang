@@ -176,7 +176,7 @@ public class RenderSession {
 
   private void setVar(
       int partIndex,
-      String[] strvals,
+      String[] values,
       EscapeType escapeType,
       String prefix,
       String separator,
@@ -192,8 +192,8 @@ public class RenderSession {
     suffix = n2e(suffix);
     boolean escape = myEscType != ESCAPE_NONE;
     boolean enrich = !prefix.isEmpty() || !separator.isEmpty() || !suffix.isEmpty();
-    for (int i = 0; i < strvals.length; ++i) {
-      String s = strvals[i];
+    for (int i = 0; i < values.length; ++i) {
+      String s = values[i];
       if (escape) {
         if (enrich) {
           if (i == 0) {
@@ -204,17 +204,17 @@ public class RenderSession {
         } else {
           s = myEscType.apply(s);
         }
-        strvals[i] = s;
+        values[i] = s;
       } else if (enrich) {
         if (i == 0) {
           s = prefix + s + suffix;
         } else {
           s = separator + prefix + s + suffix;
         }
-        strvals[i] = s;
+        values[i] = s;
       }
     }
-    state.setVar(partIndex, strvals);
+    state.setVar(partIndex, values);
   }
 
   /* METHODS FOR POPULATING A SINGLE NESTED TEMPLATE */
@@ -415,7 +415,8 @@ public class RenderSession {
     if (data == null) {
       Check.on(notTextOnly(factory.getTemplate()), factory.getTemplate().getNames())
           .has(size(), eq(), 0);
-      // The entire template is in fact static HTML. Bit wasteful, but why not support it?
+      // The entire template is in fact static HTML.
+      // Bit wasteful, but no reason not to support it.
       return this;
     }
     processVars(data, escapeType, names);

@@ -5,12 +5,7 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
-import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.*;
-import static nl.naturalis.common.check.CommonChecks.eq;
-import static nl.naturalis.common.check.CommonChecks.illegalState;
-import static nl.naturalis.common.check.CommonChecks.instanceOf;
-import static nl.naturalis.common.check.CommonGetters.size;
 
 class Renderer {
 
