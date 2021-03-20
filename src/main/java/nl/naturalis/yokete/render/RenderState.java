@@ -56,6 +56,28 @@ class RenderState {
     return children;
   }
 
+  RenderSession[] createChildSessions(Template t, Accessor acc, int repeats)
+      throws RenderException {
+    if (t.getNames().isEmpty()) { // this is a text-only template
+      return createChildSessions(t, repeats);
+    }
+    RenderSession[] children = sessions.get(t);
+    if (children == null) {
+      if (repeats == 0) {
+        children = ZERO_SESSIONS;
+      } else {
+        children = new RenderSession[repeats];
+        for (int i = 0; i < repeats; ++i) {
+          children[i] = factory.newChildSession(t, acc);
+        }
+      }
+      sessions.put(t, children);
+    } else if (children.length != repeats) {
+      throw repetitionMismatch(factory.getTemplate(), children, repeats);
+    }
+    return children;
+  }
+
   // Will only be called for text-only templates
   RenderSession[] createChildSessions(Template t, int repeats) throws RenderException {
     RenderSession[] children = sessions.get(t);

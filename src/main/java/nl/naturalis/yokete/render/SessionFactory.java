@@ -24,6 +24,9 @@ public final class SessionFactory {
    */
   public static SessionFactory configure(
       Template template, Accessor accessor, Stringifier stringifier) {
+    Check.notNull(template);
+    Check.notNull(accessor);
+    Check.notNull(stringifier);
     return new SessionFactory(template, accessor, stringifier);
   }
 
@@ -40,15 +43,30 @@ public final class SessionFactory {
     return new RenderSession(this);
   }
 
+  /**
+   * Called internally, to create child sessions for nested templates whose variables get set
+   * directly, without the help of an Accessor. That is: for methods fillMono() and fillDuo().
+   *
+   * @param template
+   */
+  SessionFactory(Template template) {
+    this(template, null, null);
+  }
+
   SessionFactory(Template template, Accessor accessor, Stringifier stringifier) {
-    this.template = Check.notNull(template).ok();
-    this.accessor = Check.notNull(accessor).ok();
-    this.stringifier = Check.notNull(stringifier).ok();
+    this.template = template;
+    this.accessor = accessor;
+    this.stringifier = stringifier;
   }
 
   RenderSession newChildSession(Template nestedTmpl, Object nestedData) throws RenderException {
     Accessor acc = accessor.getAccessorForTemplate(nestedTmpl, nestedData);
-    Check.on(nullAccessor(nestedTmpl), nestedTmpl).is(notNull());
+    Check.on(nullAccessor(nestedTmpl), acc).is(notNull());
+    SessionFactory factory = new SessionFactory(nestedTmpl, acc, stringifier);
+    return factory.newRenderSession();
+  }
+
+  RenderSession newChildSession(Template nestedTmpl, Accessor acc) {
     SessionFactory factory = new SessionFactory(nestedTmpl, acc, stringifier);
     return factory.newRenderSession();
   }

@@ -140,7 +140,7 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#fillOne(String, Object) RenderSession.fillOne} for a
+   * Thrown if you call {@link RenderSession#fillMono(String, Object) RenderSession.fillOne} for a
    * nested template that does not contain exactly one variable and zero doubly-nested templates.
    */
   public static Function<String, RenderException> not1VarTemplate(Template t) {
@@ -148,7 +148,7 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#fillTwo(String, Object) RenderSession.fillTwo} for a
+   * Thrown if you call {@link RenderSession#fillDuo(String, Object) RenderSession.fillTwo} for a
    * nested template that does not contain exactly two variables and zero doubly-nested templates.
    */
   public static Function<String, RenderException> not2VarTemplate(Template t) {

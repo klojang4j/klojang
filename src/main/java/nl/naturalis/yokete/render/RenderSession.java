@@ -2,7 +2,6 @@ package nl.naturalis.yokete.render;
 
 import java.io.OutputStream;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -331,15 +330,15 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly one variable. See
-   * {@link #fillOne(String, Object, EscapeType)}.
+   * {@link #fillMono(String, Object, EscapeType)}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillOne(String nestedTemplateName, Object value) throws RenderException {
-    return fillOne(nestedTemplateName, value, ESCAPE_NONE);
+  public RenderSession fillMono(String nestedTemplateName, Object value) throws RenderException {
+    return fillMono(nestedTemplateName, value, ESCAPE_NONE);
   }
 
   /**
@@ -357,7 +356,7 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillOne(String nestedTemplateName, Object value, EscapeType escapeType)
+  public RenderSession fillMono(String nestedTemplateName, Object value, EscapeType escapeType)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     String name = nestedTemplateName;
@@ -365,34 +364,48 @@ public class RenderSession {
     Check.on(noSuchTemplate(name), name).is(validTemplateName());
     Template t = factory.getTemplate().getNestedTemplate(name);
     Check.on(not1VarTemplate(t), t)
-        .has(Template::countVars, eq(), 1)
-        .has(Template::countNestedTemplates, eq(), 0);
+        .has(tmpl -> tmpl.getVars().size(), eq(), 1)
+        .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
     List<?> values = asList(value);
-    String var = t.getVars().iterator().next();
-    RenderSession[] sessions = state.createChildSessions(t, values);
+    RenderSession[] sessions = state.createChildSessions(t, new MonoAccessor(), values.size());
     for (int i = 0; i < sessions.length; ++i) {
-      String stringified = factory.getStringifier().toString(t, var, values.get(i));
-      sessions[i].set(var, stringified, escapeType);
+      sessions[i].populate(values.get(i), escapeType);
     }
     return this;
   }
 
   /**
-   * Convenience method for populating a nested template that contain exactly two variables. Could
-   * be useful, for example, when populating drop-down lists with <code>&lt;option&gt;</code>
-   * elements and {@code value} attributes. Ordinarily nested templates are populated with a complex
-   * {@code Object} and an {@link Accessor} that retrieves values from it. With this method,
-   * however, you specify two values directly.
+   * Convenience method for populating a nested template that contain exactly two variables. See
+   * {@link #fillDuo(String, List, EscapeType)}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
-   * @param tuples A list of tuples. Each of the inner lists <i>must</i> contain exactly values
-   * @param escapeType The escape to use for the variables within the nested template. Will not
-   *     override variables' inline escape types, if defined.
+   * @param pairs A list of value pairs.
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillTwo(
+  public RenderSession fillDuo(String nestedTemplateName, List<Pair<Object>> pairs)
+      throws RenderException {
+    return fillDuo(nestedTemplateName, pairs, ESCAPE_NONE);
+  }
+
+  /**
+   * Convenience method for populating a nested template that contain exactly two variables. Could
+   * used, for example, to populate drop-down lists with <code>&lt;option&gt;</code> elements and
+   * their {@code value} attribute. Ordinarily nested templates are populated with a complex {@code
+   * Object} and an {@link Accessor} that retrieves values from it. With this method, however, you
+   * specify two values directly. The variable that is declared first gets the pair's first value;
+   * the other one get the pair's second value.
+   *
+   * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
+   *     variable
+   * @param pairs A list of value pairs.
+   * @param escapeType The escape to use for the variables within the nested template. Will not
+   *     override the variables' inline escape types, if defined.
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession fillDuo(
       String nestedTemplateName, List<Pair<Object>> pairs, EscapeType escapeType)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
@@ -402,20 +415,12 @@ public class RenderSession {
     Check.on(noSuchTemplate(name), name).is(validTemplateName());
     Template t = factory.getTemplate().getNestedTemplate(name);
     Check.on(not2VarTemplate(t), t)
-        .has(Template::countVars, eq(), 2)
-        .has(Template::countNestedTemplates, eq(), 0);
-    String var0;
-    String var1;
-    Iterator<String> iterator = t.getVars().iterator();
-    var0 = iterator.next();
-    var1 = iterator.next();
-    RenderSession[] sessions = state.createChildSessions(t, pairs.size());
+        .has(tmpl -> tmpl.getVars().size(), eq(), 2)
+        .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
+    String var0 = t.getVars().iterator().next();
+    RenderSession[] sessions = state.createChildSessions(t, new DuoAccessor(var0), pairs.size());
     for (int i = 0; i < sessions.length; ++i) {
-      Pair<Object> pair = pairs.get(i);
-      String stringified = factory.getStringifier().toString(t, var0, pair.getFirst());
-      sessions[i].set(var0, stringified, escapeType);
-      stringified = factory.getStringifier().toString(t, var1, pair.getSecond());
-      sessions[i].set(var1, stringified, escapeType);
+      sessions[i].populate(pairs.get(i), escapeType);
     }
     return this;
   }
