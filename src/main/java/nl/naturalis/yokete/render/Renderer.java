@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 import nl.naturalis.yokete.template.*;
+import static java.util.Arrays.*;
 
 class Renderer {
 
@@ -46,8 +47,9 @@ class Renderer {
             // length of the array to determine the number of repetitions
             String text = ((TextPart) t.getParts().get(0)).getText();
             IntStream.range(0, sessions.length).forEach(x -> ps.append(text));
+          } else {
+            stream(sessions).map(RenderSession::getState).forEach(s -> render(s, ps));
           }
-          Arrays.stream(sessions).map(RenderSession::getState).forEach(state -> render(state, ps));
         }
       }
     }
@@ -72,8 +74,9 @@ class Renderer {
           if (t.getNames().isEmpty()) {
             String text = ((TextPart) t.getParts().get(0)).getText();
             IntStream.range(0, sessions.length).forEach(x -> sb.append(text));
+          } else {
+            stream(sessions).map(RenderSession::getState).forEach(s -> render(s, sb));
           }
-          Arrays.stream(sessions).map(RenderSession::getState).forEach(state -> render(state, sb));
         }
       }
     }

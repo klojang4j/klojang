@@ -2,8 +2,8 @@ package nl.naturalis.yokete.render;
 
 import java.util.*;
 import nl.naturalis.yokete.template.Template;
-import nl.naturalis.yokete.template.TemplateUtils;
 import static nl.naturalis.yokete.render.RenderException.repetitionMismatch;
+import static nl.naturalis.yokete.template.TemplateUtils.getFQName;
 
 class RenderState {
 
@@ -15,6 +15,8 @@ class RenderState {
   private final Set<String> todo; // variables that have not been set yet
   private final IdentityHashMap<Template, RenderSession[]> sessions;
   private final Map<Integer, String[]> varValues;
+
+  private boolean frozen;
 
   RenderState(SessionFactory factory) {
     this.factory = factory;
@@ -58,12 +60,7 @@ class RenderState {
   RenderSession[] createChildSessions(Template t, int repeats) throws RenderException {
     RenderSession[] children = sessions.get(t);
     if (children == null) {
-      children =
-          repeats == 0
-              ? ZERO_SESSIONS
-              : repeats == 1
-                  ? ONE_SESSION
-                  : repeats == 2 ? TWO_SESSIONS : new RenderSession[repeats];
+      children = createChildSessions(repeats);
       sessions.put(t, children);
       return children;
     }
@@ -94,18 +91,23 @@ class RenderState {
     todo.remove(var);
   }
 
-  Set<String> getUnsetVars() {
-    Set<String> names = new LinkedHashSet<>();
+  boolean isFrozen() {
+    return frozen;
+  }
+
+  void freeze() {
+    this.frozen = true;
+  }
+
+  List<String> getUnsetVarsRecursive() {
+    ArrayList<String> names = new ArrayList<>();
     collectUnsetVars(this, names);
     return names;
   }
 
-  private static void collectUnsetVars(RenderState state0, Set<String> names) {
-    state0
-        .todo
-        .stream()
-        .map(n -> TemplateUtils.getFQName(state0.factory.getTemplate(), n))
-        .forEach(names::add);
+  private static void collectUnsetVars(RenderState state0, ArrayList<String> names) {
+    Template t = state0.factory.getTemplate();
+    state0.todo.stream().map(var -> getFQName(t, var)).forEach(names::add);
     state0
         .sessions
         .values()
@@ -130,5 +132,18 @@ class RenderState {
         .flatMap(Arrays::stream)
         .map(RenderSession::getState)
         .allMatch(RenderState::ready);
+  }
+
+  private static RenderSession[] createChildSessions(int repeats) {
+    switch (repeats) {
+      case 0:
+        return ZERO_SESSIONS;
+      case 1:
+        return ONE_SESSION;
+      case 2:
+        return TWO_SESSIONS;
+      default:
+        return new RenderSession[repeats];
+    }
   }
 }

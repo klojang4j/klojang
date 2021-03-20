@@ -13,13 +13,17 @@ public class TemplateUtils {
   private TemplateUtils() {}
 
   /**
-   * Returns the fully-qualified name of the specified name, relative to the root template.
+   * Returns the fully-qualified name of the specified name, relative to the root template. If the
+   * template <i>is</i> the root template, the {@link Template#ROOT_TEMPLATE_NAME} is returned.
    *
    * @param template
    * @return
    */
   public static String getFQName(Template template) {
-    Check.notNull(template, "template");
+    Check.notNull(template);
+    if (template.getParent() == null) {
+      return template.getName();
+    }
     int sz = 0;
     ArrayList<String> chunks = new ArrayList<>(5);
     for (Template t = template; t != null && t.getParent() != null; t = t.getParent()) {

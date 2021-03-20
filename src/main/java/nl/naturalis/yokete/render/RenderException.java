@@ -1,6 +1,6 @@
 package nl.naturalis.yokete.render;
 
-import java.util.Set;
+import java.util.List;
 import java.util.function.Function;
 import nl.naturalis.yokete.YoketeException;
 import nl.naturalis.yokete.template.Template;
@@ -32,15 +32,19 @@ public class RenderException extends YoketeException {
 
   private static final String BAD_ESCAPE_TYPE = "NOT_SPECIFIED is not a valid escape type";
 
-  private static final String NOT_RENDERABLE = "Cannot render yet. Not all variables set: %s. ";
+  private static final String NOT_READY = "Cannot render yet. Not all variables set: %s. ";
 
   private static final String INACCESSIBLE = "Value of %s (%s) is inaccessible for %s";
 
   private static final String NULL_ACCESSOR =
       "Accessor.getAccessorForTemplate() returned " + "null for nested template \"%s\"";
 
-  private static final String NOT_MONO =
-      "populateMono() can only called for single-variable template; \"%s\" contains %d "
+  private static final String NOT_1VAR_TEMPLATE =
+      "fillOne() can only called for single-variable templates; \"%s\" contains %d "
+          + "variables and/or nested templates";
+
+  private static final String NOT_2VAR_TEMPLATE =
+      "fillTwo() can only called for two-variable templates; \"%s\" contains %d "
           + "variables and/or nested templates";
 
   private static final String NO_TEXT_ONLY =
@@ -49,8 +53,6 @@ public class RenderException extends YoketeException {
 
   private static final String MULTI_PASS_NOT_ALLOWED =
       "show() can be called at most once per text-only template (template specified: \"%s\")";
-
-  private static final String INVALID_VALUE = "Invalid value for \"%s\": %s";
 
   /** Thrown when specifying a non-existent variable name. */
   public static Function<String, RenderException> noSuchVariable(Template t, String var) {
@@ -96,9 +98,13 @@ public class RenderException extends YoketeException {
    * Thrown by {@link RenderSession#renderSafe(java.io.OutputStream)} if not all variables have been
    * explicitly set.
    */
-  public static Function<String, RenderException> notReady(Set<String> varsToDo) {
-    String msg = format(NOT_RENDERABLE, varsToDo);
-    return s -> new RenderException(msg);
+  public static Function<String, RenderException> notReady(List<String> varsToDo) {
+    return s -> new RenderException(format(NOT_READY, varsToDo));
+  }
+
+  /** Thrown when attempting to populate a template after it has been rendered. */
+  public static Function<String, RenderException> frozenSession() {
+    return s -> new RenderException("Session frozen after rendering");
   }
 
   /** Thrown if an {@code Accessor} cannot access the request value. */
@@ -134,16 +140,25 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#fillMono(String, Object) RenderSession.fillMono} for a
-   * nested template that does not contain exactly one variable (and zero doubly-nested templates).
+   * Thrown if you call {@link RenderSession#fillOne(String, Object) RenderSession.fillOne} for a
+   * nested template that does not contain exactly one variable and zero doubly-nested templates.
    */
-  public static Function<String, RenderException> notMono(Template t) {
-    return s -> new RenderException(format(NOT_MONO, t.getName(), t.getNames().size()));
+  public static Function<String, RenderException> not1VarTemplate(Template t) {
+    return s -> new RenderException(format(NOT_1VAR_TEMPLATE, t.getName(), t.getNames().size()));
+  }
+
+  /**
+   * Thrown if you call {@link RenderSession#fillTwo(String, Object) RenderSession.fillTwo} for a
+   * nested template that does not contain exactly two variables and zero doubly-nested templates.
+   */
+  public static Function<String, RenderException> not2VarTemplate(Template t) {
+    return s -> new RenderException(format(NOT_2VAR_TEMPLATE, t.getName(), t.getNames().size()));
   }
 
   /** Generic error condition. */
   public static Function<String, RenderException> invalidValue(String name, Object value) {
-    return s -> new RenderException(format(INVALID_VALUE, name, value));
+    String fmt = "Invalid value for \"%s\": %s";
+    return s -> new RenderException(format(fmt, name, value));
   }
 
   RenderException(String message) {

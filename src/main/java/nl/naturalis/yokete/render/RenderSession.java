@@ -1,13 +1,17 @@
 package nl.naturalis.yokete.render;
 
 import java.io.OutputStream;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
-import nl.naturalis.common.StringMethods;
+import nl.naturalis.common.Pair;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.yokete.template.Part;
 import nl.naturalis.yokete.template.Template;
+import nl.naturalis.yokete.template.TemplateUtils;
 import nl.naturalis.yokete.template.VariablePart;
 import static nl.naturalis.common.ArrayMethods.EMPTY_STRING_ARRAY;
 import static nl.naturalis.common.CollectionMethods.asList;
@@ -47,9 +51,9 @@ public class RenderSession {
   private final SessionFactory factory;
   private final RenderState state;
 
-  RenderSession(SessionFactory rsf) {
-    this.factory = rsf;
-    this.state = new RenderState(rsf);
+  RenderSession(SessionFactory sf) {
+    this.factory = sf;
+    this.state = new RenderState(sf);
   }
 
   /* METHODS FOR SETTING A SINGLE TEMPLATE VARIABLE */
@@ -156,6 +160,7 @@ public class RenderSession {
       String separator,
       String suffix)
       throws RenderException {
+    Check.on(frozenSession(), state.isFrozen()).is(no());
     Check.on(invalidValue("name", varName), varName).is(notNull());
     Check.on(invalidValue("values", values), values).is(notNull());
     Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
@@ -272,6 +277,7 @@ public class RenderSession {
 
   private RenderSession repeat(String name, List<?> data, EscapeType escapeType, String... names)
       throws RenderException {
+    Check.on(frozenSession(), state.isFrozen()).is(no());
     Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
     Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
     Check.on(invalidValue("data", data), data).is(noneNull());
@@ -312,6 +318,7 @@ public class RenderSession {
    * @throws RenderException
    */
   public RenderSession show(String nestedTemplateName, int repeats) throws RenderException {
+    Check.on(frozenSession(), state.isFrozen()).is(no());
     String name = nestedTemplateName;
     Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
     Check.on(invalidValue("repeats", repeats), repeats).is(gte(), 0);
@@ -324,15 +331,15 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly one variable. See
-   * {@link #fillMono(String, Object, EscapeType)}.
+   * {@link #fillOne(String, Object, EscapeType)}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillMono(String nestedTemplateName, Object value) throws RenderException {
-    return fillMono(nestedTemplateName, value, ESCAPE_NONE);
+  public RenderSession fillOne(String nestedTemplateName, Object value) throws RenderException {
+    return fillOne(nestedTemplateName, value, ESCAPE_NONE);
   }
 
   /**
@@ -344,28 +351,71 @@ public class RenderSession {
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
-   * @param escapeType The escape to use for the variable within the nested template
+   * @param value The value to set the template's one and only variable to
+   * @param escapeType The escape to use for the variable within the nested template. Will not
+   *     override variable's inline escape type, if defined.
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillMono(String nestedTemplateName, Object value, EscapeType escapeType)
+  public RenderSession fillOne(String nestedTemplateName, Object value, EscapeType escapeType)
       throws RenderException {
+    Check.on(frozenSession(), state.isFrozen()).is(no());
     String name = nestedTemplateName;
     Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
-    Check.on(invalidValue("value", value), value).is(notNull());
-    Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
     Check.on(noSuchTemplate(name), name).is(validTemplateName());
-    Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
     Template t = factory.getTemplate().getNestedTemplate(name);
-    Check.on(notMono(t), t)
+    Check.on(not1VarTemplate(t), t)
         .has(Template::countVars, eq(), 1)
         .has(Template::countNestedTemplates, eq(), 0);
     List<?> values = asList(value);
-    String monoVar = t.getVars().iterator().next();
+    String var = t.getVars().iterator().next();
     RenderSession[] sessions = state.createChildSessions(t, values);
     for (int i = 0; i < sessions.length; ++i) {
-      String escaped = factory.getStringifier().toString(t, monoVar, values.get(i));
-      sessions[i].set(monoVar, escaped, ESCAPE_NONE);
+      String stringified = factory.getStringifier().toString(t, var, values.get(i));
+      sessions[i].set(var, stringified, escapeType);
+    }
+    return this;
+  }
+
+  /**
+   * Convenience method for populating a nested template that contain exactly two variables. Could
+   * be useful, for example, when populating drop-down lists with <code>&lt;option&gt;</code>
+   * elements and {@code value} attributes. Ordinarily nested templates are populated with a complex
+   * {@code Object} and an {@link Accessor} that retrieves values from it. With this method,
+   * however, you specify two values directly.
+   *
+   * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
+   *     variable
+   * @param tuples A list of tuples. Each of the inner lists <i>must</i> contain exactly values
+   * @param escapeType The escape to use for the variables within the nested template. Will not
+   *     override variables' inline escape types, if defined.
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession fillTwo(
+      String nestedTemplateName, List<Pair<Object>> pairs, EscapeType escapeType)
+      throws RenderException {
+    Check.on(frozenSession(), state.isFrozen()).is(no());
+    String name = nestedTemplateName;
+    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
+    Check.on(invalidValue("pairs", pairs), pairs).is(noneNull());
+    Check.on(noSuchTemplate(name), name).is(validTemplateName());
+    Template t = factory.getTemplate().getNestedTemplate(name);
+    Check.on(not2VarTemplate(t), t)
+        .has(Template::countVars, eq(), 2)
+        .has(Template::countNestedTemplates, eq(), 0);
+    String var0;
+    String var1;
+    Iterator<String> iterator = t.getVars().iterator();
+    var0 = iterator.next();
+    var1 = iterator.next();
+    RenderSession[] sessions = state.createChildSessions(t, pairs.size());
+    for (int i = 0; i < sessions.length; ++i) {
+      Pair<Object> pair = pairs.get(i);
+      String stringified = factory.getStringifier().toString(t, var0, pair.getFirst());
+      sessions[i].set(var0, stringified, escapeType);
+      stringified = factory.getStringifier().toString(t, var1, pair.getSecond());
+      sessions[i].set(var1, stringified, escapeType);
     }
     return this;
   }
@@ -412,9 +462,10 @@ public class RenderSession {
    */
   public RenderSession populate(Object data, EscapeType escapeType, String... names)
       throws RenderException {
+    Check.on(frozenSession(), state.isFrozen()).is(no());
     if (data == null) {
-      Check.on(notTextOnly(factory.getTemplate()), factory.getTemplate().getNames())
-          .has(size(), eq(), 0);
+      Template t = factory.getTemplate();
+      Check.on(notTextOnly(t), t.getNames()).has(size(), eq(), 0);
       // The entire template is in fact static HTML.
       // Bit wasteful, but no reason not to support it.
       return this;
@@ -475,8 +526,8 @@ public class RenderSession {
    * @throws RenderException
    */
   public void render(OutputStream out) {
+    state.freeze();
     Check.notNull(out);
-    saturate();
     Renderer renderer = new Renderer(state);
     renderer.render(out);
   }
@@ -488,8 +539,8 @@ public class RenderSession {
    * @throws RenderException
    */
   public void render(StringBuilder sb) throws RenderException {
+    state.freeze();
     Check.notNull(sb);
-    saturate();
     Renderer renderer = new Renderer(state);
     renderer.render(sb);
   }
@@ -501,8 +552,9 @@ public class RenderSession {
    * @param out The output stream to which to write the render result
    */
   public void renderSafe(OutputStream out) throws RenderException {
+    state.freeze();
     Check.on(invalidValue("out", out), out).is(notNull());
-    Check.on(notReady(state.getUnsetVars()), isReady()).is(yes());
+    Check.on(notReady(state.getUnsetVarsRecursive()), isReady()).is(yes());
     Renderer renderer = new Renderer(state);
     renderer.render(out);
   }
@@ -514,10 +566,17 @@ public class RenderSession {
    * @param sb The {@code StringBuilder} to which to append the render result
    */
   public void renderSafe(StringBuilder sb) throws RenderException {
+    state.freeze();
     Check.on(invalidValue("sb", sb), sb).is(notNull());
-    Check.on(notReady(state.getUnsetVars()), isReady()).is(yes());
+    Check.on(notReady(state.getUnsetVarsRecursive()), isReady()).is(yes());
     Renderer renderer = new Renderer(state);
     renderer.render(sb);
+  }
+
+  @Override
+  public String toString() {
+    String fqn = TemplateUtils.getFQName(factory.getTemplate());
+    return getClass().getSimpleName() + "@" + System.identityHashCode(this) + "<" + fqn + ">";
   }
 
   RenderState getState() {
@@ -526,35 +585,5 @@ public class RenderSession {
 
   private Predicate<String> validTemplateName() {
     return s -> factory.getTemplate().getNestedTemplateNames().contains(s);
-  }
-
-  /*
-   * Explicitly sets all remaining unset variables to an empty string in order to saturate the
-   * template. A template can be rendered again and again but the values of its variables are fixed
-   * forever.
-   */
-  private void saturate() {
-    saturate0(this);
-  }
-
-  private static void saturate0(RenderSession s0) {
-    try {
-      for (String var : s0.state.getUnsetVars()) {
-        s0.set(var, StringMethods.EMPTY);
-      }
-    } catch (RenderException e) {
-    }
-    Set<Template> inProgress = s0.state.getChildSessions().keySet();
-    Set<Template> todo = new HashSet<>(s0.factory.getTemplate().getNestedTemplates());
-    todo.removeAll(inProgress);
-    try {
-      for (Template t : todo) {
-        s0.fill(t.getName(), Collections.emptyList());
-      }
-    } catch (RenderException e) {
-    }
-    for (Template t : inProgress) {
-      Arrays.stream(s0.state.getChildSessions(t)).forEach(RenderSession::saturate0);
-    }
   }
 }
