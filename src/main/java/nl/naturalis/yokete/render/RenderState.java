@@ -56,7 +56,7 @@ class RenderState {
     return children;
   }
 
-  RenderSession[] createChildSessions(Template t, Accessor acc, int repeats)
+  RenderSession[] createChildSessions(Template t, Accessor<?> acc, int repeats)
       throws RenderException {
     if (t.isTextOnly()) { // this is a text-only template
       return createChildSessions(t, repeats);

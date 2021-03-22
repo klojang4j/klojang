@@ -17,7 +17,6 @@ import static nl.naturalis.common.CollectionMethods.asList;
 import static nl.naturalis.common.ObjectMethods.isEmpty;
 import static nl.naturalis.common.ObjectMethods.n2e;
 import static nl.naturalis.common.check.CommonChecks.*;
-import static nl.naturalis.common.check.CommonGetters.size;
 import static nl.naturalis.yokete.render.Accessor.UNDEFINED;
 import static nl.naturalis.yokete.render.EscapeType.ESCAPE_NONE;
 import static nl.naturalis.yokete.render.EscapeType.NOT_SPECIFIED;
@@ -480,7 +479,8 @@ public class RenderSession {
     return this;
   }
 
-  private void processVars(Object data, EscapeType escapeType, String[] names)
+  @SuppressWarnings("unchecked")
+  private <T> void processVars(T data, EscapeType escapeType, String[] names)
       throws RenderException {
     Set<String> varNames;
     if (isEmpty(names)) {
@@ -489,13 +489,17 @@ public class RenderSession {
       varNames = new HashSet<>(factory.getTemplate().getVars());
       varNames.retainAll(Set.of(names));
     }
+    Accessor<T> acc = (Accessor<T>) factory.getAccessor();
     for (String varName : varNames) {
-      Object value = factory.getAccessor().access(data, varName);
-      set(varName, value, escapeType);
+      Object value = acc.access(data, varName);
+      if (value != UNDEFINED) {
+        set(varName, value, escapeType);
+      }
     }
   }
 
-  private void processTmpls(Object data, EscapeType escapeType, String[] names)
+  @SuppressWarnings("unchecked")
+  private <T> void processTmpls(T data, EscapeType escapeType, String[] names)
       throws RenderException {
     Set<String> tmplNames;
     if (isEmpty(names)) {
@@ -504,8 +508,9 @@ public class RenderSession {
       tmplNames = new HashSet<>(factory.getTemplate().getNestedTemplateNames());
       tmplNames.retainAll(Set.of(names));
     }
+    Accessor<T> acc = (Accessor<T>) factory.getAccessor();
     for (String name : tmplNames) {
-      Object nestedData = factory.getAccessor().access(data, name);
+      Object nestedData = acc.access(data, name);
       if (nestedData != null && nestedData != UNDEFINED) {
         fill(name, nestedData, escapeType, names);
       }

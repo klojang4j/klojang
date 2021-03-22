@@ -101,7 +101,7 @@ public class RenderException extends YoketeException {
   }
 
   /** Thrown if an {@code Accessor} cannot access the request value. */
-  public static RenderException inaccessible(Accessor acc, Template t, String var, Object val) {
+  public static RenderException inaccessible(Accessor<?> acc, Template t, String var, Object val) {
     String fqn = TemplateUtils.getFQName(t, var);
     String msg = format(INACCESSIBLE, fqn, prettyClassName(val), prettySimpleClassName(acc));
     return new RenderException(msg);

@@ -26,7 +26,7 @@ public final class SessionFactory {
    * @return A {@code SessionFactory} instance
    */
   public static SessionFactory configure(
-      Template template, Accessor accessor, Stringifier stringifier) {
+      Template template, Accessor<?> accessor, Stringifier stringifier) {
     Check.notNull(template);
     Check.notNull(accessor);
     Check.notNull(stringifier);
@@ -34,7 +34,7 @@ public final class SessionFactory {
   }
 
   private final Template template;
-  private final Accessor accessor;
+  private final Accessor<?> accessor;
   private final Stringifier stringifier;
 
   /**
@@ -46,20 +46,20 @@ public final class SessionFactory {
     return new RenderSession(this);
   }
 
-  SessionFactory(Template template, Accessor accessor, Stringifier stringifier) {
+  SessionFactory(Template template, Accessor<?> accessor, Stringifier stringifier) {
     this.template = template;
     this.accessor = accessor;
     this.stringifier = stringifier;
   }
 
   RenderSession newChildSession(Template nestedTmpl, Object nestedData) throws RenderException {
-    Accessor acc = accessor.getAccessorForTemplate(nestedTmpl, nestedData);
+    Accessor<?> acc = accessor.getAccessorForTemplate(nestedTmpl, nestedData);
     Check.on(nullAccessor(nestedTmpl), acc).is(notNull());
     SessionFactory factory = new SessionFactory(nestedTmpl, acc, stringifier);
     return factory.newRenderSession();
   }
 
-  RenderSession newChildSession(Template nestedTmpl, Accessor acc) {
+  RenderSession newChildSession(Template nestedTmpl, Accessor<?> acc) {
     SessionFactory factory = new SessionFactory(nestedTmpl, acc, stringifier);
     return factory.newRenderSession();
   }
@@ -76,7 +76,7 @@ public final class SessionFactory {
     return template;
   }
 
-  Accessor getAccessor() {
+  Accessor<?> getAccessor() {
     return accessor;
   }
 

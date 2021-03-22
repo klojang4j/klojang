@@ -10,16 +10,15 @@ import nl.naturalis.yokete.template.Template;
  *
  * @author Ayco Holleman
  */
-class MapAccessor0 implements Accessor {
+class MapAccessor0 implements Accessor<Map<String, Object>> {
 
   @Override
-  @SuppressWarnings("unchecked")
-  public Object access(Object from, String name) throws RenderException {
-    return ((Map<String, Object>) from).get(name);
+  public Object access(Map<String, Object> from, String name) throws RenderException {
+    return from.get(name);
   }
 
   @Override
-  public Accessor getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
+  public Accessor<?> getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
     return null;
   }
 }

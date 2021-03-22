@@ -11,17 +11,17 @@ import static nl.naturalis.common.path.PathWalker.DEAD_END;
 import static nl.naturalis.common.path.PathWalker.DeadEndAction.RETURN_DEAD_END;
 
 /**
- * The most versatile {@code Accessor} implementation. It can retrieve values from objects that are
- * (deeply) nested within the source data object. This is done by converting variable names into
- * {@link Path} objects, which are then used by a {@link PathWalker} to retrieve their values.
- * Therefore, when you decide to use a {@code PathAccessor}, your template variables might look like
- * this: {@code ~%html:person.address.street%}.
+ * The versatile {@code Accessor} implementation that can access deeply nested values within any
+ * type of object. This is done by converting variable names into {@link Path} objects, which are
+ * then used by a {@link PathWalker} to retrieve their values. Therefore, when you decide to use a
+ * {@code PathAccessor}, your template variables might look like this: {@code
+ * ~%html:person.address.street%}.
  *
  * <p>This class is not thread-safe.
  *
  * @author Ayco Holleman
  */
-public class PathAccessor implements Accessor {
+public class PathAccessor implements Accessor<Object> {
 
   private final Template template;
   private final PathWalker walker;
@@ -61,7 +61,7 @@ public class PathAccessor implements Accessor {
   }
 
   @Override
-  public Accessor getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
+  public Accessor<?> getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
     return new PathAccessor(nestedTemplate, mapper);
   }
 }

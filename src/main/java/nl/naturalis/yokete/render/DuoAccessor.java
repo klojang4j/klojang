@@ -8,7 +8,7 @@ import nl.naturalis.yokete.template.Template;
  *
  * @author Ayco Holleman
  */
-class DuoAccessor implements Accessor {
+class DuoAccessor implements Accessor<Pair<Object>> {
 
   private String var0;
 
@@ -17,16 +17,15 @@ class DuoAccessor implements Accessor {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public Object access(Object sourceData, String name) throws RenderException {
+  public Object access(Pair<Object> sourceData, String name) throws RenderException {
     if (name.equals(var0)) {
-      return ((Pair<Object>) sourceData).getFirst();
+      return sourceData.getFirst();
     }
-    return ((Pair<Object>) sourceData).getSecond();
+    return sourceData.getSecond();
   }
 
   @Override
-  public Accessor getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
+  public Accessor<?> getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
     return null;
   }
 }

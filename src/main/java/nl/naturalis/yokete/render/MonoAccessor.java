@@ -7,7 +7,7 @@ import nl.naturalis.yokete.template.Template;
  *
  * @author Ayco Holleman
  */
-class MonoAccessor implements Accessor {
+class MonoAccessor implements Accessor<Object> {
 
   MonoAccessor() {}
 
@@ -17,7 +17,7 @@ class MonoAccessor implements Accessor {
   }
 
   @Override
-  public Accessor getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
+  public Accessor<?> getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
     return null;
   }
 }

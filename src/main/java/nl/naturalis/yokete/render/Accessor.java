@@ -51,7 +51,7 @@ import nl.naturalis.yokete.template.TextPart;
  *
  * @author Ayco Holleman
  */
-public interface Accessor {
+public interface Accessor<T> {
 
   /**
    * The value that must be returned if the variable whose value to retrieve is not present in the
@@ -80,7 +80,7 @@ public interface Accessor {
    * @param varOrNestedTemplateName The name of the template variable or nested template
    * @return The value of the variable
    */
-  Object access(Object sourceData, String varOrNestedTemplateName) throws RenderException;
+  Object access(T sourceData, String varOrNestedTemplateName) throws RenderException;
 
   /**
    * Returns an {@code Accessor} object that can access data destined for the specified nested
@@ -96,5 +96,5 @@ public interface Accessor {
    * @return An {@code Accessor} object that can access data destined for the specified nested
    *     template
    */
-  Accessor getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData);
+  Accessor<?> getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData);
 }

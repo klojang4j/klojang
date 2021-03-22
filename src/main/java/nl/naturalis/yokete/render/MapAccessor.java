@@ -11,7 +11,7 @@ import nl.naturalis.yokete.template.Template;
  *
  * @author Ayco Holleman
  */
-public class MapAccessor implements Accessor {
+public class MapAccessor implements Accessor<Map<String, Object>> {
 
   private final Template template;
   private final NameMapper mapper;
@@ -36,21 +36,13 @@ public class MapAccessor implements Accessor {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public Object access(Object from, String varName) throws RenderException {
-    Check.notNull(from, "from");
+  public Object access(Map<String, Object> from, String varName) throws RenderException {
     String key = Check.notNull(varName, "varName").ok(s -> mapper.map(template, s));
-    Map<String, Object> map;
-    try {
-      map = (Map<String, Object>) from;
-    } catch (ClassCastException e) {
-      throw RenderException.inaccessible(this, template, varName, from);
-    }
-    return map.getOrDefault(key, UNDEFINED);
+    return Check.notNull(from, "from").ok().getOrDefault(key, UNDEFINED);
   }
 
   @Override
-  public Accessor getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
+  public Accessor<?> getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
     return this;
   }
 }
