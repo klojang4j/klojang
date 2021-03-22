@@ -5,9 +5,7 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.Template;
 
 /**
- * A simple map-based {@code Accessor} implementation. The {@code Map} passed to the {@link
- * #access(Map, String) getValue} method is assumed to be a simple, two-dimensional key-value store
- * without nested structures.
+ * Simple map-based {@code Accessor} implementation.
  *
  * @author Ayco Holleman
  */

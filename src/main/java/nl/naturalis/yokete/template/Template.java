@@ -12,7 +12,7 @@ import nl.naturalis.common.collection.UnmodifiableIntList;
 import nl.naturalis.yokete.render.Accessor;
 import nl.naturalis.yokete.render.RenderSession;
 import nl.naturalis.yokete.render.Stringifier;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
@@ -227,7 +227,7 @@ public class Template {
 
   /**
    * Returns, for this {@code Template} and all templates descending from it, the names of their
-   * variables. Each tuple in the returned {@code Set} contains a {@code Template} instance and a
+   * variables. Each tuple in the returned {@code List} contains a {@code Template} instance and a
    * variable name. The returned {@code List} is created on demand and mutable.
    *
    * @return All variable names in this {@code Template} and the templates nested inside it
@@ -250,14 +250,14 @@ public class Template {
    *
    * @return All templates nested inside this {@code Template}
    */
-  public List<Template> getNestedTemplates() {
+  public Set<Template> getNestedTemplates() {
     return tmplIndices
         .values()
         .stream()
         .map(parts::get)
         .map(NestedTemplatePart.class::cast)
         .map(NestedTemplatePart::getTemplate)
-        .collect(toList());
+        .collect(toSet());
   }
 
   /**
@@ -309,16 +309,15 @@ public class Template {
    *
    * @return This {@code Template} and all templates descending from it
    */
-  public Set<Template> getNestedTemplatesRecursive() {
+  public List<Template> getNestedTemplatesRecursive() {
     ArrayList<Template> tmpls = new ArrayList<>(20);
     tmpls.add(this);
     collectTmplsRecursive(this, tmpls);
-    // Return a Set, to make the API consistent and predictable
-    return new LinkedHashSet<>(tmpls);
+    return tmpls;
   }
 
   private static void collectTmplsRecursive(Template t0, ArrayList<Template> tmpls) {
-    List<Template> myTmpls = t0.getNestedTemplates();
+    Set<Template> myTmpls = t0.getNestedTemplates();
     tmpls.addAll(myTmpls);
     myTmpls.forEach(t -> collectTmplsRecursive(t, tmpls));
   }
