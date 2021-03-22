@@ -15,7 +15,11 @@ import static nl.naturalis.common.check.CommonChecks.notNull;
 import static nl.naturalis.yokete.template.TemplateUtils.getFQName;
 
 /**
- * Provides {@link Stringifier stringifiers} for template variables.
+ * Provides {@link Stringifier stringifiers} for template variables. In principle each and every
+ * template variable needs to be associated with a {@code Stringifier}. However, each variable
+ * implicitly already <i>is</i> associated with a stringifier: the {@link Stringifier#DEFAULT
+ * default stringifier}. You can use the {@link StringifierProvider.Builder} to configure
+ * alternative stringifier.
  *
  * @author Ayco Holleman
  */

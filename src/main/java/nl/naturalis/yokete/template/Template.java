@@ -17,10 +17,10 @@ import static java.util.stream.Collectors.toUnmodifiableList;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 /**
- * A {@code Template} captures the result of parsing a template file. Together with {@link
- * RenderSession} this is the most important class of the Yoketi library. It functions as a
- * knowledge repository for the {@code RenderSession}, and for you as you configure your {@link
- * Stringifier stringifiers} and {@link Accessor accessors}.
+ * A {@code Template} captures the result of parsing a template file. Together with the {@link
+ * RenderSession} class this class forms the heart of the Yokete library. It functions as a
+ * knowledge repository for a particular template and it used as such by the {@link RenderSession},
+ * and by you as you configure your {@link Stringifier stringifiers} and {@link Accessor accessors}.
  *
  * <p>{@code Template} instances are immutable, expensive-to-create and heavy-weight objects. They
  * should be created just once per source file, cached somewhere, and then reused for as long as
