@@ -14,7 +14,10 @@ import static nl.naturalis.yokete.render.RenderException.*;
 public final class SessionFactory {
 
   /**
-   * Configures and returns a {@code SessionFactory}.
+   * Creates a {@code SessionFactory} that will produce {@link RenderSession render sessions} for
+   * the specified template, using the specified {@code specified Accessor} to retrieve values the
+   * provided source data, and using the specified {@code Stringifier} to stringify those values so
+   * they can be inserted into the template.
    *
    * @param template The template for which the {@code SessionFactory} will create render sessions.
    * @param accessor The {@code Accessor} implementation to use for obtaining values from the data
@@ -41,16 +44,6 @@ public final class SessionFactory {
    */
   public RenderSession newRenderSession() {
     return new RenderSession(this);
-  }
-
-  /**
-   * Called internally, to create child sessions for nested templates whose variables get set
-   * directly, without the help of an Accessor. That is: for methods fillMono() and fillDuo().
-   *
-   * @param template
-   */
-  SessionFactory(Template template) {
-    this(template, null, null);
   }
 
   SessionFactory(Template template, Accessor accessor, Stringifier stringifier) {

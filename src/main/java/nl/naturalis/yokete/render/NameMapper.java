@@ -5,8 +5,8 @@ import nl.naturalis.yokete.template.Template;
 /**
  * Defines how to map the names of template variables and nested templates to bean properties or map
  * keys or whatever name must be used to access their value. When implementing a name mapper for a
- * template, make sure it is also capable of mapping names for <i>all</i> templates descending from
- * it.
+ * template, make sure it is capable of mapping names for <i>all</i> templates descending from it as
+ * well.
  *
  * @author Ayco Holleman
  */

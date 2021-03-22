@@ -8,6 +8,7 @@ import nl.naturalis.yokete.template.TemplateUtils;
 import static java.lang.String.format;
 import static nl.naturalis.common.ClassMethods.prettyClassName;
 import static nl.naturalis.common.ClassMethods.prettySimpleClassName;
+import static nl.naturalis.common.StringMethods.concat;
 
 /**
  * Thrown from a {@link RenderSession} under various circumstances.
@@ -38,14 +39,6 @@ public class RenderException extends YoketeException {
 
   private static final String NULL_ACCESSOR =
       "Accessor.getAccessorForTemplate() returned " + "null for nested template \"%s\"";
-
-  private static final String NOT_1VAR_TEMPLATE =
-      "fillOne() can only called for single-variable templates; \"%s\" contains %d "
-          + "variables and/or nested templates";
-
-  private static final String NOT_2VAR_TEMPLATE =
-      "fillTwo() can only called for two-variable templates; \"%s\" contains %d "
-          + "variables and/or nested templates";
 
   private static final String NO_TEXT_ONLY =
       "show() can only called for text-only templates; \"%s\" contains %d variables and/or "
@@ -143,16 +136,24 @@ public class RenderException extends YoketeException {
    * Thrown if you call {@link RenderSession#fillMono(String, Object) RenderSession.fillOne} for a
    * nested template that does not contain exactly one variable and zero doubly-nested templates.
    */
-  public static Function<String, RenderException> not1VarTemplate(Template t) {
-    return s -> new RenderException(format(NOT_1VAR_TEMPLATE, t.getName(), t.getNames().size()));
+  public static Function<String, RenderException> notMono(Template t) {
+    String fmt =
+        concat(
+            "fillMono() can only called for single-variable templates; ",
+            "\"%s\" contains %d variables and/or nested templates");
+    return s -> new RenderException(format(fmt, t.getName(), t.getNames().size()));
   }
 
   /**
    * Thrown if you call {@link RenderSession#fillDuo(String, Object) RenderSession.fillTwo} for a
    * nested template that does not contain exactly two variables and zero doubly-nested templates.
    */
-  public static Function<String, RenderException> not2VarTemplate(Template t) {
-    return s -> new RenderException(format(NOT_2VAR_TEMPLATE, t.getName(), t.getNames().size()));
+  public static Function<String, RenderException> notDuo(Template t) {
+    String fmt =
+        concat(
+            "fillTwo() can only called for two-variable templates; ",
+            "\"%s\" contains %d variables and/or nested templates");
+    return s -> new RenderException(format(fmt, t.getName(), t.getNames().size()));
   }
 
   /** Generic error condition. */

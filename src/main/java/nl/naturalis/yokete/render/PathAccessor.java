@@ -11,11 +11,11 @@ import static nl.naturalis.common.path.PathWalker.DEAD_END;
 import static nl.naturalis.common.path.PathWalker.DeadEndAction.RETURN_DEAD_END;
 
 /**
- * The most versatile {@code Accessor} implementation provided by Yokete. It can retrieve values
- * from objects that are (deeply) nested within the source data object. This is done by converting
- * variable names into {@link Path} objects, which are then used by a {@link PathWalker} to retrieve
- * their values. Therefore, when you decide to use a {@code PathAccessor}, your template variables
- * might look like this: {@code ~%html:person.address.street%}.
+ * The most versatile {@code Accessor} implementation. It can retrieve values from objects that are
+ * (deeply) nested within the source data object. This is done by converting variable names into
+ * {@link Path} objects, which are then used by a {@link PathWalker} to retrieve their values.
+ * Therefore, when you decide to use a {@code PathAccessor}, your template variables might look like
+ * this: {@code ~%html:person.address.street%}.
  *
  * <p>This class is not thread-safe.
  *

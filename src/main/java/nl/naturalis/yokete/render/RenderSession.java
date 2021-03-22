@@ -323,7 +323,7 @@ public class RenderSession {
     Check.on(invalidValue("repeats", repeats), repeats).is(gte(), 0);
     Check.on(noSuchTemplate(name), name).is(validTemplateName());
     Template t = factory.getTemplate().getNestedTemplate(name);
-    Check.on(notTextOnly(t), t.getNames()).has(size(), eq(), 0);
+    Check.on(notTextOnly(t), t.isTextOnly()).is(yes());
     state.createChildSessions(t, repeats);
     return this;
   }
@@ -363,7 +363,7 @@ public class RenderSession {
     Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
     Check.on(noSuchTemplate(name), name).is(validTemplateName());
     Template t = factory.getTemplate().getNestedTemplate(name);
-    Check.on(not1VarTemplate(t), t)
+    Check.on(notMono(t), t)
         .has(tmpl -> tmpl.getVars().size(), eq(), 1)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
     List<?> values = asList(value);
@@ -414,7 +414,7 @@ public class RenderSession {
     Check.on(invalidValue("pairs", pairs), pairs).is(noneNull());
     Check.on(noSuchTemplate(name), name).is(validTemplateName());
     Template t = factory.getTemplate().getNestedTemplate(name);
-    Check.on(not2VarTemplate(t), t)
+    Check.on(notDuo(t), t)
         .has(tmpl -> tmpl.getVars().size(), eq(), 2)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
     String var0 = t.getVars().iterator().next();
@@ -470,9 +470,9 @@ public class RenderSession {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     if (data == null) {
       Template t = factory.getTemplate();
-      Check.on(notTextOnly(t), t.getNames()).has(size(), eq(), 0);
-      // The entire template is in fact static HTML.
-      // Bit wasteful, but no reason not to support it.
+      Check.on(notTextOnly(t), t.isTextOnly()).is(yes());
+      // If we get past the check, the entire template is in fact static HTML.
+      // Pretty wasteful, but no reason not to support it.
       return this;
     }
     processVars(data, escapeType, names);

@@ -1,11 +1,12 @@
 package nl.naturalis.yokete.render;
 
 import nl.naturalis.yokete.template.Template;
+import nl.naturalis.yokete.template.TextPart;
 
 /**
- * A generic interface for objects that mediate between the data access layer and the view layer.
- * Its purpose is to provide name-based access to model beans (or whatever it is the data access
- * layer serves up).
+ * Interface for objects that mediate between the data access layer and the view layer. Its purpose
+ * is to provide name-based access to model beans, or whatever it is the data access layer serves
+ * up).
  *
  * <p>The cleanest way to employ employ {@code Accessor} objects is to write them yourself, most
  * likely on a per-type basis. For example, you could have an {@code DepartmentAccessor} like this:
@@ -59,31 +60,39 @@ public interface Accessor {
   public static final Object UNDEFINED = new Object();
 
   /**
-   * Returns the value of the specified template variable within the specified object.
+   * Returns the value of the specified template variable or nested template within the specified
+   * object. Generally speaking the returned value will have a relatively simple type for variables
+   * (e.g. a {@code String}, {@code Integer} or {@code LocalDate}, while it will be a complex object
+   * for a nested template, since it will function as the source data for that template. Together
+   * with the nested template itself this source data object will be passed to {@link
+   * #getAccessorForTemplate(Template, Object) getAccessorForTemplate}, so the {@link RenderSession}
+   * can extract values from it.
    *
    * <p>Implementations must distinguish between true {@code null} values and the variable not being
    * present in the source data at all. True {@code null} values are valid valid values that will be
    * stringified somehow by a {@link Stringifier} (e.g. to an empty string). If the variable is not
-   * present in the source data, this method must return {@link #UNDEFINED}. If a {@link
+   * present in the source data, this method must return {@link #UNDEFINED}. If a {@code
    * RenderSession} receives this value for a particular variable, it will skip setting that
-   * variable. In the end, of course, all template variables must be set before the template can be
-   * rendered.
+   * variable. On the other hand, if it receives {@code null} from the {@code Accessor} while the
+   * variable has already been set, it will throw a {@link RenderException}.
    *
    * @param sourceData The object (supposedly) containing the value
-   * @param varName The name of the template variable
+   * @param varOrNestedTemplateName The name of the template variable or nested template
    * @return The value of the variable
    */
-  Object access(Object sourceData, String varName) throws RenderException;
+  Object access(Object sourceData, String varOrNestedTemplateName) throws RenderException;
 
   /**
    * Returns an {@code Accessor} object that can access data destined for the specified nested
-   * template. Note that this method will never be called for text-only templates (see {@link
-   * RenderSession#show(String, int)}). A text-only template by definition does not contain any
-   * variables or doubly nested templates, so there's nothing to access. So for text-only templates
-   * (and only for text-only templatest) this method is allowed to return {@code null}
+   * template.
+   *
+   * <p>Note that this method will never be called for {@link TextPart text-only templates} (see
+   * {@link RenderSession#show(String, int)}). Text-only templates by definition do not contain any
+   * variables or doubly-nested templates, so there's nothing to access. Therefore, for text-only
+   * templates (and only for text-only templatest) this method is allowed to return {@code null}.
    *
    * @param nestedTemplate The nested template
-   * @param nestedSourceData The data for the nested template
+   * @param nestedSourceData The data to be accessed by the retur
    * @return An {@code Accessor} object that can access data destined for the specified nested
    *     template
    */

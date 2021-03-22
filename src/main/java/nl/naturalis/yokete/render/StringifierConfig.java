@@ -2,6 +2,7 @@ package nl.naturalis.yokete.render;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import nl.naturalis.common.Tuple;
@@ -48,7 +49,7 @@ public final class StringifierConfig {
 
   StringifierConfig(Template tmpl) {
     this.tmpl = tmpl;
-    this.varNames = tmpl.getVarsPerTemplate();
+    this.varNames = new HashSet<>(tmpl.getVarsPerTemplate());
   }
 
   /**
@@ -86,8 +87,7 @@ public final class StringifierConfig {
    * @param stringifier The stringifier
    * @return This {@code StringifierFactory}
    */
-  public StringifierConfig register(
-      Template template, String varName, Stringifier stringifier) {
+  public StringifierConfig register(Template template, String varName, Stringifier stringifier) {
     Check.notNull(template, "tmplName");
     Check.notNull(varName, "varName");
     Check.notNull(stringifier, "stringifier");
@@ -119,9 +119,9 @@ public final class StringifierConfig {
    * <p>
    *
    * <ol>
-   *   <li>It enables Yokete request type-specific stringifier from the {@link
-   *       ApplicationStringifier} even if the variable's value is null (in which case calling
-   *       {@code value.getClass()} would cause a {@code NullPointerException}).
+   *   <li>It allows the {@code Stringifier} to request a generic, type-specific stringifier from
+   *       the {@link ApplicationStringifier} even if the variable's value is null (in which case
+   *       calling {@code value.getClass()} would cause a {@code NullPointerException}).
    *   <li>It lets you specify different application-level stringifiers for the same type. An
    *       example would be {@link LocalDateTime} objects that must be formatted differently in
    *       different parts of the application. See {@link ApplicationStringifier}.

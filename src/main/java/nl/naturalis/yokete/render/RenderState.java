@@ -13,7 +13,7 @@ class RenderState {
 
   private final SessionFactory factory;
   private final Set<String> todo; // variables that have not been set yet
-  private final IdentityHashMap<Template, RenderSession[]> sessions;
+  private final Map<Template, RenderSession[]> sessions;
   private final Map<Integer, String[]> varValues;
 
   private boolean frozen;
@@ -36,7 +36,7 @@ class RenderState {
   }
 
   RenderSession[] createChildSessions(Template t, List<?> data) throws RenderException {
-    if (t.getNames().isEmpty()) { // this is a text-only template
+    if (t.isTextOnly()) {
       return createChildSessions(t, data.size());
     }
     RenderSession[] children = sessions.get(t);
@@ -58,7 +58,7 @@ class RenderState {
 
   RenderSession[] createChildSessions(Template t, Accessor acc, int repeats)
       throws RenderException {
-    if (t.getNames().isEmpty()) { // this is a text-only template
+    if (t.isTextOnly()) { // this is a text-only template
       return createChildSessions(t, repeats);
     }
     RenderSession[] children = sessions.get(t);

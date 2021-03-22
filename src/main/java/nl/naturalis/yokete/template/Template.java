@@ -9,17 +9,23 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.collection.UnmodifiableIntList;
-import static java.util.stream.Collectors.toCollection;
-import static java.util.stream.Collectors.toUnmodifiableSet;
+import nl.naturalis.yokete.render.Accessor;
+import nl.naturalis.yokete.render.RenderSession;
+import nl.naturalis.yokete.render.Stringifier;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 /**
- * A {@code Template} captures the result of parsing a template file. It provides access to the
- * constituent parts of a text template: {@link VariablePart template variables}, {@link
- * NestedTemplatePart nested templates} and {@link TextPart text-only parts}. {@code Template}
- * instances are immutable, expensive-to-create and heavy-weight objects. They should be created
- * once per source file, cached somewhere, and then reused for as long as your application lasts.
- * Creating a new {@code Template} instance for each new request would be very inefficient.
+ * A {@code Template} captures the result of parsing a template file. Together with {@link
+ * RenderSession} this is the most important class of the Yoketi library. It functions as a
+ * knowledge repository for the {@code RenderSession}, and for you as you configure your {@link
+ * Stringifier stringifiers} and {@link Accessor accessors}.
+ *
+ * <p>{@code Template} instances are immutable, expensive-to-create and heavy-weight objects. They
+ * should be created just once per source file, cached somewhere, and then reused for as long as
+ * your application lasts. Creating a new {@code Template} instance for each new request would be
+ * very inefficient.
  *
  * @author Ayco Holleman
  */
@@ -83,11 +89,7 @@ public class Template {
   private final Map<String, IntList> varIndices;
   private final IntList textIndices;
   private final Map<String, Integer> tmplIndices;
-  /*
-   * All variable names and template names, requested so often by RenderSession it's worthwile
-   * storing separately.
-   */
-  private final Set<String> names;
+  private final List<String> names; // names of all vars and nested templates
 
   private Template parent;
 
@@ -208,14 +210,14 @@ public class Template {
    * @param name The name of the variable
    * @return Whether or not this {@code Template} contains a variable with the specified name
    */
-  public boolean hasVar(String name) {
+  public boolean containsVar(String name) {
     return Check.notNull(name).ok(varIndices::containsKey);
   }
 
   /**
    * Returns the number of variables in this {@code Template}. Note that this method does not count
-   * the number of <i>unique</i> variable names (which would simply be {@link #getVars()
-   * getVariableNames().size()}).
+   * the number of <i>unique</i> variable names (which would be {@link #getVars()
+   * getVars().size()}).
    *
    * @return The number of variables in this {@code Template}
    */
@@ -226,14 +228,14 @@ public class Template {
   /**
    * Returns, for this {@code Template} and all templates descending from it, the names of their
    * variables. Each tuple in the returned {@code Set} contains a {@code Template} instance and a
-   * variable name. The returned {@code Set} is created on demand and mutable.
+   * variable name. The returned {@code List} is created on demand and mutable.
    *
    * @return All variable names in this {@code Template} and the templates nested inside it
    */
-  public Set<Tuple<Template, String>> getVarsPerTemplate() {
+  public List<Tuple<Template, String>> getVarsPerTemplate() {
     ArrayList<Tuple<Template, String>> tuples = new ArrayList<>(25);
     collectVarsPerTemplate(this, tuples);
-    return new LinkedHashSet<>(tuples);
+    return tuples;
   }
 
   private static void collectVarsPerTemplate(
@@ -248,14 +250,14 @@ public class Template {
    *
    * @return All templates nested inside this {@code Template}
    */
-  public Set<Template> getNestedTemplates() {
+  public List<Template> getNestedTemplates() {
     return tmplIndices
         .values()
         .stream()
         .map(parts::get)
         .map(NestedTemplatePart.class::cast)
         .map(NestedTemplatePart::getTemplate)
-        .collect(toCollection(LinkedHashSet::new));
+        .collect(toList());
   }
 
   /**
@@ -275,8 +277,8 @@ public class Template {
    * @param name The name of the nested template
    * @return Whether or not this {@code Template} contains a nested template with the specified name
    */
-  public boolean hasNestedTemplate(String name) {
-    return varIndices.containsKey(name);
+  public boolean containsNestedTemplate(String name) {
+    return Check.notNull(name).ok(varIndices::containsKey);
   }
 
   /**
@@ -316,18 +318,28 @@ public class Template {
   }
 
   private static void collectTmplsRecursive(Template t0, ArrayList<Template> tmpls) {
-    Set<Template> myTmpls = t0.getNestedTemplates();
+    List<Template> myTmpls = t0.getNestedTemplates();
     tmpls.addAll(myTmpls);
     myTmpls.forEach(t -> collectTmplsRecursive(t, tmpls));
   }
   /**
    * Returns the names of all variables and nested templates in this {@code Template}
-   * (non-recursive). The returned {@code Set} is immutable.
+   * (non-recursive). The returned {@code List} is immutable.
    *
    * @return The names of all variables and nested templates in this {@code Template}
    */
-  public Set<String> getNames() {
+  public List<String> getNames() {
     return names;
+  }
+
+  /**
+   * Returns whether or not this is a text-only template. Unlikely to be the case for root
+   * templates, as it would make for a pretty expensive way of rendering static HTML.
+   *
+   * @return
+   */
+  public boolean isTextOnly() {
+    return names.isEmpty();
   }
 
   /**
@@ -393,13 +405,13 @@ public class Template {
     return Collections.unmodifiableMap(indices);
   }
 
-  private static Set<String> getNames(List<Part> parts) {
+  private static List<String> getNames(List<Part> parts) {
     return parts
         .stream()
         .filter(NamedPart.class::isInstance)
         .map(NamedPart.class::cast)
         .map(NamedPart::getName)
-        .collect(toUnmodifiableSet());
+        .collect(toUnmodifiableList());
   }
 
   private static IntList getTextIndices(List<Part> parts) {

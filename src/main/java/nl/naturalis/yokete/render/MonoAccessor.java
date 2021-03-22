@@ -12,7 +12,7 @@ class MonoAccessor implements Accessor {
   MonoAccessor() {}
 
   @Override
-  public Object access(Object sourceData, String varName) throws RenderException {
+  public Object access(Object sourceData, String name) throws RenderException {
     return sourceData;
   }
 

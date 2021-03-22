@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 import nl.naturalis.yokete.template.*;
-import static java.util.Arrays.*;
+import static java.util.Arrays.stream;
 
 class Renderer {
 
@@ -41,10 +41,10 @@ class Renderer {
         RenderSession[] sessions = state0.getChildSessions(ntp.getTemplate());
         if (sessions != null) {
           Template t = ntp.getTemplate();
-          if (t.getNames().isEmpty()) {
-            // This is a text-only template. The RenderSession[] array will
-            // contain only null values and we are only interested in the
-            // length of the array to determine the number of repetitions
+          if (t.isTextOnly()) {
+            // The RenderSession[] array will contain only null values and we
+            // are only interested in its length to determine the number of
+            // repetitions
             String text = ((TextPart) t.getParts().get(0)).getText();
             IntStream.range(0, sessions.length).forEach(x -> ps.append(text));
           } else {
@@ -71,7 +71,7 @@ class Renderer {
         RenderSession[] sessions = state0.getChildSessions(ntp.getTemplate());
         if (sessions != null) {
           Template t = ntp.getTemplate();
-          if (t.getNames().isEmpty()) {
+          if (t.isTextOnly()) {
             String text = ((TextPart) t.getParts().get(0)).getText();
             IntStream.range(0, sessions.length).forEach(x -> sb.append(text));
           } else {

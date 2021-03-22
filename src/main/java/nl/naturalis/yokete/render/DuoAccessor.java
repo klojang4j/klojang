@@ -18,8 +18,8 @@ class DuoAccessor implements Accessor {
 
   @Override
   @SuppressWarnings("unchecked")
-  public Object access(Object sourceData, String varName) throws RenderException {
-    if (varName.equals(var0)) {
+  public Object access(Object sourceData, String name) throws RenderException {
+    if (name.equals(var0)) {
       return ((Pair<Object>) sourceData).getFirst();
     }
     return ((Pair<Object>) sourceData).getSecond();
