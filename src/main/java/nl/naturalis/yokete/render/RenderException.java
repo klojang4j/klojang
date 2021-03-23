@@ -133,10 +133,10 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#fillMono(String, Object) RenderSession.fillOne} for a
+   * Thrown if you call {@link RenderSession#fillMonoTemplate(String, Object) RenderSession.fillOne} for a
    * nested template that does not contain exactly one variable and zero doubly-nested templates.
    */
-  public static Function<String, RenderException> notMono(Template t) {
+  public static Function<String, RenderException> notMonoTemplate(Template t) {
     String fmt =
         concat(
             "fillMono() can only called for single-variable templates; ",
@@ -145,10 +145,10 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#fillDuo(String, Object) RenderSession.fillTwo} for a
+   * Thrown if you call {@link RenderSession#fillTupleTemplate(String, Object) RenderSession.fillTwo} for a
    * nested template that does not contain exactly two variables and zero doubly-nested templates.
    */
-  public static Function<String, RenderException> notDuo(Template t) {
+  public static Function<String, RenderException> notTupleTemplate(Template t) {
     String fmt =
         concat(
             "fillTwo() can only called for two-variable templates; ",

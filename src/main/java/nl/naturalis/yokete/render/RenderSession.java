@@ -340,15 +340,16 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly one variable. See
-   * {@link #fillMono(String, Object, EscapeType)}.
+   * {@link #fillMonoTemplate(String, Object, EscapeType)}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillMono(String nestedTemplateName, Object value) throws RenderException {
-    return fillMono(nestedTemplateName, value, ESCAPE_NONE);
+  public RenderSession fillMonoTemplate(String nestedTemplateName, Object value)
+      throws RenderException {
+    return fillMonoTemplate(nestedTemplateName, value, ESCAPE_NONE);
   }
 
   /**
@@ -366,18 +367,18 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillMono(String nestedTemplateName, Object value, EscapeType escapeType)
-      throws RenderException {
+  public RenderSession fillMonoTemplate(
+      String nestedTemplateName, Object value, EscapeType escapeType) throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     String name = nestedTemplateName;
     Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
     Check.on(noSuchTemplate(name), name).is(validTemplateName());
     Template t = factory.getTemplate().getNestedTemplate(name);
-    Check.on(notMono(t), t)
+    Check.on(notMonoTemplate(t), t)
         .has(tmpl -> tmpl.getVars().size(), eq(), 1)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
     List<?> values = asList(value);
-    RenderSession[] sessions = state.createChildSessions(t, new MonoAccessor(), values.size());
+    RenderSession[] sessions = state.createChildSessions(t, new SelfAccessor(), values.size());
     for (int i = 0; i < sessions.length; ++i) {
       sessions[i].populate(values.get(i), escapeType);
     }
@@ -385,8 +386,8 @@ public class RenderSession {
   }
 
   /**
-   * Convenience method for populating a nested template that contain exactly two variables. See
-   * {@link #fillDuo(String, List, EscapeType)}.
+   * Convenience method for populating a nested template that contains exactly two variables. See
+   * {@link #fillTupleTemplate(String, List, EscapeType)}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
@@ -394,13 +395,13 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillDuo(String nestedTemplateName, List<Pair<Object>> pairs)
+  public RenderSession fillTupleTemplate(String nestedTemplateName, List<Pair<Object>> pairs)
       throws RenderException {
-    return fillDuo(nestedTemplateName, pairs, ESCAPE_NONE);
+    return fillTupleTemplate(nestedTemplateName, pairs, ESCAPE_NONE);
   }
 
   /**
-   * Convenience method for populating a nested template that contain exactly two variables. Could
+   * Convenience method for populating a nested template that contains exactly two variables. Could
    * used, for example, to populate drop-down lists with <code>&lt;option&gt;</code> elements and
    * their {@code value} attribute. Ordinarily nested templates are populated with a complex {@code
    * Object} and an {@link Accessor} that retrieves values from it. With this method, however, you
@@ -415,7 +416,7 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillDuo(
+  public RenderSession fillTupleTemplate(
       String nestedTemplateName, List<Pair<Object>> pairs, EscapeType escapeType)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
@@ -424,7 +425,7 @@ public class RenderSession {
     Check.on(invalidValue("pairs", pairs), pairs).is(noneNull());
     Check.on(noSuchTemplate(name), name).is(validTemplateName());
     Template t = factory.getTemplate().getNestedTemplate(name);
-    Check.on(notDuo(t), t)
+    Check.on(notTupleTemplate(t), t)
         .has(tmpl -> tmpl.getVars().size(), eq(), 2)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
     String var0 = t.getVars().iterator().next();
