@@ -270,18 +270,25 @@ public class RenderSession {
   public RenderSession fill(
       String nestedTemplateName, Object sourceData, EscapeType escapeType, String... names)
       throws RenderException {
-    return repeat(nestedTemplateName, asList(sourceData), escapeType, names);
-  }
-
-  private RenderSession repeat(String name, List<?> data, EscapeType escapeType, String... names)
-      throws RenderException {
+    String name = nestedTemplateName;
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
     Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
-    Check.on(invalidValue("data", data), data).is(noneNull());
     Check.on(noSuchTemplate(name), name).is(validTemplateName());
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
-    RenderSession[] sessions = state.createChildSessions(name, data);
+    Template t = factory.getTemplate().getNestedTemplate(name);
+    List<?> data = asList(sourceData);
+    if (t.isTextOnly()) {
+      return show(t, data.size());
+    }
+    // TODO: better error reporting ("mssing/invalid source data for nested template xxx")
+    Check.on(invalidValue("data", data), data).is(noneNull());
+    return repeat(t, asList(sourceData), escapeType, names);
+  }
+
+  private RenderSession repeat(Template t, List<?> data, EscapeType escapeType, String... names)
+      throws RenderException {
+    RenderSession[] sessions = state.createChildSessions(t, data);
     for (int i = 0; i < sessions.length; ++i) {
       sessions[i].populate(data.get(i), escapeType, names);
     }
@@ -323,7 +330,11 @@ public class RenderSession {
     Check.on(noSuchTemplate(name), name).is(validTemplateName());
     Template t = factory.getTemplate().getNestedTemplate(name);
     Check.on(notTextOnly(t), t.isTextOnly()).is(yes());
-    state.createChildSessions(t, repeats);
+    return show(t, repeats);
+  }
+
+  public RenderSession show(Template nested, int repeats) throws RenderException {
+    state.createChildSessions(nested, repeats);
     return this;
   }
 
@@ -426,6 +437,11 @@ public class RenderSession {
 
   /* METHODS FOR POPULATING WHATEVER IS IN THE PROVIDED OBJECT */
 
+  public RenderSession createChildSession(String nestedTemplateName) throws RenderException {
+    Template t = factory.getTemplate().getNestedTemplate(nestedTemplateName);
+    return state.createChildSessions(t, factory.getAccessor(), 1)[0];
+  }
+
   /**
    * Populates the <i>entire</i> template, except for variables and nested templates whose name is
    * present in the {@code names} array. The template is populated with values retrieved from the
@@ -470,8 +486,9 @@ public class RenderSession {
     if (data == null) {
       Template t = factory.getTemplate();
       Check.on(notTextOnly(t), t.isTextOnly()).is(yes());
-      // If we get past the check, the entire template is in fact static HTML.
-      // Pretty wasteful, but no reason not to support it.
+      // If we get past this check, the entire template is in fact static
+      // HTML. Pretty expensive way to render static HTML, if this is the
+      // root template, but no reason not to support it.
       return this;
     }
     processVars(data, escapeType, names);
@@ -511,11 +528,13 @@ public class RenderSession {
     Accessor<T> acc = (Accessor<T>) factory.getAccessor();
     for (String name : tmplNames) {
       Object nestedData = acc.access(data, name);
-      if (nestedData != null && nestedData != UNDEFINED) {
+      if (nestedData != UNDEFINED) {
         fill(name, nestedData, escapeType, names);
       }
     }
   }
+
+  /* MISCELLANEOUS METHODS */
 
   /* RENDER METHODS */
 

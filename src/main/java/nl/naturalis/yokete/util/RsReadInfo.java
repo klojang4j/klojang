@@ -7,8 +7,8 @@ import java.util.Map;
 
 class RsReadInfo {
 
-  static Map<String, Object> toMap(ResultSet rs, RsReadInfo[] infos) throws Throwable {
-    Map<String, Object> map = new HashMap<>(infos.length);
+  static Map<String, Object> toMap(ResultSet rs, RsReadInfo[] infos, int mapSize) throws Throwable {
+    Map<String, Object> map = new HashMap<>(mapSize);
     for (RsReadInfo inf : infos) {
       Object v;
       if (inf.secondArg == null) {

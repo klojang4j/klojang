@@ -9,12 +9,14 @@ import nl.naturalis.common.collection.TypeMap;
 import nl.naturalis.common.collection.UnmodifiableTypeMap;
 import static java.util.Collections.*;
 /**
- * Provides type-based stringfiers. In most cases the way a value must be stringified doesn't really
- * depend on any template variable in particular but rather on the data type of the variable. In
- * other words, unless a template variable has very specific stringification requirements, its
- * values will be stringified based solely on its type. You could, for example, have a {@link
- * Number} stringifier, a {@link LocalDate} stringifier, a {@link File} stringifier, etc. The {@code
- * GlobalStringifierProvider} lets you configure stringifiers on a per-type basis.
+ * A repository and provider of application-wide, type-specific stringfiers. In most cases the way a
+ * variable's value must be stringified doesn't really depend on the variable per s&#233;, but
+ * rather on its data type. In other words, unless a template variable has very specific
+ * stringification requirements, its values will be stringified based solely on its type. You could,
+ * for example, have a {@link Number} stringifier, a {@link LocalDate} stringifier, a {@link File}
+ * stringifier, etc. The {@code GlobalStringifierProvider} lets you configure stringifiers on a
+ * per-type basis. Therefore most stringifiers are likely to be provided by the {@code
+ * GlobalStringifierProvider} rather than by the (template-specific) {@link StringifierProvider}.
  *
  * <p>The {@code GlobalStringifierProvider} class is built around a {@link TypeMap}. If a
  * stringifier is requested for a some type, and that type is not in the {@code TypeMap} but one of
@@ -80,7 +82,7 @@ public final class GlobalStringifierProvider {
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
 
   /**
-   * A {@code Buider} class for {@code GlobalStringifierProvider} instances.
+   * A Builder class for {@code GlobalStringifierProvider} instances.
    *
    * @author Ayco Holleman
    */

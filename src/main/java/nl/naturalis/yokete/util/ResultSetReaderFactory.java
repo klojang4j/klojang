@@ -94,6 +94,16 @@ public class ResultSetReaderFactory {
   }
 
   public ResultSetMappifier getMappifier(ResultSet rs) throws SQLException {
+    RsReadInfo[] infos = createResultSetReadInfo(rs);
+    return new ResultSetMappifier(infos, infos.length);
+  }
+
+  public ResultSetMappifier getMappifier(ResultSet rs, int mapSize) throws SQLException {
+    RsReadInfo[] infos = createResultSetReadInfo(rs);
+    return new ResultSetMappifier(infos, mapSize);
+  }
+
+  private RsReadInfo[] createResultSetReadInfo(ResultSet rs) throws SQLException {
     ResultSetMetaData rsmd = Check.notNull(rs).ok().getMetaData();
     int sz = rsmd.getColumnCount();
     RsReadInfo[] infos = new RsReadInfo[sz];
@@ -110,6 +120,6 @@ public class ResultSetReaderFactory {
         Check.fail("Unsupported data type: %s", rsmd.getColumnTypeName(idx));
       }
     }
-    return new ResultSetMappifier(infos);
+    return infos;
   }
 }

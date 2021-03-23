@@ -156,6 +156,12 @@ public class RenderException extends YoketeException {
     return s -> new RenderException(format(fmt, t.getName(), t.getNames().size()));
   }
 
+  //  /** Generic error condition. */
+  //  public static Function<String, RenderException> invalidValue(String name, Object value) {
+  //    String fmt = "Invalid value for \"%s\": %s";
+  //    return s -> new RenderException(format(fmt, name, value));
+  //  }
+
   /** Generic error condition. */
   public static Function<String, RenderException> invalidValue(String name, Object value) {
     String fmt = "Invalid value for \"%s\": %s";

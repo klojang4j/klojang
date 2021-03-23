@@ -13,9 +13,15 @@ import static nl.naturalis.common.check.CommonChecks.gt;
 public class ResultSetMappifier {
 
   private final RsReadInfo[] infos;
+  private final int mapSize;
 
   ResultSetMappifier(RsReadInfo[] infos) {
+    this(infos, infos.length);
+  }
+
+  ResultSetMappifier(RsReadInfo[] infos, int mapSize) {
     this.infos = infos;
+    this.mapSize = mapSize;
   }
 
   /**
@@ -47,7 +53,7 @@ public class ResultSetMappifier {
   public Map<String, Object> mappify(ResultSet rs) {
     Check.notNull(rs);
     try {
-      return RsReadInfo.toMap(rs, infos);
+      return RsReadInfo.toMap(rs, infos, mapSize);
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
     }
@@ -59,7 +65,7 @@ public class ResultSetMappifier {
     List<Map<String, Object>> all = new ArrayList<>(limit);
     try {
       for (int i = 0; rs.next() && i < limit; ++i) {
-        all.add(RsReadInfo.toMap(rs, infos));
+        all.add(RsReadInfo.toMap(rs, infos, mapSize));
       }
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
@@ -73,7 +79,7 @@ public class ResultSetMappifier {
     List<Map<String, Object>> all = new ArrayList<>(expectedSize);
     try {
       while (rs.next()) {
-        all.add(RsReadInfo.toMap(rs, infos));
+        all.add(RsReadInfo.toMap(rs, infos, mapSize));
       }
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
