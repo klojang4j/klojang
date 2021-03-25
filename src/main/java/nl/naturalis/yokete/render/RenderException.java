@@ -133,7 +133,7 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#fillMonoTemplate(String, Object) RenderSession.fillOne} for a
+   * Thrown if you call {@link RenderSession#fillMono(String, Object) RenderSession.fillOne} for a
    * nested template that does not contain exactly one variable and zero doubly-nested templates.
    */
   public static Function<String, RenderException> notMonoTemplate(Template t) {
@@ -145,7 +145,7 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#fillTupleTemplate(String, Object) RenderSession.fillTwo} for a
+   * Thrown if you call {@link RenderSession#fillTuple(String, Object) RenderSession.fillTwo} for a
    * nested template that does not contain exactly two variables and zero doubly-nested templates.
    */
   public static Function<String, RenderException> notTupleTemplate(Template t) {
@@ -156,11 +156,15 @@ public class RenderException extends YoketeException {
     return s -> new RenderException(format(fmt, t.getName(), t.getNames().size()));
   }
 
-  //  /** Generic error condition. */
-  //  public static Function<String, RenderException> invalidValue(String name, Object value) {
-  //    String fmt = "Invalid value for \"%s\": %s";
-  //    return s -> new RenderException(format(fmt, name, value));
-  //  }
+  /**
+   * Thrown when the source data object for a template that contains one or more variables and or
+   * nested templates is null.
+   */
+  public static Function<String, RenderException> missingSourceData(Template t) {
+    String fqn = TemplateUtils.getFQName(t);
+    String fmt = "Source data must not be null for non-text-only template %s";
+    return s -> new RenderException(format(fmt, fqn));
+  }
 
   /** Generic error condition. */
   public static Function<String, RenderException> invalidValue(String name, Object value) {

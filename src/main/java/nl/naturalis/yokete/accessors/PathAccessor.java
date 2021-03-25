@@ -1,10 +1,13 @@
-package nl.naturalis.yokete.render;
+package nl.naturalis.yokete.accessors;
 
 import java.util.HashMap;
 import java.util.List;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.path.Path;
 import nl.naturalis.common.path.PathWalker;
+import nl.naturalis.yokete.render.Accessor;
+import nl.naturalis.yokete.render.NameMapper;
+import nl.naturalis.yokete.render.RenderException;
 import nl.naturalis.yokete.template.Template;
 import static java.util.stream.Collectors.toList;
 import static nl.naturalis.common.path.PathWalker.DEAD_END;

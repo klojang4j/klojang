@@ -1,7 +1,9 @@
-package nl.naturalis.yokete.render;
+package nl.naturalis.yokete.accessors;
 
 import nl.naturalis.common.invoke.AnyBeanReader;
 import nl.naturalis.common.invoke.NoSuchPropertyException;
+import nl.naturalis.yokete.render.Accessor;
+import nl.naturalis.yokete.render.RenderException;
 import nl.naturalis.yokete.template.Template;
 
 /**

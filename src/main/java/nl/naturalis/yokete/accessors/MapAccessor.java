@@ -1,7 +1,10 @@
-package nl.naturalis.yokete.render;
+package nl.naturalis.yokete.accessors;
 
 import java.util.Map;
 import nl.naturalis.common.check.Check;
+import nl.naturalis.yokete.render.Accessor;
+import nl.naturalis.yokete.render.NameMapper;
+import nl.naturalis.yokete.render.RenderException;
 import nl.naturalis.yokete.template.Template;
 
 /**

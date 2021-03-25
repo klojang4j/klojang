@@ -332,8 +332,9 @@ public class Template {
   }
 
   /**
-   * Returns whether or not this is a text-only template. Unlikely to be the case for root
-   * templates, as it would make for a pretty expensive way of rendering static HTML.
+   * Returns whether or not this is a text-only template, that is, a template without any variables
+   * or nested templates. Unlikely to be the case for root templates, as it would make for a pretty
+   * expensive way of rendering static HTML.
    *
    * @return
    */

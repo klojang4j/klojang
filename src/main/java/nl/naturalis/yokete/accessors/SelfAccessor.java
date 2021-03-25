@@ -1,16 +1,20 @@
-package nl.naturalis.yokete.render;
+package nl.naturalis.yokete.accessors;
 
+import nl.naturalis.yokete.render.Accessor;
+import nl.naturalis.yokete.render.EscapeType;
+import nl.naturalis.yokete.render.RenderException;
+import nl.naturalis.yokete.render.RenderSession;
 import nl.naturalis.yokete.template.Template;
 
 /**
  * A non-accessor that does not access any value within the source data, but simply returns the
- * source data itself. Used by {@link RenderSession#fillMonoTemplate(String, Object, EscapeType)}.
+ * source data itself. Used by {@link RenderSession#fillMono(String, Object, EscapeType)}.
  *
  * @author Ayco Holleman
  */
 public class SelfAccessor implements Accessor<Object> {
 
-  SelfAccessor() {}
+  public SelfAccessor() {}
 
   /** Returns {@code sourceData}. */
   @Override
