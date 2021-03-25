@@ -443,11 +443,6 @@ public class RenderSession {
 
   /* METHODS FOR POPULATING WHATEVER IS IN THE PROVIDED OBJECT */
 
-  public RenderSession createChildSession(String nestedTemplateName) throws RenderException {
-    Template t = factory.getTemplate().getNestedTemplate(nestedTemplateName);
-    return state.createChildSessions(t, factory.getAccessor(), 1)[0];
-  }
-
   /**
    * Populates the <i>entire</i> template, except for variables and nested templates whose name is
    * present in the {@code names} array. The template is populated with values retrieved from the
