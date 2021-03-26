@@ -7,8 +7,9 @@ import nl.naturalis.yokete.render.RenderSession;
 import nl.naturalis.yokete.template.Template;
 
 /**
- * A non-accessor that does not access any value within the source data, but simply returns the
- * source data itself. Used by {@link RenderSession#fillMono(String, Object, EscapeType)}.
+ * An {@code Accessor} implementation that returns the source data itself rather than any particular
+ * value within it. Used by the render session's {@link RenderSession#fillMono(String, Object,
+ * EscapeType) fillMono} method.
  *
  * @author Ayco Holleman
  */
@@ -16,7 +17,7 @@ public class SelfAccessor implements Accessor<Object> {
 
   public SelfAccessor() {}
 
-  /** Returns {@code sourceData}. */
+  /** Ignores the {@code name} argument and returns {@code sourceData}. */
   @Override
   public Object access(Object sourceData, String name) throws RenderException {
     return sourceData;

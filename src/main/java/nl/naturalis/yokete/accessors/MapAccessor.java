@@ -36,12 +36,17 @@ public class MapAccessor implements Accessor<Map<String, Object>> {
     this.mapper = Check.notNull(nameMapper).ok();
   }
 
+  /** {@inheritDoc} */
   @Override
   public Object access(Map<String, Object> from, String varName) throws RenderException {
     String key = Check.notNull(varName, "varName").ok(s -> mapper.map(template, s));
     return Check.notNull(from, "from").ok().getOrDefault(key, UNDEFINED);
   }
 
+  /**
+   * Returns this {@code MapAccessor}, assuming the source data to have a <i>maps-within-maps</i>
+   * data structure.
+   */
   @Override
   public Accessor<?> getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
     return this;

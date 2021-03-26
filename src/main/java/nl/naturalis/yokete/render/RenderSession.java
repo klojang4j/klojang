@@ -8,6 +8,7 @@ import java.util.function.Predicate;
 import nl.naturalis.common.Pair;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
+import nl.naturalis.yokete.accessors.BypassAccessor;
 import nl.naturalis.yokete.accessors.SelfAccessor;
 import nl.naturalis.yokete.accessors.TupleAccessor;
 import nl.naturalis.yokete.template.Part;
@@ -23,6 +24,7 @@ import static nl.naturalis.yokete.render.Accessor.UNDEFINED;
 import static nl.naturalis.yokete.render.EscapeType.ESCAPE_NONE;
 import static nl.naturalis.yokete.render.EscapeType.NOT_SPECIFIED;
 import static nl.naturalis.yokete.render.RenderException.*;
+import static nl.naturalis.yokete.accessors.BypassAccessor.*;
 
 /**
  * A {@code RenderSession} is responsible for populating a template and rendering it. Populating the
@@ -523,26 +525,79 @@ public class RenderSession {
 
   /* MISCELLANEOUS METHODS */
 
-  public List<RenderSession> createChildSessions(String nestedTemplateName, int repeats)
-      throws RenderException {
-    Check.on(frozenSession(), state.isFrozen()).is(no());
-    String name = nestedTemplateName;
-    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
-    Check.on(noSuchTemplate(name), name).is(validTemplateName());
-    return null;
+  /**
+   * Creates a render session for the specified nested template. See {@link
+   * #createChildSession(String, Accessor)}.
+   *
+   * @param nestedTemplateName The nested template for which to create the child sessions
+   * @return A child session that you can (and should) populate yourself
+   * @throws RenderException
+   */
+  public RenderSession createChildSession(String nestedTemplateName) throws RenderException {
+    return createChildSession(nestedTemplateName, BYPASS_ACCESSOR);
   }
 
-  private Template getNestedTemplate(String name) throws RenderException {
-    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
-    Check.on(noSuchTemplate(name), name).is(validTemplateName());
-    return factory.getTemplate().getNestedTemplate(name);
+  /**
+   * Creates a render session for the specified nested template. See {@link
+   * #createChildSessions(String, Accessor, int)}.
+   *
+   * @param nestedTemplateName The nested template for which to create the child sessions
+   * @param accessor The {@code Accessor} implementation to be used to extract values from the
+   *     source data for the template
+   * @return A child session that you can (and should) populate yourself
+   * @throws RenderException
+   */
+  public RenderSession createChildSession(String nestedTemplateName, Accessor<?> accessor)
+      throws RenderException {
+    Check.on(frozenSession(), state.isFrozen()).is(no());
+    Template t = getNestedTemplate(nestedTemplateName);
+    return state.createChildSessions(t, accessor, 1)[0];
+  }
+
+  /**
+   * Creates render sessions for a repeating template within the parent template. Each of the
+   * sessions will use a {@link BypassAccessor} to access any source data for the template
+   * (effectively meaning you're own your own). See {@link #createChildSessions(String, Accessor,
+   * int)}.
+   *
+   * @param nestedTemplateName The nested template for which to create the child sessions
+   * @param repeats The number of times you want the template to repeat itself
+   * @return A {@code List} of child sessions that you can (and should) populate yourself
+   * @throws RenderException
+   */
+  public List<RenderSession> createChildSessions(String nestedTemplateName, int repeats)
+      throws RenderException {
+    return createChildSessions(nestedTemplateName, BYPASS_ACCESSOR, repeats);
+  }
+
+  /**
+   * Creates render sessions for a repeating template within the parent template. Note that child
+   * sessions are automatically and implicitly created when populating a template with a source data
+   * object that reflects its structure. This method gives you more fine-grained control over the
+   * rendering process, should you need it. Although you could, you should not in principle render
+   * the child sessions yourself. They are still attached to the parent session and will be rendered
+   * (again) when the parent session is rendered.
+   *
+   * @param nestedTemplateName The nested template for which to create the child sessions
+   * @param accessor The {@code Accessor} implementation to be used to extract values from the
+   *     source data for the template
+   * @param repeats The number of times you want the template to repeat itself
+   * @return A {@code List} of child sessions that you can (and should) populate yourself
+   * @throws RenderException
+   */
+  public List<RenderSession> createChildSessions(
+      String nestedTemplateName, Accessor<?> accessor, int repeats) throws RenderException {
+    Check.on(frozenSession(), state.isFrozen()).is(no());
+    Template t = getNestedTemplate(nestedTemplateName);
+    return List.of(state.createChildSessions(t, accessor, repeats));
   }
 
   /* RENDER METHODS */
 
   /**
-   * Verifies that is fully populated. If this is not the case, calling {@link
-   * #renderSafe(OutputStream) renderSafe} will throw a {@link RenderException}.
+   * Verifies that is fully populated, that is, all variables have been set and all nested templates
+   * have been filled. If this is not the case, calling {@link #renderSafe(OutputStream) renderSafe}
+   * will throw a {@link RenderException}.
    *
    * @return Whether or not the template is fully populated
    */
@@ -607,11 +662,20 @@ public class RenderSession {
   @Override
   public String toString() {
     String fqn = TemplateUtils.getFQName(factory.getTemplate());
-    return getClass().getSimpleName() + "@" + System.identityHashCode(this) + "<" + fqn + ">";
+    String clazz0 = getClass().getSimpleName();
+    String clazz1 = factory.getAccessor().getClass().getSimpleName();
+    int hash = System.identityHashCode(this);
+    return clazz0 + "[" + fqn + "," + clazz1 + "]@" + hash;
   }
 
   RenderState getState() {
     return state;
+  }
+
+  private Template getNestedTemplate(String name) throws RenderException {
+    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
+    Check.on(noSuchTemplate(name), name).is(validTemplateName());
+    return factory.getTemplate().getNestedTemplate(name);
   }
 
   private Predicate<String> validTemplateName() {

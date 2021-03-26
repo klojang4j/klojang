@@ -6,7 +6,13 @@ import nl.naturalis.yokete.render.RenderException;
 import nl.naturalis.yokete.render.RenderSession;
 import nl.naturalis.yokete.template.Template;
 
-/** @author Ayco Holleman */
+/**
+ * An {@code Accessor} implementation sepcialized at accessing {@link Pair} objects. Used by the
+ * render session's {@link RenderSession#fillTuple(String, java.util.List,
+ * nl.naturalis.yokete.render.EscapeType) fillTuple} method.
+ *
+ * @author Ayco Holleman
+ */
 public class TupleAccessor implements Accessor<Pair<Object>> {
 
   private final String varName;
