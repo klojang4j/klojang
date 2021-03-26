@@ -1,7 +1,10 @@
 package nl.naturalis.yokete.template;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import nl.naturalis.common.collection.IntList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,8 +21,7 @@ public class TemplateTest {
     Template t0_0 = t0.getNestedTemplate("company");
     assertEquals(5, t0_0.countVars());
     assertEquals(1, t0_0.countNestedTemplates());
-    assertEquals(
-        List.of("name", "poBox", "established", "director"), List.copyOf(t0_0.getVars()));
+    assertEquals(List.of("name", "poBox", "established", "director"), List.copyOf(t0_0.getVars()));
     Template t0_0_0 = t0_0.getNestedTemplate("departments");
     assertEquals(2, t0_0_0.countVars());
     assertEquals(1, t0_0_0.countNestedTemplates());
@@ -43,8 +45,7 @@ public class TemplateTest {
             + "employees:name;employees:age;"
             + "roles:role;";
     StringBuilder sb = new StringBuilder(100);
-    t0.getVarsPerTemplate()
-        .forEach(t -> append(sb, t.getLeft().getName(), ":", t.getRight(), ";"));
+    t0.getVarsPerTemplate().forEach(t -> append(sb, t.getLeft().getName(), ":", t.getRight(), ";"));
     assertEquals(expected, sb.toString());
   }
 
@@ -74,5 +75,16 @@ public class TemplateTest {
     t0.getNestedTemplates().forEach(t -> System.out.println(t.getName()));
     t0 = t0.getNestedTemplate("employees");
     t0.getNestedTemplates().forEach(t -> System.out.println(t.getName()));
+  }
+
+  @Test
+  public void testEncounterOrder() throws ParseException {
+    Template t0 = Template.parse(getClass(), Path.of("TemplateTest.testEncounterOrder.html"));
+    String varStr =
+        "topdeskId, id, department, instituteCode, collectionCode, firstNumber, lastNumber, amount, issueDate";
+    String[] varNames = varStr.split(",");
+    List<String> expected = Arrays.stream(varNames).map(String::strip).collect(Collectors.toList());
+    List<String> actual = new ArrayList<>(t0.getVars());
+    assertEquals(expected, actual);
   }
 }

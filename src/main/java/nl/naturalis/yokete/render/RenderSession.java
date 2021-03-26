@@ -278,12 +278,9 @@ public class RenderSession {
       String nestedTemplateName, Object sourceData, EscapeType escapeType, String... names)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    String name = nestedTemplateName;
-    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
     Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
-    Check.on(noSuchTemplate(name), name).is(validTemplateName());
     Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
-    Template t = factory.getTemplate().getNestedTemplate(name);
+    Template t = getNestedTemplate(nestedTemplateName);
     List<?> data = asUnsafeList(sourceData);
     if (t.isTextOnly()) {
       return show(t, data.size());
@@ -330,11 +327,8 @@ public class RenderSession {
    */
   public RenderSession show(String nestedTemplateName, int repeats) throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    String name = nestedTemplateName;
-    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
     Check.on(invalidValue("repeats", repeats), repeats).is(gte(), 0);
-    Check.on(noSuchTemplate(name), name).is(validTemplateName());
-    Template t = factory.getTemplate().getNestedTemplate(name);
+    Template t = getNestedTemplate(nestedTemplateName);
     Check.on(notTextOnly(t), t.isTextOnly()).is(yes());
     return show(t, repeats);
   }
@@ -358,11 +352,12 @@ public class RenderSession {
   }
 
   /**
-   * Convenience method for populating a nested template that contains exactly one variable.
-   * Ordinarily nested templates are populated with a complex {@code Object} and an {@link Accessor}
-   * that retrieves values from it. With this method, however, you specify the variable's value
-   * directly. The value can still be an array or {@code Collection}, causing the template to repeat
-   * itself. See {@link #fill(String, Object, EscapeType, String...)}.
+   * Convenience method for populating a nested template that contains exactly one variable. The
+   * variable may still occur multiple times within the template. Contrary to the other {@code fill}
+   * methods the {@code value} argument really is the value that is going to be assigned to the
+   * value, rather than a source data object that is going to be accessed by the session's {@link
+   * Accessor}. This method bypasses the session's {@code Accessor} and uses a {@link SelfAccessor}
+   * instead.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
@@ -375,10 +370,7 @@ public class RenderSession {
   public RenderSession fillMono(String nestedTemplateName, Object value, EscapeType escapeType)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    String name = nestedTemplateName;
-    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
-    Check.on(noSuchTemplate(name), name).is(validTemplateName());
-    Template t = factory.getTemplate().getNestedTemplate(name);
+    Template t = getNestedTemplate(nestedTemplateName);
     Check.on(notMonoTemplate(t), t)
         .has(tmpl -> tmpl.getVars().size(), eq(), 1)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
@@ -408,10 +400,7 @@ public class RenderSession {
   /**
    * Convenience method for populating a nested template that contains exactly two variables. Could
    * used, for example, to populate drop-down lists with <code>&lt;option&gt;</code> elements and
-   * their {@code value} attribute. Ordinarily nested templates are populated with a complex {@code
-   * Object} and an {@link Accessor} that retrieves values from it. With this method, however, you
-   * specify two values directly via a {@link Pair} object. The variable that is declared first gets
-   * the pair's first value; the other one get the pair's second value.
+   * their {@code value} attribute.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
@@ -425,11 +414,8 @@ public class RenderSession {
       String nestedTemplateName, List<Pair<Object>> pairs, EscapeType escapeType)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    String name = nestedTemplateName;
-    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
     Check.on(invalidValue("pairs", pairs), pairs).is(noneNull());
-    Check.on(noSuchTemplate(name), name).is(validTemplateName());
-    Template t = factory.getTemplate().getNestedTemplate(name);
+    Template t = getNestedTemplate(nestedTemplateName);
     Check.on(notTupleTemplate(t), t)
         .has(tmpl -> tmpl.getVars().size(), eq(), 2)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
@@ -536,6 +522,21 @@ public class RenderSession {
   }
 
   /* MISCELLANEOUS METHODS */
+
+  public List<RenderSession> createChildSessions(String nestedTemplateName, int repeats)
+      throws RenderException {
+    Check.on(frozenSession(), state.isFrozen()).is(no());
+    String name = nestedTemplateName;
+    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
+    Check.on(noSuchTemplate(name), name).is(validTemplateName());
+    return null;
+  }
+
+  private Template getNestedTemplate(String name) throws RenderException {
+    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
+    Check.on(noSuchTemplate(name), name).is(validTemplateName());
+    return factory.getTemplate().getNestedTemplate(name);
+  }
 
   /* RENDER METHODS */
 

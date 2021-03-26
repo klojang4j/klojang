@@ -12,7 +12,7 @@ import nl.naturalis.common.collection.UnmodifiableIntList;
 import nl.naturalis.yokete.render.Accessor;
 import nl.naturalis.yokete.render.RenderSession;
 import nl.naturalis.yokete.render.Stringifier;
-import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
@@ -23,9 +23,9 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
  * and by you as you configure your {@link Stringifier stringifiers} and {@link Accessor accessors}.
  *
  * <p>{@code Template} instances are immutable, expensive-to-create and heavy-weight objects. They
- * should be created just once per source file, cached somewhere, and then reused for as long as
- * your application lasts. Creating a new {@code Template} instance for each new request would be
- * very inefficient.
+ * should be created just once per source file, cached somewhere, and then reused for as long as the
+ * application lasts. Creating a new {@code Template} instance for each new request would be very
+ * inefficient.
  *
  * @author Ayco Holleman
  */
@@ -161,10 +161,11 @@ public class Template {
 
   /**
    * Returns the indices of the parts in the {@link #getParts() parts list} that contain variables.
-   * The returned {@code Map} maps variable names to an {@link IntList}, since one variable may
-   * occur multiple times in the same template. The returned {@code Map} is immutable.
+   * The returned {@code Map} maps each variable name to an {@link IntList}, since one variable may
+   * occur multiple times in the same template. In other words, you may find the same variable in
+   * multiple parts of the parts list. The returned {@code Map} is immutable.
    *
-   * @return The indexes of parts that contain variables
+   * @return The list indices of parts that contain variables
    */
   public Map<String, IntList> getVarPartIndices() {
     return varIndices;
@@ -173,11 +174,10 @@ public class Template {
   /**
    * Returns the indices of the parts in the {@link #getParts() parts list} that contain nested
    * templates. The returned {@code Map} maps each template name to exactly one {@code List} index,
-   * since template names must be unique within the parent template. (In fact they must be
-   * recursively unique. That is, no two templates descending from the same parent template are
-   * allowed to have the same name.) The returned {@code Map} is immutable.
+   * since template names must be unique within the parent template. The returned {@code Map} is
+   * immutable.
    *
-   * @return The indexes of parts that contain nested templates
+   * @return The list indices of parts that contain nested templates
    */
   public Map<String, Integer> getTemplatePartIndices() {
     return tmplIndices;
@@ -188,15 +188,15 @@ public class Template {
    * text. Each element in the returned {@link IntList} is an index into the parts list. The
    * returned {@code IntList} is immutable.
    *
-   * @return The indexes of parts that contain literal text
+   * @return The list indices of parts that contain literal text
    */
   public IntList getTextPartIndices() {
     return textIndices;
   }
 
   /**
-   * Returns the names of all variables in this {@code Template}. The returned {@code Set} is
-   * immutable.
+   * Returns the names of all variables in this {@code Template}, in order of their first appearance
+   * in the template. The returned {@code Set} is immutable.
    *
    * @return The names of all variables in this {@code Template}
    */
@@ -215,11 +215,11 @@ public class Template {
   }
 
   /**
-   * Returns the number of variables in this {@code Template}. Note that this method does not count
-   * the number of <i>unique</i> variable names (which would be {@link #getVars()
+   * Returns the total number of variables in this {@code Template}. Note that this method does not
+   * count the number of <i>unique</i> variable names (which would be {@link #getVars()
    * getVars().size()}).
    *
-   * @return The number of variables in this {@code Template}
+   * @return The total number of variables in this {@code Template}
    */
   public int countVars() {
     return (int) parts.stream().filter(VariablePart.class::isInstance).count();
@@ -246,18 +246,18 @@ public class Template {
 
   /**
    * Returns all templates nested inside this {@code Template} (non-recursive). The returned {@code
-   * Set} is created on demand and mutable.
+   * List} is created on demand and mutable.
    *
    * @return All templates nested inside this {@code Template}
    */
-  public Set<Template> getNestedTemplates() {
+  public List<Template> getNestedTemplates() {
     return tmplIndices
         .values()
         .stream()
         .map(parts::get)
         .map(NestedTemplatePart.class::cast)
         .map(NestedTemplatePart::getTemplate)
-        .collect(toSet());
+        .collect(toList());
   }
 
   /**
@@ -317,7 +317,7 @@ public class Template {
   }
 
   private static void collectTmplsRecursive(Template t0, ArrayList<Template> tmpls) {
-    Set<Template> myTmpls = t0.getNestedTemplates();
+    List<Template> myTmpls = t0.getNestedTemplates();
     tmpls.addAll(myTmpls);
     myTmpls.forEach(t -> collectTmplsRecursive(t, tmpls));
   }
@@ -332,9 +332,8 @@ public class Template {
   }
 
   /**
-   * Returns whether or not this is a text-only template, that is, a template without any variables
-   * or nested templates. Unlikely to be the case for root templates, as it would make for a pretty
-   * expensive way of rendering static HTML.
+   * Returns whether or not this is a text-only template. In other words: whether or not this is a
+   * template without any variables or nested templates.
    *
    * @return
    */
