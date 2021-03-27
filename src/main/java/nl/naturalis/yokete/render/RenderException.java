@@ -3,12 +3,12 @@ package nl.naturalis.yokete.render;
 import java.util.List;
 import java.util.function.Function;
 import nl.naturalis.yokete.YoketeException;
+import nl.naturalis.yokete.accessors.TupleAccessor;
 import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.TemplateUtils;
 import static java.lang.String.format;
 import static nl.naturalis.common.ClassMethods.prettyClassName;
 import static nl.naturalis.common.ClassMethods.prettySimpleClassName;
-import static nl.naturalis.common.StringMethods.concat;
 
 /**
  * Thrown from a {@link RenderSession} under various circumstances.
@@ -31,18 +31,12 @@ public class RenderException extends YoketeException {
           + "always provide the same number of source data objects. Received %d source data "
           + "objects in first round; now got %d";
 
-  private static final String BAD_ESCAPE_TYPE = "NOT_SPECIFIED is not a valid escape type";
-
   private static final String NOT_READY = "Cannot render yet. Not all variables set: %s. ";
 
   private static final String INACCESSIBLE = "Value of %s (%s) is inaccessible for %s";
 
   private static final String NULL_ACCESSOR =
       "Accessor.getAccessorForTemplate() returned " + "null for nested template \"%s\"";
-
-  private static final String NO_TEXT_ONLY =
-      "show() can only called for text-only templates; \"%s\" contains %d variables and/or "
-          + "nested templates";
 
   private static final String MULTI_PASS_NOT_ALLOWED =
       "show() can be called at most once per text-only template (template specified: \"%s\")";
@@ -84,7 +78,7 @@ public class RenderException extends YoketeException {
 
   /** Thrown if you specify {@link EscapeType#NOT_SPECIFIED NOT_SPECIFIED} as the escape type. */
   public static Function<String, RenderException> badEscapeType() {
-    return s -> new RenderException(BAD_ESCAPE_TYPE);
+    return s -> new RenderException("NOT_SPECIFIED is not a valid escape type");
   }
 
   /**
@@ -118,9 +112,10 @@ public class RenderException extends YoketeException {
    * Thrown if you call {@link RenderSession#show(String) RenderSession.show} for a nested template
    * that is not a text-only template.
    */
-  public static Function<String, RenderException> notTextOnly(Template t) {
+  public static Function<String, RenderException> noTextOnly(Template t) {
     String fqn = TemplateUtils.getFQName(t);
-    return s -> new RenderException(format(NO_TEXT_ONLY, fqn, t.getNames().size()));
+    String fmt = "Not a text-only template: %s";
+    return s -> new RenderException(format(fmt, fqn));
   }
 
   /**
@@ -133,27 +128,24 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#fillMono(String, Object) RenderSession.fillOne} for a
-   * nested template that does not contain exactly one variable and zero doubly-nested templates.
+   * Thrown if you call {@link RenderSession#fillMonoTemplate(String, Object) RenderSession.fillOne}
+   * for a nested template that does not contain exactly one variable and zero doubly-nested
+   * templates.
    */
-  public static Function<String, RenderException> notMonoTemplate(Template t) {
-    String fmt =
-        concat(
-            "fillMono() can only called for single-variable templates; ",
-            "\"%s\" contains %d variables and/or nested templates");
-    return s -> new RenderException(format(fmt, t.getName(), t.getNames().size()));
+  public static Function<String, RenderException> noMonoTemplate(Template t) {
+    String fqn = TemplateUtils.getFQName(t);
+    String fmt = "Not a one-variable template: %s";
+    return s -> new RenderException(format(fmt, fqn));
   }
 
   /**
    * Thrown if you call {@link RenderSession#fillTuple(String, Object) RenderSession.fillTwo} for a
    * nested template that does not contain exactly two variables and zero doubly-nested templates.
    */
-  public static Function<String, RenderException> notTupleTemplate(Template t) {
-    String fmt =
-        concat(
-            "fillTwo() can only called for two-variable templates; ",
-            "\"%s\" contains %d variables and/or nested templates");
-    return s -> new RenderException(format(fmt, t.getName(), t.getNames().size()));
+  public static Function<String, RenderException> noTupleTemplate(Template t) {
+    String fqn = TemplateUtils.getFQName(t);
+    String fmt = "Not a two-variable template: %s";
+    return s -> new RenderException(format(fmt, fqn));
   }
 
   /**
@@ -166,7 +158,33 @@ public class RenderException extends YoketeException {
     return s -> new RenderException(format(fmt, fqn));
   }
 
-  /** Generic error condition. */
+  /**
+   * Thrown if you attempt to {@link RenderSession#createChildSessions(String, Accessor, int)
+   * create} a child session for the specified template, but one or more child sessions have already
+   * been created for it.
+   */
+  public static Function<String, RenderException> childSessionsAlreadyCreated(Template t) {
+    String fqn = TemplateUtils.getFQName(t);
+    String fmt = "Child sessions already created for template %s";
+    return s -> new RenderException(format(fmt, fqn));
+  }
+
+  /**
+   * Thrown if you {@link RenderSession#getChildSessions(String) request} the child sessions created
+   * for the specified template, but no child sessions have been created yet.
+   */
+  public static Function<String, RenderException> noChildSessionsYet(Template t) {
+    String fqn = TemplateUtils.getFQName(t);
+    String fmt = "No child sessions yet for template %s";
+    return s -> new RenderException(format(fmt, fqn));
+  }
+
+  /** Thrown if you call the {@code access} method of a {@link TupleAccessor} more than twice. */
+  public static RenderException pairObjectExhausted() {
+    return new RenderException("No more values in Pair object");
+  }
+
+  /** Generic error condition, usually akin to an {@link IllegalArgumentException}. */
   public static Function<String, RenderException> invalidValue(String name, Object value) {
     String fmt = "Invalid value for \"%s\": %s";
     return s -> new RenderException(format(fmt, name, value));

@@ -1,7 +1,11 @@
 package nl.naturalis.yokete.render;
 
 import java.util.*;
+import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.Template;
+import static nl.naturalis.common.check.CommonChecks.notContainingKey;
+import static nl.naturalis.common.check.CommonChecks.notNull;
+import static nl.naturalis.yokete.render.RenderException.childSessionsAlreadyCreated;
 import static nl.naturalis.yokete.render.RenderException.repetitionMismatch;
 import static nl.naturalis.yokete.template.TemplateUtils.getFQName;
 
@@ -9,7 +13,6 @@ class RenderState {
 
   private static final RenderSession[] ZERO_SESSIONS = new RenderSession[0];
   private static final RenderSession[] ONE_SESSION = new RenderSession[1];
-  private static final RenderSession[] TWO_SESSIONS = new RenderSession[2];
 
   private final SessionFactory factory;
   private final Set<String> todo; // variables that have not been set yet
@@ -30,15 +33,12 @@ class RenderState {
     return factory;
   }
 
-  RenderSession[] createChildSessions(String tmplName, List<?> data) throws RenderException {
+  RenderSession[] getOrCreateChildSessions(String tmplName, List<?> data) throws RenderException {
     Template nested = factory.getTemplate().getNestedTemplate(tmplName);
-    return createChildSessions(nested, data);
+    return getOrCreateChildSessions(nested, data);
   }
 
-  RenderSession[] createChildSessions(Template t, List<?> data) throws RenderException {
-    if (t.isTextOnly()) {
-      return createChildSessions(t, data.size());
-    }
+  RenderSession[] getOrCreateChildSessions(Template t, List<?> data) throws RenderException {
     RenderSession[] children = sessions.get(t);
     if (children == null) {
       if (data.isEmpty()) {
@@ -56,10 +56,10 @@ class RenderState {
     return children;
   }
 
-  RenderSession[] createChildSessions(Template t, Accessor<?> acc, int repeats)
+  RenderSession[] getOrCreateChildSessions(Template t, Accessor<?> acc, int repeats)
       throws RenderException {
-    if (t.isTextOnly()) { // this is a text-only template
-      return createChildSessions(t, repeats);
+    if (t.isTextOnly()) {
+      return getOrCreateTextOnlyChildSessions(t, repeats);
     }
     RenderSession[] children = sessions.get(t);
     if (children == null) {
@@ -78,11 +78,19 @@ class RenderState {
     return children;
   }
 
-  // Will only be called for text-only templates
-  RenderSession[] createChildSessions(Template t, int repeats) throws RenderException {
+  RenderSession[] createChildSessions(Template t, Accessor<?> acc, int repeats)
+      throws RenderException {
+    Check.on(childSessionsAlreadyCreated(t), sessions).is(notContainingKey(), t);
+    return getOrCreateChildSessions(t, acc, repeats);
+  }
+
+  RenderSession[] getOrCreateTextOnlyChildSessions(Template t, int repeats) throws RenderException {
+    // The RenderSession[] array will never contain any actual RenderSession
+    // instances for a text-only template. Only its length matters to the
+    // Renderer as it determines how often the template is to be repeated.
     RenderSession[] children = sessions.get(t);
     if (children == null) {
-      children = createChildSessions(repeats);
+      children = createTextOnlySessions(repeats);
       sessions.put(t, children);
       return children;
     }
@@ -118,10 +126,22 @@ class RenderState {
   }
 
   void freeze() {
-    this.frozen = true;
+    deepFreeze(this);
   }
 
-  List<String> getUnsetVarsRecursive() {
+  private static void deepFreeze(RenderState state0) {
+    state0.frozen = true;
+    state0
+        .sessions
+        .values()
+        .stream()
+        .flatMap(Arrays::stream)
+        .filter(notNull()) // text-only null sessions - don't need freezing anyhow
+        .map(RenderSession::getState)
+        .forEach(RenderState::deepFreeze);
+  }
+
+  List<String> getUnsetCars() {
     ArrayList<String> names = new ArrayList<>();
     collectUnsetVars(this, names);
     return names;
@@ -156,14 +176,12 @@ class RenderState {
         .allMatch(RenderState::ready);
   }
 
-  private static RenderSession[] createChildSessions(int repeats) {
+  private static RenderSession[] createTextOnlySessions(int repeats) {
     switch (repeats) {
       case 0:
         return ZERO_SESSIONS;
       case 1:
         return ONE_SESSION;
-      case 2:
-        return TWO_SESSIONS;
       default:
         return new RenderSession[repeats];
     }

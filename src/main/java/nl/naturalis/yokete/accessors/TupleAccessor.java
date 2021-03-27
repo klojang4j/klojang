@@ -7,41 +7,31 @@ import nl.naturalis.yokete.render.RenderSession;
 import nl.naturalis.yokete.template.Template;
 
 /**
- * An {@code Accessor} implementation sepcialized at accessing {@link Pair} objects. Used by the
- * render session's {@link RenderSession#fillTuple(String, java.util.List,
- * nl.naturalis.yokete.render.EscapeType) fillTuple} method.
+ * An {@code Accessor} implementation specialized at accessing {@link Pair} objects. This {@code
+ * Accessor} is used by the render session's {@link RenderSession#fillTuple(String, java.util.List,
+ * nl.naturalis.yokete.render.EscapeType) fillTuple} method. Its {@code access} method alternates
+ * between handing out the first value and the second value in the {@code Pair} object.
  *
  * @author Ayco Holleman
  */
 public class TupleAccessor implements Accessor<Pair<Object>> {
 
-  private final String varName;
+  private boolean first = true;
 
   /**
-   * Creates a new {@code TupleAccessor} for a two-variable template where one of the variables has
-   * the specified name. Any other name passed to the {@link #access(Pair, String) access} method
-   * must be the name of the other variable, since before calling this method, the {@link
-   * RenderSession} will check whether the specified variable name is valid in the first place,
-   * given the template to be populated.
-   *
-   * @param varName
+   * Ignores the {@code name} argument and returns either the first or the second value in the
+   * {@code Pair}, depending on how often the {@code access} method has been called before.
    */
-  public TupleAccessor(String varName) {
-    this.varName = varName;
-  }
-
-  /** {@inheritDoc} */
   @Override
-  public Object access(Pair<Object> sourceData, String name) throws RenderException {
-    if (name.equals(varName)) {
-      return sourceData.getFirst();
-    }
-    return sourceData.getSecond();
+  public Object access(Pair<Object> pair, String name) throws RenderException {
+    Object obj = first ? pair.getFirst() : pair.getSecond();
+    first = !first;
+    return obj;
   }
 
-  /** {@inheritDoc} */
+  /** Throws an {@link UnsupportedOperationException}. */
   @Override
   public Accessor<?> getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
-    return null;
+    throw new UnsupportedOperationException();
   }
 }
