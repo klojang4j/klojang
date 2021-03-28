@@ -23,7 +23,7 @@ public interface Stringifier {
   /**
    * Stringifies {@code null} to an empty string and any other value by calling {@code toString()}
    * on it. It is the {@code Stringifier} that is used by default for any template variable for
-   * which no alternative {@code Stringifier} is {@link StringifierProvider.Builder configured}.
+   * which no alternative {@code Stringifier} is {@link TemplateStringifiers.Builder configured}.
    */
   public static final Stringifier DEFAULT =
       (x) -> ifNotNull(x, Object::toString, StringMethods.EMPTY);

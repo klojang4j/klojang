@@ -1,5 +1,6 @@
 package nl.naturalis.yokete.render;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -15,47 +16,54 @@ import static nl.naturalis.common.check.CommonChecks.notNull;
 import static nl.naturalis.yokete.template.TemplateUtils.getFQName;
 
 /**
- * Provides {@link Stringifier stringifiers} for template variables. In principle each and every
- * template variable needs to be associated with a {@code Stringifier}. However, each variable
- * implicitly already <i>is</i> associated with a stringifier: the {@link Stringifier#DEFAULT
- * default stringifier}. You can use the {@link StringifierProvider.Builder} to configure
- * alternative stringifier.
+ * Provides {@link Stringifier stringifiers} for template variables. In principle every template
+ * variable must be associated with a {@code Stringifier}. That includes not just the variables in
+ * the template nominally being rendered, but also all variables in all templates nested inside it.
+ * In practice, though, you're likely to define very few template-specific stringifiers. If a
+ * variable's value can be stringified by calling {@code toString()} on it, or to an empty string if
+ * null, you don't need to specify a strinifier for the variable because this is {@link
+ * Stringifier#DEFAULT default} behaviour. In addition, for most variables stringification does not
+ * really depend the variable per s&#233;, but on the variable's data type, and these type-based
+ * stringifiers are defined centrally, through the {@link GlobalStringifiers} class. (An example of
+ * a type-based stringifier would be a {@link LocalDate} stringifier, or a {@link Number}
+ * stringifier.) if a variable has very specific stringification requirements should you register
+ * the stringifier with the {@code TemplateStringifier} class.
  *
  * @author Ayco Holleman
  */
-public final class StringifierProvider {
+public final class TemplateStringifiers {
 
   /**
-   * A simple, brute-force {@code StringifierProvider} whose {@link #getStringifier(Template,
+   * A simple, brute-force {@code TemplateStringifiers} whose {@link #getStringifier(Template,
    * String) getStringifier} method always returns the {@link Stringifier#DEFAULT default
    * stringifier}, whatever the template, whatever the variable. Unlikely to be satisfactory in the
    * end, but handy in the early stages of development.
    */
-  public static final StringifierProvider SIMPLETON = new StringifierProvider(emptyMap());
+  public static final TemplateStringifiers SIMPLETON = new TemplateStringifiers(emptyMap());
 
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
 
   /**
-   * Lets you set up a {@code StringifierProvider}.
+   * Lets you coonfigure a {@code TemplateStringifiers} instance.
    *
    * @author Ayco Holleman
    */
   public static class Builder {
 
     private static final String LOOKUP_FAILED = "No stringifier found for type %s";
-    private static final String GSP_NOT_SET = "GlobalStringifierProvider not set";
+    private static final String GSP_NOT_SET = "GlobalTemplateStringifiers not set";
     private static final String NO_SUCH_VARIABLE = "No such variable: \"%s\"";
     private static final String ALREADY_SET = "Stringifier already set for variable %s";
 
     private final Map<Tuple<Template, String>, Stringifier> stringifiers = new HashMap<>();
 
-    private final Template tmpl;
-    private GlobalStringifierProvider gsp;
+    private final Template template;
+    private GlobalStringifiers globals;
     private final Set<Tuple<Template, String>> vars;
 
-    private Builder(Template tmpl, GlobalStringifierProvider gsp) {
-      this.tmpl = tmpl;
-      this.gsp = gsp;
+    private Builder(Template tmpl, GlobalStringifiers globals) {
+      this.template = tmpl;
+      this.globals = globals;
       this.vars = new HashSet<>(tmpl.getVarsPerTemplate());
     }
 
@@ -70,7 +78,7 @@ public final class StringifierProvider {
      * @return This {@code Builder}
      */
     public Builder setStringifier(Stringifier stringifier, String... varNames) {
-      return setStringifier(stringifier, tmpl, varNames);
+      return setStringifier(stringifier, template, varNames);
     }
 
     /**
@@ -92,21 +100,21 @@ public final class StringifierProvider {
     }
 
     /**
-     * Retrieves a stringifier for the specified type from the {@link GlobalStringifierProvider} and
+     * Looks up a stringifier for the specified type in the {@link GlobalStringifiers} instance and
      * associates it with the specified variables. The variable must be declared in the template
      * being configured, rather than in one the templates nested inside it.
      *
-     * @see #setType(String, String, Class)
-     * @param varName The name of the variable
-     * @param type The type of the variable
+     * @param type The data type for which to retrieve a stringifier from the {@link
+     *     GlobalStringifiers} instance (for example: a {@link LocalDate} stringifier)
+     * @param varNames The name of the variables
      * @return This {@code Builder}
      */
-    public Builder lookupGlobal(Class<?> type, String... varNames) {
-      return lookupGlobal(type, tmpl, varNames);
+    public Builder addGlobalStringifier(Class<?> type, String... varNames) {
+      return addGlobalStringifier(type, template, varNames);
     }
 
     /**
-     * Retrieves a stringifier for the specified type from the {@link GlobalStringifierProvider} and
+     * Looks up a stringifier for the specified type in the {@link GlobalStringifiers} instance and
      * associates it with the specified variables.
      *
      * @param type The type of the variable
@@ -114,22 +122,22 @@ public final class StringifierProvider {
      * @param varName The name of the variable
      * @return This {@code Builder}
      */
-    public Builder lookupGlobal(Class<?> type, Template template, String... varNames) {
-      Check.notNull(type, "type").is(gsp::hasStringifier, LOOKUP_FAILED, type.getName());
+    public Builder addGlobalStringifier(Class<?> type, Template template, String... varNames) {
+      Check.notNull(type, "type").is(globals::hasStringifier, LOOKUP_FAILED, type.getName());
       Check.notNull(template, "template");
       Check.that(varNames, "varNames").is(deepNotEmpty());
-      Check.that(gsp).is(notNull(), GSP_NOT_SET);
-      register(gsp.getStringifier(type), template, varNames);
+      Check.that(globals).is(notNull(), GSP_NOT_SET);
+      register(globals.getStringifier(type), template, varNames);
       return this;
     }
 
     /**
-     * Returns a new, immutable {@code StringifierProvider} instance.
+     * Returns a new, immutable {@code TemplateStringifiers} instance.
      *
-     * @return A new, immutable {@code StringifierProvider} instance
+     * @return A new, immutable {@code TemplateStringifiers} instance
      */
-    public StringifierProvider freeze() {
-      return new StringifierProvider(Map.copyOf(stringifiers));
+    public TemplateStringifiers freeze() {
+      return new TemplateStringifiers(Map.copyOf(stringifiers));
     }
 
     private void register(Stringifier stringifier, Template template, String... varNames) {
@@ -145,13 +153,23 @@ public final class StringifierProvider {
 
   /* +++++++++++++++++++++[ END BUILDER CLASS ]++++++++++++++++++ */
 
-  public static Builder configure(Template template, GlobalStringifierProvider gsp) {
-    return new Builder(template, gsp);
+  /**
+   * Returns a {@code Builder} instance that lets you configure a {@code TemplateStringifiers}
+   * instance.
+   *
+   * @param template The template for which to define the stringifiers
+   * @param globalStringifiers A {@code GlobalStringifiers} instance to retrieve type-based
+   *     stringifiers from
+   * @return A {@code Builder} instance that lets you configure a {@code TemplateStringifiers}
+   *     instance
+   */
+  public static Builder configure(Template template, GlobalStringifiers globalStringifiers) {
+    return new Builder(template, globalStringifiers);
   }
 
   private final Map<Tuple<Template, String>, Stringifier> stringifiers;
 
-  private StringifierProvider(Map<Tuple<Template, String>, Stringifier> stringifiers) {
+  private TemplateStringifiers(Map<Tuple<Template, String>, Stringifier> stringifiers) {
     this.stringifiers = stringifiers;
   }
 

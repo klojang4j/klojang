@@ -8,13 +8,13 @@ import nl.naturalis.yokete.template.Template;
 
 /**
  * An {@code Accessor} implementation specialized at accessing {@link Pair} objects. This {@code
- * Accessor} is used by the render session's {@link RenderSession#fillTuple(String, java.util.List,
+ * Accessor} is used by the render session's {@link RenderSession#fillPair(String, java.util.List,
  * nl.naturalis.yokete.render.EscapeType) fillTuple} method. Its {@code access} method alternates
  * between handing out the first value and the second value in the {@code Pair} object.
  *
  * @author Ayco Holleman
  */
-public class TupleAccessor implements Accessor<Pair<Object>> {
+public class PairAccessor implements Accessor<Pair<Object>> {
 
   private boolean first = true;
 

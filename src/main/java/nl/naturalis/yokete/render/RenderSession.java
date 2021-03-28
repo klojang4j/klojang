@@ -10,7 +10,7 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.yokete.accessors.BypassAccessor;
 import nl.naturalis.yokete.accessors.SelfAccessor;
-import nl.naturalis.yokete.accessors.TupleAccessor;
+import nl.naturalis.yokete.accessors.PairAccessor;
 import nl.naturalis.yokete.template.Part;
 import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.TemplateUtils;
@@ -386,7 +386,7 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly two variables and
-   * zero doubly-nested templates. See {@link #fillTuple(String, List, EscapeType)}.
+   * zero doubly-nested templates. See {@link #fillPair(String, List, EscapeType)}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly two
    *     variables
@@ -394,16 +394,16 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillTuple(String nestedTemplateName, List<Pair<Object>> pairs)
+  public RenderSession fillPair(String nestedTemplateName, List<Pair<Object>> pairs)
       throws RenderException {
-    return fillTuple(nestedTemplateName, pairs, ESCAPE_NONE);
+    return fillPair(nestedTemplateName, pairs, ESCAPE_NONE);
   }
 
   /**
    * Convenience method for populating a nested template that contains exactly two variables and
    * zero doubly-nested templates. Could be used, for example, to populate <code>&lt;select&gt;
    * </code> boxes with <code>&lt;option&gt;</code> elements and their {@code value} attribute. This
-   * method bypasses the session's {@code Accessor} and uses a {@link TupleAccessor} instead. The
+   * method bypasses the session's {@code Accessor} and uses a {@link PairAccessor} instead. The
    * values in the specified {@link Pair} instances must be in the same order as the encounter order
    * of the two variables within the template.
    *
@@ -415,7 +415,7 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillTuple(
+  public RenderSession fillPair(
       String nestedTemplateName, List<Pair<Object>> pairs, EscapeType escapeType)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
@@ -424,7 +424,7 @@ public class RenderSession {
     Check.on(noTupleTemplate(t), t)
         .has(tmpl -> tmpl.getVars().size(), eq(), 2)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
-    RenderSession[] sessions = state.getOrCreateChildSessions(t, new TupleAccessor(), pairs.size());
+    RenderSession[] sessions = state.getOrCreateChildSessions(t, new PairAccessor(), pairs.size());
     for (int i = 0; i < sessions.length; ++i) {
       sessions[i].populate(pairs.get(i), escapeType);
     }
