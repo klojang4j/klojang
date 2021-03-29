@@ -713,7 +713,7 @@ public class RenderSession {
 
   private Template getNestedTemplate(String name) throws RenderException {
     Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
-    Check.on(noSuchTemplate(name), name).is(validTemplateName());
+    Check.on(noSuchTemplate(factory.getTemplate(), name), name).is(validTemplateName());
     return factory.getTemplate().getNestedTemplate(name);
   }
 

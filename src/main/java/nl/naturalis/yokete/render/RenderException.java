@@ -17,13 +17,7 @@ import static nl.naturalis.common.ClassMethods.prettySimpleClassName;
  */
 public class RenderException extends YoketeException {
 
-  private static final String NO_SUCH_VARIABLE = "No such variable: \"%s\"";
-
-  private static final String NO_SUCH_TEMPLATE = "No such nested template: \"%s\"";
-
   private static final String NO_SUCH_NAME = "No such variable or nested template: \"%s\"";
-
-  private static final String ALREADY_SET = "Variable already set: \"%s\"";
 
   private static final String REPETITION_MISMATCH =
       "Template \"%s\" has already been partially populated, but with a different amount "
@@ -44,12 +38,15 @@ public class RenderException extends YoketeException {
   /** Thrown when specifying a non-existent variable name. */
   public static Function<String, RenderException> noSuchVariable(Template t, String var) {
     String fqn = TemplateUtils.getFQName(t, var);
-    return s -> new RenderException(format(NO_SUCH_VARIABLE, fqn));
+    String fmt = "No such variable: \"%s\"";
+    return s -> new RenderException(format(fmt, fqn));
   }
 
   /** Thrown when specifying a non-existent template name. */
-  public static Function<String, RenderException> noSuchTemplate(String name) {
-    return s -> new RenderException(format(NO_SUCH_TEMPLATE, name));
+  public static Function<String, RenderException> noSuchTemplate(Template t, String name) {
+    String fqn = TemplateUtils.getFQName(t, name);
+    String fmt = "No such template: \"%s\"";
+    return s -> new RenderException(format(fmt, fqn));
   }
 
   /** Thrown when specifying a non-existent variable and/or template name. */
@@ -60,7 +57,8 @@ public class RenderException extends YoketeException {
   /** Thrown if you attempt to set a variable more than once. */
   public static Function<String, RenderException> alreadySet(Template t, String var) {
     String fqn = TemplateUtils.getFQName(t, var);
-    return s -> new RenderException(format(ALREADY_SET, fqn));
+    String fmt = "Variable already set: \"%s\"";
+    return s -> new RenderException(format(fmt, fqn));
   }
 
   /**
