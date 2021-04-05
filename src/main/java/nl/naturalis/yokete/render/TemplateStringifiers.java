@@ -11,7 +11,6 @@ import nl.naturalis.yokete.template.Template;
 import static java.util.Collections.emptyMap;
 import static nl.naturalis.common.check.CommonChecks.deepNotEmpty;
 import static nl.naturalis.common.check.CommonChecks.in;
-import static nl.naturalis.common.check.CommonChecks.notIn;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 import static nl.naturalis.yokete.template.TemplateUtils.getFQName;
 
@@ -23,11 +22,11 @@ import static nl.naturalis.yokete.template.TemplateUtils.getFQName;
  * variable's value can be stringified by calling {@code toString()} on it, or to an empty string if
  * null, you don't need to specify a strinifier for the variable because this is {@link
  * Stringifier#DEFAULT default} behaviour. In addition, for most variables stringification does not
- * really depend the variable per s&#233;, but on the variable's data type, and these type-based
+ * depend the variable per s&#233;, but rather on the variable's data type. These type-based
  * stringifiers are defined centrally, through the {@link GlobalStringifiers} class. (An example of
  * a type-based stringifier would be a {@link LocalDate} stringifier, or a {@link Number}
- * stringifier.) if a variable has very specific stringification requirements should you register
- * the stringifier with the {@code TemplateStringifier} class.
+ * stringifier.) Only if a variable has very specific stringification requirements would you
+ * register the stringifier with the {@code TemplateStringifier} class.
  *
  * @author Ayco Holleman
  */
@@ -145,7 +144,7 @@ public final class TemplateStringifiers {
         Tuple<Template, String> var = Tuple.of(template, varName);
         Check.that(var)
             .is(in(), vars, NO_SUCH_VARIABLE, getFQName(template, varName))
-            .is(notIn(), stringifiers.keySet(), ALREADY_SET, getFQName(template, varName))
+            .isNot(in(), stringifiers.keySet(), ALREADY_SET, getFQName(template, varName))
             .then(x -> stringifiers.put(x, stringifier));
       }
     }

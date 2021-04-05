@@ -148,10 +148,10 @@ class Parser {
       }
       String name = m.group(1);
       String mySrc = m.group(2);
-      Check.on(emptyTemplateName(src, offset + m.start(1)), name).is(notBlank());
+      Check.on(emptyTemplateName(src, offset + m.start(1)), name).isNot(blank());
       Check.on(duplicateTemplateName(src, offset + m.start(1), name), name)
-          .is(notIn(), names)
-          .is(notEqualTo(), Template.ROOT_TEMPLATE_NAME);
+          .isNot(in(), names)
+          .isNot(equalTo(), Template.ROOT_TEMPLATE_NAME);
       names.add(name);
       Parser parser = new Parser(name, clazz, mySrc);
       Template nested = parser.parse();
@@ -173,14 +173,14 @@ class Parser {
       }
       String name = m.group(2);
       String path = m.group(3);
-      Check.on(emptyPath(src, offset + m.start(3)), path).is(notBlank());
+      Check.on(emptyPath(src, offset + m.start(3)), path).isNot(blank());
       if (name == null) {
         name = IncludedTemplatePart.basename(path);
       }
-      Check.on(emptyTemplateName(src, offset + m.start(2)), name).is(notBlank());
+      Check.on(emptyTemplateName(src, offset + m.start(2)), name).isNot(blank());
       Check.on(duplicateTemplateName(src, offset + m.start(2), name), name)
-          .is(notIn(), names)
-          .is(notEqualTo(), Template.ROOT_TEMPLATE_NAME);
+          .isNot(in(), names)
+          .isNot(equalTo(), Template.ROOT_TEMPLATE_NAME);
       Check.on(missingClassObject(src, offset + m.start(3), name, path), clazz).is(notNull());
       Check.on(invalidIncludePath(src, offset + m.start(3), path), clazz.getResource(path))
           .is(notNull());
@@ -209,8 +209,8 @@ class Parser {
         throw badEscapeType(src, offset + m.start(2), m.group(2));
       }
       String name = m.group(3);
-      Check.on(emptyVarName(src, offset + m.start(3)), name).is(notBlank());
-      Check.on(duplicateVarName(src, offset + m.start(3), name), name).is(notIn(), names);
+      Check.on(emptyVarName(src, offset + m.start(3)), name).isNot(blank());
+      Check.on(duplicateVarName(src, offset + m.start(3), name), name).isNot(in(), names);
       parts.add(new VariablePart(escType, name, offset + m.start()));
     }
     if (end < unparsed.text().length()) {

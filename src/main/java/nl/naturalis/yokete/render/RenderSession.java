@@ -166,7 +166,7 @@ public class RenderSession {
     Check.on(invalidValue("name", varName), varName).is(notNull());
     Check.on(invalidValue("values", values), values).is(notNull());
     Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
-    Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
+    Check.on(badEscapeType(), escapeType).isNot(sameAs(), NOT_SPECIFIED);
     Template t = factory.getTemplate();
     Check.on(noSuchVariable(t, varName), varName).is(in(), t.getVars());
     Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
@@ -281,7 +281,7 @@ public class RenderSession {
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
-    Check.on(badEscapeType(), escapeType).is(notSameAs(), NOT_SPECIFIED);
+    Check.on(badEscapeType(), escapeType).isNot(sameAs(), NOT_SPECIFIED);
     Template t = getNestedTemplate(nestedTemplateName);
     List<?> data = asUnsafeList(sourceData);
     if (t.isTextOnly()) {

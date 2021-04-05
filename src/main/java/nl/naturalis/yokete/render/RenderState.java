@@ -3,7 +3,7 @@ package nl.naturalis.yokete.render;
 import java.util.*;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.Template;
-import static nl.naturalis.common.check.CommonChecks.notContainingKey;
+import static nl.naturalis.common.check.CommonChecks.containingKey;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 import static nl.naturalis.yokete.render.RenderException.childSessionsAlreadyCreated;
 import static nl.naturalis.yokete.render.RenderException.repetitionMismatch;
@@ -80,7 +80,7 @@ class RenderState {
 
   RenderSession[] createChildSessions(Template t, Accessor<?> acc, int repeats)
       throws RenderException {
-    Check.on(childSessionsAlreadyCreated(t), sessions).is(notContainingKey(), t);
+    Check.on(childSessionsAlreadyCreated(t), sessions).isNot(containingKey(), t);
     return getOrCreateChildSessions(t, acc, repeats);
   }
 
