@@ -5,10 +5,12 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
+import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.*;
 import static java.util.Arrays.stream;
+import static nl.naturalis.common.ObjectMethods.ifNotNull;
 
-class Renderer {
+class Renderer implements Renderable {
 
   private final RenderState state;
 
@@ -16,16 +18,30 @@ class Renderer {
     this.state = state;
   }
 
-  void render(OutputStream out) {
+  @Override
+  public void render(OutputStream out) {
+    Check.notNull(out);
     PrintStream ps = out instanceof PrintStream ? (PrintStream) out : new PrintStream(out);
     render(state, ps);
   }
 
-  void render(StringBuilder sb) {
+  @Override
+  public void render(StringBuilder sb) {
+    Check.notNull(sb);
     render(state, sb);
   }
 
-  private static void render(RenderState state0, PrintStream ps) {
+  @Override
+  public String toString() {
+    Template t = state.getSessionFactory().getTemplate();
+    String s = ifNotNull(t.getPath(), Object::toString, t.getName());
+    return "Renderable for "
+        + s
+        + ". NB: better not pass List<Renderable> to "
+        + "RenderSession.set(String varName, List<?> values)";
+  }
+
+  private void render(RenderState state0, PrintStream ps) {
     List<Part> parts = state0.getSessionFactory().getTemplate().getParts();
     for (int i = 0; i < parts.size(); ++i) {
       Part part = parts.get(i);
@@ -34,7 +50,12 @@ class Renderer {
         ps.append(tp.getText());
       } else if (part.getClass() == VariablePart.class) {
         if (state0.getVar(i) != null) {
-          Arrays.stream(state0.getVar(i)).forEach(ps::append);
+          Object val = state0.getVar(i);
+          if (val.getClass() == String[].class) {
+            Arrays.stream((String[]) state0.getVar(i)).forEach(ps::append);
+          } else { // Renderable.class
+            ((Renderable) val).render(ps);
+          }
         }
       } else /* TemplatePart */ {
         NestedTemplatePart ntp = (NestedTemplatePart) part;
@@ -55,7 +76,7 @@ class Renderer {
     }
   }
 
-  private static void render(RenderState state0, StringBuilder sb) {
+  private void render(RenderState state0, StringBuilder sb) {
     List<Part> parts = state0.getSessionFactory().getTemplate().getParts();
     for (int i = 0; i < parts.size(); ++i) {
       Part part = parts.get(i);
@@ -64,7 +85,12 @@ class Renderer {
         sb.append(tp.getText());
       } else if (part.getClass() == VariablePart.class) {
         if (state0.getVar(i) != null) {
-          Arrays.stream(state0.getVar(i)).forEach(sb::append);
+          Object val = state0.getVar(i);
+          if (val.getClass() == String[].class) {
+            Arrays.stream((String[]) state0.getVar(i)).forEach(sb::append);
+          } else { // Renderable.class
+            ((Renderable) val).render(sb);
+          }
         }
       } else /* TemplatePart */ {
         NestedTemplatePart ntp = (NestedTemplatePart) part;

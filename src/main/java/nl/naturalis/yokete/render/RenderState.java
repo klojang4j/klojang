@@ -14,14 +14,14 @@ class RenderState {
   private static final RenderSession[] ZERO_SESSIONS = new RenderSession[0];
   private static final RenderSession[] ONE_SESSION = new RenderSession[1];
 
-  private final SessionFactory factory;
+  private final Page factory;
   private final Set<String> todo; // variables that have not been set yet
   private final Map<Template, RenderSession[]> sessions;
-  private final Map<Integer, String[]> varValues;
+  private final Map<Integer, Object> varValues;
 
   private boolean frozen;
 
-  RenderState(SessionFactory factory) {
+  RenderState(Page factory) {
     this.factory = factory;
     int sz = factory.getTemplate().countNestedTemplates();
     this.sessions = new IdentityHashMap<>(sz);
@@ -29,7 +29,7 @@ class RenderState {
     this.todo = new HashSet<>(factory.getTemplate().getVars());
   }
 
-  SessionFactory getSessionFactory() {
+  Page getSessionFactory() {
     return factory;
   }
 
@@ -105,11 +105,15 @@ class RenderState {
     return sessions.get(template);
   }
 
-  String[] getVar(int partIndex) {
+  Object getVar(int partIndex) {
     return varValues.get(partIndex);
   }
 
   void setVar(int partIndex, String[] value) {
+    varValues.put(partIndex, value);
+  }
+
+  void setVar(int partIndex, Renderable value) {
     varValues.put(partIndex, value);
   }
 
@@ -159,7 +163,7 @@ class RenderState {
         .forEach(state -> collectUnsetVars(state, names));
   }
 
-  boolean isReady() {
+  boolean isFullyPopulated() {
     return ready(this);
   }
 

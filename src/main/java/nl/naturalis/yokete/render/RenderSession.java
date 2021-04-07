@@ -5,12 +5,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
-import nl.naturalis.common.Pair;
+import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.yokete.accessors.BypassAccessor;
 import nl.naturalis.yokete.accessors.SelfAccessor;
-import nl.naturalis.yokete.accessors.PairAccessor;
+import nl.naturalis.yokete.accessors.TupleAccessor;
 import nl.naturalis.yokete.template.Part;
 import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.TemplateUtils;
@@ -50,10 +50,10 @@ import static nl.naturalis.yokete.render.RenderException.*;
  */
 public class RenderSession {
 
-  private final SessionFactory factory;
+  private final Page factory;
   private final RenderState state;
 
-  RenderSession(SessionFactory sf) {
+  RenderSession(Page sf) {
     this.factory = sf;
     this.state = new RenderState(sf);
   }
@@ -74,8 +74,8 @@ public class RenderSession {
       /*
        * Unless the user is manually going through, and accessing the properties of some source data
        * object, specifying UNDEFINED misses the point of that constant, but since we can't know
-       * this, we'll have to accept that value and process it as it is meant to be processed (namely
-       * ignore it).
+       * this, we'll have to accept that value and process it as it is meant to be processed (namely:
+       * not).
        */
       return this;
     }
@@ -163,7 +163,7 @@ public class RenderSession {
       String suffix)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    Check.on(invalidValue("name", varName), varName).is(notNull());
+    Check.on(invalidValue("varName", varName), varName).is(notNull());
     Check.on(invalidValue("values", values), values).is(notNull());
     Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
     Check.on(badEscapeType(), escapeType).isNot(sameAs(), NOT_SPECIFIED);
@@ -222,6 +222,29 @@ public class RenderSession {
       }
     }
     state.setVar(partIndex, values);
+  }
+
+  /**
+   * Sets the specified variable to the entire output of the specified {@code Renderable}. This
+   * allows you to create and populate a template for an HTML snippet once, and then repeatedly (for
+   * each render session of the current template) "paste" its output into the current template. See
+   * {@link #createRenderable()}.
+   *
+   * @param varName The template variable to set
+   * @param renderable The {@code Renderable}
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession setRenderable(String varName, Renderable renderable) throws RenderException {
+    Check.on(frozenSession(), state.isFrozen()).is(no());
+    Check.on(invalidValue("varName", varName), varName).is(notNull());
+    Check.on(invalidValue("renderable", renderable), renderable).is(notNull());
+    Template t = factory.getTemplate();
+    Check.on(noSuchVariable(t, varName), varName).is(in(), t.getVars());
+    Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
+    IntList indices = factory.getTemplate().getVarPartIndices().get(varName);
+    indices.forEach(i -> state.setVar(i, renderable));
+    return this;
   }
 
   /* METHODS FOR POPULATING A SINGLE NESTED TEMPLATE */
@@ -342,15 +365,16 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly one variable and zero
-   * doubly-nested templates. See {@link #fillMono(String, Object, EscapeType)}.
+   * doubly-nested templates. See {@link #fillMonoTemplate(String, Object, EscapeType)}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillMono(String nestedTemplateName, Object value) throws RenderException {
-    return fillMono(nestedTemplateName, value, ESCAPE_NONE);
+  public RenderSession fillMonoTemplate(String nestedTemplateName, Object value)
+      throws RenderException {
+    return fillMonoTemplate(nestedTemplateName, value, ESCAPE_NONE);
   }
 
   /**
@@ -369,8 +393,8 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillMono(String nestedTemplateName, Object value, EscapeType escapeType)
-      throws RenderException {
+  public RenderSession fillMonoTemplate(
+      String nestedTemplateName, Object value, EscapeType escapeType) throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Template t = getNestedTemplate(nestedTemplateName);
     Check.on(noMonoTemplate(t), t)
@@ -386,7 +410,7 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly two variables and
-   * zero doubly-nested templates. See {@link #fillPair(String, List, EscapeType)}.
+   * zero doubly-nested templates. See {@link #fillTupleTemplate(String, List, EscapeType)}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly two
    *     variables
@@ -394,39 +418,39 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillPair(String nestedTemplateName, List<Pair<Object>> pairs)
+  public <T, U> RenderSession fillTupleTemplate(String nestedTemplateName, List<Tuple<T, U>> pairs)
       throws RenderException {
-    return fillPair(nestedTemplateName, pairs, ESCAPE_NONE);
+    return fillTupleTemplate(nestedTemplateName, pairs, ESCAPE_NONE);
   }
 
   /**
    * Convenience method for populating a nested template that contains exactly two variables and
    * zero doubly-nested templates. Could be used, for example, to populate <code>&lt;select&gt;
    * </code> boxes with <code>&lt;option&gt;</code> elements and their {@code value} attribute. This
-   * method bypasses the session's {@code Accessor} and uses a {@link PairAccessor} instead. The
-   * values in the specified {@link Pair} instances must be in the same order as the encounter order
-   * of the two variables within the template.
+   * method bypasses the session's {@code Accessor} and uses a {@link TupleAccessor} instead. The
+   * values in the specified {@link Tuple} instances <i>must</i> be in the same order as the
+   * encounter order of the two variables within the template.
    *
-   * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly two
-   *     variables
-   * @param pairs A list of value pairs.
+   * @param nestedTemplateName The name of the nested template.
+   * @param tuples A list of value pairs.
    * @param escapeType The escape to use for the variables within the nested template. Will not
    *     override the variables' inline escape types, if defined.
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillPair(
-      String nestedTemplateName, List<Pair<Object>> pairs, EscapeType escapeType)
+  public <T, U> RenderSession fillTupleTemplate(
+      String nestedTemplateName, List<Tuple<T, U>> tuples, EscapeType escapeType)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    Check.on(invalidValue("pairs", pairs), pairs).is(noneNull());
+    Check.on(invalidValue("tuples", tuples), tuples).is(noneNull());
     Template t = getNestedTemplate(nestedTemplateName);
     Check.on(noTupleTemplate(t), t)
         .has(tmpl -> tmpl.getVars().size(), eq(), 2)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
-    RenderSession[] sessions = state.getOrCreateChildSessions(t, new PairAccessor(), pairs.size());
+    RenderSession[] sessions =
+        state.getOrCreateChildSessions(t, new TupleAccessor(), tuples.size());
     for (int i = 0; i < sessions.length; ++i) {
-      sessions[i].populate(pairs.get(i), escapeType);
+      sessions[i].populate(tuples.get(i), escapeType);
     }
     return this;
   }
@@ -634,68 +658,48 @@ public class RenderSession {
   /* RENDER METHODS */
 
   /**
-   * Verifies that is fully populated, that is, all variables have been set and all nested templates
-   * have been filled. If this is not the case, calling {@link #renderSafe(OutputStream) renderSafe}
-   * will throw a {@link RenderException}.
+   * Returns whether or not the template is fully populated. That is, all variables have been set
+   * and all nested templates (however deeply nested) have been filled. Note that you may not even
+   * <i>want</i> the template to be fully populated. Nested templates whose rendering depended on a
+   * condition that turned out to evaluate to {@code false} will not be populated.
    *
    * @return Whether or not the template is fully populated
    */
-  public boolean isReady() {
-    return state.isReady();
+  public boolean isFullyPopulated() {
+    return state.isFullyPopulated();
   }
 
   /**
-   * Writes the render result to the specified output stream.
+   * Returns a {@code Renderable} instance with which you render the current template. See {@link
+   * #setRenderable(String, Renderable)}.
+   *
+   * @return A {@code Renderable} instance with which you render the current template
+   */
+  public Renderable createRenderable() {
+    state.freeze();
+    return new Renderer(state);
+  }
+
+  /**
+   * Writes the populated template to the specified {@code OutputStream}. Shortcut for {@code
+   * createRenderable().render(out)}.
    *
    * @param out The output stream to which to write the render result
    * @throws RenderException
    */
   public void render(OutputStream out) {
-    state.freeze();
-    Check.notNull(out);
-    Renderer renderer = new Renderer(state);
-    renderer.render(out);
+    createRenderable().render(out);
   }
 
   /**
-   * Appends the render result to the specified {@code StringBuilder}.
+   * Appends the populated template to the specified {@code StringBuilder}. Shortcut for {@code
+   * createRenderable().render(sb)}.
    *
    * @param sb The {@code StringBuilder} to which to append the render result
    * @throws RenderException
    */
-  public void render(StringBuilder sb) throws RenderException {
-    state.freeze();
-    Check.notNull(sb);
-    Renderer renderer = new Renderer(state);
-    renderer.render(sb);
-  }
-
-  /**
-   * Writes the render result to the specified output stream. If the template is not fully
-   * populated, a {@code RenderException} is thrown and the output stream is left untouched.
-   *
-   * @param out The output stream to which to write the render result
-   */
-  public void renderSafe(OutputStream out) throws RenderException {
-    state.freeze();
-    Check.on(invalidValue("out", out), out).is(notNull());
-    Check.on(notReady(state.getUnsetCars()), isReady()).is(yes());
-    Renderer renderer = new Renderer(state);
-    renderer.render(out);
-  }
-
-  /**
-   * Appends the render result to the specified {@code StringBuilder}. If the template is not fully
-   * populated, a {@code RenderException} is thrown and the {@code StringBuilder} is left untouched.
-   *
-   * @param sb The {@code StringBuilder} to which to append the render result
-   */
-  public void renderSafe(StringBuilder sb) throws RenderException {
-    state.freeze();
-    Check.on(invalidValue("sb", sb), sb).is(notNull());
-    Check.on(notReady(state.getUnsetCars()), isReady()).is(yes());
-    Renderer renderer = new Renderer(state);
-    renderer.render(sb);
+  public void render(StringBuilder sb) {
+    createRenderable().render(sb);
   }
 
   @Override

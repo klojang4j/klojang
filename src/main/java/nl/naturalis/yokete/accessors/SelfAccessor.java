@@ -8,7 +8,7 @@ import nl.naturalis.yokete.template.Template;
 
 /**
  * An {@code Accessor} implementation that returns the source data itself rather than any particular
- * value within it. Used by the render session's {@link RenderSession#fillMono(String, Object,
+ * value within it. Used by the render session's {@link RenderSession#fillMonoTemplate(String, Object,
  * EscapeType) fillMono} method.
  *
  * @author Ayco Holleman
