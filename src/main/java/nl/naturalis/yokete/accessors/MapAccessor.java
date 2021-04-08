@@ -21,8 +21,9 @@ public class MapAccessor implements Accessor<Map<String, Object>> {
    * Creates a {@code KeyValueAccessor} that assumes a one-to-once correspondence between template
    * variable names and map keys.
    */
-  public MapAccessor(Template template) {
-    this(template, NameMapper.NOOP);
+  public MapAccessor() {
+    this.template = null;
+    this.mapper = null;
   }
 
   /**
@@ -39,16 +40,10 @@ public class MapAccessor implements Accessor<Map<String, Object>> {
   /** {@inheritDoc} */
   @Override
   public Object access(Map<String, Object> from, String varName) throws RenderException {
-    String key = Check.notNull(varName, "varName").ok(s -> mapper.map(template, s));
+    String key = Check.notNull(varName, "varName").ok();
+    if (mapper != null) {
+      key = mapper.map(template, key);
+    }
     return Check.notNull(from, "from").ok().getOrDefault(key, UNDEFINED);
-  }
-
-  /**
-   * Returns this {@code MapAccessor}, assuming the source data to have a <i>maps-within-maps</i>
-   * data structure.
-   */
-  @Override
-  public Accessor<?> getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
-    return this;
   }
 }

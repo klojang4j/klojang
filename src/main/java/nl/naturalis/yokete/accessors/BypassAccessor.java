@@ -3,7 +3,6 @@ package nl.naturalis.yokete.accessors;
 import nl.naturalis.yokete.render.Accessor;
 import nl.naturalis.yokete.render.RenderException;
 import nl.naturalis.yokete.render.RenderSession;
-import nl.naturalis.yokete.template.Template;
 
 /**
  * A dummy {@code Accessor} implementation. Could be used when manually creating {@link
@@ -25,12 +24,6 @@ public class BypassAccessor implements Accessor<Object> {
   /** Throws an {@code UnsupportedOperationException}. */
   @Override
   public Object access(Object sourceData, String varOrNestedTemplateName) throws RenderException {
-    throw new UnsupportedOperationException(ERR);
-  }
-
-  /** Throws an {@code UnsupportedOperationException}. */
-  @Override
-  public Accessor<?> getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
     throw new UnsupportedOperationException(ERR);
   }
 }

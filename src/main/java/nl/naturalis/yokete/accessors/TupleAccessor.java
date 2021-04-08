@@ -5,7 +5,6 @@ import nl.naturalis.common.Tuple;
 import nl.naturalis.yokete.render.Accessor;
 import nl.naturalis.yokete.render.RenderException;
 import nl.naturalis.yokete.render.RenderSession;
-import nl.naturalis.yokete.template.Template;
 
 /**
  * An {@code Accessor} implementation specialized at accessing {@link Pair} objects. This {@code
@@ -29,11 +28,5 @@ public class TupleAccessor implements Accessor<Tuple<?, ?>> {
     Object obj = left ? pair.getLeft() : pair.getRight();
     left = !left;
     return obj;
-  }
-
-  /** Throws an {@link UnsupportedOperationException}. */
-  @Override
-  public Accessor<?> getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
-    throw new UnsupportedOperationException();
   }
 }

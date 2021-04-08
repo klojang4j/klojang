@@ -4,13 +4,12 @@ import nl.naturalis.common.invoke.AnyBeanReader;
 import nl.naturalis.common.invoke.NoSuchPropertyException;
 import nl.naturalis.yokete.render.Accessor;
 import nl.naturalis.yokete.render.RenderException;
-import nl.naturalis.yokete.template.Template;
 
 /**
- * Simple JavaBeans properties {@code Accessor}. This implementation does not use reflection to read
- * the bean properties, but it still uses reflection to figure out what the properties are.
- * Therefore, if you are using this class within a Java module, you will have to open the module to
- * the Yoketi packages.
+ * JavaBeans properties {@code Accessor}. This implementation does not use reflection to read the
+ * bean properties, but it still uses reflection to figure out what the properties are. Therefore,
+ * if you are using this class within a Java module, you will have to open the module to the Yoketi
+ * packages.
  *
  * @author Ayco Holleman
  */
@@ -27,10 +26,5 @@ public class AnyBeanAccessor implements Accessor<Object> {
     } catch (NoSuchPropertyException e) {
       return UNDEFINED;
     }
-  }
-
-  @Override
-  public Accessor<?> getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
-    return this;
   }
 }

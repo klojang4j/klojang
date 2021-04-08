@@ -50,12 +50,12 @@ import static nl.naturalis.yokete.render.RenderException.*;
  */
 public class RenderSession {
 
-  private final Page factory;
+  private final Page page;
   private final RenderState state;
 
-  RenderSession(Page sf) {
-    this.factory = sf;
-    this.state = new RenderState(sf);
+  RenderSession(Page page) {
+    this.page = page;
+    this.state = new RenderState(page);
   }
 
   /* METHODS FOR SETTING A SINGLE TEMPLATE VARIABLE */
@@ -167,14 +167,14 @@ public class RenderSession {
     Check.on(invalidValue("values", values), values).is(notNull());
     Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
     Check.on(badEscapeType(), escapeType).isNot(sameAs(), NOT_SPECIFIED);
-    Template t = factory.getTemplate();
+    Template t = page.getTemplate();
     Check.on(noSuchVariable(t, varName), varName).is(in(), t.getVars());
     Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
-    IntList indices = factory.getTemplate().getVarPartIndices().get(varName);
+    IntList indices = page.getTemplate().getVarPartIndices().get(varName);
     if (values.isEmpty()) {
       indices.forEach(i -> state.setVar(i, EMPTY_STRING_ARRAY));
     } else {
-      String[] strings = factory.toString(varName, values);
+      String[] strings = page.toString(varName, values);
       indices.forEach(i -> setVar(i, strings, escapeType, prefix, separator, suffix));
     }
     state.done(varName);
@@ -188,7 +188,7 @@ public class RenderSession {
       String prefix,
       String separator,
       String suffix) {
-    List<Part> parts = factory.getTemplate().getParts();
+    List<Part> parts = page.getTemplate().getParts();
     VariablePart part = (VariablePart) parts.get(partIndex);
     EscapeType myEscType = part.getEscapeType();
     if (myEscType == NOT_SPECIFIED) {
@@ -239,10 +239,10 @@ public class RenderSession {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Check.on(invalidValue("varName", varName), varName).is(notNull());
     Check.on(invalidValue("renderable", renderable), renderable).is(notNull());
-    Template t = factory.getTemplate();
+    Template t = page.getTemplate();
     Check.on(noSuchVariable(t, varName), varName).is(in(), t.getVars());
     Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
-    IntList indices = factory.getTemplate().getVarPartIndices().get(varName);
+    IntList indices = page.getTemplate().getVarPartIndices().get(varName);
     indices.forEach(i -> state.setVar(i, renderable));
     return this;
   }
@@ -499,11 +499,11 @@ public class RenderSession {
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     if (data == null) {
-      Template t = factory.getTemplate();
+      Template t = page.getTemplate();
       Check.on(noTextOnly(t), t.isTextOnly()).is(yes());
-      // If we get past this check, the entire template is in fact static
-      // HTML. Pretty expensive way to render static HTML, if this is the
-      // root template, but no reason not to support it.
+      // If we get past this check, the entire template is in fact
+      // static HTML. Pretty expensive way to render static HTML,
+      // but no reason not to support it.
       return this;
     }
     processVars(data, escapeType, names);
@@ -516,12 +516,12 @@ public class RenderSession {
       throws RenderException {
     Set<String> varNames;
     if (isEmpty(names)) {
-      varNames = factory.getTemplate().getVars();
+      varNames = page.getTemplate().getVars();
     } else {
-      varNames = new HashSet<>(factory.getTemplate().getVars());
+      varNames = new HashSet<>(page.getTemplate().getVars());
       varNames.retainAll(Set.of(names));
     }
-    Accessor<T> acc = (Accessor<T>) factory.getAccessor();
+    Accessor<T> acc = (Accessor<T>) page.getAccessor(data);
     for (String varName : varNames) {
       Object value = acc.access(data, varName);
       if (value != UNDEFINED) {
@@ -535,12 +535,12 @@ public class RenderSession {
       throws RenderException {
     Set<String> tmplNames;
     if (isEmpty(names)) {
-      tmplNames = factory.getTemplate().getNestedTemplateNames();
+      tmplNames = page.getTemplate().getNestedTemplateNames();
     } else {
-      tmplNames = new HashSet<>(factory.getTemplate().getNestedTemplateNames());
+      tmplNames = new HashSet<>(page.getTemplate().getNestedTemplateNames());
       tmplNames.retainAll(Set.of(names));
     }
-    Accessor<T> acc = (Accessor<T>) factory.getAccessor();
+    Accessor<T> acc = (Accessor<T>) page.getAccessor(data);
     for (String name : tmplNames) {
       Object nestedData = acc.access(data, name);
       if (nestedData != UNDEFINED) {
@@ -704,11 +704,10 @@ public class RenderSession {
 
   @Override
   public String toString() {
-    String fqn = TemplateUtils.getFQName(factory.getTemplate());
+    String fqn = TemplateUtils.getFQName(page.getTemplate());
     String clazz0 = getClass().getSimpleName();
-    String clazz1 = factory.getAccessor().getClass().getSimpleName();
     int hash = System.identityHashCode(this);
-    return clazz0 + "[" + fqn + "," + clazz1 + "]@" + hash;
+    return clazz0 + "[" + fqn + "]@" + hash;
   }
 
   RenderState getState() {
@@ -717,11 +716,11 @@ public class RenderSession {
 
   private Template getNestedTemplate(String name) throws RenderException {
     Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
-    Check.on(noSuchTemplate(factory.getTemplate(), name), name).is(validTemplateName());
-    return factory.getTemplate().getNestedTemplate(name);
+    Check.on(noSuchTemplate(page.getTemplate(), name), name).is(validTemplateName());
+    return page.getTemplate().getNestedTemplate(name);
   }
 
   private Predicate<String> validTemplateName() {
-    return s -> factory.getTemplate().getNestedTemplateNames().contains(s);
+    return s -> page.getTemplate().getNestedTemplateNames().contains(s);
   }
 }

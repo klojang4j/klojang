@@ -62,9 +62,4 @@ public class PathAccessor implements Accessor<Object> {
     Object val = mruData.getOrDefault(key, UNDEFINED);
     return val == DEAD_END ? UNDEFINED : val;
   }
-
-  @Override
-  public Accessor<?> getAccessorForTemplate(Template nestedTemplate, Object nestedSourceData) {
-    return new PathAccessor(nestedTemplate, mapper);
-  }
 }

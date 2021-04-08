@@ -46,7 +46,7 @@ class RenderState {
       } else {
         children = new RenderSession[data.size()];
         for (int i = 0; i < data.size(); ++i) {
-          children[i] = factory.newChildSession(t, data.get(i));
+          children[i] = factory.newChildSession(t);
         }
       }
       sessions.put(t, children);

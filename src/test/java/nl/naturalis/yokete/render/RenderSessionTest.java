@@ -15,9 +15,8 @@ public class RenderSessionTest {
   public void test00() throws ParseException, RenderException {
 
     Template tmpl = Template.parse(getClass(), Path.of("RenderSessionTest.main.html"));
-    Accessor<Map<String, Object>> acc = new MapAccessor(tmpl);
     TemplateStringifiers sf = TemplateStringifiers.SIMPLETON;
-    Page factory = Page.configure(tmpl, acc, sf);
+    Page factory = Page.configure(tmpl, (t, u) -> new MapAccessor(), sf);
 
     Map<String, Object> data = new HashMap<>();
     Map<String, Object> company = new HashMap<>();

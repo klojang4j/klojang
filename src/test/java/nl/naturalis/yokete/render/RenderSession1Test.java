@@ -16,9 +16,8 @@ public class RenderSession1Test {
   public void test00() throws ParseException, RenderException {
 
     Template tmpl = Template.parse(getClass(), Path.of("RenderSession1Test.html"));
-    Accessor<Map<String, Object>> acc = new MapAccessor(tmpl);
     TemplateStringifiers sf = TemplateStringifiers.SIMPLETON;
-    Page factory = Page.configure(tmpl, acc, sf);
+    Page page = Page.configure(tmpl, (t, u) -> new MapAccessor(), sf);
 
     Map<String, Object> data = new HashMap<>();
 
@@ -47,7 +46,7 @@ public class RenderSession1Test {
     dept.put("manager", "Robert de Niro");
     depts.add(dept);
 
-    RenderSession session = factory.newRenderSession();
+    RenderSession session = page.newRenderSession();
     session.populate(data);
 
     session.render(System.out);

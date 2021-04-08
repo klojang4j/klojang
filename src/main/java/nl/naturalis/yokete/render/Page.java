@@ -3,8 +3,6 @@ package nl.naturalis.yokete.render;
 import java.util.List;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.Template;
-import static nl.naturalis.common.check.CommonChecks.notNull;
-import static nl.naturalis.yokete.render.RenderException.*;
 
 /**
  * The {@code Page} class is a factory for {@link RenderSession render sessions}. Its main component
@@ -34,7 +32,7 @@ public final class Page {
    * @return A {@code Page} instance
    */
   public static Page configure(
-      Template template, Accessor<?> accessor, TemplateStringifiers stringifiers) {
+      Template template, AccessorFactory accessor, TemplateStringifiers stringifiers) {
     Check.notNull(template);
     Check.notNull(accessor);
     Check.notNull(stringifiers);
@@ -42,7 +40,7 @@ public final class Page {
   }
 
   private final Template template;
-  private final Accessor<?> accessor;
+  private final AccessorFactory accFactory;
   private final TemplateStringifiers stringifiers;
 
   /**
@@ -54,21 +52,23 @@ public final class Page {
     return new RenderSession(this);
   }
 
-  private Page(Template template, Accessor<?> accessor, TemplateStringifiers stringifiers) {
+  private Page(Template template, AccessorFactory accFactory, TemplateStringifiers stringifiers) {
     this.template = template;
-    this.accessor = accessor;
+    this.accFactory = accFactory;
     this.stringifiers = stringifiers;
   }
 
-  RenderSession newChildSession(Template nestedTmpl, Object nestedData) throws RenderException {
-    Accessor<?> acc = this.accessor.getAccessorForTemplate(nestedTmpl, nestedData);
-    Check.on(nullAccessor(nestedTmpl), acc).is(notNull());
-    Page factory = new Page(nestedTmpl, acc, stringifiers);
+  Accessor<?> getAccessor(Object sourceData) {
+    return accFactory.getAccessor(sourceData.getClass(), template);
+  }
+
+  RenderSession newChildSession(Template nested) {
+    Page factory = new Page(nested, accFactory, stringifiers);
     return factory.newRenderSession();
   }
 
-  RenderSession newChildSession(Template nestedTmpl, Accessor<?> acc) {
-    Page factory = new Page(nestedTmpl, acc, stringifiers);
+  RenderSession newChildSession(Template nested, Accessor<?> acc) {
+    Page factory = new Page(nested, (type, tmpl) -> acc, stringifiers);
     return factory.newRenderSession();
   }
 
@@ -91,7 +91,7 @@ public final class Page {
     return template;
   }
 
-  Accessor<?> getAccessor() {
-    return accessor;
+  AccessorFactory getAccessorFactory() {
+    return accFactory;
   }
 }
