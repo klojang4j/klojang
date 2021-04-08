@@ -5,18 +5,13 @@ import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Map;
 
-class RsReadInfo {
+class ColumnReader {
 
-  static Map<String, Object> toMap(ResultSet rs, RsReadInfo[] infos, int mapSize) throws Throwable {
+  static Map<String, Object> toMap(ResultSet rs, ColumnReader[] infos, int mapSize)
+      throws Throwable {
     Map<String, Object> map = new HashMap<>(mapSize);
-    for (RsReadInfo inf : infos) {
-      Object v;
-      if (inf.secondArg == null) {
-        v = inf.rsMethod.invoke(rs, inf.idx);
-      } else {
-        v = inf.rsMethod.invoke(rs, inf.idx, inf.secondArg);
-      }
-      map.put(inf.label, v);
+    for (ColumnReader inf : infos) {
+      map.put(inf.label, inf.readColumn(rs));
     }
     return map;
   }
@@ -30,13 +25,20 @@ class RsReadInfo {
   /* one of the getXXX methods in ResultSet */
   private final MethodHandle rsMethod;
   /* Class object passed as 2nd arg to ResultSet.getObject */
-  private final Class<?> secondArg;
+  private final Class<?> classArg;
 
-  RsReadInfo(int idx, String label, int type, MethodHandle mh, Class<?> clazz) {
+  ColumnReader(int idx, String label, int type, MethodHandle mh, Class<?> classArg) {
     this.idx = idx;
     this.label = label;
     this.type = type;
     this.rsMethod = mh;
-    this.secondArg = clazz;
+    this.classArg = classArg;
+  }
+
+  Object readColumn(ResultSet rs) throws Throwable {
+    if (classArg == null) {
+      return rsMethod.invoke(rs, idx);
+    }
+    return rsMethod.invoke(rs, idx, classArg);
   }
 }

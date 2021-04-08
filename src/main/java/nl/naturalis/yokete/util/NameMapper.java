@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.render;
+package nl.naturalis.yokete.util;
 
 import nl.naturalis.yokete.template.Template;
 

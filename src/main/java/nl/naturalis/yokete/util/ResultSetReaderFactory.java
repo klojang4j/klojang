@@ -28,7 +28,7 @@ public class ResultSetReaderFactory {
     return instance;
   }
 
-  // Maps SQL types to the ResultSet methods, like ResultSet.getString(columnLabel);
+  // Maps SQL types to the ResultSet methods, like ResultSet.getString(columnNumber);
   private final Map<Integer, Tuple<MethodHandle, Class<?>>> mhCache;
 
   private ResultSetReaderFactory() {
@@ -94,19 +94,19 @@ public class ResultSetReaderFactory {
   }
 
   public ResultSetMappifier getMappifier(ResultSet rs) throws SQLException {
-    RsReadInfo[] infos = createResultSetReadInfo(rs);
+    ColumnReader[] infos = createResultSetReadInfo(rs);
     return new ResultSetMappifier(infos, infos.length);
   }
 
   public ResultSetMappifier getMappifier(ResultSet rs, int mapSize) throws SQLException {
-    RsReadInfo[] infos = createResultSetReadInfo(rs);
+    ColumnReader[] infos = createResultSetReadInfo(rs);
     return new ResultSetMappifier(infos, mapSize);
   }
 
-  private RsReadInfo[] createResultSetReadInfo(ResultSet rs) throws SQLException {
+  private ColumnReader[] createResultSetReadInfo(ResultSet rs) throws SQLException {
     ResultSetMetaData rsmd = Check.notNull(rs).ok().getMetaData();
     int sz = rsmd.getColumnCount();
-    RsReadInfo[] infos = new RsReadInfo[sz];
+    ColumnReader[] infos = new ColumnReader[sz];
     for (int idx = 0; idx < sz; ++idx) {
       int jdbcIdx = idx + 1; // JDBC is one-based!
       int sqlType = rsmd.getColumnType(jdbcIdx);
@@ -114,8 +114,9 @@ public class ResultSetReaderFactory {
       if (tuple != null) {
         String label = rsmd.getColumnLabel(jdbcIdx);
         MethodHandle rsMethod = tuple.getLeft();
+        // null for all ResultSet.getXXX methods except getObject(int,Class):
         Class<?> secondArg = tuple.getRight();
-        infos[idx] = new RsReadInfo(jdbcIdx, label, sqlType, rsMethod, secondArg);
+        infos[idx] = new ColumnReader(jdbcIdx, label, sqlType, rsMethod, secondArg);
       } else {
         Check.fail("Unsupported data type: %s", rsmd.getColumnTypeName(idx));
       }

@@ -135,8 +135,7 @@ public abstract class ResultSetMapper<T> {
   /**
    * Temporarily unmaps the specified fields. This can be useful when mapping SQL queries that
    * SELECT only a few columns of the table or view corresponding to the bean class. The new mapping
-   * only applies to this instance of {@code ResultSetMapper}. Previously and subsequently
-   * instantiated instances will not be affected.
+   * only applies to this instance of {@code ResultSetMapper}.
    *
    * @param fields The fields to unmap
    */

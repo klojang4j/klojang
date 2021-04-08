@@ -1,5 +1,7 @@
 package nl.naturalis.yokete.util;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -12,26 +14,26 @@ import static nl.naturalis.common.check.CommonChecks.gt;
 
 public class ResultSetMappifier {
 
-  private final RsReadInfo[] infos;
+  private final ColumnReader[] readers;
   private final int mapSize;
 
-  ResultSetMappifier(RsReadInfo[] infos) {
+  ResultSetMappifier(ColumnReader[] infos) {
     this(infos, infos.length);
   }
 
-  ResultSetMappifier(RsReadInfo[] infos, int mapSize) {
-    this.infos = infos;
+  ResultSetMappifier(ColumnReader[] infos, int mapSize) {
+    this.readers = infos;
     this.mapSize = mapSize;
   }
 
   /**
-   * The {@code mappify} methods do not verify whether they can actually mappify the {@code
-   * ResultSet} instance that is passed to them. They assume that it has the same metadata (column
-   * count and column types) as the {@code ResultSet} that was used to create the mappifier.
-   * Strictly speaking, though, they don't know that. If they get passed a {@code ResultSet} with a
-   * different layout, all sorts of errors might ensue, including an {@link
-   * ArrayIndexOutOfBoundsException}. If you want to be absolutely sure that won't happen, you can
-   * call this method first.
+   * For performance reasons the {@code mappify} methods do not verify whether they can actually
+   * mappify the {@code ResultSet} instance that is passed to them. They assume that the {@code
+   * ResultSet} has the same metadata (column count and column types) as the {@code ResultSet} that
+   * was used to create the mappifier. Strictly speaking, though, they don't know that. If they get
+   * passed a {@code ResultSet} with a different layout, all sorts of errors might ensue, including
+   * an {@link ArrayIndexOutOfBoundsException}. If you want to be absolutely sure that won't happen,
+   * you can call this method first.
    *
    * @param rs
    * @return
@@ -39,21 +41,47 @@ public class ResultSetMappifier {
    */
   public boolean canMappify(ResultSet rs) throws SQLException {
     ResultSetMetaData rsmd = rs.getMetaData();
-    if (rsmd.getColumnCount() != infos.length) {
+    if (rsmd.getColumnCount() != readers.length) {
       return false;
     }
-    for (int i = 0; i < infos.length; ++i) {
-      if (infos[i].type != rsmd.getColumnType(i + 1)) {
+    for (int i = 0; i < readers.length; ++i) {
+      if (readers[i].type != rsmd.getColumnType(i + 1)) {
         return false;
       }
     }
     return true;
   }
 
+  public void printMismatch(ResultSet rs, OutputStream out) throws SQLException {
+    Check.notNull(rs);
+    Check.notNull(out);
+    PrintStream ps = out.getClass() == PrintStream.class ? (PrintStream) out : new PrintStream(out);
+    ResultSetMetaData rsmd = rs.getMetaData();
+    int mismatches = 0;
+    if (rsmd.getColumnCount() != readers.length) {
+      ++mismatches;
+      String fmt = "Expected column count: %d. Actual column count: %d%n";
+      ps.printf(fmt, readers.length, rsmd.getColumnCount());
+    }
+    int min = Math.min(readers.length, rsmd.getColumnCount());
+    for (int i = 0; i < min; ++i) {
+      if (readers[i].type != rsmd.getColumnType(i + 1)) {
+        ++mismatches;
+        String expected = SQLTypeNames.getTypeName(readers[i].type);
+        String actual = SQLTypeNames.getTypeName(rsmd.getColumnType(i + 1));
+        String fmt = "Colum %3d: expected type: %s; actual type: %s%n";
+        ps.printf(fmt, i + 1, expected, actual);
+      }
+    }
+    if (mismatches == 0) {
+      ps.println("No mismatch found");
+    }
+  }
+
   public Map<String, Object> mappify(ResultSet rs) {
     Check.notNull(rs);
     try {
-      return RsReadInfo.toMap(rs, infos, mapSize);
+      return ColumnReader.toMap(rs, readers, mapSize);
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
     }
@@ -65,7 +93,7 @@ public class ResultSetMappifier {
     List<Map<String, Object>> all = new ArrayList<>(limit);
     try {
       for (int i = 0; rs.next() && i < limit; ++i) {
-        all.add(RsReadInfo.toMap(rs, infos, mapSize));
+        all.add(ColumnReader.toMap(rs, readers, mapSize));
       }
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
@@ -79,7 +107,7 @@ public class ResultSetMappifier {
     List<Map<String, Object>> all = new ArrayList<>(expectedSize);
     try {
       while (rs.next()) {
-        all.add(RsReadInfo.toMap(rs, infos, mapSize));
+        all.add(ColumnReader.toMap(rs, readers, mapSize));
       }
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
