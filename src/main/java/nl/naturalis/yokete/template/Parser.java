@@ -71,11 +71,12 @@ class Parser {
     List<Part> parts = new ArrayList<>();
     int end = 0;
     do {
-      if (m.start() > end) {
-        parts.add(new UnparsedPart(src.substring(end, m.start()), end));
+      int start = m.start();
+      if (start > end) {
+        parts.add(new UnparsedPart(src.substring(end, start), end));
       }
       if (!m.find()) {
-        throw ditchBlockNotTerminated(src, m.start());
+        throw ditchBlockNotTerminated(src, start);
       }
       end = m.end();
     } while (m.find());

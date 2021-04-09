@@ -61,7 +61,7 @@ class Regex {
   static final String INCLUDE_CMT = "<!--\\s*(" + INCLUDE + ")\\s*-->";
 
   /* private  - only used for error reporting (ditch block not terminated) */
-  static final String DITCH_TOKEN = "<!--%%\\V*-->";
+  static final String DITCH_TOKEN = "<!--%%-->";
 
   /* private */
   /*
@@ -70,12 +70,12 @@ class Regex {
    * U: un-greedy; used by ditch block to find next rather than last ditch token
    *    following current ditch token
    *
-   * Actually, however, the U modifier does not work (at least not as expected).
+   * Actually, however, the U modifier does not work, at least not as expected.
    * The regex below __does__ the expected and desired thing on regex101.com,
    * but not in Java's regex implementation. Therefore, for now, we'll just use
-   * the ditch token itself to programmatically wade through the source and find
-   * pairs of consecutive ditch tokens. Eveyrhing inside them (as well as the
-   * ditch tokens themselves of course) is going to be purged from the template.
+   * the ditch token itself to programmatically plough through the source and
+   * find pairs of consecutive ditch tokens. Eveyrhing inside them (as well as
+   * the ditch tokens themselves) is going to be purged from the template.
    */
   static final String DITCH_BLOCK = "(?msU)" + DITCH_TOKEN + ".*" + DITCH_TOKEN;
 

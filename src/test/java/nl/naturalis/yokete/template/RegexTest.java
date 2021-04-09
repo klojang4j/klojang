@@ -119,12 +119,15 @@ public class RegexTest {
 
   @Test
   public void ditch01() {
-    Matcher m =
-        REGEX_DITCH_BLOCK.matcher(
-            "FOO \n"
-                + "<!--%% Example row: -->\n"
-                + "<tr><td>Hi!</td></tr>\n"
-                + "<!--%% (End of example row)-->");
+    Matcher m = REGEX_DITCH_TOKEN.matcher("<!--%%--><!-- Single-line ditch block --><!--%%-->");
+    assertTrue(m.find());
+    assertTrue(m.find());
+  }
+
+  @Test
+  public void ditch02() {
+    Matcher m = REGEX_DITCH_TOKEN.matcher("Foo\n<!--%%-->Multi-line ditch block\n<!--%%-->BAR");
+    assertTrue(m.find());
     assertTrue(m.find());
   }
 
