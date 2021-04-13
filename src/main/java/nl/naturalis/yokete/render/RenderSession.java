@@ -310,7 +310,7 @@ public class RenderSession {
     if (t.isTextOnly()) {
       return show(t, data.size());
     }
-    Check.on(missingSourceData(t), data).is(noneNull());
+    Check.on(missingSourceData(t), data).is(neverNull());
     return repeat(t, data, escapeType, names);
   }
 
@@ -414,13 +414,13 @@ public class RenderSession {
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly two
    *     variables
-   * @param pairs A list of value pairs.
+   * @param tuples A list of value pairs.
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public <T, U> RenderSession fillTupleTemplate(String nestedTemplateName, List<Tuple<T, U>> pairs)
+  public <T, U> RenderSession fillTupleTemplate(String nestedTemplateName, List<Tuple<T, U>> tuples)
       throws RenderException {
-    return fillTupleTemplate(nestedTemplateName, pairs, ESCAPE_NONE);
+    return fillTupleTemplate(nestedTemplateName, tuples, ESCAPE_NONE);
   }
 
   /**
@@ -442,7 +442,7 @@ public class RenderSession {
       String nestedTemplateName, List<Tuple<T, U>> tuples, EscapeType escapeType)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    Check.on(invalidValue("tuples", tuples), tuples).is(noneNull());
+    Check.on(invalidValue("tuples", tuples), tuples).is(neverNull());
     Template t = getNestedTemplate(nestedTemplateName);
     Check.on(noTupleTemplate(t), t)
         .has(tmpl -> tmpl.getVars().size(), eq(), 2)

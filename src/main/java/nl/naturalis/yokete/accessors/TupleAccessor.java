@@ -24,8 +24,8 @@ public class TupleAccessor implements Accessor<Tuple<?, ?>> {
    * {@code Pair}, depending on how often the {@code access} method has been called before.
    */
   @Override
-  public Object access(Tuple<?, ?> pair, String name) throws RenderException {
-    Object obj = left ? pair.getLeft() : pair.getRight();
+  public Object access(Tuple<?, ?> tuple, String name) throws RenderException {
+    Object obj = left ? tuple.getLeft() : tuple.getRight();
     left = !left;
     return obj;
   }

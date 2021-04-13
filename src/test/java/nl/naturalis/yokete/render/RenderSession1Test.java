@@ -16,7 +16,7 @@ public class RenderSession1Test {
   public void test00() throws ParseException, RenderException {
 
     Template tmpl = Template.parse(getClass(), Path.of("RenderSession1Test.html"));
-    TemplateStringifiers sf = TemplateStringifiers.SIMPLETON;
+    TemplateStringifiers sf = TemplateStringifiers.BASIC;
     Page page = Page.configure(tmpl, (t, u) -> new MapAccessor(), sf);
 
     Map<String, Object> data = new HashMap<>();

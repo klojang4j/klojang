@@ -2,14 +2,11 @@ package nl.naturalis.yokete.util;
 
 import java.lang.invoke.MethodHandle;
 import java.sql.ResultSet;
-import java.util.HashMap;
-import java.util.Map;
 
 class ColumnReader {
 
-  static Map<String, Object> toMap(ResultSet rs, ColumnReader[] infos, int mapSize)
-      throws Throwable {
-    Map<String, Object> map = new HashMap<>(mapSize);
+  static Row toMap(ResultSet rs, ColumnReader[] infos, int mapSize) throws Throwable {
+    Row map = new Row(mapSize);
     for (ColumnReader inf : infos) {
       map.put(inf.label, inf.readColumn(rs));
     }

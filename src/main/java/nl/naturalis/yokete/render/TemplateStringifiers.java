@@ -38,7 +38,7 @@ public final class TemplateStringifiers {
    * stringifier}, whatever the template, whatever the variable. Unlikely to be satisfactory in the
    * end, but handy in the early stages of development.
    */
-  public static final TemplateStringifiers SIMPLETON = new TemplateStringifiers(emptyMap());
+  public static final TemplateStringifiers BASIC = new TemplateStringifiers(emptyMap());
 
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
 

@@ -9,19 +9,19 @@ import static nl.naturalis.common.check.CommonChecks.gte;
 import static nl.naturalis.common.check.CommonChecks.ne;
 import static nl.naturalis.common.check.CommonChecks.negative;
 import static nl.naturalis.common.check.CommonChecks.positive;
-import static nl.naturalis.yokete.helpers.PagingHelper.Type.SHIFT_WINDOW;
+import static nl.naturalis.yokete.helpers.PagingDataHelper.ScrollType.SHIFT_WINDOW;
 
-public class PagingHelper {
+public class PagingDataHelper {
 
   private static final String ERR_NO_ROW_COUNT = "Row count not set";
 
-  public static enum Type {
+  public static enum ScrollType {
     SHIFT_WINDOW,
     NEXT_WINDOW;
   }
 
-  private final Type type;
-  private final int numPageLinks;
+  private final ScrollType scrollType;
+  private final int windowSize;
 
   // Settable
   private int rowsPerPage = 10;
@@ -29,38 +29,38 @@ public class PagingHelper {
 
   // Maintained internally
   private int page = 0; // selected page number
-  private int first = 0; // first of the numPageLinks page numbers
+  private int first = 0; // first of the page numbers in window
 
-  public PagingHelper() {
+  public PagingDataHelper() {
     this(SHIFT_WINDOW, 10);
   }
 
-  public PagingHelper(int numPageLinks) {
-    this(SHIFT_WINDOW, numPageLinks);
+  public PagingDataHelper(int windowSize) {
+    this(SHIFT_WINDOW, windowSize);
   }
 
-  public PagingHelper(Type type, int numPageLinks) {
-    this.type = Check.notNull(type, "type").ok();
-    this.numPageLinks = Check.that(numPageLinks, "numPageLinks").is(gte(), 2).intValue();
+  public PagingDataHelper(ScrollType scrollType, int windowSize) {
+    this.scrollType = Check.notNull(scrollType, "scrollType").ok();
+    this.windowSize = Check.that(windowSize, "windowSize").is(gte(), 2).intValue();
   }
 
-  public PagingHelper rowCount(int rowCount) {
+  public PagingDataHelper rowCount(int rowCount) {
     this.rowCount = Check.that(rowCount).isNot(negative()).intValue();
     return this;
   }
 
-  public PagingHelper rowsPerPage(int rowsPerPage) {
+  public PagingDataHelper rowsPerPage(int rowsPerPage) {
     this.rowsPerPage = Check.that(rowsPerPage).is(positive()).intValue();
     return this;
   }
 
-  public PagingHelper firstPage() {
+  public PagingDataHelper firstPage() {
     page = 0;
     first = 0;
     return this;
   }
 
-  public PagingHelper prevPage() {
+  public PagingDataHelper prevPage() {
     page = Math.max(0, --page);
     if (page < first) {
       first = shift() ? page : nextWindow();
@@ -68,11 +68,11 @@ public class PagingHelper {
     return this;
   }
 
-  public PagingHelper nextPage() {
+  public PagingDataHelper nextPage() {
     page = clamp(++page);
-    if (page >= first + numPageLinks) {
+    if (page >= first + windowSize) {
       if (shift()) {
-        first = Math.max(0, page - numPageLinks + 1);
+        first = Math.max(0, page - windowSize + 1);
       } else {
         first = nextWindow();
       }
@@ -80,18 +80,18 @@ public class PagingHelper {
     return this;
   }
 
-  public PagingHelper lastPage() {
+  public PagingDataHelper lastPage() {
     Check.that(rowCount).is(ne(), -1, ERR_NO_ROW_COUNT);
     page = clamp(getPageCount());
     if (shift()) {
-      first = Math.max(0, page - numPageLinks + 1);
+      first = Math.max(0, page - windowSize + 1);
     } else {
       first = nextWindow();
     }
     return this;
   }
 
-  public PagingHelper page(int pageNo) {
+  public PagingDataHelper page(int pageNo) {
     Check.that(rowCount).is(ne(), -1, ERR_NO_ROW_COUNT);
     page = clamp(pageNo);
     if (page < first) {
@@ -99,9 +99,9 @@ public class PagingHelper {
       // one of the page links so has probably been tinkering with the URL,
       // which is fine by us
       first = shift() ? page : nextWindow();
-    } else if (page >= first + numPageLinks) {
+    } else if (page >= first + windowSize) {
       if (shift()) {
-        first = Math.max(0, page - numPageLinks + 1);
+        first = Math.max(0, page - windowSize + 1);
       } else {
         first = nextWindow();
       }
@@ -114,7 +114,7 @@ public class PagingHelper {
     if (rowCount <= rowsPerPage) {
       return Collections.emptyList();
     }
-    int numLinks = Math.min(getPageCount() - first, numPageLinks);
+    int numLinks = Math.min(getPageCount() - first, windowSize);
     List<Tuple<Boolean, Integer>> tuples = new ArrayList<>(numLinks);
     for (int i = first; i < first + numLinks; ++i) {
       tuples.add(Tuple.of(i == page, i + 1));
@@ -123,7 +123,7 @@ public class PagingHelper {
   }
 
   private int nextWindow() {
-    return clamp(page - (page % numPageLinks));
+    return clamp(page - (page % windowSize));
   }
 
   private int clamp(int pageNo) {
@@ -131,7 +131,7 @@ public class PagingHelper {
   }
 
   private boolean shift() {
-    return type == SHIFT_WINDOW;
+    return scrollType == SHIFT_WINDOW;
   }
 
   private int getPageCount() {
