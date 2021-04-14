@@ -14,7 +14,7 @@ public class RenderSession1Test {
   @Test
   public void test00() throws ParseException, RenderException {
 
-    Template tmpl = Template.parse(getClass(), "RenderSession1Test.html");
+    Template tmpl = Template.parseResource(getClass(), "RenderSession1Test.html");
     TemplateStringifiers sf = TemplateStringifiers.BASIC;
     Page page = Page.configure(tmpl, (t, u) -> new MapAccessor(), sf);
 

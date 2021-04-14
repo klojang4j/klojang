@@ -143,7 +143,7 @@ public class ListBoxHtmlHelper<T> {
       Page page = Page.configure(getTemplate(), (x, y) -> accessor, BASIC);
       RenderSession session = page.newRenderSession();
       session.set("name", name);
-      session.set("YLB_KEY", key);
+      session.set("ylbKey", key);
       session.fill("options", dataSupplier.get());
       if (initOption != NOT_SET) {
         session.fillTupleTemplate("initOption", List.of(Tuple.of(initVal, initOption)));
@@ -156,8 +156,8 @@ public class ListBoxHtmlHelper<T> {
 
   private static Template getTemplate() throws ParseException {
     if (TEMPLATE == null) {
-      TEMPLATE = Template.parseString(ListBoxHtmlHelper.class, "ListBox.html");
-      TEMPLATE.printParts(System.out);
+      TEMPLATE = Template.parseResource(ListBoxHtmlHelper.class, "ListBox.html");
+      // TEMPLATE.printParts(System.out);
     }
     return TEMPLATE;
   }

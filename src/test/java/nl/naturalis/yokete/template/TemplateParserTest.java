@@ -68,7 +68,7 @@ public class TemplateParserTest {
   @Test
   public void parseNestedTemplates00() throws ParseException {
     String path = "TemplateParserTest.parseNestedTemplates00.html";
-    Template template = Template.parse(getClass(), path);
+    Template template = Template.parseResource(getClass(), path);
     // System.out.println(template);
     List<Part> parts = template.getParts();
     assertTrue(parts.get(1) instanceof NestedTemplatePart);
@@ -86,7 +86,7 @@ public class TemplateParserTest {
   @Test
   public void parseNestedTemplates01() throws ParseException {
     String path = "TemplateParserTest.parseNestedTemplates01.html";
-    Template template = Template.parse(getClass(), path);
+    Template template = Template.parseResource(getClass(), path);
     // System.out.println(template);
     List<Part> parts = template.getParts();
     assertTrue(parts.get(1) instanceof NestedTemplatePart);
@@ -104,7 +104,7 @@ public class TemplateParserTest {
   @Test
   public void parseIncludedTemplates00() throws ParseException {
     String path = "TemplateParserTest.parseIncludedTemplates00.html";
-    Template template = Template.parse(getClass(), path);
+    Template template = Template.parseResource(getClass(), path);
     // System.out.println(template);
     List<Part> parts = template.getParts();
     assertTrue(parts.get(1) instanceof NestedTemplatePart);
@@ -126,7 +126,7 @@ public class TemplateParserTest {
   @Test
   public void parseIncludedTemplates01() throws ParseException {
     String path = "TemplateParserTest.parseIncludedTemplates01.html";
-    Template template = Template.parse(getClass(), path);
+    Template template = Template.parseResource(getClass(), path);
     // System.out.println(template);
     List<Part> parts = template.getParts();
     assertTrue(parts.get(1) instanceof NestedTemplatePart);
@@ -150,7 +150,7 @@ public class TemplateParserTest {
   @Test
   public void allTogetherNow00() throws ParseException {
     String path = "TemplateParserTest.allTogetherNow00.html";
-    Template template = Template.parse(getClass(), path);
+    Template template = Template.parseResource(getClass(), path);
     template.printParts(System.out);
   }
 }

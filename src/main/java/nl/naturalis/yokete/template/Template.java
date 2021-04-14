@@ -79,7 +79,7 @@ public class Template {
    * @return a new {@code Template} instance
    * @throws ParseException
    */
-  public static Template parse(Class<?> clazz, String path) throws ParseException {
+  public static Template parseResource(Class<?> clazz, String path) throws ParseException {
     return new Parser(ROOT_TEMPLATE_NAME, clazz, Path.of(path)).parse();
   }
 
