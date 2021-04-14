@@ -69,7 +69,7 @@ public class ListBoxHtmlHelper<T> {
     }
 
     public <U> Factory addHelper(String key, String name, Supplier<List<U>> dataSupplier) {
-      Check.that(key).is(notNull()).isNot(keyIn(), CACHE, ERR_DUP_KEY, key);
+      Check.that(key, "key").is(notNull()).isNot(keyIn(), CACHE, ERR_DUP_KEY, key);
       Check.notNull(name, "name");
       Check.notNull(dataSupplier, "dataSupplier");
       @SuppressWarnings("unchecked")
