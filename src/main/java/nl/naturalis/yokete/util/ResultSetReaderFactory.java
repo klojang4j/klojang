@@ -15,6 +15,7 @@ import java.util.Map;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
+import nl.naturalis.yokete.template.Template;
 import static java.lang.invoke.MethodHandles.lookup;
 
 public class ResultSetReaderFactory {
@@ -94,13 +95,25 @@ public class ResultSetReaderFactory {
   }
 
   public ResultSetMappifier getMappifier(ResultSet rs) throws SQLException {
-    ColumnReader[] infos = createResultSetReadInfo(rs);
-    return new ResultSetMappifier(infos, infos.length);
+    return getMappifier(rs, 0);
   }
 
-  public ResultSetMappifier getMappifier(ResultSet rs, int mapSize) throws SQLException {
+  /**
+   * Creates a {@code ResultSetMappifier} that will produce {@link Row} instances that will be sized
+   * somewhat larger than the number of columns within the {@code ResultSet}. Contrary to the {@code
+   * ResultSet} class itself, you are free to add extra entries to the {@code Row} (which really is
+   * a <code>HashMap&lt;String,Object&gt;&gt;</code>) after it has been produced. This may come in
+   * handy as the {@code Row} object is likely to be used to fill a {@link Template}, and you might
+   * want to enrich it first before doing so.
+   *
+   * @param rs
+   * @param extraRowSize
+   * @return
+   * @throws SQLException
+   */
+  public ResultSetMappifier getMappifier(ResultSet rs, int extraRowSize) throws SQLException {
     ColumnReader[] infos = createResultSetReadInfo(rs);
-    return new ResultSetMappifier(infos, mapSize);
+    return new ResultSetMappifier(infos, infos.length + extraRowSize);
   }
 
   private ColumnReader[] createResultSetReadInfo(ResultSet rs) throws SQLException {
@@ -108,15 +121,16 @@ public class ResultSetReaderFactory {
     int sz = rsmd.getColumnCount();
     ColumnReader[] infos = new ColumnReader[sz];
     for (int idx = 0; idx < sz; ++idx) {
-      int jdbcIdx = idx + 1; // JDBC is one-based!
+      int jdbcIdx = idx + 1; // JDBC is one-based
       int sqlType = rsmd.getColumnType(jdbcIdx);
-      Tuple<MethodHandle, Class<?>> tuple = mhCache.get(sqlType);
-      if (tuple != null) {
+      Tuple<MethodHandle, Class<?>> methodInfo = mhCache.get(sqlType);
+      if (methodInfo != null) {
         String label = rsmd.getColumnLabel(jdbcIdx);
-        MethodHandle rsMethod = tuple.getLeft();
-        // null for all ResultSet.getXXX methods except getObject(int,Class):
-        Class<?> secondArg = tuple.getRight();
-        infos[idx] = new ColumnReader(jdbcIdx, label, sqlType, rsMethod, secondArg);
+        MethodHandle rsMethod = methodInfo.getLeft();
+        Class<?> classArg = methodInfo.getRight();
+        // 2nd argument to ResultSet.getObject(int,Class); null in any other
+        // case - e.g. ResultSet.getInt(int) or ResultSet.getString(int)
+        infos[idx] = new ColumnReader(jdbcIdx, label, sqlType, rsMethod, classArg);
       } else {
         Check.fail("Unsupported data type: %s", rsmd.getColumnTypeName(idx));
       }

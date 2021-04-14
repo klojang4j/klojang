@@ -7,7 +7,7 @@ import nl.naturalis.yokete.template.Template;
  * Defines methods for rendering a populated {@link Template}. {@code Renderable} instances are
  * obtained via {@link RenderSession#createRenderable()}.
  *
- * @see RenderSession#setRenderable(String, Renderable)
+ * @see RenderSession#addRenderable(String, Renderable)
  * @author Ayco Holleman
  */
 public interface Renderable {

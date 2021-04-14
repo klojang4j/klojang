@@ -77,6 +77,7 @@ public class ListBoxHtmlHelper<T> {
           new ListBoxHtmlHelper<>(
               key, name, dataSupplier, (Accessor<U>) accessor, initOption, initVal);
       tmpCache.put(key, helper);
+      CACHE = Map.copyOf(tmpCache);
       return this;
     }
 

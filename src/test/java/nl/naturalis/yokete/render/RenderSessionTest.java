@@ -72,6 +72,6 @@ public class RenderSessionTest {
     emps1.add(emp);
 
     RenderSession session = factory.newRenderSession();
-    session.populate(data);
+    session.add(data);
   }
 }

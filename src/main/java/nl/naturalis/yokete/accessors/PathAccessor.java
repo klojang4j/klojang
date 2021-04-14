@@ -53,12 +53,12 @@ public class PathAccessor implements Accessor<Object> {
   }
 
   @Override
-  public Object access(Object from, String varName) throws RenderException {
+  public Object access(Object from, String varOrNestedTemplateName) throws RenderException {
     if (from != mruObj) {
       walker.readValues(from, mruData);
       mruObj = from;
     }
-    String key = mapper.map(template, varName);
+    String key = mapper.map(template, varOrNestedTemplateName);
     Object val = mruData.getOrDefault(key, UNDEFINED);
     return val == DEAD_END ? UNDEFINED : val;
   }

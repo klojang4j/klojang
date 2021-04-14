@@ -57,4 +57,23 @@ public class Row extends HashMap<String, Object> {
     }
     return Check.fail("Cannot convert key \"%s\" to int", key);
   }
+
+  public int getByte(String key) {
+    return getInt(key, 0);
+  }
+
+  public int getByte(String key, int defaultValue) {
+    Object v = Check.notNull(key).ok(this::get);
+    if (v == null) {
+      return defaultValue;
+    } else if (v.getClass() == Byte.class) {
+      return (Byte) get(key);
+    } else if (v instanceof Number) {
+      return ((Number) v).intValue();
+    } else if (v.getClass() == String.class) {
+      BigInteger bi = new BigInteger((String) v);
+      bi.byteValueExact();
+    }
+    return Check.fail("Cannot convert key \"%s\" to int", key);
+  }
 }

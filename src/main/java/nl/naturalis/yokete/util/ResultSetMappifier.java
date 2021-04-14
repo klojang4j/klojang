@@ -9,7 +9,20 @@ import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
 import static nl.naturalis.common.check.CommonChecks.gt;
 
-/** @author Ayco Holleman */
+/**
+ * Converts JDBC {@link ResultSet} instances into <code>Map&lt;String, Object&gt;</code> instances
+ * or <code>List&lt;Map&lt;String, Object&gt;&gt;</code>, depending on whether you want to mappify
+ * just a single row from the {@code ResultSet} or multiple rows. To be more precize: it converts
+ * them into instances of {@link Row} or {@link QueryResult}, which are extensions of <code>
+ * HashMap&lt;String, Object&gt;</code> and <code>ArrayList&lt;Row&gt;</code>. These subclasses
+ * provide some extra methods useful when reading query results but otherwise don't alter their
+ * behaviour.
+ *
+ * <p>You cannot instatiate a {@code ResultSetMappifier} directly. You can obtain an instance from a
+ * {@link ResultSetReaderFactory}.
+ *
+ * @author Ayco Holleman
+ */
 public class ResultSetMappifier {
 
   private final ColumnReader[] readers;
@@ -50,6 +63,15 @@ public class ResultSetMappifier {
     return true;
   }
 
+  /**
+   * If {@link #canMappify(ResultSet) canMappify} returned {@code false}, this method can be used to
+   * print the difference between the {@link ResultSetMetaData} that this {@code ResultSetMappifier}
+   * was created from and the {@code ResultSetMetaData} of the specified {@code ResultSet}.
+   *
+   * @param rs
+   * @param out
+   * @throws SQLException
+   */
   public void printResultSetMismatch(ResultSet rs, OutputStream out) throws SQLException {
     Check.notNull(rs);
     Check.notNull(out);
@@ -106,7 +128,7 @@ public class ResultSetMappifier {
    * @param limit The maximum number of records to mappify
    * @return A {@code List} of <code>Map&lt;String,Object&gt;</code> instances
    */
-  public QueryResult mappify(ResultSet rs, int limit) {
+  public QueryResult mappifyAtMost(ResultSet rs, int limit) {
     Check.notNull(rs, "rs");
     Check.that(limit, "limit").is(gt(), 0);
     QueryResult all = new QueryResult(limit);
@@ -122,19 +144,33 @@ public class ResultSetMappifier {
   }
 
   /**
-   * Converts allrecords within the specified {@code ResultSet} to <code>
+   * Converts all rows within the specified {@code ResultSet} to <code>
    * Map&lt;String,Object&gt;</code> instances. {@link ResultSet#next()} <b>must</b> have been
    * called first, and it <b>must</b> have returned true. This method will only call {@code
    * ResultSet.next()} <i>after</i> each conversion.
    *
    * @param rs The {@code ResultSet}
-   * @param limit The maximum number of records to mappify
    * @return A {@code List} of <code>Map&lt;String,Object&gt;</code> instances
    */
-  public QueryResult mappifyAll(ResultSet rs, int expectedSize) {
+  public QueryResult mappifyAll(ResultSet rs) {
+    return mappifyAll(rs, 16);
+  }
+
+  /**
+   * Converts all rows within the specified {@code ResultSet} to <code>
+   * Map&lt;String,Object&gt;</code> instances. {@link ResultSet#next()} <b>must</b> have been
+   * called first, and it <b>must</b> have returned true. This method will only call {@code
+   * ResultSet.next()} <i>after</i> each conversion.
+   *
+   * @param rs The {@code ResultSet}
+   * @param limit An estimate of the total size of the result set. Will be used to initialize the
+   *     returned {@code List}
+   * @return A {@code List} of <code>Map&lt;String,Object&gt;</code> instances
+   */
+  public QueryResult mappifyAll(ResultSet rs, int sizeEstimate) {
     Check.notNull(rs, "rs");
-    Check.that(expectedSize, "expectedSize").is(gt(), 0);
-    QueryResult all = new QueryResult(expectedSize);
+    Check.that(sizeEstimate, "sizeEstimate").is(gt(), 0);
+    QueryResult all = new QueryResult(sizeEstimate);
     try {
       while (rs.next()) {
         all.add(ColumnReader.toMap(rs, readers, mapSize));

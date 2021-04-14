@@ -39,8 +39,8 @@ public class MapAccessor implements Accessor<Map<String, Object>> {
 
   /** {@inheritDoc} */
   @Override
-  public Object access(Map<String, Object> from, String varName) throws RenderException {
-    String key = Check.notNull(varName, "varName").ok();
+  public Object access(Map<String, Object> from, String name) throws RenderException {
+    String key = Check.notNull(name, "name").ok();
     if (mapper != null) {
       key = mapper.map(template, key);
     }

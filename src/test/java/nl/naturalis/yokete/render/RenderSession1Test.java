@@ -47,7 +47,7 @@ public class RenderSession1Test {
     depts.add(dept);
 
     RenderSession session = page.newRenderSession();
-    session.populate(data);
+    session.add(data);
 
     session.render(System.out);
   }

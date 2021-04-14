@@ -227,7 +227,7 @@ public class RenderSession {
   /**
    * Sets the specified variable to the entire output of the specified {@code Renderable}. This
    * allows you to create and populate a template for an HTML snippet once, and then repeatedly (for
-   * each render session of the current template) "paste" its output into the current template. See
+   * every render session of the current template) "paste" its output into the current template. See
    * {@link #createRenderable()}.
    *
    * @param varName The template variable to set
@@ -235,7 +235,7 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession setRenderable(String varName, Renderable renderable) throws RenderException {
+  public RenderSession addRenderable(String varName, Renderable renderable) throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Check.on(invalidValue("varName", varName), varName).is(notNull());
     Check.on(invalidValue("renderable", renderable), renderable).is(notNull());
@@ -318,7 +318,7 @@ public class RenderSession {
       throws RenderException {
     RenderSession[] sessions = state.getOrCreateChildSessions(t, data);
     for (int i = 0; i < sessions.length; ++i) {
-      sessions[i].populate(data.get(i), escapeType, names);
+      sessions[i].add(data.get(i), escapeType, names);
     }
     return this;
   }
@@ -403,7 +403,7 @@ public class RenderSession {
     List<?> values = asUnsafeList(value);
     RenderSession[] sessions = state.getOrCreateChildSessions(t, new SelfAccessor(), values.size());
     for (int i = 0; i < sessions.length; ++i) {
-      sessions[i].populate(values.get(i), escapeType);
+      sessions[i].add(values.get(i), escapeType);
     }
     return this;
   }
@@ -450,7 +450,7 @@ public class RenderSession {
     RenderSession[] sessions =
         state.getOrCreateChildSessions(t, new TupleAccessor(), tuples.size());
     for (int i = 0; i < sessions.length; ++i) {
-      sessions[i].populate(tuples.get(i), escapeType);
+      sessions[i].add(tuples.get(i), escapeType);
     }
     return this;
   }
@@ -458,10 +458,9 @@ public class RenderSession {
   /* METHODS FOR POPULATING WHATEVER IS IN THE PROVIDED OBJECT */
 
   /**
-   * Populates the <i>entire</i> template, except for variables and nested templates whose name is
-   * present in the {@code names} array. The template is populated with values retrieved from the
-   * specified source data. No escaping will be applied to the retrieved values. See {@link
-   * #populate(Object, EscapeType, String...)}.
+   * Populates the <i>current</i> template (the template for which this {@code RenderSession} was
+   * created). No escaping will be applied to the values extracted from the source data. See {@link
+   * #add(Object, EscapeType, String...)}.
    *
    * @param sourceData An object that provides data for all or some of the template variables and
    *     nested templates
@@ -472,21 +471,22 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession populate(Object sourceData, String... names) throws RenderException {
-    return populate(sourceData, ESCAPE_NONE, names);
+  public RenderSession add(Object sourceData, String... names) throws RenderException {
+    return add(sourceData, ESCAPE_NONE, names);
   }
 
   /**
-   * Populates the <i>entire</i> template, except for variables and nested templates whose name is
-   * present in the {@code names} array. This allows you to call this method multiple times with the
-   * same source data, but with different escape types for different variables. If the {@code names}
-   * array is {@code null} or empty, this method will attempt to populate all variables and nested
-   * templates. Note, however, that the source data object is itself explicitly not required to
-   * provide all values for all variables (see {@link Accessor#access(Object, String)}). This again
-   * allows you to call this method multiple times with <i>different</i> source data, until the
-   * template is fully populated.
+   * Populates the <i>current</i> template (the template for which this {@code RenderSession} was
+   * created). The {@code RenderSession} will attempt to populate all variables and nested template
+   * will be populated using the provided source data, except for the variables and/or nested
+   * templates whose name is present in the {@code names} array. This allows you to call this method
+   * multiple times with the same source data, but with different escape types for different
+   * variables. Note, however, that the source data object is explicitly not required to provide all
+   * values for all variables and nested templates (see {@link Accessor#access(Object, String)}).
+   * This again allows you to call this method multiple times with <i>different</i> source data,
+   * until the template is fully populated.
    *
-   * @param data An object that provides data for all or some of the template variables and nested
+   * @param sourceData An object that provides data for all or some of the template variables and nested
    *     templates
    * @param escapeType The escape type to use
    * @param names The names of the variables nested templates names that must be populated. Not
@@ -495,10 +495,10 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession populate(Object data, EscapeType escapeType, String... names)
+  public RenderSession add(Object sourceData, EscapeType escapeType, String... names)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    if (data == null) {
+    if (sourceData == null) {
       Template t = page.getTemplate();
       Check.on(noTextOnly(t), t.isTextOnly()).is(yes());
       // If we get past this check, the entire template is in fact
@@ -506,8 +506,8 @@ public class RenderSession {
       // but no reason not to support it.
       return this;
     }
-    processVars(data, escapeType, names);
-    processTmpls(data, escapeType, names);
+    processVars(sourceData, escapeType, names);
+    processTmpls(sourceData, escapeType, names);
     return this;
   }
 
@@ -671,7 +671,7 @@ public class RenderSession {
 
   /**
    * Returns a {@code Renderable} instance with which you render the current template. See {@link
-   * #setRenderable(String, Renderable)}.
+   * #addRenderable(String, Renderable)}.
    *
    * @return A {@code Renderable} instance with which you render the current template
    */
