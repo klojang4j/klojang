@@ -1,6 +1,5 @@
 package nl.naturalis.yokete.template;
 
-import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import nl.naturalis.yokete.render.EscapeType;
@@ -12,7 +11,7 @@ public class TemplateParserTest {
   @Test
   public void parseVariables00() throws ParseException {
     String src = "<tr><td>~%foo%</td></tr>";
-    Template template = Template.parse(src);
+    Template template = Template.parseString(src);
     // System.out.println(template);
     List<Part> parts = template.getParts();
     assertEquals(3, parts.size());
@@ -29,7 +28,7 @@ public class TemplateParserTest {
   @Test
   public void parseVariables01() throws ParseException {
     String src = "<tr><td><!-- ~%foo% --></td></tr>";
-    Template template = Template.parse(src);
+    Template template = Template.parseString(src);
     // System.out.println(template);
     List<Part> parts = template.getParts();
     assertEquals(3, parts.size());
@@ -46,7 +45,7 @@ public class TemplateParserTest {
   @Test
   public void parseVariables02() throws ParseException {
     String src = "<tr>\n<td>~%html:foo%</td>\n<!-- some comment -->\n<td>~%text:bar%</td>\n</tr>";
-    Template template = Template.parse(getClass(), src);
+    Template template = Template.parseString(getClass(), src);
     // System.out.println(template);
     List<Part> parts = template.getParts();
     assertEquals(5, parts.size());
@@ -68,7 +67,7 @@ public class TemplateParserTest {
 
   @Test
   public void parseNestedTemplates00() throws ParseException {
-    Path path = Path.of("TemplateParserTest.parseNestedTemplates00.html");
+    String path = "TemplateParserTest.parseNestedTemplates00.html";
     Template template = Template.parse(getClass(), path);
     // System.out.println(template);
     List<Part> parts = template.getParts();
@@ -86,7 +85,7 @@ public class TemplateParserTest {
 
   @Test
   public void parseNestedTemplates01() throws ParseException {
-    Path path = Path.of("TemplateParserTest.parseNestedTemplates01.html");
+    String path = "TemplateParserTest.parseNestedTemplates01.html";
     Template template = Template.parse(getClass(), path);
     // System.out.println(template);
     List<Part> parts = template.getParts();
@@ -104,7 +103,7 @@ public class TemplateParserTest {
 
   @Test
   public void parseIncludedTemplates00() throws ParseException {
-    Path path = Path.of("TemplateParserTest.parseIncludedTemplates00.html");
+    String path = "TemplateParserTest.parseIncludedTemplates00.html";
     Template template = Template.parse(getClass(), path);
     // System.out.println(template);
     List<Part> parts = template.getParts();
@@ -126,7 +125,7 @@ public class TemplateParserTest {
 
   @Test
   public void parseIncludedTemplates01() throws ParseException {
-    Path path = Path.of("TemplateParserTest.parseIncludedTemplates01.html");
+    String path = "TemplateParserTest.parseIncludedTemplates01.html";
     Template template = Template.parse(getClass(), path);
     // System.out.println(template);
     List<Part> parts = template.getParts();
@@ -150,7 +149,7 @@ public class TemplateParserTest {
 
   @Test
   public void allTogetherNow00() throws ParseException {
-    Path path = Path.of("TemplateParserTest.allTogetherNow00.html");
+    String path = "TemplateParserTest.allTogetherNow00.html";
     Template template = Template.parse(getClass(), path);
     template.printParts(System.out);
   }

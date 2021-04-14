@@ -49,8 +49,8 @@ public class Template {
    * @return a new {@code Template} instance
    * @throws ParseException
    */
-  public static Template parse(String source) throws ParseException {
-    return parse((Class<?>) null, source);
+  public static Template parseString(String source) throws ParseException {
+    return parseString((Class<?>) null, source);
   }
 
   /**
@@ -64,7 +64,7 @@ public class Template {
    * @return a new {@code Template} instance
    * @throws ParseException
    */
-  public static Template parse(Class<?> clazz, String source) throws ParseException {
+  public static Template parseString(Class<?> clazz, String source) throws ParseException {
     return new Parser(ROOT_TEMPLATE_NAME, clazz, source).parse();
   }
 
@@ -79,8 +79,8 @@ public class Template {
    * @return a new {@code Template} instance
    * @throws ParseException
    */
-  public static Template parse(Class<?> clazz, Path path) throws ParseException {
-    return new Parser(ROOT_TEMPLATE_NAME, clazz, path).parse();
+  public static Template parse(Class<?> clazz, String path) throws ParseException {
+    return new Parser(ROOT_TEMPLATE_NAME, clazz, Path.of(path)).parse();
   }
 
   private final String name;

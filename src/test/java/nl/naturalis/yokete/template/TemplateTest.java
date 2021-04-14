@@ -1,6 +1,5 @@
 package nl.naturalis.yokete.template;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,7 +13,7 @@ public class TemplateTest {
 
   @Test
   public void test00() throws ParseException {
-    Template t0 = Template.parse(getClass(), Path.of("TemplateTest.main.html"));
+    Template t0 = Template.parse(getClass(), "TemplateTest.main.html");
     assertEquals(0, t0.countVars());
     assertEquals(1, t0.countNestedTemplates());
     assertEquals("company", t0.getNestedTemplates().iterator().next().getName());
@@ -38,7 +37,7 @@ public class TemplateTest {
 
   @Test // getVariableNamesPerTemplate
   public void test01() throws ParseException {
-    Template t0 = Template.parse(getClass(), Path.of("TemplateTest.main.html"));
+    Template t0 = Template.parse(getClass(), "TemplateTest.main.html");
     String expected =
         "company:name;company:poBox;company:established;company:director;"
             + "departments:name;departments:managerName;"
@@ -51,7 +50,7 @@ public class TemplateTest {
 
   @Test // getVarPartIndices
   public void test02() throws ParseException {
-    Template t0 = Template.parse(getClass(), Path.of("TemplateTest.main.html"));
+    Template t0 = Template.parse(getClass(), "TemplateTest.main.html");
     IntList indices = t0.getNestedTemplate("company").getVarPartIndices().get("name");
     assertEquals(2, indices.size());
     indices = t0.getNestedTemplate("company").getVarPartIndices().get("poBox");
@@ -60,14 +59,14 @@ public class TemplateTest {
 
   @Test // getVarPartIndices
   public void test03() throws ParseException {
-    Template t0 = Template.parse(getClass(), Path.of("TemplateTest.main.html"));
+    Template t0 = Template.parse(getClass(), "TemplateTest.main.html");
     t0.getNestedTemplatesRecursive()
         .forEach(t -> System.out.println(TemplateUtils.getFQName(t, "test")));
   }
 
   @Test // getNestedTemplates
   public void test04() throws ParseException {
-    Template t0 = Template.parse(getClass(), Path.of("TemplateTest.main.html"));
+    Template t0 = Template.parse(getClass(), "TemplateTest.main.html");
     t0.getNestedTemplates().forEach(t -> System.out.println(t.getName()));
     t0 = t0.getNestedTemplate("company");
     t0.getNestedTemplates().forEach(t -> System.out.println(t.getName()));
@@ -79,7 +78,7 @@ public class TemplateTest {
 
   @Test
   public void testEncounterOrder() throws ParseException {
-    Template t0 = Template.parse(getClass(), Path.of("TemplateTest.testEncounterOrder.html"));
+    Template t0 = Template.parse(getClass(), "TemplateTest.testEncounterOrder.html");
     String varStr =
         "topdeskId, id, department, instituteCode, collectionCode, firstNumber, lastNumber, amount, issueDate";
     String[] varNames = varStr.split(",");

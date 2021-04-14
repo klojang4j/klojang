@@ -1,6 +1,5 @@
 package nl.naturalis.yokete.render;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,7 +13,7 @@ public class RenderSessionTest {
   @Test
   public void test00() throws ParseException, RenderException {
 
-    Template tmpl = Template.parse(getClass(), Path.of("RenderSessionTest.main.html"));
+    Template tmpl = Template.parse(getClass(), "RenderSessionTest.main.html");
     TemplateStringifiers sf = TemplateStringifiers.BASIC;
     Page factory = Page.configure(tmpl, (t, u) -> new MapAccessor(), sf);
 

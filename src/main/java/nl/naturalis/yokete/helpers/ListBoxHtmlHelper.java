@@ -69,7 +69,7 @@ public class ListBoxHtmlHelper<T> {
     }
 
     public <U> Factory addHelper(String key, String name, Supplier<List<U>> dataSupplier) {
-      Check.that(key, "key").is(notNull()).isNot(keyIn(), CACHE, ERR_DUP_KEY, key);
+      Check.that(key, "key").is(notNull()).isNot(keyIn(), tmpCache, ERR_DUP_KEY, key);
       Check.notNull(name, "name");
       Check.notNull(dataSupplier, "dataSupplier");
       @SuppressWarnings("unchecked")
@@ -77,7 +77,6 @@ public class ListBoxHtmlHelper<T> {
           new ListBoxHtmlHelper<>(
               key, name, dataSupplier, (Accessor<U>) accessor, initOption, initVal);
       tmpCache.put(key, helper);
-      CACHE = Map.copyOf(tmpCache);
       return this;
     }
 
@@ -157,7 +156,8 @@ public class ListBoxHtmlHelper<T> {
 
   private static Template getTemplate() throws ParseException {
     if (TEMPLATE == null) {
-      TEMPLATE = Template.parse("ListBox.html");
+      TEMPLATE = Template.parseString(ListBoxHtmlHelper.class, "ListBox.html");
+      TEMPLATE.printParts(System.out);
     }
     return TEMPLATE;
   }
