@@ -1,10 +1,10 @@
 package nl.naturalis.yokete.util;
 
-import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.util.HashMap;
-import java.util.Map;
+import nl.naturalis.common.NumberMethods;
 import nl.naturalis.common.check.Check;
+import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 /**
  * Extension of {@code HashMap} with a bit of sugar coating useful when reading SQL {@link ResultSet
@@ -15,65 +15,51 @@ import nl.naturalis.common.check.Check;
  */
 public class Row extends HashMap<String, Object> {
 
-  public Row() {}
+  private static final String ERR0 = "No such key: %s";
+  private static final String ERR1 = "Key %s not convertible to %s: %s";
 
-  public Row(int initialCapacity) {
+  Row() {}
+
+  Row(int initialCapacity) {
     super(initialCapacity);
-  }
-
-  public Row(Map<? extends String, ? extends Object> m) {
-    super(m);
-  }
-
-  public Row(int initialCapacity, float loadFactor) {
-    super(initialCapacity, loadFactor);
   }
 
   @SuppressWarnings("unchecked")
   public <T> T valueOf(String key) {
-    return (T) Check.notNull(key).ok(this::get);
+    return (T) Check.that(key).is(keyIn(), this, ERR0, key).ok(this::get);
   }
 
   public String getString(String key) {
-    Object v = Check.notNull(key).ok(this::get);
+    Object v = Check.that(key).is(keyIn(), this, ERR0, key).ok(this::get);
     return v == null ? null : v.toString();
   }
 
-  public int getInt(String key) {
-    return getInt(key, 0);
+  public Integer getInt(String key) {
+    Object v = Check.that(key).is(keyIn(), this, ERR0, key).ok(this::get);
+    return v == null ? null : getNumber(key, v, Integer.class);
   }
 
-  public int getInt(String key, int defaultValue) {
-    Object v = Check.notNull(key).ok(this::get);
-    if (v == null) {
-      return defaultValue;
-    } else if (v.getClass() == Integer.class) {
-      return (Integer) get(key);
-    } else if (v instanceof Number) {
-      return ((Number) v).intValue();
-    } else if (v.getClass() == String.class) {
-      BigInteger bi = new BigInteger((String) v);
-      bi.intValueExact();
+  public Integer getInt(String key, int defaultValue) {
+    Object v = Check.that(key).is(keyIn(), this, ERR0, key).ok(this::get);
+    return v == null ? defaultValue : getNumber(key, v, Integer.class);
+  }
+
+  public Byte getByte(String key) {
+    Object v = Check.that(key).is(keyIn(), this, ERR0, key).ok(this::get);
+    return v == null ? null : getNumber(key, v, Byte.class);
+  }
+
+  public Byte getByte(String key, byte defaultValue) {
+    Object v = Check.that(key).is(keyIn(), this, ERR0, key).ok(this::get);
+    return v == null ? defaultValue : getNumber(key, v, Byte.class);
+  }
+
+  private static <T extends Number> T getNumber(String key, Object val, Class<T> targetType) {
+    if (val instanceof Number) {
+      return NumberMethods.convert((Number) val, targetType);
+    } else if (val.getClass() == String.class) {
+      return NumberMethods.parse((String) val, targetType);
     }
-    return Check.fail("Cannot convert key \"%s\" to int", key);
-  }
-
-  public int getByte(String key) {
-    return getInt(key, 0);
-  }
-
-  public int getByte(String key, int defaultValue) {
-    Object v = Check.notNull(key).ok(this::get);
-    if (v == null) {
-      return defaultValue;
-    } else if (v.getClass() == Byte.class) {
-      return (Byte) get(key);
-    } else if (v instanceof Number) {
-      return ((Number) v).intValue();
-    } else if (v.getClass() == String.class) {
-      BigInteger bi = new BigInteger((String) v);
-      bi.byteValueExact();
-    }
-    return Check.fail("Cannot convert key \"%s\" to int", key);
+    return Check.fail(ERR1, key, targetType, val);
   }
 }
