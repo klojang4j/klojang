@@ -4,20 +4,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import nl.naturalis.common.Bool;
-import nl.naturalis.common.ClassMethods;
 import nl.naturalis.common.check.Check;
 import static java.sql.Types.*;
+import static nl.naturalis.common.ClassMethods.prettyClassName;
 import static nl.naturalis.common.NumberMethods.convert;
 import static nl.naturalis.common.NumberMethods.parse;
 import static nl.naturalis.yokete.util.ResultSetGetters.*;
-import static nl.naturalis.common.ClassMethods.*;
 
 /**
- * Finds the most suitable of the ResultSet,getXXX methods for a given Java type. If no sure-fire
+ * Finds the most suitable of the ResultSet.getXXX methods for a given Java type. If no sure-fire
  * match can be found, then possibly an "adapter" function can be specified that converts the result
- * of a getXXX method to the specified Java type.
+ * of a getXXX method to the specified Java type. Therefore what actually gets negotiated is not so
+ * much a ResultSet.getXXX method per se, but a Synapse, which is a combination of a
+ * ResultSet.getXXX method and a converter function.
  */
-class RSInvokerNegotiator<T> {
+class SynapseNegotiator<T> {
 
   private static Map<Class<?>, Map<Integer, Synapse<?>>> SYNAPSE_CACHE;
 
@@ -34,9 +35,9 @@ class RSInvokerNegotiator<T> {
   private final Class<T> javaType;
   private final int sqlType;
 
-  RSInvokerNegotiator(Class<T> javaType, int sqlType) {
+  SynapseNegotiator(Class<T> javaType, int sqlType) {
     if (SYNAPSE_CACHE == null) {
-      synchronized (RSInvokerNegotiator.class) {
+      synchronized (SynapseNegotiator.class) {
         if (SYNAPSE_CACHE == null) { // Ask again
           SYNAPSE_CACHE = createSynapseCache();
         }
