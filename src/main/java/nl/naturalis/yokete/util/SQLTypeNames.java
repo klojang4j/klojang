@@ -18,7 +18,7 @@ public class SQLTypeNames {
       instance = new SQLTypeNames();
     }
     return Check.that(sqlType)
-        .is(keyIn(), instance.map, "No such type: %d", sqlType)
+        .is(keyIn(), instance.map, "No such constant in java.sql.Types: %d", sqlType)
         .ok(instance.map::get);
   }
 
