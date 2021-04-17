@@ -1,13 +1,38 @@
 package nl.naturalis.yokete.util;
 
+import java.sql.ResultSet;
+import java.util.function.Supplier;
 import nl.naturalis.common.invoke.Setter;
 
-class PropertyWriter extends ColumnReader {
+class PropertyWriter {
 
-  private final Setter<?> setter;
+  static <U> U toBean(ResultSet rs, Supplier<U> beanSupplier, PropertyWriter[] writers)
+      throws Throwable {
+    U bean = beanSupplier.get();
+    for (PropertyWriter writer : writers) {
+      Object value = writer.synapse.fire(rs, writer.jdbcIdx);
+      writer.setProperty(bean, value);
+    }
+    return bean;
+  }
 
-  PropertyWriter(int idx, String label, int type, ResultSetGetter getter, Setter<?> setter) {
-    super(idx, label, type, getter);
+  private final Synapse synapse;
+  private final Setter setter;
+  private final int jdbcIdx;
+  private final int sqlType;
+
+  PropertyWriter(Synapse synapse, Setter setter, int jdbcIdx, int sqlType) {
+    this.synapse = synapse;
     this.setter = setter;
+    this.jdbcIdx = jdbcIdx;
+    this.sqlType = sqlType;
+  }
+
+  int getSqlType() {
+    return sqlType;
+  }
+
+  private void setProperty(Object bean, Object value) throws Throwable {
+    setter.getMethod().invoke(bean, value);
   }
 }

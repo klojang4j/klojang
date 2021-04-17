@@ -19,22 +19,16 @@ import static nl.naturalis.common.check.CommonChecks.gt;
  * behaviour.
  *
  * <p>You cannot instatiate a {@code ResultSetMappifier} directly. You can obtain an instance from a
- * {@link ResultSetReaderFactory}.
+ * {@link MappifierFactory}.
  *
  * @author Ayco Holleman
  */
 public class ResultSetMappifier {
 
-  private final ColumnReader[] readers;
-  private final int mapSize;
+  private final KeyWriter[] writers;
 
-  ResultSetMappifier(ColumnReader[] infos) {
-    this(infos, infos.length);
-  }
-
-  ResultSetMappifier(ColumnReader[] infos, int mapSize) {
-    this.readers = infos;
-    this.mapSize = mapSize;
+  ResultSetMappifier(KeyWriter[] writers) {
+    this.writers = writers;
   }
 
   /**
@@ -52,11 +46,11 @@ public class ResultSetMappifier {
    */
   public boolean canMappify(ResultSet rs) throws SQLException {
     ResultSetMetaData rsmd = rs.getMetaData();
-    if (rsmd.getColumnCount() != readers.length) {
+    if (rsmd.getColumnCount() != writers.length) {
       return false;
     }
-    for (int i = 0; i < readers.length; ++i) {
-      if (readers[i].type != rsmd.getColumnType(i + 1)) {
+    for (int i = 0; i < writers.length; ++i) {
+      if (writers[i].getSqlType() != rsmd.getColumnType(i + 1)) {
         return false;
       }
     }
@@ -78,16 +72,16 @@ public class ResultSetMappifier {
     PrintStream ps = out.getClass() == PrintStream.class ? (PrintStream) out : new PrintStream(out);
     ResultSetMetaData rsmd = rs.getMetaData();
     int mismatches = 0;
-    if (rsmd.getColumnCount() != readers.length) {
+    if (rsmd.getColumnCount() != writers.length) {
       ++mismatches;
       String fmt = "Expected column count: %d. Actual column count: %d%n";
-      ps.printf(fmt, readers.length, rsmd.getColumnCount());
+      ps.printf(fmt, writers.length, rsmd.getColumnCount());
     }
-    int min = Math.min(readers.length, rsmd.getColumnCount());
+    int min = Math.min(writers.length, rsmd.getColumnCount());
     for (int i = 0; i < min; ++i) {
-      if (readers[i].type != rsmd.getColumnType(i + 1)) {
+      if (writers[i].getSqlType() != rsmd.getColumnType(i + 1)) {
         ++mismatches;
-        String expected = SQLTypeNames.getTypeName(readers[i].type);
+        String expected = SQLTypeNames.getTypeName(writers[i].getSqlType());
         String actual = SQLTypeNames.getTypeName(rsmd.getColumnType(i + 1));
         String fmt = "Colum %3d: expected type: %s; actual type: %s%n";
         ps.printf(fmt, i + 1, expected, actual);
@@ -112,7 +106,7 @@ public class ResultSetMappifier {
   public Row mappify(ResultSet rs) {
     Check.notNull(rs);
     try {
-      return ColumnReader.toMap(rs, readers, mapSize);
+      return KeyWriter.toMap(rs, writers);
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
     }
@@ -135,7 +129,7 @@ public class ResultSetMappifier {
     int i = 0;
     try {
       do {
-        all.add(ColumnReader.toMap(rs, readers, mapSize));
+        all.add(KeyWriter.toMap(rs, writers));
       } while (++i < limit && rs.next());
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
@@ -173,7 +167,7 @@ public class ResultSetMappifier {
     QueryResult all = new QueryResult(sizeEstimate);
     try {
       while (rs.next()) {
-        all.add(ColumnReader.toMap(rs, readers, mapSize));
+        all.add(KeyWriter.toMap(rs, writers));
       }
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);

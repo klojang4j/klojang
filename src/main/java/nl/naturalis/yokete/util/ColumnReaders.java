@@ -15,27 +15,27 @@ import static java.lang.invoke.MethodHandles.lookup;
 import static java.sql.Types.*;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
-class ResultSetGetters {
+class ColumnReaders {
 
-  private static ResultSetGetters INSTANCE;
+  private static ColumnReaders INSTANCE;
 
-  static ResultSetGetters getInstance() {
+  static ColumnReaders getInstance() {
     if (INSTANCE == null) {
-      INSTANCE = new ResultSetGetters();
+      INSTANCE = new ColumnReaders();
     }
     return INSTANCE;
   }
 
-  static final ResultSetGetter GET_STRING = newInvoker("getString", String.class);
-  static final ResultSetGetter GET_INT = newInvoker("getInt", int.class);
-  static final ResultSetGetter GET_SHORT = newInvoker("getShort", short.class);
-  static final ResultSetGetter GET_BYTE = newInvoker("getByte", byte.class);
-  static final ResultSetGetter GET_LONG = newInvoker("getLong", long.class);
-  static final ResultSetGetter GET_DOUBLE = newInvoker("getDouble", double.class);
-  static final ResultSetGetter GET_FLOAT = newInvoker("getFloat", float.class);
-  static final ResultSetGetter GET_BOOLEAN = newInvoker("getBoolean", boolean.class);
+  static final ColumnReader GET_STRING = newReader("getString", String.class);
+  static final ColumnReader GET_INT = newReader("getInt", int.class);
+  static final ColumnReader GET_SHORT = newReader("getShort", short.class);
+  static final ColumnReader GET_BYTE = newReader("getByte", byte.class);
+  static final ColumnReader GET_LONG = newReader("getLong", long.class);
+  static final ColumnReader GET_DOUBLE = newReader("getDouble", double.class);
+  static final ColumnReader GET_FLOAT = newReader("getFloat", float.class);
+  static final ColumnReader GET_BOOLEAN = newReader("getBoolean", boolean.class);
 
-  static ResultSetGetter newGetObjectInvoker(Class<?> returnType) {
+  static ColumnReader newGetObjectInvoker(Class<?> returnType) {
     MethodType mt = MethodType.methodType(returnType, int.class, Class.class);
     MethodHandle mh;
     try {
@@ -43,25 +43,25 @@ class ResultSetGetters {
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw ExceptionMethods.uncheck(e);
     }
-    return new ResultSetGetter(mh, returnType);
+    return new ColumnReader(mh, returnType);
   }
 
-  private final Map<Integer, ResultSetGetter> getters;
+  private final Map<Integer, ColumnReader> readers;
 
-  private ResultSetGetters() {
-    getters = createGetterCache();
+  private ColumnReaders() {
+    readers = createReaderCache();
   }
 
-  ResultSetGetter getGetter(int sqlType) {
+  ColumnReader getReader(int sqlType) {
     // This implicitly checks that the specified int is one of the
     // static final int constants in the java.sql.Types class
     String typeName = SQLTypeNames.getTypeName(sqlType);
-    Check.that(sqlType).is(keyIn(), getters, "Unsupported SQL type: %s", typeName);
-    return getters.get(sqlType);
+    Check.that(sqlType).is(keyIn(), readers, "Unsupported SQL type: %s", typeName);
+    return readers.get(sqlType);
   }
 
-  private static Map<Integer, ResultSetGetter> createGetterCache() {
-    Map<Integer, ResultSetGetter> tmp = new HashMap<>();
+  private static Map<Integer, ColumnReader> createReaderCache() {
+    Map<Integer, ColumnReader> tmp = new HashMap<>();
     tmp.put(VARCHAR, GET_STRING);
     tmp.put(LONGVARCHAR, GET_STRING);
     tmp.put(NVARCHAR, GET_STRING);
@@ -81,7 +81,7 @@ class ResultSetGetters {
     tmp.put(BOOLEAN, GET_BOOLEAN);
 
     tmp.put(TIME, newGetObjectInvoker(LocalTime.class));
-    ResultSetGetter invoker = newGetObjectInvoker(LocalDateTime.class);
+    ColumnReader invoker = newGetObjectInvoker(LocalDateTime.class);
     tmp.put(DATE, invoker);
     tmp.put(TIMESTAMP, invoker);
     tmp.put(TIMESTAMP_WITH_TIMEZONE, newGetObjectInvoker(OffsetDateTime.class));
@@ -94,7 +94,7 @@ class ResultSetGetters {
     return Map.copyOf(tmp);
   }
 
-  private static ResultSetGetter newInvoker(String methodName, Class<?> returnType) {
+  private static ColumnReader newReader(String methodName, Class<?> returnType) {
     MethodType mt = MethodType.methodType(returnType, int.class);
     MethodHandle mh;
     try {
@@ -102,6 +102,6 @@ class ResultSetGetters {
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw ExceptionMethods.uncheck(e);
     }
-    return new ResultSetGetter(mh);
+    return new ColumnReader(mh);
   }
 }

@@ -1,40 +1,31 @@
 package nl.naturalis.yokete.util;
 
-import java.sql.ResultSet;
+import java.lang.invoke.MethodHandle;
 
 class ColumnReader {
 
-  static Row toMap(ResultSet rs, ColumnReader[] infos, int mapSize) throws Throwable {
-    Row map = new Row(mapSize);
-    for (ColumnReader inf : infos) {
-      map.put(inf.label, inf.readColumn(rs));
-    }
-    return map;
+  private final MethodHandle method;
+
+  // If this is corresponds to ResultSet.getObject(int, Class), then
+  // classArgument will be the Class object passed in as the second
+  // argument to getObject. In anyother case classArgument will be
+  // null.
+  private final Class<?> classArgument;
+
+  ColumnReader(MethodHandle method) {
+    this(method, null);
   }
 
-  /* one of the constants in java.sql.Types */
-  final int type;
-
-  /* one-based column index in the SELECT clause */
-  private final int idx;
-
-  /* column name or column alias */
-  private final String label;
-
-  /* one of the getXXX methods in ResultSet */
-  private final ResultSetGetter getter;
-
-  ColumnReader(int idx, String label, int type, ResultSetGetter getter) {
-    this.idx = idx;
-    this.label = label;
-    this.type = type;
-    this.getter = getter;
+  ColumnReader(MethodHandle method, Class<?> classArgument) {
+    this.method = method;
+    this.classArgument = classArgument;
   }
 
-  Object readColumn(ResultSet rs) throws Throwable {
-    if (getter.getClassArgument() == null) {
-      return getter.getMethod().invoke(rs, idx);
-    }
-    return getter.getMethod().invoke(rs, idx, getter.getClassArgument());
+  MethodHandle getMethod() {
+    return method;
+  }
+
+  Class<?> getClassArgument() {
+    return classArgument;
   }
 }
