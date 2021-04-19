@@ -3,26 +3,28 @@ package nl.naturalis.yokete.util;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
 import static nl.naturalis.common.check.CommonChecks.gt;
-import static nl.naturalis.yokete.util.PropertyWriter.*;
+import static nl.naturalis.yokete.util.PropertyWriter.toBean;
 
 public class ResultSetBeanifier<T> {
 
-  private final Supplier<T> beanSupplier;
-  private final PropertyWriter[] writers;
+  final PropertyWriter[] writers;
 
-  ResultSetBeanifier(Supplier<T> beanSupplier, PropertyWriter[] writers) {
+  private final Supplier<T> beanSupplier;
+
+  ResultSetBeanifier(PropertyWriter[] writers, Supplier<T> beanSupplier) {
     this.beanSupplier = beanSupplier;
     this.writers = writers;
   }
 
-  public T beanify(ResultSet rs) {
+  public Optional<T> beanify(ResultSet rs) {
     Check.notNull(rs);
     try {
-      return toBean(rs, beanSupplier, writers);
+      return Optional.of(toBean(rs, beanSupplier, writers));
     } catch (Throwable e) {
       throw ExceptionMethods.uncheck(e);
     }

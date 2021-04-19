@@ -3,9 +3,11 @@ package nl.naturalis.yokete.util;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.ResultSet;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,10 +35,14 @@ class ColumnReaders {
   static final ColumnReader GET_LONG = newReader("getLong", long.class);
   static final ColumnReader GET_DOUBLE = newReader("getDouble", double.class);
   static final ColumnReader GET_FLOAT = newReader("getFloat", float.class);
+  static final ColumnReader GET_BIG_DECIMAL = newReader("getBigDecimal", BigDecimal.class);
   static final ColumnReader GET_BOOLEAN = newReader("getBoolean", boolean.class);
+  static final ColumnReader GET_DATE = newReader("getDate", Date.class);
+  static final ColumnReader GET_TIME = newReader("getTime", Time.class);
+  static final ColumnReader GET_TIMESTAMP = newReader("getTimestamp", Timestamp.class);
 
   static ColumnReader newGetObjectInvoker(Class<?> returnType) {
-    MethodType mt = MethodType.methodType(returnType, int.class, Class.class);
+    MethodType mt = MethodType.methodType(Object.class, int.class, Class.class);
     MethodHandle mh;
     try {
       mh = lookup().findVirtual(ResultSet.class, "getObject", mt);
@@ -80,15 +86,14 @@ class ColumnReaders {
 
     tmp.put(BOOLEAN, GET_BOOLEAN);
 
-    tmp.put(TIME, newGetObjectInvoker(LocalTime.class));
-    ColumnReader invoker = newGetObjectInvoker(LocalDateTime.class);
-    tmp.put(DATE, invoker);
-    tmp.put(TIMESTAMP, invoker);
+    tmp.put(DATE, GET_DATE);
+    tmp.put(TIME, GET_TIME);
+
+    tmp.put(TIMESTAMP, newGetObjectInvoker(LocalDateTime.class));
     tmp.put(TIMESTAMP_WITH_TIMEZONE, newGetObjectInvoker(OffsetDateTime.class));
 
-    invoker = newGetObjectInvoker(BigDecimal.class);
-    tmp.put(NUMERIC, invoker);
-    tmp.put(DECIMAL, invoker);
+    tmp.put(NUMERIC, GET_BIG_DECIMAL);
+    tmp.put(DECIMAL, GET_BIG_DECIMAL);
 
     tmp.put(ARRAY, newGetObjectInvoker(Object[].class));
     return Map.copyOf(tmp);

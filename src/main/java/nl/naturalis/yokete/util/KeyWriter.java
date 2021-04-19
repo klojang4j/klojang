@@ -1,15 +1,18 @@
 package nl.naturalis.yokete.util;
 
 import java.sql.ResultSet;
+import java.util.Map;
+import static java.util.Map.Entry;
 
-class KeyWriter {
+class KeyWriter implements Writer {
 
-  static Row toMap(ResultSet rs, KeyWriter[] writers) throws Throwable {
-    Row map = new Row(writers.length);
-    for (KeyWriter writer : writers) {
-      map.put(writer.mapKey, writer.readColumn(rs));
+  static Row toRow(ResultSet rs, KeyWriter[] writers) throws Throwable {
+    @SuppressWarnings("unchecked")
+    Entry<String, Object>[] entries = new Entry[writers.length];
+    for (int i = 0; i < writers.length; ++i) {
+      entries[i] = Map.entry(writers[i].mapKey, writers[i].readColumn(rs));
     }
-    return map;
+    return new Row(Map.ofEntries(entries));
   }
 
   private final ColumnReader getter;
@@ -24,14 +27,18 @@ class KeyWriter {
     this.mapKey = mapKey;
   }
 
-  int getSqlType() {
+  @Override
+  public int getSqlType() {
     return sqlType;
   }
 
   private Object readColumn(ResultSet rs) throws Throwable {
+    Object v;
     if (getter.getClassArgument() == null) {
-      return getter.getMethod().invoke(rs, jdbcIdx);
+      v = getter.getMethod().invoke(rs, jdbcIdx);
+    } else {
+      v = getter.getMethod().invoke(rs, jdbcIdx, getter.getClassArgument());
     }
-    return getter.getMethod().invoke(rs, jdbcIdx, getter.getClassArgument());
+    return rs.wasNull() ? null : v;
   }
 }

@@ -3,7 +3,7 @@ package nl.naturalis.yokete.template;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.*;
-import nl.naturalis.common.CollectionMethods;
+import nl.naturalis.common.StringMethods;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
@@ -364,7 +364,7 @@ public class Template {
    */
   @Override
   public String toString() {
-    return CollectionMethods.implode(parts, "");
+    return StringMethods.implode(parts, "");
   }
 
   /**

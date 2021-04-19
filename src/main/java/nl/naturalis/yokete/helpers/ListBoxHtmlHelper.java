@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.YoketeRuntimeException;
-import nl.naturalis.yokete.accessors.MapAccessor;
+import nl.naturalis.yokete.accessors.RowAccessor;
 import nl.naturalis.yokete.render.*;
 import nl.naturalis.yokete.template.ParseException;
 import nl.naturalis.yokete.template.Template;
@@ -40,7 +40,7 @@ public class ListBoxHtmlHelper<T> {
 
     private final Map<String, ListBoxHtmlHelper<?>> tmpCache;
 
-    private Accessor<?> accessor = new MapAccessor();
+    private Accessor<?> accessor = new RowAccessor();
     private String initOption = NOT_SET;
     private String initVal = NOT_SET;
 

@@ -4,7 +4,7 @@ import java.sql.ResultSet;
 import java.util.function.Supplier;
 import nl.naturalis.common.invoke.Setter;
 
-class PropertyWriter {
+class PropertyWriter implements Writer {
 
   static <U> U toBean(ResultSet rs, Supplier<U> beanSupplier, PropertyWriter[] writers)
       throws Throwable {
@@ -28,7 +28,8 @@ class PropertyWriter {
     this.sqlType = sqlType;
   }
 
-  int getSqlType() {
+  @Override
+  public int getSqlType() {
     return sqlType;
   }
 
