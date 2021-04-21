@@ -104,9 +104,9 @@ public class ResultSetMappifier {
     Check.that(sizeEstimate, "sizeEstimate").is(gt(), 0);
     List<Row> all = new ArrayList<>(sizeEstimate);
     try {
-      while (rs.next()) {
+      do {
         all.add(KeyWriter.toRow(rs, writers));
-      }
+      } while (rs.next());
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
     }

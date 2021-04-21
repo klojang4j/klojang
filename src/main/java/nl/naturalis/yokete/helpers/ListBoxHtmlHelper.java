@@ -26,13 +26,11 @@ public class ListBoxHtmlHelper<T> {
       "No ListBoxHtmlHelper instances available. Did you close the Factory?";
   private static final String NOT_SET = new String();
 
-  // While a Factory is alive we lock the entire ListBoxHtmlHelper class
+  // While a Factory is alive we lock the entire ListBoxHtmlHelper *class*
   // so all threads always see the same ListBoxHtmlHelper instances.
   private static final ReentrantLock LOCK = new ReentrantLock();
 
   private static Map<String, ListBoxHtmlHelper<?>> CACHE;
-
-  private static Template TEMPLATE;
 
   /* ++++++++++++++++++++[ BEGIN FACTORY CLASS ]+++++++++++++++++ */
 
@@ -40,7 +38,7 @@ public class ListBoxHtmlHelper<T> {
 
     private final Map<String, ListBoxHtmlHelper<?>> tmpCache;
 
-    private Accessor<?> accessor = new RowAccessor();
+    private Accessor<?> defAccessor = new RowAccessor();
     private String initOption = NOT_SET;
     private String initVal = NOT_SET;
 
@@ -49,8 +47,8 @@ public class ListBoxHtmlHelper<T> {
       CACHE = null;
     }
 
-    public Factory setAccessor(Accessor<?> accessor) {
-      this.accessor = Check.notNull(accessor).ok();
+    public Factory setDefaultAccessor(Accessor<?> accessor) {
+      this.defAccessor = Check.notNull(accessor).ok();
       return this;
     }
 
@@ -68,15 +66,19 @@ public class ListBoxHtmlHelper<T> {
       return addHelper(name, name, dataSupplier);
     }
 
+    @SuppressWarnings("unchecked")
     public <U> Factory addHelper(String key, String name, Supplier<List<U>> dataSupplier) {
+      return addHelper(key, name, dataSupplier, (Accessor<U>) defAccessor);
+    }
+
+    public <U> Factory addHelper(
+        String key, String name, Supplier<List<U>> dataSupplier, Accessor<U> dataAccessor) {
       Check.that(key, "key").is(notNull()).isNot(keyIn(), tmpCache, ERR_DUP_KEY, key);
       Check.notNull(name, "name");
       Check.notNull(dataSupplier, "dataSupplier");
-      @SuppressWarnings("unchecked")
-      ListBoxHtmlHelper<U> helper =
-          new ListBoxHtmlHelper<>(
-              key, name, dataSupplier, (Accessor<U>) accessor, initOption, initVal);
-      tmpCache.put(key, helper);
+      Check.notNull(dataAccessor, "dataAccessor");
+      tmpCache.put(
+          key, new ListBoxHtmlHelper<>(key, name, dataSupplier, dataAccessor, initOption, initVal));
       return this;
     }
 
@@ -154,11 +156,12 @@ public class ListBoxHtmlHelper<T> {
     }
   }
 
+  private static Template listBoxTemplate;
+
   private static Template getTemplate() throws ParseException {
-    if (TEMPLATE == null) {
-      TEMPLATE = Template.parseResource(ListBoxHtmlHelper.class, "ListBox.html");
-      // TEMPLATE.printParts(System.out);
+    if (listBoxTemplate == null) {
+      listBoxTemplate = Template.parseResource(ListBoxHtmlHelper.class, "ListBox.html");
     }
-    return TEMPLATE;
+    return listBoxTemplate;
   }
 }

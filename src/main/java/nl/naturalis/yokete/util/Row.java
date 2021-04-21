@@ -9,7 +9,7 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 public class Row {
 
-  private static final String ERR0 = "No such column: %s";
+  private static final String ERR0 = "Column not present in ResultSet: \"%s\"";
   private static final String ERR1 = "Column %s not convertible to %s: %s";
 
   private final Map<String, Object> data;
@@ -24,6 +24,10 @@ public class Row {
 
   public boolean hasColumn(String colName) {
     return data.keySet().contains(colName);
+  }
+
+  public Map<String, Object> asMap() {
+    return data;
   }
 
   @SuppressWarnings("unchecked")
