@@ -9,16 +9,17 @@ import java.util.function.Function;
  * name).
  *
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 class Synapse {
 
   private final ColumnReader reader;
-  private final Function<Object, Object> adapter;
+  private final Function adapter;
 
   Synapse(ColumnReader getter) {
     this(getter, Function.identity());
   }
 
-  Synapse(ColumnReader getter, Function<Object, Object> adapter) {
+  Synapse(ColumnReader getter, Function adapter) {
     this.reader = getter;
     this.adapter = adapter;
   }

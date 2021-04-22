@@ -3,7 +3,6 @@ package nl.naturalis.yokete.render;
 import java.util.List;
 import java.util.function.Function;
 import nl.naturalis.yokete.YoketeException;
-import nl.naturalis.yokete.accessors.TupleAccessor;
 import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.TemplateUtils;
 import static java.lang.String.format;
@@ -137,8 +136,9 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#fillTupleTemplate(String, Object) RenderSession.fillTwo} for a
-   * nested template that does not contain exactly two variables and zero doubly-nested templates.
+   * Thrown if you call {@link RenderSession#fillTupleTemplate(String, Object)
+   * RenderSession.fillTwo} for a nested template that does not contain exactly two variables and
+   * zero doubly-nested templates.
    */
   public static Function<String, RenderException> noTupleTemplate(Template t) {
     String fqn = TemplateUtils.getFQName(t);
@@ -177,14 +177,9 @@ public class RenderException extends YoketeException {
     return s -> new RenderException(format(fmt, fqn));
   }
 
-  /** Thrown if you call the {@code access} method of a {@link TupleAccessor} more than twice. */
-  public static RenderException pairObjectExhausted() {
-    return new RenderException("No more values in Pair object");
-  }
-
   /** Generic error condition, usually akin to an {@link IllegalArgumentException}. */
-  public static Function<String, RenderException> invalidValue(String name, Object value) {
-    String fmt = "Invalid value for \"%s\": %s";
+  public static Function<String, RenderException> illegalValue(String name, Object value) {
+    String fmt = "Illegal value for \"%s\": %s";
     return s -> new RenderException(format(fmt, name, value));
   }
 

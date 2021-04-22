@@ -3,6 +3,7 @@ package nl.naturalis.yokete.render;
 import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import nl.naturalis.common.Tuple;
@@ -10,11 +11,11 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.yokete.accessors.BypassAccessor;
 import nl.naturalis.yokete.accessors.SelfAccessor;
-import nl.naturalis.yokete.accessors.TupleAccessor;
 import nl.naturalis.yokete.template.Part;
 import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.TemplateUtils;
 import nl.naturalis.yokete.template.VariablePart;
+import static java.util.stream.Collectors.toList;
 import static nl.naturalis.common.ArrayMethods.EMPTY_STRING_ARRAY;
 import static nl.naturalis.common.CollectionMethods.asUnsafeList;
 import static nl.naturalis.common.ObjectMethods.isEmpty;
@@ -163,9 +164,9 @@ public class RenderSession {
       String suffix)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    Check.on(invalidValue("varName", varName), varName).is(notNull());
-    Check.on(invalidValue("values", values), values).is(notNull());
-    Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
+    Check.on(illegalValue("varName", varName), varName).is(notNull());
+    Check.on(illegalValue("values", values), values).is(notNull());
+    Check.on(illegalValue("escapeType", escapeType), escapeType).is(notNull());
     Check.on(badEscapeType(), escapeType).isNot(sameAs(), NOT_SPECIFIED);
     Template t = page.getTemplate();
     Check.on(noSuchVariable(t, varName), varName).is(in(), t.getVars());
@@ -227,7 +228,7 @@ public class RenderSession {
   /**
    * Sets the specified variable to the entire output of the specified {@code Renderable}. This
    * allows you to create and populate a template for an HTML snippet once, and then repeatedly (for
-   * every render session of the current template) "paste" its output into the current template. See
+   * each render session of the current template) "paste" its output into the current template. See
    * {@link #createRenderable()}.
    *
    * @param varName The template variable to set
@@ -235,10 +236,10 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession addRenderable(String varName, Renderable renderable) throws RenderException {
+  public RenderSession paste(String varName, Renderable renderable) throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    Check.on(invalidValue("varName", varName), varName).is(notNull());
-    Check.on(invalidValue("renderable", renderable), renderable).is(notNull());
+    Check.on(illegalValue("varName", varName), varName).is(notNull());
+    Check.on(illegalValue("renderable", renderable), renderable).is(notNull());
     Template t = page.getTemplate();
     Check.on(noSuchVariable(t, varName), varName).is(in(), t.getVars());
     Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
@@ -303,7 +304,7 @@ public class RenderSession {
       String nestedTemplateName, Object sourceData, EscapeType escapeType, String... names)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    Check.on(invalidValue("escapeType", escapeType), escapeType).is(notNull());
+    Check.on(illegalValue("escapeType", escapeType), escapeType).is(notNull());
     Check.on(badEscapeType(), escapeType).isNot(sameAs(), NOT_SPECIFIED);
     Template t = getNestedTemplate(nestedTemplateName);
     List<?> data = asUnsafeList(sourceData);
@@ -352,7 +353,7 @@ public class RenderSession {
    */
   public RenderSession show(String nestedTemplateName, int repeats) throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    Check.on(invalidValue("repeats", repeats), repeats).is(gte(), 0);
+    Check.on(illegalValue("repeats", repeats), repeats).is(gte(), 0);
     Template t = getNestedTemplate(nestedTemplateName);
     Check.on(noTextOnly(t), t.isTextOnly()).is(yes());
     return show(t, repeats);
@@ -424,12 +425,12 @@ public class RenderSession {
   }
 
   /**
-   * Convenience method for populating a nested template that contains exactly two variables and
-   * zero doubly-nested templates. Could be used, for example, to populate <code>&lt;select&gt;
-   * </code> boxes with <code>&lt;option&gt;</code> elements and their {@code value} attribute. This
-   * method bypasses the session's {@code Accessor} and uses a {@link TupleAccessor} instead. The
-   * values in the specified {@link Tuple} instances <i>must</i> be in the same order as the
-   * encounter order of the two variables within the template.
+   * Convenience method for populating a nested template that contains exactly two variables. The
+   * template must not containing any doubly-nested templates, but the variables may occur multiple
+   * times within the template. The values in the specified {@link Tuple} instances <i>must</i> be
+   * in the same order as the encounter order of the two variables within the template. This method
+   * could be used, for example, to populate <code>&lt;select&gt;
+   * </code> elements with <code>&lt;option&gt;</code> elements and their {@code value} attribute.
    *
    * @param nestedTemplateName The name of the nested template.
    * @param tuples A list of value pairs.
@@ -442,15 +443,21 @@ public class RenderSession {
       String nestedTemplateName, List<Tuple<T, U>> tuples, EscapeType escapeType)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    Check.on(invalidValue("tuples", tuples), tuples).is(neverNull());
+    Check.on(illegalValue("tuples", tuples), tuples).is(neverNull());
     Template t = getNestedTemplate(nestedTemplateName);
     Check.on(noTupleTemplate(t), t)
         .has(tmpl -> tmpl.getVars().size(), eq(), 2)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
+    String[] vars = t.getVars().toArray(new String[2]);
+    List<Map<String, Object>> data =
+        tuples
+            .stream()
+            .map(tuple -> Map.of(vars[0], tuple.getLeft(), vars[1], tuple.getRight()))
+            .collect(toList());
     RenderSession[] sessions =
-        state.getOrCreateChildSessions(t, new TupleAccessor(), tuples.size());
+        state.getOrCreateChildSessions(t, new MapAccessorInternal(), data.size());
     for (int i = 0; i < sessions.length; ++i) {
-      sessions[i].add(tuples.get(i), escapeType);
+      sessions[i].add(data.get(i), escapeType);
     }
     return this;
   }
@@ -486,8 +493,8 @@ public class RenderSession {
    * This again allows you to call this method multiple times with <i>different</i> source data,
    * until the template is fully populated.
    *
-   * @param sourceData An object that provides data for all or some of the template variables and nested
-   *     templates
+   * @param sourceData An object that provides data for all or some of the template variables and
+   *     nested templates
    * @param escapeType The escape type to use
    * @param names The names of the variables nested templates names that must be populated. Not
    *     specifying any name (or {@code null}) indicates that you want all variables and nested
@@ -671,7 +678,7 @@ public class RenderSession {
 
   /**
    * Returns a {@code Renderable} instance with which you render the current template. See {@link
-   * #addRenderable(String, Renderable)}.
+   * #paste(String, Renderable)}.
    *
    * @return A {@code Renderable} instance with which you render the current template
    */
@@ -715,7 +722,7 @@ public class RenderSession {
   }
 
   private Template getNestedTemplate(String name) throws RenderException {
-    Check.on(invalidValue("nestedTemplateName", name), name).is(notNull());
+    Check.on(illegalValue("nestedTemplateName", name), name).is(notNull());
     Check.on(noSuchTemplate(page.getTemplate(), name), name).is(validTemplateName());
     return page.getTemplate().getNestedTemplate(name);
   }

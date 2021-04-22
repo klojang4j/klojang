@@ -1,6 +1,9 @@
 package nl.naturalis.yokete.util;
 
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -70,6 +73,8 @@ class SynapseNegotiator {
     tmp.put(boolean.class, createToBooleanSynapses());
     tmp.put(Byte.class, createToByteSynapses());
     tmp.put(byte.class, createToByteSynapses());
+    tmp.put(LocalDateTime.class, createLocalDateTimeSynapses());
+    tmp.put(LocalDate.class, createLocalDateSynapses());
     // TODO: Add more ...
     return Map.copyOf(tmp);
   }
@@ -163,6 +168,25 @@ class SynapseNegotiator {
     synapse = new Synapse(GET_STRING, Bool::from);
     tmp.put(DEFAULT_SYNAPSE_ENTRY, synapse);
 
+    return Map.copyOf(tmp);
+  }
+
+  private static Function<Date, LocalDate> SQLDATE_TO_LOCALDATE = d -> d.toLocalDate();
+
+  private static Map<Integer, Synapse> createLocalDateSynapses() {
+    Map<Integer, Synapse> tmp = new HashMap<>();
+    tmp.put(DATE, new Synapse(GET_DATE, SQLDATE_TO_LOCALDATE));
+    // TODO: GET_TIMESTAMP, GET_LONG
+    return Map.copyOf(tmp);
+  }
+
+  private static Function<Date, LocalDateTime> SQLDATE_TO_LOCALDATETIME =
+      d -> d.toLocalDate().atStartOfDay();
+
+  private static Map<Integer, Synapse> createLocalDateTimeSynapses() {
+    Map<Integer, Synapse> tmp = new HashMap<>();
+    tmp.put(DATE, new Synapse(GET_DATE, SQLDATE_TO_LOCALDATETIME));
+    // TODO: GET_TIMESTAMP, GET_LONG
     return Map.copyOf(tmp);
   }
 }
