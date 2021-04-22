@@ -189,4 +189,18 @@ class SynapseNegotiator {
     // TODO: GET_TIMESTAMP, GET_LONG
     return Map.copyOf(tmp);
   }
+
+  private static Function<Byte, Enum<?>> BYTE_TO_ENUM = b -> Enum.class.getEnumConstants()[b];
+  private static Function<Short, Enum<?>> SHORT_TO_ENUM = s -> Enum.class.getEnumConstants()[s];
+  private static Function<Integer, Enum<?>> INT_TO_ENUM = i -> Enum.class.getEnumConstants()[i];
+  private static Function<String, Enum<?>> STRING_TO_ENUM =
+      s -> {
+        return null;
+      };
+
+  private static Map<Integer, Synapse> createEnumSynapses() {
+    Map<Integer, Synapse> tmp = new HashMap<>();
+    // tmp.put(GET_BYTE, value)
+    return Map.copyOf(tmp);
+  }
 }
