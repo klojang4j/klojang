@@ -28,46 +28,48 @@ class ColumnReaders {
     return INSTANCE;
   }
 
-  static final ColumnReader GET_STRING = newReader("getString", String.class);
-  static final ColumnReader GET_INT = newReader("getInt", int.class);
-  static final ColumnReader GET_SHORT = newReader("getShort", short.class);
-  static final ColumnReader GET_BYTE = newReader("getByte", byte.class);
-  static final ColumnReader GET_LONG = newReader("getLong", long.class);
-  static final ColumnReader GET_DOUBLE = newReader("getDouble", double.class);
-  static final ColumnReader GET_FLOAT = newReader("getFloat", float.class);
-  static final ColumnReader GET_BIG_DECIMAL = newReader("getBigDecimal", BigDecimal.class);
-  static final ColumnReader GET_BOOLEAN = newReader("getBoolean", boolean.class);
-  static final ColumnReader GET_DATE = newReader("getDate", Date.class);
-  static final ColumnReader GET_TIME = newReader("getTime", Time.class);
-  static final ColumnReader GET_TIMESTAMP = newReader("getTimestamp", Timestamp.class);
+  static final ColumnReader<String> GET_STRING = newReader("getString", String.class);
+  static final ColumnReader<Integer> GET_INT = newReader("getInt", int.class);
+  static final ColumnReader<Short> GET_SHORT = newReader("getShort", short.class);
+  static final ColumnReader<Byte> GET_BYTE = newReader("getByte", byte.class);
+  static final ColumnReader<Long> GET_LONG = newReader("getLong", long.class);
+  static final ColumnReader<Double> GET_DOUBLE = newReader("getDouble", double.class);
+  static final ColumnReader<Float> GET_FLOAT = newReader("getFloat", float.class);
+  static final ColumnReader<BigDecimal> GET_BIG_DECIMAL =
+      newReader("getBigDecimal", BigDecimal.class);
+  static final ColumnReader<Boolean> GET_BOOLEAN = newReader("getBoolean", boolean.class);
+  static final ColumnReader<Date> GET_DATE = newReader("getDate", Date.class);
+  static final ColumnReader<Time> GET_TIME = newReader("getTime", Time.class);
+  static final ColumnReader<Timestamp> GET_TIMESTAMP = newReader("getTimestamp", Timestamp.class);
 
-  static ColumnReader newGetObjectInvoker(Class<?> returnType) {
-    MethodType mt = MethodType.methodType(Object.class, int.class, Class.class);
+  static <T> ColumnReader<T> newGetObjectInvoker(Class<T> returnType) {
+    MethodType mt = MethodType.methodType(returnType, int.class, Class.class);
     MethodHandle mh;
     try {
       mh = lookup().findVirtual(ResultSet.class, "getObject", mt);
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw ExceptionMethods.uncheck(e);
     }
-    return new ColumnReader(mh, returnType);
+    return new ColumnReader<>(mh, returnType);
   }
 
-  private final Map<Integer, ColumnReader> readers;
+  private final Map<Integer, ColumnReader<?>> readers;
 
   private ColumnReaders() {
     readers = createReaderCache();
   }
 
-  ColumnReader getReader(int sqlType) {
+  @SuppressWarnings("unchecked")
+  <T> ColumnReader<T> getReader(int sqlType) {
     // This implicitly checks that the specified int is one of the
     // static final int constants in the java.sql.Types class
     String typeName = SQLTypeNames.getTypeName(sqlType);
     Check.that(sqlType).is(keyIn(), readers, "Unsupported SQL type: %s", typeName);
-    return readers.get(sqlType);
+    return (ColumnReader<T>) readers.get(sqlType);
   }
 
-  private static Map<Integer, ColumnReader> createReaderCache() {
-    Map<Integer, ColumnReader> tmp = new HashMap<>();
+  private static Map<Integer, ColumnReader<?>> createReaderCache() {
+    Map<Integer, ColumnReader<?>> tmp = new HashMap<>();
     tmp.put(VARCHAR, GET_STRING);
     tmp.put(LONGVARCHAR, GET_STRING);
     tmp.put(NVARCHAR, GET_STRING);
@@ -99,7 +101,7 @@ class ColumnReaders {
     return Map.copyOf(tmp);
   }
 
-  private static ColumnReader newReader(String methodName, Class<?> returnType) {
+  private static <T> ColumnReader<T> newReader(String methodName, Class<T> returnType) {
     MethodType mt = MethodType.methodType(returnType, int.class);
     MethodHandle mh;
     try {
@@ -107,6 +109,6 @@ class ColumnReaders {
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw ExceptionMethods.uncheck(e);
     }
-    return new ColumnReader(mh);
+    return new ColumnReader<>(mh);
   }
 }

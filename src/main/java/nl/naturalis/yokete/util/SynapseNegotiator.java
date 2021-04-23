@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.function.Function;
 import nl.naturalis.common.Bool;
 import nl.naturalis.common.check.Check;
+import nl.naturalis.common.collection.UnmodifiableTypeMap;
 import static java.sql.Types.*;
 import static nl.naturalis.common.ClassMethods.prettyClassName;
 import static nl.naturalis.common.NumberMethods.convert;
@@ -26,7 +27,7 @@ class SynapseNegotiator {
 
   private static SynapseNegotiator INSTANCE;
 
-  public static SynapseNegotiator getInstance() {
+  static SynapseNegotiator getInstance() {
     if (INSTANCE == null) {
       INSTANCE = new SynapseNegotiator();
     }
@@ -34,173 +35,57 @@ class SynapseNegotiator {
   }
 
   /*
-   * The entry within the nested map within the SYNAPSE_CACHE that points to the Synapse to use for
-   * a Java type if the nested map does not contain an entry for the specified SQL type. Make sure
-   * DEFAULT does not correspond to any of the constants in the java.sql.Types class. If there is no
-   * reasonable default, you don't need to specify one.
+   * The entry within the nested maps of the SYNAPSE_CACHE that points to the Synapse to use for a
+   * Java type if the nested map does not contain a specific synapse for the requested SQL type.
+   * Make sure DEFAULT does not correspond to any of the (int) constants in the java.sql.Types
+   * class. If there is no reasonable default, you don't need to specify one.
    */
-  private static final Integer DEFAULT_SYNAPSE_ENTRY = Integer.MIN_VALUE;
-  private static final ColumnReader BIG_DECIMAL_GETTER = newGetObjectInvoker(BigDecimal.class);
+  static final Integer DEFAULT_ENTRY = Integer.MIN_VALUE;
 
-  private final Map<Class<?>, Map<Integer, Synapse>> synapseCache;
+  private final Map<Class<?>, Map<Integer, Synapse<?, ?>>> synapseCache;
 
   private SynapseNegotiator() {
     synapseCache = createSynapseCache();
   }
 
-  Synapse getSynapse(Class<?> javaType, int sqlType) {
+  @SuppressWarnings("unchecked")
+  <T, R> Synapse<T, R> getSynapse(Class<R> javaType, int sqlType) {
     if (!synapseCache.containsKey(javaType)) {
       return Check.fail("Type not supported: %s", prettyClassName(javaType));
     }
-    Map<Integer, Synapse> synapses = synapseCache.get(javaType);
+    Map<Integer, Synapse<?, ?>> synapses = synapseCache.get(javaType);
     if (!synapses.containsKey(sqlType)) {
-      if (synapses.containsKey(DEFAULT_SYNAPSE_ENTRY)) {
-        return synapses.get(DEFAULT_SYNAPSE_ENTRY);
+      if (synapses.containsKey(DEFAULT_ENTRY)) {
+        return (Synapse<T, R>) synapses.get(DEFAULT_ENTRY);
       }
       String s0 = SQLTypeNames.getTypeName(sqlType);
       String s1 = prettyClassName(javaType);
       return Check.fail("Cannot convert %s to %s", s0, s1);
     }
-    return synapses.get(sqlType);
+    return (Synapse<T, R>) synapses.get(sqlType);
   }
 
-  private static Map<Class<?>, Map<Integer, Synapse>> createSynapseCache() {
-    Map<Class<?>, Map<Integer, Synapse>> tmp = new HashMap<>();
-    tmp.put(String.class, createToStringSynapses());
-    tmp.put(Integer.class, createToIntSynapses());
-    tmp.put(int.class, createToIntSynapses());
-    tmp.put(Boolean.class, createToBooleanSynapses());
-    tmp.put(boolean.class, createToBooleanSynapses());
-    tmp.put(Byte.class, createToByteSynapses());
-    tmp.put(byte.class, createToByteSynapses());
-    tmp.put(LocalDateTime.class, createLocalDateTimeSynapses());
-    tmp.put(LocalDate.class, createLocalDateSynapses());
-    // TODO: Add more ...
-    return Map.copyOf(tmp);
-  }
+  private static Map<Class<?>, Map<Integer, Synapse<?, ?>>> createSynapseCache() {
 
-  private static Map<Integer, Synapse> createToStringSynapses() {
-    // If the Java type is String.class we always call ResultSet.getString()
-    // no matter the actual SQL type of the column we are reading.
-    return Map.of(DEFAULT_SYNAPSE_ENTRY, new Synapse(GET_STRING));
-  }
+    Map<Class<?>, Map<Integer, Synapse<?, ?>>> tmp = new HashMap<>();
 
-  private static Map<Integer, Synapse> createToIntSynapses() {
-    Map<Integer, Synapse> tmp = new HashMap<>();
+    tmp.put(String.class, ToStringSynapses.get());
 
-    Synapse synapse = new Synapse(GET_INT);
-    tmp.put(INTEGER, synapse);
-    tmp.put(SMALLINT, synapse);
-    tmp.put(TINYINT, synapse);
-    tmp.put(BIT, synapse);
+    Map<Integer, Synapse<?, ?>> synapses = ToIntSynapses.get();
+    tmp.put(Integer.class, synapses);
+    tmp.put(int.class, synapses);
 
-    Function<Object, Object> adapter = obj -> convert((Number) obj, Integer.class);
+    synapses = ToByteSynapses.get();
+    tmp.put(Byte.class, synapses);
+    tmp.put(byte.class, synapses);
 
-    tmp.put(FLOAT, new Synapse(GET_FLOAT, adapter));
+    synapses = ToBooleanSynapses.get();
+    tmp.put(Boolean.class, synapses);
+    tmp.put(boolean.class, synapses);
 
-    synapse = new Synapse(GET_LONG, adapter);
-    tmp.put(BIGINT, synapse);
-    tmp.put(TIMESTAMP, synapse);
+    tmp.put(LocalDate.class, ToLocalDateSynapses.get());
+    tmp.put(LocalDateTime.class, ToLocalDateTimeSynapses.get());
 
-    synapse = new Synapse(GET_DOUBLE, adapter);
-    tmp.put(DOUBLE, synapse);
-    tmp.put(REAL, synapse);
-
-    synapse = new Synapse(BIG_DECIMAL_GETTER, adapter);
-    tmp.put(NUMERIC, synapse);
-    tmp.put(DECIMAL, synapse);
-
-    synapse = new Synapse(GET_STRING, obj -> parse((String) obj, Integer.class));
-    tmp.put(DEFAULT_SYNAPSE_ENTRY, synapse);
-
-    return Map.copyOf(tmp);
-  }
-
-  private static Map<Integer, Synapse> createToByteSynapses() {
-    Map<Integer, Synapse> tmp = new HashMap<>();
-
-    Synapse synapse = new Synapse(GET_BYTE);
-    tmp.put(TINYINT, synapse);
-    tmp.put(BIT, synapse);
-
-    Function<Object, Object> adapter = obj -> convert((Number) obj, Byte.class);
-    synapse = new Synapse(GET_INT, adapter);
-    tmp.put(INTEGER, synapse);
-    tmp.put(SMALLINT, synapse);
-
-    tmp.put(FLOAT, new Synapse(GET_FLOAT, adapter));
-    tmp.put(BIGINT, new Synapse(GET_LONG, adapter));
-
-    synapse = new Synapse(GET_DOUBLE, adapter);
-    tmp.put(DOUBLE, synapse);
-    tmp.put(REAL, synapse);
-
-    synapse = new Synapse(BIG_DECIMAL_GETTER, adapter);
-    tmp.put(NUMERIC, synapse);
-    tmp.put(DECIMAL, synapse);
-
-    synapse = new Synapse(GET_STRING, obj -> parse((String) obj, Byte.class));
-    return Map.copyOf(tmp);
-  }
-
-  private static Map<Integer, Synapse> createToBooleanSynapses() {
-    Map<Integer, Synapse> tmp = new HashMap<>();
-
-    tmp.put(BOOLEAN, new Synapse(GET_BOOLEAN));
-
-    Synapse synapse = new Synapse(GET_INT, Bool::from);
-    tmp.put(INTEGER, synapse);
-    tmp.put(SMALLINT, synapse);
-    tmp.put(TINYINT, synapse);
-    tmp.put(BIT, synapse);
-
-    tmp.put(FLOAT, new Synapse(GET_FLOAT, Bool::from));
-    tmp.put(BIGINT, new Synapse(GET_LONG, Bool::from));
-
-    synapse = new Synapse(GET_DOUBLE, Bool::from);
-    tmp.put(DOUBLE, synapse);
-    tmp.put(REAL, synapse);
-
-    synapse = new Synapse(BIG_DECIMAL_GETTER, Bool::from);
-    tmp.put(NUMERIC, synapse);
-    tmp.put(DECIMAL, synapse);
-
-    synapse = new Synapse(GET_STRING, Bool::from);
-    tmp.put(DEFAULT_SYNAPSE_ENTRY, synapse);
-
-    return Map.copyOf(tmp);
-  }
-
-  private static Function<Date, LocalDate> SQLDATE_TO_LOCALDATE = d -> d.toLocalDate();
-
-  private static Map<Integer, Synapse> createLocalDateSynapses() {
-    Map<Integer, Synapse> tmp = new HashMap<>();
-    tmp.put(DATE, new Synapse(GET_DATE, SQLDATE_TO_LOCALDATE));
-    // TODO: GET_TIMESTAMP, GET_LONG
-    return Map.copyOf(tmp);
-  }
-
-  private static Function<Date, LocalDateTime> SQLDATE_TO_LOCALDATETIME =
-      d -> d.toLocalDate().atStartOfDay();
-
-  private static Map<Integer, Synapse> createLocalDateTimeSynapses() {
-    Map<Integer, Synapse> tmp = new HashMap<>();
-    tmp.put(DATE, new Synapse(GET_DATE, SQLDATE_TO_LOCALDATETIME));
-    // TODO: GET_TIMESTAMP, GET_LONG
-    return Map.copyOf(tmp);
-  }
-
-  private static Function<Byte, Enum<?>> BYTE_TO_ENUM = b -> Enum.class.getEnumConstants()[b];
-  private static Function<Short, Enum<?>> SHORT_TO_ENUM = s -> Enum.class.getEnumConstants()[s];
-  private static Function<Integer, Enum<?>> INT_TO_ENUM = i -> Enum.class.getEnumConstants()[i];
-  private static Function<String, Enum<?>> STRING_TO_ENUM =
-      s -> {
-        return null;
-      };
-
-  private static Map<Integer, Synapse> createEnumSynapses() {
-    Map<Integer, Synapse> tmp = new HashMap<>();
-    // tmp.put(GET_BYTE, value)
-    return Map.copyOf(tmp);
+    return UnmodifiableTypeMap.copyOf(tmp);
   }
 }

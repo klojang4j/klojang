@@ -2,7 +2,8 @@ package nl.naturalis.yokete.util;
 
 import java.lang.invoke.MethodHandle;
 
-class ColumnReader {
+@SuppressWarnings("unused")
+class ColumnReader<T> {
 
   private final MethodHandle method;
 

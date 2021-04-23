@@ -9,33 +9,39 @@ import java.util.function.Function;
  * name).
  *
  */
-@SuppressWarnings({"rawtypes", "unchecked"})
-class Synapse {
+class Synapse<T, R> {
 
-  private final ColumnReader reader;
-  private final Function adapter;
+  private final ColumnReader<T> reader;
+  private final Adapter<T, R> adapter;
 
-  Synapse(ColumnReader getter) {
-    this(getter, Function.identity());
+  Synapse(ColumnReader<T> reader) {
+    this.reader = reader;
+    this.adapter = null;
   }
 
-  Synapse(ColumnReader getter, Function adapter) {
-    this.reader = getter;
+  Synapse(ColumnReader<T> reader, Function<T, R> adapter) {
+    this(reader, (x, y, z) -> adapter.apply(x));
+  }
+
+  Synapse(ColumnReader<T> reader, Adapter<T, R> adapter) {
+    this.reader = reader;
     this.adapter = adapter;
   }
 
-  Object fire(ResultSet rs, int columnIndex) throws Throwable {
+  @SuppressWarnings("unchecked")
+  R fire(ResultSet rs, int columnIndex, Class<?> targetType, ResultSetReaderConfig cfg)
+      throws Throwable {
     MethodHandle method = reader.getMethod();
     Class<?> clazz = reader.getClassArgument();
-    Object resultSetValue;
+    T val;
     if (clazz == null) {
-      resultSetValue = method.invoke(rs, columnIndex);
+      val = (T) method.invoke(rs, columnIndex);
     } else {
-      resultSetValue = method.invoke(rs, columnIndex, clazz);
+      val = (T) method.invoke(rs, columnIndex, clazz);
     }
     if (adapter == null) {
-      return resultSetValue;
+      return (R) val;
     }
-    return adapter.apply(resultSetValue);
+    return adapter.adapt(val, targetType, cfg);
   }
 }
