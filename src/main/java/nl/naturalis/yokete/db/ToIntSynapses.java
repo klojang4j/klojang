@@ -5,8 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import nl.naturalis.common.NumberMethods;
 import static java.sql.Types.*;
-import static nl.naturalis.common.NumberMethods.parse;
-import static nl.naturalis.yokete.db.ColumnReaders.*;
+import static nl.naturalis.yokete.db.ColumnReader.*;
 import static nl.naturalis.yokete.db.SynapseNegotiator.DEFAULT_ENTRY;
 
 class ToIntSynapses {
@@ -40,7 +39,7 @@ class ToIntSynapses {
 
     // Otherwise call ResultSet.getString(columnIndex) and pray that the
     // returned value can be parsed into an integer
-    Synapse<String, Integer> syn5 = new Synapse<>(GET_STRING, x -> parse(x, Integer.class));
+    Synapse<String, Integer> syn5 = new Synapse<>(GET_STRING, NumberMethods::parse);
     tmp.put(DEFAULT_ENTRY, syn5);
 
     return Map.copyOf(tmp);

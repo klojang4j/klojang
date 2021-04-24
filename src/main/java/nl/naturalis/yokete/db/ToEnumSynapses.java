@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import nl.naturalis.common.NumberMethods;
 import static java.sql.Types.*;
-import static nl.naturalis.yokete.db.ColumnReaders.*;
+import static nl.naturalis.yokete.db.ColumnReader.*;
 
 class ToEnumSynapses {
 

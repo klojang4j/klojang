@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import nl.naturalis.common.Bool;
 import static java.sql.Types.*;
-import static nl.naturalis.yokete.db.ColumnReaders.*;
+import static nl.naturalis.yokete.db.ColumnReader.*;
 import static nl.naturalis.yokete.db.SynapseNegotiator.DEFAULT_ENTRY;
 
 class ToBooleanSynapses {

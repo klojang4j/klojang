@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import static java.sql.Types.DATE;
-import static nl.naturalis.yokete.db.ColumnReaders.GET_DATE;
 
 class ToLocalDateTimeSynapses {
 
@@ -17,7 +16,7 @@ class ToLocalDateTimeSynapses {
 
   static Map<Integer, Synapse<?, ?>> get() {
     Map<Integer, Synapse<?, LocalDateTime>> tmp = new HashMap<>();
-    tmp.put(DATE, new Synapse<>(GET_DATE, SQLDATE_TO_LOCALDATETIME));
+    tmp.put(DATE, new Synapse<>(ColumnReader.GET_DATE, SQLDATE_TO_LOCALDATETIME));
     return Map.copyOf(tmp);
   }
 }
