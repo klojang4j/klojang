@@ -12,11 +12,11 @@ import static nl.naturalis.yokete.util.PropertyWriter.toBean;
 
 public class ResultSetBeanifier<T> {
 
-  final PropertyWriter[] writers;
+  final PropertyWriter<?, ?>[] writers;
 
   private final Supplier<T> beanSupplier;
 
-  ResultSetBeanifier(PropertyWriter[] writers, Supplier<T> beanSupplier) {
+  ResultSetBeanifier(PropertyWriter<?, ?>[] writers, Supplier<T> beanSupplier) {
     this.beanSupplier = beanSupplier;
     this.writers = writers;
   }

@@ -24,9 +24,9 @@ import static nl.naturalis.common.check.CommonChecks.gt;
  */
 public class ResultSetMappifier {
 
-  final KeyWriter[] writers;
+  final MapEntryWriter<?>[] writers;
 
-  ResultSetMappifier(KeyWriter[] writers) {
+  ResultSetMappifier(MapEntryWriter<?>[] writers) {
     this.writers = writers;
   }
 
@@ -44,7 +44,7 @@ public class ResultSetMappifier {
   public Optional<Row> mappify(ResultSet rs) {
     Check.notNull(rs);
     try {
-      return Optional.of(KeyWriter.toRow(rs, writers));
+      return Optional.of(MapEntryWriter.toRow(rs, writers));
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
     }
@@ -67,7 +67,7 @@ public class ResultSetMappifier {
     int i = 0;
     try {
       do {
-        all.add(KeyWriter.toRow(rs, writers));
+        all.add(MapEntryWriter.toRow(rs, writers));
       } while (++i < limit && rs.next());
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
@@ -105,7 +105,7 @@ public class ResultSetMappifier {
     List<Row> all = new ArrayList<>(sizeEstimate);
     try {
       do {
-        all.add(KeyWriter.toRow(rs, writers));
+        all.add(MapEntryWriter.toRow(rs, writers));
       } while (rs.next());
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);

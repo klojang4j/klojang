@@ -4,8 +4,7 @@ import java.sql.ResultSet;
 import java.util.function.Function;
 
 /*
- * Captures the point at which a value finally jumps from the ResultSet to the bean (hence the
- * name).
+ * Captures the point at which a value pops out of the ResultSet.
  *
  */
 class Synapse<COLUMN_TYPE, TARGET_TYPE> {
@@ -28,11 +27,11 @@ class Synapse<COLUMN_TYPE, TARGET_TYPE> {
   }
 
   @SuppressWarnings("unchecked")
-  TARGET_TYPE fire(ResultSet rs, int columnIndex, Class<TARGET_TYPE> targetType) throws Throwable {
+  TARGET_TYPE fire(ResultSet rs, int columnIndex, Class<TARGET_TYPE> toType) throws Throwable {
     COLUMN_TYPE val = reader.readColumn(rs, columnIndex);
     if (adapter == null) {
       return (TARGET_TYPE) val;
     }
-    return adapter.adapt(val, targetType);
+    return adapter.adapt(val, toType);
   }
 }

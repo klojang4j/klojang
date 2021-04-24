@@ -49,7 +49,7 @@ public class BeanifierBox<T> {
     ResultSetBeanifier<T> rsb;
     if ((rsb = ref.get()) == null) {
       synchronized (this) {
-        PropertyWriter[] writers = createWriters(rs);
+        PropertyWriter<?, ?>[] writers = createWriters(rs);
         rsb = new ResultSetBeanifier<>(writers, bs);
         ref.setPlain(rsb);
       }
@@ -59,12 +59,12 @@ public class BeanifierBox<T> {
     return rsb;
   }
 
-  private PropertyWriter[] createWriters(ResultSet rs) throws SQLException {
+  private PropertyWriter<?, ?>[] createWriters(ResultSet rs) throws SQLException {
     Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(bc);
     SynapseNegotiator negotiator = SynapseNegotiator.getInstance();
     ResultSetMetaData rsmd = rs.getMetaData();
     int sz = rsmd.getColumnCount();
-    List<PropertyWriter> writers = new ArrayList<>(sz);
+    List<PropertyWriter<?, ?>> writers = new ArrayList<>(sz);
     for (int idx = 0; idx < sz; ++idx) {
       int jdbcIdx = idx + 1; // JDBC is one-based
       int sqlType = rsmd.getColumnType(jdbcIdx);
@@ -73,8 +73,8 @@ public class BeanifierBox<T> {
       Setter setter = setters.get(property);
       if (setter != null) {
         Class<?> javaType = setter.getParamType();
-        Synapse synapse = negotiator.getSynapse(javaType, sqlType);
-        writers.add(new PropertyWriter(synapse, setter, jdbcIdx, sqlType));
+        Synapse<?, ?> synapse = negotiator.getSynapse(javaType, sqlType);
+        writers.add(new PropertyWriter<>(synapse, setter, jdbcIdx, sqlType));
       }
     }
     return writers.toArray(new PropertyWriter[writers.size()]);

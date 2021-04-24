@@ -1,27 +1,19 @@
 package nl.naturalis.yokete.util;
 
-import java.math.BigDecimal;
-import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
-import nl.naturalis.common.Bool;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.UnmodifiableTypeMap;
-import static java.sql.Types.*;
 import static nl.naturalis.common.ClassMethods.prettyClassName;
-import static nl.naturalis.common.NumberMethods.convert;
-import static nl.naturalis.common.NumberMethods.parse;
-import static nl.naturalis.yokete.util.ColumnReaders.*;
 
 /**
  * Finds the most suitable of the ResultSet.getXXX methods for a given Java type. If no sure-fire
- * match can be found, then possibly an "adapter" function can be specified that converts the result
- * of a getXXX method to the specified Java type. Therefore what actually gets negotiated is not so
- * much a ResultSet.getXXX method per se, but a Synapse, which is a combination of a
- * ResultSet.getXXX method and a converter function.
+ * match can be found, then an "adapter" function can be specified that converts the result of the
+ * getXXX method to the required Java type. Therefore what actually gets negotiated is not so much a
+ * ResultSet.getXXX method per se, but a Synapse, which is a combination of a ResultSet.getXXX
+ * method invoker and a converter function.
  */
 class SynapseNegotiator {
 

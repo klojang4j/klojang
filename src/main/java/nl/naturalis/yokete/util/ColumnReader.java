@@ -28,6 +28,6 @@ class ColumnReader<COLUMN_TYPE> {
     } else {
       val = (COLUMN_TYPE) method.invoke(rs, columnIndex, classArg);
     }
-    return val;
+    return rs.wasNull() ? null : val;
   }
 }
