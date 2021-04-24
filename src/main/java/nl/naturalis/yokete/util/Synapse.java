@@ -1,6 +1,5 @@
 package nl.naturalis.yokete.util;
 
-import java.lang.invoke.MethodHandle;
 import java.sql.ResultSet;
 import java.util.function.Function;
 
@@ -9,39 +8,31 @@ import java.util.function.Function;
  * name).
  *
  */
-class Synapse<T, R> {
+class Synapse<COLUMN_TYPE, TARGET_TYPE> {
 
-  private final ColumnReader<T> reader;
-  private final Adapter<T, R> adapter;
+  private final ColumnReader<COLUMN_TYPE> reader;
+  private final Adapter<COLUMN_TYPE, TARGET_TYPE> adapter;
 
-  Synapse(ColumnReader<T> reader) {
+  Synapse(ColumnReader<COLUMN_TYPE> reader) {
     this.reader = reader;
     this.adapter = null;
   }
 
-  Synapse(ColumnReader<T> reader, Function<T, R> adapter) {
-    this(reader, (x, y, z) -> adapter.apply(x));
+  Synapse(ColumnReader<COLUMN_TYPE> reader, Function<COLUMN_TYPE, TARGET_TYPE> adapter) {
+    this(reader, (x, y) -> adapter.apply(x));
   }
 
-  Synapse(ColumnReader<T> reader, Adapter<T, R> adapter) {
+  Synapse(ColumnReader<COLUMN_TYPE> reader, Adapter<COLUMN_TYPE, TARGET_TYPE> adapter) {
     this.reader = reader;
     this.adapter = adapter;
   }
 
   @SuppressWarnings("unchecked")
-  R fire(ResultSet rs, int columnIndex, Class<?> targetType, ResultSetReaderConfig cfg)
-      throws Throwable {
-    MethodHandle method = reader.getMethod();
-    Class<?> clazz = reader.getClassArgument();
-    T val;
-    if (clazz == null) {
-      val = (T) method.invoke(rs, columnIndex);
-    } else {
-      val = (T) method.invoke(rs, columnIndex, clazz);
-    }
+  TARGET_TYPE fire(ResultSet rs, int columnIndex, Class<TARGET_TYPE> targetType) throws Throwable {
+    COLUMN_TYPE val = reader.readColumn(rs, columnIndex);
     if (adapter == null) {
-      return (R) val;
+      return (TARGET_TYPE) val;
     }
-    return adapter.adapt(val, targetType, cfg);
+    return adapter.adapt(val, targetType);
   }
 }

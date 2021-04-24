@@ -1,7 +1,7 @@
 package nl.naturalis.yokete.util;
 
 @FunctionalInterface
-interface Adapter<T, R> {
+interface Adapter<COLUMN_TYPE, TARGET_TYPE> {
 
-  R adapt(T resultSetValue, Class<R> targetType, ResultSetReaderConfig cfg);
+  TARGET_TYPE adapt(COLUMN_TYPE columnValue, Class<TARGET_TYPE> targetType);
 }

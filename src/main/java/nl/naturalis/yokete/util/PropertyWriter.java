@@ -4,26 +4,24 @@ import java.sql.ResultSet;
 import java.util.function.Supplier;
 import nl.naturalis.common.invoke.Setter;
 
-class PropertyWriter implements Writer {
+class PropertyWriter<COLUMN_TYPE, TARGET_TYPE> implements Writer {
 
-  static <U> U toBean(
-      ResultSet rs, Supplier<U> beanSupplier, PropertyWriter[] writers, ResultSetReaderConfig cfg)
+  static <U> U toBean(ResultSet rs, Supplier<U> beanSupplier, PropertyWriter<?, ?>[] writers)
       throws Throwable {
     U bean = beanSupplier.get();
-    for (PropertyWriter writer : writers) {
-      Object value =
-          writer.synapse.fire(rs, writer.jdbcIdx, (Class<U>) writer.setter.getParamType(), cfg);
-      writer.setProperty(bean, value);
+    for (PropertyWriter<?, ?> writer : writers) {
+      writer.transferValue(rs, bean);
     }
     return bean;
   }
 
-  private final Synapse<?, ?> synapse;
+  private final Synapse<COLUMN_TYPE, TARGET_TYPE> synapse;
   private final Setter setter;
   private final int jdbcIdx;
   private final int sqlType;
 
-  PropertyWriter(Synapse<?, ?> synapse, Setter setter, int jdbcIdx, int sqlType) {
+  PropertyWriter(
+      Synapse<COLUMN_TYPE, TARGET_TYPE> synapse, Setter setter, int jdbcIdx, int sqlType) {
     this.synapse = synapse;
     this.setter = setter;
     this.jdbcIdx = jdbcIdx;
@@ -35,7 +33,9 @@ class PropertyWriter implements Writer {
     return sqlType;
   }
 
-  private void setProperty(Object bean, Object value) throws Throwable {
-    setter.getMethod().invoke(bean, value);
+  @SuppressWarnings("unchecked")
+  private <U> void transferValue(ResultSet rs, U bean) throws Throwable {
+    TARGET_TYPE val = synapse.fire(rs, jdbcIdx, (Class<TARGET_TYPE>) setter.getParamType());
+    setter.getMethod().invoke(bean, val);
   }
 }

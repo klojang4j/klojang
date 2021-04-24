@@ -8,42 +8,25 @@ import static java.sql.Types.*;
 
 class ToEnumSynapses {
 
-  private static final String ERR_BASE = "Cannot convert %s to %s";
-  private static final String ERR_OUT_OF_RANGE = ERR_BASE + ": invalid ordinal number";
-
   private static class IntToEnumAdapter implements Adapter<Integer, Enum<?>> {
 
     @Override
-    public Enum<?> adapt(Integer i, Class<Enum<?>> t, ResultSetReaderConfig cfg) {
-      if (i < 0 || i >= t.getEnumConstants().length) {
-        String msg = String.format(ERR_OUT_OF_RANGE, i, t.getSimpleName());
-        throw new ResultSetReadException(msg);
-      }
-      return t.getEnumConstants()[i];
+    public Enum<?> adapt(Integer i, Class<Enum<?>> t) {
+      return asOrdinal(i, t);
     }
   }
 
   private static class StringToEnumAdapter implements Adapter<String, Enum<?>> {
 
     @Override
-    public Enum<?> adapt(String s, Class<Enum<?>> t, ResultSetReaderConfig cfg) {
+    public Enum<?> adapt(String s, Class<Enum<?>> t) {
       int i;
       try {
         i = NumberMethods.parse(s, Integer.class);
       } catch (IllegalArgumentException e) {
-        for (Enum<?> c : t.getEnumConstants()) {
-          if (s.equals(c.name()) || s.equals(c.toString())) {
-            return c;
-          }
-        }
-        String msg = String.format(ERR_BASE, s, t.getSimpleName());
-        throw new ResultSetReadException(msg);
+        return asName(s, t);
       }
-      if (i < 0 || i >= t.getEnumConstants().length) {
-        String msg = String.format(ERR_OUT_OF_RANGE, i, t.getSimpleName());
-        throw new ResultSetReadException(msg);
-      }
-      return t.getEnumConstants()[i];
+      return asOrdinal(i, t);
     }
   }
 
@@ -64,5 +47,25 @@ class ToEnumSynapses {
     tmp.put(CHAR, syn1);
 
     return Map.copyOf(tmp);
+  }
+
+  private static Enum<?> asOrdinal(Integer i, Class<Enum<?>> t) {
+    if (i < 0 || i >= t.getEnumConstants().length) {
+      String fmt = "Invalid ordinal number for enum type %s: %d";
+      String msg = String.format(fmt, t.getSimpleName(), i);
+      throw new ResultSetReadException(msg);
+    }
+    return t.getEnumConstants()[i];
+  }
+
+  private static Enum<?> asName(String s, Class<Enum<?>> t) {
+    for (Enum<?> c : t.getEnumConstants()) {
+      if (s.equals(c.name()) || s.equals(c.toString())) {
+        return c;
+      }
+    }
+    String fmt = "Unable to parse \"%s\" into %s";
+    String msg = String.format(fmt, s, t.getSimpleName());
+    throw new ResultSetReadException(msg);
   }
 }
