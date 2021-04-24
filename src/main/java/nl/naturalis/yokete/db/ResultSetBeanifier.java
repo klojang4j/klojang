@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.util;
+package nl.naturalis.yokete.db;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
 import static nl.naturalis.common.check.CommonChecks.gt;
-import static nl.naturalis.yokete.util.PropertyWriter.toBean;
+import static nl.naturalis.yokete.db.PropertyWriter.toBean;
 
 public class ResultSetBeanifier<T> {
 

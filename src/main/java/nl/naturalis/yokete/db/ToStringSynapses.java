@@ -1,8 +1,8 @@
-package nl.naturalis.yokete.util;
+package nl.naturalis.yokete.db;
 
 import java.util.Map;
-import static nl.naturalis.yokete.util.ColumnReaders.GET_STRING;
-import static nl.naturalis.yokete.util.SynapseNegotiator.*;
+import static nl.naturalis.yokete.db.ColumnReaders.GET_STRING;
+import static nl.naturalis.yokete.db.SynapseNegotiator.*;
 
 class ToStringSynapses {
 

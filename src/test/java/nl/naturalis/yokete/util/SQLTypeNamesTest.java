@@ -2,6 +2,7 @@ package nl.naturalis.yokete.util;
 
 import java.sql.Types;
 import org.junit.jupiter.api.Test;
+import nl.naturalis.yokete.db.SQLTypeNames;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class SQLTypeNamesTest {

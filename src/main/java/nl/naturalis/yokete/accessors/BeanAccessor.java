@@ -6,9 +6,9 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.invoke.BeanReader;
 import nl.naturalis.common.invoke.NoSuchPropertyException;
 import nl.naturalis.yokete.render.Accessor;
+import nl.naturalis.yokete.render.NameMapper;
 import nl.naturalis.yokete.render.RenderException;
 import nl.naturalis.yokete.template.Template;
-import nl.naturalis.yokete.util.NameMapper;
 
 public class BeanAccessor<T> implements Accessor<T> {
 

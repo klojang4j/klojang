@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.util;
+package nl.naturalis.yokete.db;
 
 @FunctionalInterface
 interface Adapter<COLUMN_TYPE, TARGET_TYPE> {

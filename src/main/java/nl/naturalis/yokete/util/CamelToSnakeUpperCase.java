@@ -7,18 +7,12 @@ import static java.lang.Character.isUpperCase;
 import static java.lang.Character.toUpperCase;
 
 /**
- * Converts camel case identifiers to snake case identifiers. For example "myBloodyValentine"
- * becomes "MY_BLOODY_VALENTINE".
+ * Converts camel case identifiers to snake case identifiers. For example <code>
+ * myBloodyValentine</code> becomes <code>MY_BLOODY_VALENTINE</code>.
  *
  * @author Ayco Holleman
  */
 public class CamelToSnakeUpperCase implements UnaryOperator<String> {
-
-  private static final CamelToSnakeUpperCase INSTANCE = new CamelToSnakeUpperCase();
-
-  public static final CamelToSnakeUpperCase camelToSnakeUpperCase() {
-    return INSTANCE;
-  }
 
   @Override
   public String apply(String n) {

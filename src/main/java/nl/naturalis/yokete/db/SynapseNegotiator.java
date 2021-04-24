@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.util;
+package nl.naturalis.yokete.db;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -13,7 +13,7 @@ import static nl.naturalis.common.ClassMethods.prettyClassName;
  * match can be found, then an "adapter" function can be specified that converts the result of the
  * getXXX method to the required Java type. Therefore what actually gets negotiated is not so much a
  * ResultSet.getXXX method per se, but a Synapse, which is a combination of a ResultSet.getXXX
- * method invoker and a converter function.
+ * method and a converter function.
  */
 class SynapseNegotiator {
 

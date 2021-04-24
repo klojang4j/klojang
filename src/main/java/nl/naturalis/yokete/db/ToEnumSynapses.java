@@ -1,10 +1,10 @@
-package nl.naturalis.yokete.util;
+package nl.naturalis.yokete.db;
 
 import java.util.HashMap;
 import java.util.Map;
 import nl.naturalis.common.NumberMethods;
-import static nl.naturalis.yokete.util.ColumnReaders.*;
 import static java.sql.Types.*;
+import static nl.naturalis.yokete.db.ColumnReaders.*;
 
 class ToEnumSynapses {
 

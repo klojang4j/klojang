@@ -1,11 +1,11 @@
 package nl.naturalis.yokete.accessors;
 
 import nl.naturalis.common.check.Check;
+import nl.naturalis.yokete.db.Row;
 import nl.naturalis.yokete.render.Accessor;
+import nl.naturalis.yokete.render.NameMapper;
 import nl.naturalis.yokete.render.RenderException;
 import nl.naturalis.yokete.template.Template;
-import nl.naturalis.yokete.util.NameMapper;
-import nl.naturalis.yokete.util.Row;
 
 public class RowAccessor implements Accessor<Row> {
 

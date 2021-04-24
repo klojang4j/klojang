@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.util;
+package nl.naturalis.yokete.db;
 
 import java.sql.Date;
 import java.time.LocalDateTime;
@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import static java.sql.Types.DATE;
-import static nl.naturalis.yokete.util.ColumnReaders.GET_DATE;
+import static nl.naturalis.yokete.db.ColumnReaders.GET_DATE;
 
 class ToLocalDateTimeSynapses {
 
