@@ -28,7 +28,7 @@ class ColumnReader<COLUMN_TYPE> {
 
   // Invokes <T> ResultSet.getObject(columnIndex, Class<T>)
   static <T> ColumnReader<T> newObjectReader(Class<T> returnType) {
-    MethodType mt = MethodType.methodType(returnType, int.class, Class.class);
+    MethodType mt = MethodType.methodType(Object.class, int.class, Class.class);
     MethodHandle mh;
     try {
       mh = lookup().findVirtual(ResultSet.class, "getObject", mt);

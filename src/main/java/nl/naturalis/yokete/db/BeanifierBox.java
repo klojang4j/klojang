@@ -13,6 +13,12 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.invoke.Setter;
 import nl.naturalis.common.invoke.SetterFactory;
 
+/**
+ * Creates and holds
+ *
+ * @author Ayco Holleman
+ * @param <T>
+ */
 public class BeanifierBox<T> {
 
   private final AtomicReference<ResultSetBeanifier<T>> ref = new AtomicReference<>();

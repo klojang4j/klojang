@@ -7,6 +7,7 @@ import java.util.Map;
 import nl.naturalis.common.check.Check;
 import static java.sql.Types.*;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
+import static nl.naturalis.yokete.db.ColumnReader.*;
 
 class ColumnReaders {
 
@@ -36,34 +37,34 @@ class ColumnReaders {
 
   private static Map<Integer, ColumnReader<?>> createReaderCache() {
     Map<Integer, ColumnReader<?>> tmp = new HashMap<>();
-    tmp.put(VARCHAR, ColumnReader.GET_STRING);
-    tmp.put(LONGVARCHAR, ColumnReader.GET_STRING);
-    tmp.put(NVARCHAR, ColumnReader.GET_STRING);
-    tmp.put(LONGNVARCHAR, ColumnReader.GET_STRING);
-    tmp.put(CHAR, ColumnReader.GET_STRING);
-    tmp.put(CLOB, ColumnReader.GET_STRING);
+    tmp.put(VARCHAR, GET_STRING);
+    tmp.put(LONGVARCHAR, GET_STRING);
+    tmp.put(NVARCHAR, GET_STRING);
+    tmp.put(LONGNVARCHAR, GET_STRING);
+    tmp.put(CHAR, GET_STRING);
+    tmp.put(CLOB, GET_STRING);
 
-    tmp.put(INTEGER, ColumnReader.GET_INT);
-    tmp.put(SMALLINT, ColumnReader.GET_SHORT);
-    tmp.put(TINYINT, ColumnReader.GET_BYTE);
-    tmp.put(BIT, ColumnReader.GET_BYTE);
-    tmp.put(DOUBLE, ColumnReader.GET_DOUBLE);
-    tmp.put(REAL, ColumnReader.GET_DOUBLE);
-    tmp.put(FLOAT, ColumnReader.GET_FLOAT);
-    tmp.put(BIGINT, ColumnReader.GET_LONG);
+    tmp.put(INTEGER, GET_INT);
+    tmp.put(SMALLINT, GET_SHORT);
+    tmp.put(TINYINT, GET_BYTE);
+    tmp.put(BIT, GET_BYTE);
+    tmp.put(DOUBLE, GET_DOUBLE);
+    tmp.put(REAL, GET_DOUBLE);
+    tmp.put(FLOAT, GET_FLOAT);
+    tmp.put(BIGINT, GET_LONG);
 
-    tmp.put(BOOLEAN, ColumnReader.GET_BOOLEAN);
+    tmp.put(BOOLEAN, GET_BOOLEAN);
 
-    tmp.put(DATE, ColumnReader.GET_DATE);
-    tmp.put(TIME, ColumnReader.GET_TIME);
+    tmp.put(DATE, GET_DATE);
+    tmp.put(TIME, GET_TIME);
 
-    tmp.put(TIMESTAMP, ColumnReader.newObjectReader(LocalDateTime.class));
-    tmp.put(TIMESTAMP_WITH_TIMEZONE, ColumnReader.newObjectReader(OffsetDateTime.class));
+    tmp.put(TIMESTAMP, newObjectReader(LocalDateTime.class));
+    tmp.put(TIMESTAMP_WITH_TIMEZONE, newObjectReader(OffsetDateTime.class));
 
-    tmp.put(NUMERIC, ColumnReader.GET_BIG_DECIMAL);
-    tmp.put(DECIMAL, ColumnReader.GET_BIG_DECIMAL);
+    tmp.put(NUMERIC, GET_BIG_DECIMAL);
+    tmp.put(DECIMAL, GET_BIG_DECIMAL);
 
-    tmp.put(ARRAY, ColumnReader.newObjectReader(Object[].class));
+    tmp.put(ARRAY, newObjectReader(Object[].class));
     return Map.copyOf(tmp);
   }
 }

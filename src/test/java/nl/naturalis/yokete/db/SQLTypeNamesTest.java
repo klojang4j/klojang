@@ -1,9 +1,9 @@
-package nl.naturalis.yokete.util;
+package nl.naturalis.yokete.db;
 
 import java.sql.Types;
 import org.junit.jupiter.api.Test;
-import nl.naturalis.yokete.db.SQLTypeNames;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class SQLTypeNamesTest {
 

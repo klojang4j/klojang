@@ -78,6 +78,8 @@ class SynapseNegotiator {
     tmp.put(LocalDate.class, ToLocalDateSynapses.get());
     tmp.put(LocalDateTime.class, ToLocalDateTimeSynapses.get());
 
+    tmp.put(Enum.class, ToEnumSynapses.get());
+
     return UnmodifiableTypeMap.copyOf(tmp);
   }
 }
