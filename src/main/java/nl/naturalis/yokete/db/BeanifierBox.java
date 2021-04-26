@@ -14,14 +14,14 @@ import nl.naturalis.common.invoke.Setter;
 import nl.naturalis.common.invoke.SetterFactory;
 
 /**
- * Creates and holds
+ * Creates and holds a {@link ResultSetMappifier}
  *
  * @author Ayco Holleman
  * @param <T>
  */
 public class BeanifierBox<T> {
 
-  private final AtomicReference<ResultSetBeanifier<T>> ref = new AtomicReference<>();
+  private final AtomicReference<DefaultBeanifier<T>> ref = new AtomicReference<>();
 
   private final Class<T> bc;
   private final Supplier<T> bs;
@@ -52,11 +52,11 @@ public class BeanifierBox<T> {
     if (!rs.next()) {
       return EmptyBeanifier.INSTANCE;
     }
-    ResultSetBeanifier<T> rsb;
+    DefaultBeanifier<T> rsb;
     if ((rsb = ref.get()) == null) {
       synchronized (this) {
         PropertyWriter<?, ?>[] writers = createWriters(rs);
-        rsb = new ResultSetBeanifier<>(writers, bs);
+        rsb = new DefaultBeanifier<>(writers, bs);
         ref.setPlain(rsb);
       }
     } else if (verify) {

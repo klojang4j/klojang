@@ -5,14 +5,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-class EmptyBeanifier<T> extends ResultSetBeanifier<T> {
+class EmptyBeanifier<T> implements ResultSetBeanifier<T> {
 
   @SuppressWarnings("rawtypes")
   static final EmptyBeanifier INSTANCE = new EmptyBeanifier();
 
-  private EmptyBeanifier() {
-    super(null, null);
-  }
+  private EmptyBeanifier() {}
 
   @Override
   public Optional<T> beanify(ResultSet rs) {
@@ -21,6 +19,11 @@ class EmptyBeanifier<T> extends ResultSetBeanifier<T> {
 
   @Override
   public List<T> beanifyAtMost(ResultSet rs, int limit) {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public List<T> beanifyAtMost(ResultSet rs, int from, int limit) {
     return Collections.emptyList();
   }
 

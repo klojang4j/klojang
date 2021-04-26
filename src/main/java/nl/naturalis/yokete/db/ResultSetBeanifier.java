@@ -1,65 +1,75 @@
 package nl.naturalis.yokete.db;
 
 import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
-import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.check.Check;
-import static nl.naturalis.common.check.CommonChecks.gt;
-import static nl.naturalis.yokete.db.PropertyWriter.toBean;
 
-public class ResultSetBeanifier<T> {
+/**
+ * A {@code ResultSetBeanifier} converts JDBC {@link ResultSet result sets} to JavaBeans. A single
+ * {@code ResultSetBeanifier} exactly one SQL query. You cannot instantiate a {@code
+ * ResultSetBeanifier} directly. Instead you obtain one from a {@link BeanifierBox}. When using a
+ * {@code ResultSetBeanifier} to iterate over a {@code ResultSet} you should not call {@link
+ * ResultSet#next()}) yourself. This is already done by the {@code ResultSetBeanifier}.
+ *
+ * @author Ayco Holleman
+ * @param <T> The type of the JavaBean
+ */
+public interface ResultSetBeanifier<T> {
 
-  final PropertyWriter<?, ?>[] writers;
+  /**
+   * Converts the current row within the specified {@code ResultSet} into a JavaBean. If the {@code
+   * ResultSet} is empty, or if there are no more rows in the {@code ResultSet}, an empty {@code
+   * ResultSet} is returned.
+   *
+   * @param rs The {@code ResultSet}
+   * @return An {@code Optional} containing the JavaBean or an empty {@code Optional} if the {@code
+   *     ResultSet} contained no (more) rows
+   */
+  Optional<T> beanify(ResultSet rs);
 
-  private final Supplier<T> beanSupplier;
+  /**
+   * Extracts and converts at most {@code limit} rows from the specified {@code ResultSet} into
+   * JavaBeans. If the {@code ResultSet} is empty, or if there are no more rows in the {@code
+   * ResultSet}, an empty {@code List} is returned.
+   *
+   * @param rs The {@code ResultSet}
+   * @param limit maximum number of rows to extract and convert
+   * @return A {@code List} of JavaBeans or an empty {@code List} if the {@code ResultSet} contained
+   *     no (more) rows
+   */
+  List<T> beanifyAtMost(ResultSet rs, int limit);
 
-  ResultSetBeanifier(PropertyWriter<?, ?>[] writers, Supplier<T> beanSupplier) {
-    this.beanSupplier = beanSupplier;
-    this.writers = writers;
-  }
+  /**
+   * First skips {@code from} rows and then extracts and converts at most {@code limit} rows from
+   * the specified {@code ResultSet} into a JavaBeans. This method will not throw an exception when
+   * attempting to read past the end of the {@code ResultSet}. Instead, it will return an empty
+   * {@code List}.
+   *
+   * @param rs The {@code ResultSet}
+   * @param from The number of rows to skip
+   * @param limit maximum number of rows to extract and convert
+   * @return A {@code List} of JavaBeans or an empty {@code List} if the {@code ResultSet} contained
+   *     no (more) rows
+   */
+  List<T> beanifyAtMost(ResultSet rs, int from, int limit);
 
-  public Optional<T> beanify(ResultSet rs) {
-    Check.notNull(rs);
-    try {
-      return Optional.of(toBean(rs, beanSupplier, writers));
-    } catch (Throwable e) {
-      throw ExceptionMethods.uncheck(e);
-    }
-  }
+  /**
+   * Extract and converts all remaining rows within the specified {@code ResultSet} into JavaBeans.
+   *
+   * @param rs The {@code ResultSet}
+   * @return A {@code List} of JavaBeans or an empty {@code List} if the {@code ResultSet} contained
+   *     no (more) rows
+   */
+  List<T> beanifyAll(ResultSet rs);
 
-  public List<T> beanifyAtMost(ResultSet rs, int limit) {
-    Check.notNull(rs, "rs");
-    Check.that(limit, "limit").is(gt(), 0);
-    List<T> all = new ArrayList<>(limit);
-    int i = 0;
-    try {
-      do {
-        all.add(toBean(rs, beanSupplier, writers));
-      } while (++i < limit && rs.next());
-    } catch (Throwable t) {
-      throw ExceptionMethods.uncheck(t);
-    }
-    return all;
-  }
-
-  public List<T> beanifyAll(ResultSet rs) {
-    return beanifyAll(rs, 16);
-  }
-
-  public List<T> beanifyAll(ResultSet rs, int sizeEstimate) {
-    Check.notNull(rs, "rs");
-    Check.that(sizeEstimate, "sizeEstimate").is(gt(), 0);
-    List<T> all = new ArrayList<>(sizeEstimate);
-    try {
-      while (rs.next()) {
-        all.add(toBean(rs, beanSupplier, writers));
-      }
-    } catch (Throwable t) {
-      throw ExceptionMethods.uncheck(t);
-    }
-    return all;
-  }
+  /**
+   * Extract and converts all remaining rows within the specified {@code ResultSet} into JavaBeans.
+   *
+   * @param rs The {@code ResultSet}
+   * @param sizeEstimate An estimate of the size of the resulting {@code List}. Will be passed on as
+   *     the {@code initialCapacity} argument to the {@code ArrayList} constructor.
+   * @return A {@code List} of JavaBeans or an empty {@code List} if the {@code ResultSet} contained
+   *     no (more) rows
+   */
+  List<T> beanifyAll(ResultSet rs, int sizeEstimate);
 }
