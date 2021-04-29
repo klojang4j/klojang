@@ -1,13 +1,14 @@
-package nl.naturalis.yokete.db;
+package nl.naturalis.yokete.db.read;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import nl.naturalis.common.check.Check;
+import nl.naturalis.yokete.db.SQLTypeNames;
 import static java.sql.Types.*;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
-import static nl.naturalis.yokete.db.ColumnReader.*;
+import static nl.naturalis.yokete.db.read.ColumnReader.*;
 
 class ColumnReaders {
 

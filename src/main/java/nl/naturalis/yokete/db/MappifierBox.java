@@ -1,15 +1,16 @@
 package nl.naturalis.yokete.db;
 
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.check.Check;
+import nl.naturalis.yokete.db.read.*;
+import static nl.naturalis.yokete.db.read.MapEntryWriter.*;
 
 public class MappifierBox {
 
-  private final AtomicReference<ResultSetMappifier> ref = new AtomicReference<>();
+  private final AtomicReference<DefaultMappifier> ref = new AtomicReference<>();
 
   private final UnaryOperator<String> mapper;
   private final boolean verify;
@@ -31,32 +32,15 @@ public class MappifierBox {
     if (!rs.next()) {
       return EmptyMappifier.INSTANCE;
     }
-    ResultSetMappifier rsm;
+    DefaultMappifier rsm;
     if ((rsm = ref.get()) == null) {
       synchronized (this) {
-        rsm = new ResultSetMappifier(createWriters(rs, mapper));
+        rsm = new DefaultMappifier(createWriters(rs, mapper));
         ref.setPlain(rsm);
       }
     } else if (verify) {
       Writer.checkCompatibility(rs, rsm.writers);
     }
     return rsm;
-  }
-
-  private static MapEntryWriter<?>[] createWriters(ResultSet rs, UnaryOperator<String> mapper)
-      throws SQLException {
-    ColumnReaders getters = ColumnReaders.getInstance();
-    ResultSetMetaData rsmd = rs.getMetaData();
-    int sz = rsmd.getColumnCount();
-    MapEntryWriter<?>[] writers = new MapEntryWriter[sz];
-    for (int idx = 0; idx < sz; ++idx) {
-      int jdbcIdx = idx + 1; // JDBC is one-based
-      int sqlType = rsmd.getColumnType(jdbcIdx);
-      ColumnReader<?> getter = getters.getReader(sqlType);
-      String label = rsmd.getColumnLabel(jdbcIdx);
-      String mapKey = mapper.apply(label);
-      writers[idx] = new MapEntryWriter<>(getter, jdbcIdx, sqlType, mapKey);
-    }
-    return writers;
   }
 }

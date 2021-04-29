@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-class EmptyMappifier extends ResultSetMappifier {
+class EmptyMappifier extends DefaultMappifier {
 
   static final EmptyMappifier INSTANCE = new EmptyMappifier();
 

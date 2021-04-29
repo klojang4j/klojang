@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.db;
+package nl.naturalis.yokete.db.read;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -6,8 +6,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import nl.naturalis.common.StringMethods;
+import nl.naturalis.yokete.db.ResultSetMismatchException;
+import nl.naturalis.yokete.db.SQLTypeNames;
 
-interface Writer {
+public interface Writer {
 
   public static void checkCompatibility(ResultSet rs, Writer[] writers) throws SQLException {
     ResultSetMetaData rsmd = rs.getMetaData();

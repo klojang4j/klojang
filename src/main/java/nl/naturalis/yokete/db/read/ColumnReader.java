@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.db;
+package nl.naturalis.yokete.db.read;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;

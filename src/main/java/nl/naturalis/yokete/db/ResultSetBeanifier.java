@@ -9,7 +9,7 @@ import java.util.Optional;
  * {@code ResultSetBeanifier} exactly one SQL query. You cannot instantiate a {@code
  * ResultSetBeanifier} directly. Instead you obtain one from a {@link BeanifierBox}. When using a
  * {@code ResultSetBeanifier} to iterate over a {@code ResultSet} you should not call {@link
- * ResultSet#next()}) yourself. This is already done by the {@code ResultSetBeanifier}.
+ * ResultSet#next()}) yourself. This is done by the {@code ResultSetBeanifier}.
  *
  * @author Ayco Holleman
  * @param <T> The type of the JavaBean

@@ -12,16 +12,18 @@ import java.util.function.UnaryOperator;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.invoke.Setter;
 import nl.naturalis.common.invoke.SetterFactory;
+import nl.naturalis.yokete.db.read.*;
+import static nl.naturalis.yokete.db.read.PropertyWriter.*;
 
 /**
- * Creates and holds a {@link ResultSetMappifier}
+ * Creates and holds a {@link DefaultMappifier}
  *
  * @author Ayco Holleman
  * @param <T>
  */
 public class BeanifierBox<T> {
 
-  private final AtomicReference<DefaultBeanifier<T>> ref = new AtomicReference<>();
+  private final AtomicReference<ResultSetBeanifier<T>> ref = new AtomicReference<>();
 
   private final Class<T> bc;
   private final Supplier<T> bs;
@@ -52,37 +54,18 @@ public class BeanifierBox<T> {
     if (!rs.next()) {
       return EmptyBeanifier.INSTANCE;
     }
-    DefaultBeanifier<T> rsb;
-    if ((rsb = ref.get()) == null) {
+    DefaultBeanifier<T> beanifier = (DefaultBeanifier<T>) ref.getPlain();
+    if (beanifier == null) {
       synchronized (this) {
-        PropertyWriter<?, ?>[] writers = createWriters(rs);
-        rsb = new DefaultBeanifier<>(writers, bs);
-        ref.setPlain(rsb);
+        if (ref.get() == null) { // Ask again, more forcefully
+          PropertyWriter<?, ?>[] writers = createWriters(rs.getMetaData(), bc, mapper);
+          beanifier = new DefaultBeanifier<>(writers, bs);
+          ref.set(beanifier);
+        }
       }
     } else if (verify) {
-      Writer.checkCompatibility(rs, rsb.writers);
+      Writer.checkCompatibility(rs, beanifier.writers);
     }
-    return rsb;
-  }
-
-  private PropertyWriter<?, ?>[] createWriters(ResultSet rs) throws SQLException {
-    Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(bc);
-    SynapseNegotiator negotiator = SynapseNegotiator.getInstance();
-    ResultSetMetaData rsmd = rs.getMetaData();
-    int sz = rsmd.getColumnCount();
-    List<PropertyWriter<?, ?>> writers = new ArrayList<>(sz);
-    for (int idx = 0; idx < sz; ++idx) {
-      int jdbcIdx = idx + 1; // JDBC is one-based
-      int sqlType = rsmd.getColumnType(jdbcIdx);
-      String label = rsmd.getColumnLabel(jdbcIdx);
-      String property = mapper.apply(label);
-      Setter setter = setters.get(property);
-      if (setter != null) {
-        Class<?> javaType = setter.getParamType();
-        Synapse<?, ?> synapse = negotiator.getSynapse(javaType, sqlType);
-        writers.add(new PropertyWriter<>(synapse, setter, jdbcIdx, sqlType));
-      }
-    }
-    return writers.toArray(new PropertyWriter[writers.size()]);
+    return beanifier;
   }
 }

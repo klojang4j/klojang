@@ -1,22 +1,22 @@
-package nl.naturalis.yokete.db;
+package nl.naturalis.yokete.db.read;
 
 import java.util.HashMap;
-import java.util.Map;
 import nl.naturalis.common.NumberMethods;
+import nl.naturalis.yokete.db.ResultSetReadException;
 import static java.sql.Types.*;
-import static nl.naturalis.yokete.db.ColumnReader.*;
+import static nl.naturalis.yokete.db.read.ColumnReader.*;
 
-class ToEnumSynapses {
+class EnumProducers extends HashMap<Integer, ValueProducer<?, ?>> {
 
-  private static class IntToEnumAdapter implements Adapter<Integer, Enum<?>> {
+  private static class NumberAdapter<T extends Number> implements Adapter<T, Enum<?>> {
 
     @Override
-    public Enum<?> adapt(Integer i, Class<Enum<?>> t) {
+    public Enum<?> adapt(T i, Class<Enum<?>> t) {
       return asOrdinal(i, t);
     }
   }
 
-  private static class StringToEnumAdapter implements Adapter<String, Enum<?>> {
+  private static class StringAdapter implements Adapter<String, Enum<?>> {
 
     @Override
     public Enum<?> adapt(String s, Class<Enum<?>> t) {
@@ -30,26 +30,18 @@ class ToEnumSynapses {
     }
   }
 
-  private ToEnumSynapses() {}
-
-  static Map<Integer, Synapse<?, ?>> get() {
-
-    Map<Integer, Synapse<?, Enum<?>>> tmp = new HashMap<>();
-
-    Synapse<Integer, Enum<?>> syn0 = new Synapse<>(GET_INT, new IntToEnumAdapter());
-    tmp.put(INTEGER, syn0);
-    tmp.put(SMALLINT, syn0);
-    tmp.put(TINYINT, syn0);
-    tmp.put(BIT, syn0);
-
-    Synapse<String, Enum<?>> syn1 = new Synapse<>(GET_STRING, new StringToEnumAdapter());
-    tmp.put(VARCHAR, syn1);
-    tmp.put(CHAR, syn1);
-
-    return Map.copyOf(tmp);
+  EnumProducers() {
+    put(BIGINT, new ValueProducer<>(GET_LONG, new NumberAdapter<Long>()));
+    put(INTEGER, new ValueProducer<>(GET_INT, new NumberAdapter<Integer>()));
+    put(SMALLINT, new ValueProducer<>(GET_SHORT, new NumberAdapter<Short>()));
+    put(TINYINT, new ValueProducer<>(GET_BYTE, new NumberAdapter<Byte>()));
+    ValueProducer<String, Enum<?>> vp0 = new ValueProducer<>(GET_STRING, new StringAdapter());
+    put(VARCHAR, vp0);
+    put(CHAR, vp0);
   }
 
-  private static Enum<?> asOrdinal(Integer i, Class<Enum<?>> t) {
+  private static <T extends Number> Enum<?> asOrdinal(T number, Class<Enum<?>> t) {
+    int i = number.intValue();
     if (i < 0 || i >= t.getEnumConstants().length) {
       String fmt = "Invalid ordinal number for enum type %s: %d";
       String msg = String.format(fmt, t.getSimpleName(), i);

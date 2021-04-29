@@ -12,9 +12,13 @@ public class Row {
   private static final String ERR0 = "Column not present in ResultSet: \"%s\"";
   private static final String ERR1 = "Column %s not convertible to %s: %s";
 
+  public static Row withData(Map<String, Object> data) {
+    return new Row(data);
+  }
+
   private final Map<String, Object> data;
 
-  Row(Map<String, Object> data) {
+  private Row(Map<String, Object> data) {
     this.data = data;
   }
 
@@ -26,8 +30,8 @@ public class Row {
     return data.keySet().contains(colName);
   }
 
-  public Map<String, Object> asMap() {
-    return data;
+  public Map<String, Object> getData() {
+    return Map.copyOf(data);
   }
 
   @SuppressWarnings("unchecked")
@@ -48,8 +52,8 @@ public class Row {
     return getInt(colName, 0);
   }
 
-  public int getInt(String colName, int ifNull) {
-    return ifNotNull(getValue(colName), v -> getNumber(colName, v, Integer.class), ifNull);
+  public int getInt(String colName, int nullValue) {
+    return ifNotNull(getValue(colName), v -> getNumber(colName, v, Integer.class), nullValue);
   }
 
   public Double getObjDouble(String colName) {
@@ -60,8 +64,8 @@ public class Row {
     return getByte(colName, (byte) 0);
   }
 
-  public double getDouble(String colName, double ifNull) {
-    return ifNotNull(getValue(colName), v -> getNumber(colName, v, Double.class), ifNull);
+  public double getDouble(String colName, double nullValue) {
+    return ifNotNull(getValue(colName), v -> getNumber(colName, v, Double.class), nullValue);
   }
 
   public Long getObjLong(String colName) {
@@ -72,8 +76,8 @@ public class Row {
     return getByte(colName, (byte) 0);
   }
 
-  public long getLong(String colName, long ifNull) {
-    return ifNotNull(getValue(colName), v -> getNumber(colName, v, Long.class), ifNull);
+  public long getLong(String colName, long nullValue) {
+    return ifNotNull(getValue(colName), v -> getNumber(colName, v, Long.class), nullValue);
   }
 
   public Byte getObjByte(String colName) {
@@ -84,8 +88,8 @@ public class Row {
     return getByte(colName, (byte) 0);
   }
 
-  public byte getByte(String colName, byte ifNull) {
-    return ifNotNull(getValue(colName), v -> getNumber(colName, v, Byte.class), ifNull);
+  public byte getByte(String colName, byte nullValue) {
+    return ifNotNull(getValue(colName), v -> getNumber(colName, v, Byte.class), nullValue);
   }
 
   // TODO: more of this
