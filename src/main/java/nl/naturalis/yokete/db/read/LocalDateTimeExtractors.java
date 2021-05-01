@@ -7,10 +7,10 @@ import static java.sql.Types.TIMESTAMP;
 import static nl.naturalis.yokete.db.read.ColumnReader.GET_DATE;
 import static nl.naturalis.yokete.db.read.ColumnReader.newObjectReader;
 
-class LocalDateTimeProducers extends HashMap<Integer, ValueProducer<?, ?>> {
+class LocalDateTimeExtractors extends HashMap<Integer, ValueExtractor<?, ?>> {
 
-  LocalDateTimeProducers() {
-    put(DATE, new ValueProducer<>(GET_DATE, d -> d.toLocalDate().atStartOfDay()));
-    put(TIMESTAMP, new ValueProducer<>(newObjectReader(LocalDateTime.class)));
+  LocalDateTimeExtractors() {
+    put(DATE, new ValueExtractor<>(GET_DATE, d -> d.toLocalDate().atStartOfDay()));
+    put(TIMESTAMP, new ValueExtractor<>(newObjectReader(LocalDateTime.class)));
   }
 }

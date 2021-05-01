@@ -6,7 +6,7 @@ import nl.naturalis.yokete.db.ResultSetReadException;
 import static java.sql.Types.*;
 import static nl.naturalis.yokete.db.read.ColumnReader.*;
 
-class EnumProducers extends HashMap<Integer, ValueProducer<?, ?>> {
+class EnumExtractors extends HashMap<Integer, ValueExtractor<?, ?>> {
 
   private static class NumberAdapter<T extends Number> implements Adapter<T, Enum<?>> {
 
@@ -30,12 +30,12 @@ class EnumProducers extends HashMap<Integer, ValueProducer<?, ?>> {
     }
   }
 
-  EnumProducers() {
-    put(BIGINT, new ValueProducer<>(GET_LONG, new NumberAdapter<Long>()));
-    put(INTEGER, new ValueProducer<>(GET_INT, new NumberAdapter<Integer>()));
-    put(SMALLINT, new ValueProducer<>(GET_SHORT, new NumberAdapter<Short>()));
-    put(TINYINT, new ValueProducer<>(GET_BYTE, new NumberAdapter<Byte>()));
-    ValueProducer<String, Enum<?>> vp0 = new ValueProducer<>(GET_STRING, new StringAdapter());
+  EnumExtractors() {
+    put(BIGINT, new ValueExtractor<>(GET_LONG, new NumberAdapter<Long>()));
+    put(INTEGER, new ValueExtractor<>(GET_INT, new NumberAdapter<Integer>()));
+    put(SMALLINT, new ValueExtractor<>(GET_SHORT, new NumberAdapter<Short>()));
+    put(TINYINT, new ValueExtractor<>(GET_BYTE, new NumberAdapter<Byte>()));
+    ValueExtractor<String, Enum<?>> vp0 = new ValueExtractor<>(GET_STRING, new StringAdapter());
     put(VARCHAR, vp0);
     put(CHAR, vp0);
   }

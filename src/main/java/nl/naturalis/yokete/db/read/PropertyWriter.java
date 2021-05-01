@@ -28,7 +28,7 @@ public class PropertyWriter<COLUMN_TYPE, TARGET_TYPE> implements Writer {
       ResultSetMetaData rsmd, Class<?> beanClass, UnaryOperator<String> nameMapper)
       throws SQLException {
     Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(beanClass);
-    ValueProducerNegotiator negotiator = ValueProducerNegotiator.getInstance();
+    ExtractorNegotiator negotiator = ExtractorNegotiator.getInstance();
     int sz = rsmd.getColumnCount();
     List<PropertyWriter<?, ?>> writers = new ArrayList<>(sz);
     for (int idx = 0; idx < sz; ++idx) {
@@ -39,21 +39,21 @@ public class PropertyWriter<COLUMN_TYPE, TARGET_TYPE> implements Writer {
       Setter setter = setters.get(property);
       if (setter != null) {
         Class<?> javaType = setter.getParamType();
-        ValueProducer<?, ?> synapse = negotiator.getProducer(javaType, sqlType);
+        ValueExtractor<?, ?> synapse = negotiator.getProducer(javaType, sqlType);
         writers.add(new PropertyWriter<>(synapse, setter, jdbcIdx, sqlType));
       }
     }
     return writers.toArray(new PropertyWriter[writers.size()]);
   }
 
-  private final ValueProducer<COLUMN_TYPE, TARGET_TYPE> synapse;
+  private final ValueExtractor<COLUMN_TYPE, TARGET_TYPE> extractor;
   private final Setter setter;
   private final int jdbcIdx;
   private final int sqlType;
 
   PropertyWriter(
-      ValueProducer<COLUMN_TYPE, TARGET_TYPE> synapse, Setter setter, int jdbcIdx, int sqlType) {
-    this.synapse = synapse;
+      ValueExtractor<COLUMN_TYPE, TARGET_TYPE> extractor, Setter setter, int jdbcIdx, int sqlType) {
+    this.extractor = extractor;
     this.setter = setter;
     this.jdbcIdx = jdbcIdx;
     this.sqlType = sqlType;
@@ -66,7 +66,7 @@ public class PropertyWriter<COLUMN_TYPE, TARGET_TYPE> implements Writer {
 
   @SuppressWarnings("unchecked")
   private <U> void transferValue(ResultSet rs, U bean) throws Throwable {
-    TARGET_TYPE val = synapse.getValue(rs, jdbcIdx, (Class<TARGET_TYPE>) setter.getParamType());
+    TARGET_TYPE val = extractor.getValue(rs, jdbcIdx, (Class<TARGET_TYPE>) setter.getParamType());
     setter.getMethod().invoke(bean, val);
   }
 }

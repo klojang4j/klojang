@@ -8,10 +8,10 @@ import static java.sql.Types.TIMESTAMP;
 import static nl.naturalis.yokete.db.read.ColumnReader.GET_DATE;
 import static nl.naturalis.yokete.db.read.ColumnReader.newObjectReader;
 
-class LocalDateProducers extends HashMap<Integer, ValueProducer<?, ?>> {
+class LocalDateExtractors extends HashMap<Integer, ValueExtractor<?, ?>> {
 
-  LocalDateProducers() {
-    put(DATE, new ValueProducer<>(GET_DATE, Date::toLocalDate));
-    put(TIMESTAMP, new ValueProducer<>(newObjectReader(LocalDate.class)));
+  LocalDateExtractors() {
+    put(DATE, new ValueExtractor<>(GET_DATE, Date::toLocalDate));
+    put(TIMESTAMP, new ValueExtractor<>(newObjectReader(LocalDate.class)));
   }
 }

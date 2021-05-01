@@ -7,11 +7,11 @@ import java.sql.PreparedStatement;
  * setXXX} methods in {@link PreparedStatement}.
  *
  * @author Ayco Holleman
- * @param <COLUMN_TYPE>
+ * @param <PARAM_TYPE>
  * @param <FIELD_TYPE>
  */
 @FunctionalInterface
-interface Adapter<FIELD_TYPE, COLUMN_TYPE> {
+interface Adapter<FIELD_TYPE, PARAM_TYPE> {
 
-  COLUMN_TYPE adapt(FIELD_TYPE value, Class<COLUMN_TYPE> targetType);
+  PARAM_TYPE adapt(FIELD_TYPE value, Class<PARAM_TYPE> targetType);
 }

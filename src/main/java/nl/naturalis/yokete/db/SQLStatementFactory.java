@@ -4,19 +4,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import nl.naturalis.common.check.Check;
 import nl.naturalis.common.util.MutableInt;
 import nl.naturalis.yokete.YoketeRuntimeException;
+import static java.util.stream.Collectors.*;
+import static nl.naturalis.common.CollectionMethods.asIntArray;
 
-/**
- * Utility class that replaces named parameters in a SQL query with positional parameters and, in
- * the process, produces a list of all parameter names and their position(s) within the query. Note
- * that a named parameter may occur multiple times in a SQL query, for example: {@code SELECT * FROM
- * BOOKS WHERE AUTHOR = :name OR TITLE = :name}.
- */
-class ParamExtractor {
+public class SQLStatementFactory {
 
-  static StatementInfo parseSQL(String sql) {
+  private final String normalizedSQL;
+  private final List<NamedParameter> params;
+
+  public SQLStatementFactory(String sql) {
     StringBuilder out = new StringBuilder(sql);
     Map<String, List<Integer>> params = new HashMap<>();
     MutableInt position = new MutableInt();
@@ -47,9 +45,9 @@ class ParamExtractor {
             inString = true;
           } else if (c == ':') {
             /*
-             * Two adjacent parameters ... this can never be valid SQL, so we might as well stop
-             * here and throw an exception. But we don't, because we don't want to be a genuine SQL
-             * parser.
+             * Two adjacent parameters ... this can never be valid SQL, so we
+             * might as well stop here and throw an exception. But we don't,
+             * because we don't want to be a genuine SQL parser.
              */
             out.append('?');
             inParam = true;
@@ -67,7 +65,16 @@ class ParamExtractor {
         }
       }
     }
-    return new StatementInfo(out.toString(), Map.copyOf(params));
+    this.normalizedSQL = out.toString();
+    this.params = params.entrySet().stream().map(this::toNamedParameter).collect(toList());
+  }
+
+  public String getNormalizedSQL() {
+    return normalizedSQL;
+  }
+
+  public List<NamedParameter> getParams() {
+    return params;
   }
 
   private static boolean isParamChar(char c) {
@@ -77,8 +84,12 @@ class ParamExtractor {
   private static void addParam(
       Map<String, List<Integer>> params, StringBuilder param, MutableInt pos) {
     if (param.length() == 0) {
-      throw new YoketeRuntimeException("Zero-length parameter found in query string");
+      throw new YoketeRuntimeException("Zero-length parameter name in query string");
     }
     params.computeIfAbsent(param.toString(), k -> new ArrayList<>(4)).add(pos.ppi());
+  }
+
+  private NamedParameter toNamedParameter(Map.Entry<String, List<Integer>> e) {
+    return new NamedParameter(e.getKey(), asIntArray(e.getValue()));
   }
 }
