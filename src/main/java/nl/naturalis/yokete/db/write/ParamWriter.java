@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.sql.*;
 import nl.naturalis.common.ExceptionMethods;
 import static java.lang.invoke.MethodHandles.lookup;
+import static java.sql.Types.*;
 
 public class ParamWriter<PARAM_TYPE> {
 
@@ -22,16 +23,7 @@ public class ParamWriter<PARAM_TYPE> {
   static ParamWriter<Time> SET_TIME = newBinder("setTime", Time.class);
   static ParamWriter<Timestamp> SET_TIMESTAMP = newBinder("setTimestamp", Timestamp.class);
 
-  static ParamWriter<Object> newObjectBinder(int targetSqlType) {
-    MethodType mt = MethodType.methodType(void.class, int.class, Object.class, int.class);
-    MethodHandle mh;
-    try {
-      mh = lookup().findVirtual(PreparedStatement.class, "setObject", mt);
-    } catch (NoSuchMethodException | IllegalAccessException e) {
-      throw ExceptionMethods.uncheck(e);
-    }
-    return new ParamWriter<>(mh, Object.class, targetSqlType);
-  }
+  static final ParamWriter<Object> SET_OBJECT_FOR_TIMESTAMP = newObjectBinder(TIMESTAMP);
 
   private final MethodHandle method;
   private final Class<PARAM_TYPE> paramType;
@@ -59,6 +51,17 @@ public class ParamWriter<PARAM_TYPE> {
     } else {
       method.invoke(ps, paramIndex, paramValue, targetSqlType);
     }
+  }
+
+  private static ParamWriter<Object> newObjectBinder(int targetSqlType) {
+    MethodType mt = MethodType.methodType(void.class, int.class, Object.class, int.class);
+    MethodHandle mh;
+    try {
+      mh = lookup().findVirtual(PreparedStatement.class, "setObject", mt);
+    } catch (NoSuchMethodException | IllegalAccessException e) {
+      throw ExceptionMethods.uncheck(e);
+    }
+    return new ParamWriter<>(mh, Object.class, targetSqlType);
   }
 
   private static <X> ParamWriter<X> newBinder(String methodName, Class<X> paramType) {

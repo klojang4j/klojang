@@ -1,11 +1,12 @@
 package nl.naturalis.yokete.db.write;
 
 import java.sql.Date;
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.HashMap;
-import static java.sql.Types.*;
-import static nl.naturalis.yokete.db.write.ParamWriter.*;
+import static java.sql.Types.DATE;
+import static java.sql.Types.TIMESTAMP;
+import static nl.naturalis.yokete.db.write.ParamWriter.SET_DATE;
+import static nl.naturalis.yokete.db.write.ParamWriter.SET_OBJECT_FOR_TIMESTAMP;
 import static nl.naturalis.yokete.db.write.PersisterNegotiator.DEFAULT_ENTRY;
 
 public class LocalDatePersisters extends HashMap<Integer, ValuePersister<?, ?>> {
@@ -14,6 +15,6 @@ public class LocalDatePersisters extends HashMap<Integer, ValuePersister<?, ?>> 
     ValuePersister<LocalDate, Date> va = new ValuePersister<>(SET_DATE, Date::valueOf);
     put(DEFAULT_ENTRY, va);
     put(DATE, va);
-    put(TIMESTAMP, new ValuePersister<LocalDate, Timestamp>(newObjectBinder(TIMESTAMP)));
+    put(TIMESTAMP, new ValuePersister<LocalDate, Object>(SET_OBJECT_FOR_TIMESTAMP));
   }
 }
