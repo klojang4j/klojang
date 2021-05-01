@@ -4,9 +4,9 @@ import java.util.HashMap;
 import nl.naturalis.common.NumberMethods;
 import nl.naturalis.yokete.db.ResultSetReadException;
 import static java.sql.Types.*;
-import static nl.naturalis.yokete.db.rs.ColumnReader.*;
+import static nl.naturalis.yokete.db.rs.RSGetter.*;
 
-class EnumExtractors extends HashMap<Integer, ValueExtractor<?, ?>> {
+class EnumEmitters extends HashMap<Integer, Emitter<?, ?>> {
 
   private static class NumberAdapter<T extends Number> implements Adapter<T, Enum<?>> {
 
@@ -30,12 +30,12 @@ class EnumExtractors extends HashMap<Integer, ValueExtractor<?, ?>> {
     }
   }
 
-  EnumExtractors() {
-    put(BIGINT, new ValueExtractor<>(GET_LONG, new NumberAdapter<Long>()));
-    put(INTEGER, new ValueExtractor<>(GET_INT, new NumberAdapter<Integer>()));
-    put(SMALLINT, new ValueExtractor<>(GET_SHORT, new NumberAdapter<Short>()));
-    put(TINYINT, new ValueExtractor<>(GET_BYTE, new NumberAdapter<Byte>()));
-    ValueExtractor<String, Enum<?>> vp0 = new ValueExtractor<>(GET_STRING, new StringAdapter());
+  EnumEmitters() {
+    put(BIGINT, new Emitter<>(GET_LONG, new NumberAdapter<Long>()));
+    put(INTEGER, new Emitter<>(GET_INT, new NumberAdapter<Integer>()));
+    put(SMALLINT, new Emitter<>(GET_SHORT, new NumberAdapter<Short>()));
+    put(TINYINT, new Emitter<>(GET_BYTE, new NumberAdapter<Byte>()));
+    Emitter<String, Enum<?>> vp0 = new Emitter<>(GET_STRING, new StringAdapter());
     put(VARCHAR, vp0);
     put(CHAR, vp0);
   }

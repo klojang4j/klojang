@@ -10,24 +10,24 @@ import java.sql.Timestamp;
 import nl.naturalis.common.ExceptionMethods;
 import static java.lang.invoke.MethodHandles.lookup;
 
-class ColumnReader<COLUMN_TYPE> {
+class RSGetter<COLUMN_TYPE> {
 
-  static final ColumnReader<String> GET_STRING = newReader("getString", String.class);
-  static final ColumnReader<Integer> GET_INT = newReader("getInt", int.class);
-  static final ColumnReader<Float> GET_FLOAT = newReader("getFloat", float.class);
-  static final ColumnReader<Double> GET_DOUBLE = newReader("getDouble", double.class);
-  static final ColumnReader<Long> GET_LONG = newReader("getLong", long.class);
-  static final ColumnReader<Short> GET_SHORT = newReader("getShort", short.class);
-  static final ColumnReader<Byte> GET_BYTE = newReader("getByte", byte.class);
-  static final ColumnReader<Boolean> GET_BOOLEAN = newReader("getBoolean", boolean.class);
-  static final ColumnReader<Date> GET_DATE = newReader("getDate", Date.class);
-  static final ColumnReader<Time> GET_TIME = newReader("getTime", Time.class);
-  static final ColumnReader<Timestamp> GET_TIMESTAMP = newReader("getTimestamp", Timestamp.class);
-  static final ColumnReader<BigDecimal> GET_BIG_DECIMAL =
-      newReader("getBigDecimal", BigDecimal.class);
+  static final RSGetter<String> GET_STRING = getter("getString", String.class);
+  static final RSGetter<Integer> GET_INT = getter("getInt", int.class);
+  static final RSGetter<Float> GET_FLOAT = getter("getFloat", float.class);
+  static final RSGetter<Double> GET_DOUBLE = getter("getDouble", double.class);
+  static final RSGetter<Long> GET_LONG = getter("getLong", long.class);
+  static final RSGetter<Short> GET_SHORT = getter("getShort", short.class);
+  static final RSGetter<Byte> GET_BYTE = getter("getByte", byte.class);
+  static final RSGetter<Boolean> GET_BOOLEAN = getter("getBoolean", boolean.class);
+  static final RSGetter<Date> GET_DATE = getter("getDate", Date.class);
+  static final RSGetter<Time> GET_TIME = getter("getTime", Time.class);
+  static final RSGetter<Timestamp> GET_TIMESTAMP = getter("getTimestamp", Timestamp.class);
+  static final RSGetter<BigDecimal> GET_BIG_DECIMAL =
+      getter("getBigDecimal", BigDecimal.class);
 
   // Invokes <T> ResultSet.getObject(columnIndex, Class<T>)
-  static <T> ColumnReader<T> newObjectReader(Class<T> returnType) {
+  static <T> RSGetter<T> objectGetter(Class<T> returnType) {
     MethodType mt = MethodType.methodType(Object.class, int.class, Class.class);
     MethodHandle mh;
     try {
@@ -35,7 +35,7 @@ class ColumnReader<COLUMN_TYPE> {
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw ExceptionMethods.uncheck(e);
     }
-    return new ColumnReader<>(mh, returnType);
+    return new RSGetter<>(mh, returnType);
   }
 
   private final MethodHandle method;
@@ -45,11 +45,11 @@ class ColumnReader<COLUMN_TYPE> {
   // getObject. In anyother case classArg will be null.
   private final Class<?> classArg;
 
-  private ColumnReader(MethodHandle method) {
+  private RSGetter(MethodHandle method) {
     this(method, null);
   }
 
-  private ColumnReader(MethodHandle method, Class<?> classArg) {
+  private RSGetter(MethodHandle method, Class<?> classArg) {
     this.method = method;
     this.classArg = classArg;
   }
@@ -64,7 +64,7 @@ class ColumnReader<COLUMN_TYPE> {
     return rs.wasNull() ? null : val;
   }
 
-  private static <T> ColumnReader<T> newReader(String methodName, Class<T> returnType) {
+  private static <T> RSGetter<T> getter(String methodName, Class<T> returnType) {
     MethodType mt = MethodType.methodType(returnType, int.class);
     MethodHandle mh;
     try {
@@ -72,6 +72,6 @@ class ColumnReader<COLUMN_TYPE> {
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw ExceptionMethods.uncheck(e);
     }
-    return new ColumnReader<>(mh);
+    return new RSGetter<>(mh);
   }
 }

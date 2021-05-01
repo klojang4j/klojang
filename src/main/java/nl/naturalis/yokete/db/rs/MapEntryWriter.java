@@ -23,14 +23,14 @@ public class MapEntryWriter<COLUMN_TYPE> implements Writer {
 
   public static MapEntryWriter<?>[] createWriters(ResultSet rs, UnaryOperator<String> mapper)
       throws SQLException {
-    ColumnReaders getters = ColumnReaders.getInstance();
+    RSGetters getters = RSGetters.getInstance();
     ResultSetMetaData rsmd = rs.getMetaData();
     int sz = rsmd.getColumnCount();
     MapEntryWriter<?>[] writers = new MapEntryWriter[sz];
     for (int idx = 0; idx < sz; ++idx) {
       int jdbcIdx = idx + 1; // JDBC is one-based
       int sqlType = rsmd.getColumnType(jdbcIdx);
-      ColumnReader<?> getter = getters.getReader(sqlType);
+      RSGetter<?> getter = getters.getReader(sqlType);
       String label = rsmd.getColumnLabel(jdbcIdx);
       String mapKey = mapper.apply(label);
       writers[idx] = new MapEntryWriter<>(getter, jdbcIdx, sqlType, mapKey);
@@ -38,12 +38,12 @@ public class MapEntryWriter<COLUMN_TYPE> implements Writer {
     return writers;
   }
 
-  private final ColumnReader<COLUMN_TYPE> reader;
+  private final RSGetter<COLUMN_TYPE> reader;
   private final int jdbcIdx;
   private final int sqlType;
   private final String key;
 
-  MapEntryWriter(ColumnReader<COLUMN_TYPE> reader, int jdbcIdx, int sqlType, String key) {
+  MapEntryWriter(RSGetter<COLUMN_TYPE> reader, int jdbcIdx, int sqlType, String key) {
     this.reader = reader;
     this.jdbcIdx = jdbcIdx;
     this.sqlType = sqlType;

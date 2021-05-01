@@ -28,7 +28,7 @@ public class PropertyWriter<COLUMN_TYPE, TARGET_TYPE> implements Writer {
       ResultSetMetaData rsmd, Class<?> beanClass, UnaryOperator<String> nameMapper)
       throws SQLException {
     Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(beanClass);
-    ExtractorNegotiator negotiator = ExtractorNegotiator.getInstance();
+    EmitterSelector negotiator = EmitterSelector.getInstance();
     int sz = rsmd.getColumnCount();
     List<PropertyWriter<?, ?>> writers = new ArrayList<>(sz);
     for (int idx = 0; idx < sz; ++idx) {
@@ -39,20 +39,20 @@ public class PropertyWriter<COLUMN_TYPE, TARGET_TYPE> implements Writer {
       Setter setter = setters.get(property);
       if (setter != null) {
         Class<?> javaType = setter.getParamType();
-        ValueExtractor<?, ?> synapse = negotiator.getProducer(javaType, sqlType);
+        Emitter<?, ?> synapse = negotiator.getProducer(javaType, sqlType);
         writers.add(new PropertyWriter<>(synapse, setter, jdbcIdx, sqlType));
       }
     }
     return writers.toArray(new PropertyWriter[writers.size()]);
   }
 
-  private final ValueExtractor<COLUMN_TYPE, TARGET_TYPE> extractor;
+  private final Emitter<COLUMN_TYPE, TARGET_TYPE> extractor;
   private final Setter setter;
   private final int jdbcIdx;
   private final int sqlType;
 
   PropertyWriter(
-      ValueExtractor<COLUMN_TYPE, TARGET_TYPE> extractor, Setter setter, int jdbcIdx, int sqlType) {
+      Emitter<COLUMN_TYPE, TARGET_TYPE> extractor, Setter setter, int jdbcIdx, int sqlType) {
     this.extractor = extractor;
     this.setter = setter;
     this.jdbcIdx = jdbcIdx;

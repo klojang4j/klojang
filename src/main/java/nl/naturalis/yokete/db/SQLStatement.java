@@ -15,7 +15,7 @@ public class SQLStatement {
 
   private SQLStatement(String sql, List<NamedParameter> params, BindConfig bindConfig) {
     this.sql = sql;
-    this.params = List.copyOf(params);
+    this.params = params;
     this.bindConfig = bindConfig;
   }
 

@@ -4,27 +4,28 @@ import java.sql.ResultSet;
 import java.util.function.Function;
 
 /**
- * Extracts a single value from a {@link ResultSet} and possibly converts to the appropriate type.
+ * Extracts a single value from a {@link ResultSet} and possibly converts it to the type of the
+ * JavaBean field that the value is destined for.
  *
  * @author Ayco Holleman
  * @param <COLUMN_TYPE>
  * @param <FIELD_TYPE>
  */
-class ValueExtractor<COLUMN_TYPE, FIELD_TYPE> {
+class Emitter<COLUMN_TYPE, FIELD_TYPE> {
 
-  private final ColumnReader<COLUMN_TYPE> reader;
+  private final RSGetter<COLUMN_TYPE> reader;
   private final Adapter<COLUMN_TYPE, FIELD_TYPE> adapter;
 
-  ValueExtractor(ColumnReader<COLUMN_TYPE> reader) {
+  Emitter(RSGetter<COLUMN_TYPE> reader) {
     this.reader = reader;
     this.adapter = null;
   }
 
-  ValueExtractor(ColumnReader<COLUMN_TYPE> reader, Function<COLUMN_TYPE, FIELD_TYPE> adapter) {
+  Emitter(RSGetter<COLUMN_TYPE> reader, Function<COLUMN_TYPE, FIELD_TYPE> adapter) {
     this(reader, (x, y) -> adapter.apply(x));
   }
 
-  ValueExtractor(ColumnReader<COLUMN_TYPE> reader, Adapter<COLUMN_TYPE, FIELD_TYPE> adapter) {
+  Emitter(RSGetter<COLUMN_TYPE> reader, Adapter<COLUMN_TYPE, FIELD_TYPE> adapter) {
     this.reader = reader;
     this.adapter = adapter;
   }

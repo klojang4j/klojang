@@ -15,20 +15,20 @@ import java.util.function.Function;
  */
 public class Receiver<FIELD_TYPE, PARAM_TYPE> {
 
-  private final PSSetter<PARAM_TYPE> writer;
+  private final PSSetter<PARAM_TYPE> setter;
   private final Adapter<FIELD_TYPE, PARAM_TYPE> adapter;
 
-  Receiver(PSSetter<PARAM_TYPE> writer) {
-    this.writer = writer;
+  Receiver(PSSetter<PARAM_TYPE> setter) {
+    this.setter = setter;
     this.adapter = null;
   }
 
-  Receiver(PSSetter<PARAM_TYPE> writer, Function<FIELD_TYPE, PARAM_TYPE> adapter) {
-    this(writer, (x, y) -> adapter.apply(x));
+  Receiver(PSSetter<PARAM_TYPE> setter, Function<FIELD_TYPE, PARAM_TYPE> adapter) {
+    this(setter, (x, y) -> adapter.apply(x));
   }
 
-  Receiver(PSSetter<PARAM_TYPE> writer, Adapter<FIELD_TYPE, PARAM_TYPE> adapter) {
-    this.writer = writer;
+  Receiver(PSSetter<PARAM_TYPE> setter, Adapter<FIELD_TYPE, PARAM_TYPE> adapter) {
+    this.setter = setter;
     this.adapter = adapter;
   }
 
@@ -36,10 +36,10 @@ public class Receiver<FIELD_TYPE, PARAM_TYPE> {
   public PARAM_TYPE getParamValue(FIELD_TYPE beanValue) {
     return adapter == null
         ? (PARAM_TYPE) beanValue
-        : adapter.adapt(beanValue, writer.getParamType());
+        : adapter.adapt(beanValue, setter.getParamType());
   }
 
   public void bind(PreparedStatement ps, int paramIndex, PARAM_TYPE value) throws Throwable {
-    writer.bindValue(ps, paramIndex, value);
+    setter.bindValue(ps, paramIndex, value);
   }
 }

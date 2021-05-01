@@ -17,20 +17,20 @@ import static java.sql.Types.*;
  */
 public class PSSetter<PARAM_TYPE> {
 
-  static PSSetter<String> SET_STRING = newBinder("setString", String.class);
-  static PSSetter<Integer> SET_INT = newBinder("setInt", int.class);
-  static PSSetter<Double> SET_DOUBLE = newBinder("setDouble", double.class);
-  static PSSetter<Long> SET_LONG = newBinder("setLong", long.class);
-  static PSSetter<Float> SET_FLOAT = newBinder("setFloat", float.class);
-  static PSSetter<Short> SET_SHORT = newBinder("setShort", short.class);
-  static PSSetter<Byte> SET_BYTE = newBinder("setByte", byte.class);
-  static PSSetter<Boolean> SET_BOOLEAN = newBinder("setBoolean", boolean.class);
-  static PSSetter<BigDecimal> SET_BIG_DECIMAL = newBinder("setBigDecimal", BigDecimal.class);
-  static PSSetter<Date> SET_DATE = newBinder("setDate", Date.class);
-  static PSSetter<Time> SET_TIME = newBinder("setTime", Time.class);
-  static PSSetter<Timestamp> SET_TIMESTAMP = newBinder("setTimestamp", Timestamp.class);
+  static PSSetter<String> SET_STRING = setter("setString", String.class);
+  static PSSetter<Integer> SET_INT = setter("setInt", int.class);
+  static PSSetter<Double> SET_DOUBLE = setter("setDouble", double.class);
+  static PSSetter<Long> SET_LONG = setter("setLong", long.class);
+  static PSSetter<Float> SET_FLOAT = setter("setFloat", float.class);
+  static PSSetter<Short> SET_SHORT = setter("setShort", short.class);
+  static PSSetter<Byte> SET_BYTE = setter("setByte", byte.class);
+  static PSSetter<Boolean> SET_BOOLEAN = setter("setBoolean", boolean.class);
+  static PSSetter<BigDecimal> SET_BIG_DECIMAL = setter("setBigDecimal", BigDecimal.class);
+  static PSSetter<Date> SET_DATE = setter("setDate", Date.class);
+  static PSSetter<Time> SET_TIME = setter("setTime", Time.class);
+  static PSSetter<Timestamp> SET_TIMESTAMP = setter("setTimestamp", Timestamp.class);
 
-  static final PSSetter<Object> SET_OBJECT_FOR_TIMESTAMP = newObjectBinder(TIMESTAMP);
+  static final PSSetter<Object> SET_OBJECT_FOR_TIMESTAMP = objectSetter(TIMESTAMP);
 
   private final MethodHandle method;
   private final Class<PARAM_TYPE> paramType;
@@ -60,7 +60,7 @@ public class PSSetter<PARAM_TYPE> {
     }
   }
 
-  private static PSSetter<Object> newObjectBinder(int targetSqlType) {
+  private static PSSetter<Object> objectSetter(int targetSqlType) {
     MethodType mt = MethodType.methodType(void.class, int.class, Object.class, int.class);
     MethodHandle mh;
     try {
@@ -71,7 +71,7 @@ public class PSSetter<PARAM_TYPE> {
     return new PSSetter<>(mh, Object.class, targetSqlType);
   }
 
-  private static <X> PSSetter<X> newBinder(String methodName, Class<X> paramType) {
+  private static <X> PSSetter<X> setter(String methodName, Class<X> paramType) {
     MethodType mt = MethodType.methodType(void.class, int.class, paramType);
     MethodHandle mh;
     try {
