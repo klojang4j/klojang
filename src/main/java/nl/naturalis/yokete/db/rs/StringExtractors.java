@@ -1,8 +1,8 @@
-package nl.naturalis.yokete.db.read;
+package nl.naturalis.yokete.db.rs;
 
 import java.util.HashMap;
-import static nl.naturalis.yokete.db.read.ColumnReader.GET_STRING;
-import static nl.naturalis.yokete.db.read.ExtractorNegotiator.DEFAULT_ENTRY;
+import static nl.naturalis.yokete.db.rs.ColumnReader.GET_STRING;
+import static nl.naturalis.yokete.db.rs.ExtractorNegotiator.DEFAULT_ENTRY;
 
 class StringExtractors extends HashMap<Integer, ValueExtractor<?, ?>> {
 

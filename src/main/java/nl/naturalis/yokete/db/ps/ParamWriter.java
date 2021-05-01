@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.db.write;
+package nl.naturalis.yokete.db.ps;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;

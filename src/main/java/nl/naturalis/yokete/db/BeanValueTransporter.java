@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 import nl.naturalis.common.invoke.Getter;
 import nl.naturalis.common.invoke.GetterFactory;
-import nl.naturalis.yokete.db.write.PersisterNegotiator;
-import nl.naturalis.yokete.db.write.ValuePersister;
+import nl.naturalis.yokete.db.ps.PersisterNegotiator;
+import nl.naturalis.yokete.db.ps.ValuePersister;
 
 class BeanValueTransporter<FIELD_TYPE, PARAM_TYPE> {
 

@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.db.read;
+package nl.naturalis.yokete.db.rs;
 
 import java.sql.ResultSet;
 

@@ -1,11 +1,11 @@
-package nl.naturalis.yokete.db.write;
+package nl.naturalis.yokete.db.ps;
 
 import java.util.HashMap;
 import nl.naturalis.common.Bool;
 import nl.naturalis.common.NumberMethods;
 import static java.sql.Types.*;
-import static nl.naturalis.yokete.db.write.ParamWriter.*;
-import static nl.naturalis.yokete.db.write.PersisterNegotiator.DEFAULT_ENTRY;
+import static nl.naturalis.yokete.db.ps.ParamWriter.*;
+import static nl.naturalis.yokete.db.ps.PersisterNegotiator.DEFAULT_ENTRY;
 
 class IntPersisters extends HashMap<Integer, ValuePersister<?, ?>> {
 

@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.db.read;
+package nl.naturalis.yokete.db.rs;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -8,7 +8,7 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.db.SQLTypeNames;
 import static java.sql.Types.*;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
-import static nl.naturalis.yokete.db.read.ColumnReader.*;
+import static nl.naturalis.yokete.db.rs.ColumnReader.*;
 
 class ColumnReaders {
 

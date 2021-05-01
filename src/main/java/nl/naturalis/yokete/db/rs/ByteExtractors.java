@@ -1,11 +1,11 @@
-package nl.naturalis.yokete.db.read;
+package nl.naturalis.yokete.db.rs;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
 import nl.naturalis.common.NumberMethods;
 import static java.sql.Types.*;
-import static nl.naturalis.yokete.db.read.ColumnReader.*;
-import static nl.naturalis.yokete.db.read.ExtractorNegotiator.DEFAULT_ENTRY;
+import static nl.naturalis.yokete.db.rs.ColumnReader.*;
+import static nl.naturalis.yokete.db.rs.ExtractorNegotiator.DEFAULT_ENTRY;
 
 class ByteExtractors extends HashMap<Integer, ValueExtractor<?, ?>> {
 

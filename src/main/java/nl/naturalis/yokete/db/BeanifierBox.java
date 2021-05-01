@@ -6,9 +6,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.yokete.db.read.PropertyWriter;
-import nl.naturalis.yokete.db.read.Writer;
-import static nl.naturalis.yokete.db.read.PropertyWriter.createWriters;
+import nl.naturalis.yokete.db.rs.PropertyWriter;
+import nl.naturalis.yokete.db.rs.Writer;
+import static nl.naturalis.yokete.db.rs.PropertyWriter.createWriters;
 
 /**
  * Creates and holds a {@link DefaultMappifier}

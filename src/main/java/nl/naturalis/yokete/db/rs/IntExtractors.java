@@ -1,10 +1,10 @@
-package nl.naturalis.yokete.db.read;
+package nl.naturalis.yokete.db.rs;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
 import nl.naturalis.common.NumberMethods;
 import static java.sql.Types.*;
-import static nl.naturalis.yokete.db.read.ColumnReader.*;
+import static nl.naturalis.yokete.db.rs.ColumnReader.*;
 
 class IntExtractors extends HashMap<Integer, ValueExtractor<?, ?>> {
 

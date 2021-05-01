@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.db.write;
+package nl.naturalis.yokete.db.ps;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

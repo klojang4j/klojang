@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.db.write;
+package nl.naturalis.yokete.db.ps;
 
 import java.sql.PreparedStatement;
 import java.util.function.Function;

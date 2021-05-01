@@ -5,8 +5,8 @@ import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.yokete.db.read.*;
-import static nl.naturalis.yokete.db.read.MapEntryWriter.*;
+import nl.naturalis.yokete.db.rs.*;
+import static nl.naturalis.yokete.db.rs.MapEntryWriter.*;
 
 public class MappifierBox {
 

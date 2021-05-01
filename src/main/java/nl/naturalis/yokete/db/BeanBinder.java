@@ -10,8 +10,8 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.invoke.BeanReader;
 import nl.naturalis.common.invoke.Getter;
 import nl.naturalis.common.invoke.GetterFactory;
-import nl.naturalis.yokete.db.write.ValuePersister;
-import nl.naturalis.yokete.db.write.PersisterNegotiator;
+import nl.naturalis.yokete.db.ps.PersisterNegotiator;
+import nl.naturalis.yokete.db.ps.ValuePersister;
 import static nl.naturalis.common.check.CommonChecks.in;
 
 public class BeanBinder<T> {
