@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 import nl.naturalis.common.invoke.Getter;
 import nl.naturalis.common.invoke.GetterFactory;
-import nl.naturalis.yokete.db.ps.PersisterNegotiator;
-import nl.naturalis.yokete.db.ps.ValuePersister;
+import nl.naturalis.yokete.db.ps.ReceiverSelector;
+import nl.naturalis.yokete.db.ps.Receiver;
 
 class BeanValueTransporter<FIELD_TYPE, PARAM_TYPE> {
 
@@ -20,7 +20,7 @@ class BeanValueTransporter<FIELD_TYPE, PARAM_TYPE> {
 
   public static BeanValueTransporter<?, ?>[] createTransporters(
       Class<?> beanClass, List<NamedParameter> params, BindConfig cfg) {
-    PersisterNegotiator negotiator = PersisterNegotiator.getInstance();
+    ReceiverSelector negotiator = ReceiverSelector.getInstance();
     Map<String, Getter> getters = GetterFactory.INSTANCE.getGetters(beanClass, true);
     List<BeanValueTransporter<?, ?>> vts = new ArrayList<>(params.size());
     for (NamedParameter param : params) {
@@ -30,11 +30,11 @@ class BeanValueTransporter<FIELD_TYPE, PARAM_TYPE> {
       }
       Class<?> fieldType = getter.getReturnType();
       Integer sqlType = cfg.getSQLType(param.getName(), fieldType);
-      ValuePersister<?, ?> persister;
+      Receiver<?, ?> persister;
       if (sqlType == null) {
-        persister = negotiator.getDefaultPersister(fieldType);
+        persister = negotiator.getDefaultReceiver(fieldType);
       } else {
-        persister = negotiator.getPersister(fieldType, sqlType);
+        persister = negotiator.getReceiver(fieldType, sqlType);
       }
       vts.add(new BeanValueTransporter<>(getter, persister, param));
     }
@@ -42,11 +42,11 @@ class BeanValueTransporter<FIELD_TYPE, PARAM_TYPE> {
   }
 
   private final Getter getter;
-  private final ValuePersister<FIELD_TYPE, PARAM_TYPE> persister;
+  private final Receiver<FIELD_TYPE, PARAM_TYPE> persister;
   private final NamedParameter param;
 
   BeanValueTransporter(
-      Getter getter, ValuePersister<FIELD_TYPE, PARAM_TYPE> persister, NamedParameter param) {
+      Getter getter, Receiver<FIELD_TYPE, PARAM_TYPE> persister, NamedParameter param) {
     this.getter = getter;
     this.persister = persister;
     this.param = param;
@@ -56,7 +56,7 @@ class BeanValueTransporter<FIELD_TYPE, PARAM_TYPE> {
     FIELD_TYPE beanValue = (FIELD_TYPE) getter.getMethod().invoke(bean);
     PARAM_TYPE paramValue = persister.getParamValue(beanValue);
     for (int paramIndex : param.indices()) {
-      persister.bindValue(ps, paramIndex, paramValue);
+      persister.bind(ps, paramIndex, paramValue);
     }
   }
 }

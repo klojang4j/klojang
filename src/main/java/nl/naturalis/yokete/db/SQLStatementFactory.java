@@ -9,12 +9,14 @@ import nl.naturalis.yokete.YoketeRuntimeException;
 import static java.util.stream.Collectors.*;
 import static nl.naturalis.common.CollectionMethods.asIntArray;
 
-public class SQLStatementFactory {
+class SQLStatementFactory {
 
+  // The processed SQL string in which all named parameters have
+  // been replaced with positional parameters
   private final String normalizedSQL;
   private final List<NamedParameter> params;
 
-  public SQLStatementFactory(String sql) {
+  SQLStatementFactory(String sql) {
     StringBuilder out = new StringBuilder(sql);
     Map<String, List<Integer>> params = new HashMap<>();
     MutableInt position = new MutableInt();
@@ -66,14 +68,19 @@ public class SQLStatementFactory {
       }
     }
     this.normalizedSQL = out.toString();
-    this.params = params.entrySet().stream().map(this::toNamedParameter).collect(toList());
+    this.params =
+        params
+            .entrySet()
+            .stream()
+            .map(e -> new NamedParameter(e.getKey(), asIntArray(e.getValue())))
+            .collect(toUnmodifiableList());
   }
 
-  public String getNormalizedSQL() {
+  String getNormalizedSQL() {
     return normalizedSQL;
   }
 
-  public List<NamedParameter> getParams() {
+  List<NamedParameter> getParams() {
     return params;
   }
 
@@ -87,9 +94,5 @@ public class SQLStatementFactory {
       throw new YoketeRuntimeException("Zero-length parameter name in query string");
     }
     params.computeIfAbsent(param.toString(), k -> new ArrayList<>(4)).add(pos.ppi());
-  }
-
-  private NamedParameter toNamedParameter(Map.Entry<String, List<Integer>> e) {
-    return new NamedParameter(e.getKey(), asIntArray(e.getValue()));
   }
 }

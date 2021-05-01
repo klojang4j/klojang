@@ -4,8 +4,7 @@ import java.sql.ResultSet;
 import java.util.function.Function;
 
 /**
- * Extracts a single value from a {@link ResultSet}, possibly converting it to the another type or
- * value afterwards.
+ * Extracts a single value from a {@link ResultSet} and possibly converts to the appropriate type.
  *
  * @author Ayco Holleman
  * @param <COLUMN_TYPE>
