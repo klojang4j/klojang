@@ -12,25 +12,33 @@ import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.invoke.Setter;
 import nl.naturalis.common.invoke.SetterFactory;
 
+/**
+ * Transports a single value <i>out of</i> a {@code ResultSet} and <i>into</i> a JavaBean.
+ *
+ * @author Ayco Holleman
+ * @param <COLUMN_TYPE>
+ * @param <FIELD_TYPE>
+ */
 @ModulePrivate
-public class PropertyWriter<COLUMN_TYPE, TARGET_TYPE> implements Writer {
+public class BeanValueTransporter<COLUMN_TYPE, FIELD_TYPE> implements Transporter {
 
-  public static <U> U toBean(ResultSet rs, Supplier<U> beanSupplier, PropertyWriter<?, ?>[] writers)
+  public static <U> U toBean(
+      ResultSet rs, Supplier<U> beanSupplier, BeanValueTransporter<?, ?>[] transporters)
       throws Throwable {
     U bean = beanSupplier.get();
-    for (PropertyWriter<?, ?> writer : writers) {
-      writer.transferValue(rs, bean);
+    for (BeanValueTransporter<?, ?> t : transporters) {
+      t.transferValue(rs, bean);
     }
     return bean;
   }
 
-  public static PropertyWriter<?, ?>[] createWriters(
+  public static BeanValueTransporter<?, ?>[] createTransporters(
       ResultSetMetaData rsmd, Class<?> beanClass, UnaryOperator<String> nameMapper)
       throws SQLException {
     Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(beanClass);
     EmitterSelector negotiator = EmitterSelector.getInstance();
     int sz = rsmd.getColumnCount();
-    List<PropertyWriter<?, ?>> writers = new ArrayList<>(sz);
+    List<BeanValueTransporter<?, ?>> transporters = new ArrayList<>(sz);
     for (int idx = 0; idx < sz; ++idx) {
       int jdbcIdx = idx + 1; // JDBC is one-based
       int sqlType = rsmd.getColumnType(jdbcIdx);
@@ -40,20 +48,20 @@ public class PropertyWriter<COLUMN_TYPE, TARGET_TYPE> implements Writer {
       if (setter != null) {
         Class<?> javaType = setter.getParamType();
         Emitter<?, ?> synapse = negotiator.getProducer(javaType, sqlType);
-        writers.add(new PropertyWriter<>(synapse, setter, jdbcIdx, sqlType));
+        transporters.add(new BeanValueTransporter<>(synapse, setter, jdbcIdx, sqlType));
       }
     }
-    return writers.toArray(new PropertyWriter[writers.size()]);
+    return transporters.toArray(new BeanValueTransporter[transporters.size()]);
   }
 
-  private final Emitter<COLUMN_TYPE, TARGET_TYPE> extractor;
+  private final Emitter<COLUMN_TYPE, FIELD_TYPE> emitter;
   private final Setter setter;
   private final int jdbcIdx;
   private final int sqlType;
 
-  PropertyWriter(
-      Emitter<COLUMN_TYPE, TARGET_TYPE> extractor, Setter setter, int jdbcIdx, int sqlType) {
-    this.extractor = extractor;
+  private BeanValueTransporter(
+      Emitter<COLUMN_TYPE, FIELD_TYPE> emitter, Setter setter, int jdbcIdx, int sqlType) {
+    this.emitter = emitter;
     this.setter = setter;
     this.jdbcIdx = jdbcIdx;
     this.sqlType = sqlType;
@@ -66,7 +74,7 @@ public class PropertyWriter<COLUMN_TYPE, TARGET_TYPE> implements Writer {
 
   @SuppressWarnings("unchecked")
   private <U> void transferValue(ResultSet rs, U bean) throws Throwable {
-    TARGET_TYPE val = extractor.getValue(rs, jdbcIdx, (Class<TARGET_TYPE>) setter.getParamType());
+    FIELD_TYPE val = emitter.getValue(rs, jdbcIdx, (Class<FIELD_TYPE>) setter.getParamType());
     setter.getMethod().invoke(bean, val);
   }
 }

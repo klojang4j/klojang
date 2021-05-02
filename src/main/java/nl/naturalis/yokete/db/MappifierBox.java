@@ -2,15 +2,18 @@ package nl.naturalis.yokete.db;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.db.rs.*;
-import static nl.naturalis.yokete.db.rs.MapEntryWriter.*;
+import static nl.naturalis.common.StringMethods.implode;
+import static nl.naturalis.yokete.db.rs.MapValueTransporter.*;
+import static nl.naturalis.yokete.db.rs.Transporter.*;
 
 public class MappifierBox {
 
-  private final AtomicReference<DefaultMappifier> ref = new AtomicReference<>();
+  private final AtomicReference<MapValueTransporter<?>[]> ref = new AtomicReference<>();
 
   private final UnaryOperator<String> mapper;
   private final boolean verify;
@@ -32,15 +35,17 @@ public class MappifierBox {
     if (!rs.next()) {
       return EmptyMappifier.INSTANCE;
     }
-    DefaultMappifier rsm;
-    if ((rsm = ref.get()) == null) {
+    MapValueTransporter<?>[] transporters;
+    if ((transporters = ref.getPlain()) == null) {
       synchronized (this) {
-        rsm = new DefaultMappifier(createWriters(rs, mapper));
-        ref.setPlain(rsm);
+        if (ref.get() == null) {
+          transporters = createTransporters(rs, mapper);
+        }
       }
-    } else if (verify) {
-      Writer.checkCompatibility(rs, rsm.writers);
+    } else if (verify && !isCompatible(rs, transporters)) {
+      List<String> errors = getMatchErrors(rs, transporters);
+      throw new ResultSetMismatchException(implode(errors, ". "));
     }
-    return rsm;
+    return new DefaultMappifier(rs, transporters);
   }
 }

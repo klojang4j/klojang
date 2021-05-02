@@ -1,35 +1,30 @@
 package nl.naturalis.yokete.db;
 
-import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-class EmptyMappifier extends DefaultMappifier {
+class EmptyMappifier implements ResultSetMappifier {
 
   static final EmptyMappifier INSTANCE = new EmptyMappifier();
 
-  private EmptyMappifier() {
-    super(null);
-  }
-
   @Override
-  public Optional<Row> mappify(ResultSet rs) {
+  public Optional<Row> mappify() {
     return Optional.empty();
   }
 
   @Override
-  public List<Row> mappifyAtMost(ResultSet rs, int limit) {
+  public List<Row> mappifyAtMost(int limit) {
     return Collections.emptyList();
   }
 
   @Override
-  public List<Row> mappifyAll(ResultSet rs) {
+  public List<Row> mappifyAll() {
     return Collections.emptyList();
   }
 
   @Override
-  public List<Row> mappifyAll(ResultSet rs, int sizeEstimate) {
+  public List<Row> mappifyAll(int sizeEstimate) {
     return Collections.emptyList();
   }
 }

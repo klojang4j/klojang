@@ -9,17 +9,17 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.yokete.db.rs.PropertyWriter;
+import nl.naturalis.yokete.db.rs.BeanValueTransporter;
 import static nl.naturalis.common.check.CommonChecks.gt;
-import static nl.naturalis.yokete.db.rs.PropertyWriter.toBean;
+import static nl.naturalis.yokete.db.rs.BeanValueTransporter.toBean;
 
 class DefaultBeanifier<T> implements ResultSetBeanifier<T> {
 
   private final ResultSet rs;
-  private final PropertyWriter<?, ?>[] writers;
+  private final BeanValueTransporter<?, ?>[] writers;
   private final Supplier<T> beanSupplier;
 
-  DefaultBeanifier(ResultSet rs, PropertyWriter<?, ?>[] writers, Supplier<T> beanSupplier) {
+  DefaultBeanifier(ResultSet rs, BeanValueTransporter<?, ?>[] writers, Supplier<T> beanSupplier) {
     this.rs = rs;
     this.beanSupplier = beanSupplier;
     this.writers = writers;

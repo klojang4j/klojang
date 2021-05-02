@@ -9,42 +9,49 @@ import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.yokete.db.Row;
 import static java.util.Map.Entry;
 
+/**
+ * Transports a single value <i>out of</i> a {@code ResultSet} and <i>into</i> a <code>
+ * Map&lt;String,Object&gt;</code> instance.
+ *
+ * @author Ayco Holleman
+ * @param <COLUMN_TYPE>
+ */
 @ModulePrivate
-public class MapEntryWriter<COLUMN_TYPE> implements Writer {
+public class MapValueTransporter<COLUMN_TYPE> implements Transporter {
 
-  public static Row toRow(ResultSet rs, MapEntryWriter<?>[] writers) throws Throwable {
+  public static Row toRow(ResultSet rs, MapValueTransporter<?>[] transporters) throws Throwable {
     @SuppressWarnings("unchecked")
-    Entry<String, Object>[] entries = new Entry[writers.length];
-    for (int i = 0; i < writers.length; ++i) {
-      entries[i] = writers[i].transferValue(rs);
+    Entry<String, Object>[] entries = new Entry[transporters.length];
+    for (int i = 0; i < transporters.length; ++i) {
+      entries[i] = transporters[i].transferValue(rs);
     }
     return Row.withData(Map.ofEntries(entries));
   }
 
-  public static MapEntryWriter<?>[] createWriters(ResultSet rs, UnaryOperator<String> mapper)
+  public static MapValueTransporter<?>[] createTransporters(ResultSet rs, UnaryOperator<String> mapper)
       throws SQLException {
     RSGetters getters = RSGetters.getInstance();
     ResultSetMetaData rsmd = rs.getMetaData();
     int sz = rsmd.getColumnCount();
-    MapEntryWriter<?>[] writers = new MapEntryWriter[sz];
+    MapValueTransporter<?>[] transporters = new MapValueTransporter[sz];
     for (int idx = 0; idx < sz; ++idx) {
       int jdbcIdx = idx + 1; // JDBC is one-based
       int sqlType = rsmd.getColumnType(jdbcIdx);
       RSGetter<?> getter = getters.getReader(sqlType);
       String label = rsmd.getColumnLabel(jdbcIdx);
       String mapKey = mapper.apply(label);
-      writers[idx] = new MapEntryWriter<>(getter, jdbcIdx, sqlType, mapKey);
+      transporters[idx] = new MapValueTransporter<>(getter, jdbcIdx, sqlType, mapKey);
     }
-    return writers;
+    return transporters;
   }
 
-  private final RSGetter<COLUMN_TYPE> reader;
+  private final RSGetter<COLUMN_TYPE> rsGetter;
   private final int jdbcIdx;
   private final int sqlType;
   private final String key;
 
-  MapEntryWriter(RSGetter<COLUMN_TYPE> reader, int jdbcIdx, int sqlType, String key) {
-    this.reader = reader;
+  private MapValueTransporter(RSGetter<COLUMN_TYPE> reader, int jdbcIdx, int sqlType, String key) {
+    this.rsGetter = reader;
     this.jdbcIdx = jdbcIdx;
     this.sqlType = sqlType;
     this.key = key;
@@ -56,7 +63,7 @@ public class MapEntryWriter<COLUMN_TYPE> implements Writer {
   }
 
   private Entry<String, Object> transferValue(ResultSet rs) throws Throwable {
-    Object val = reader.readColumn(rs, jdbcIdx);
+    Object val = rsGetter.readColumn(rs, jdbcIdx);
     return Map.entry(key, val);
   }
 }

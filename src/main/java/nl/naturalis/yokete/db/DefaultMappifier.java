@@ -6,29 +6,17 @@ import java.util.List;
 import java.util.Optional;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.yokete.db.rs.MapEntryWriter;
+import nl.naturalis.yokete.db.rs.MapValueTransporter;
 import static nl.naturalis.common.check.CommonChecks.gt;
 
-/**
- * Converts JDBC {@link ResultSet} instances into <code>Map&lt;String, Object&gt;</code> instances
- * or <code>List&lt;Map&lt;String, Object&gt;&gt;</code>, depending on whether you want to mappify
- * just a single row from the {@code ResultSet} or multiple rows. To be more precize: it converts
- * them into instances of {@link Row} or {@link QueryResult}, which are extensions of <code>
- * HashMap&lt;String, Object&gt;</code> and <code>ArrayList&lt;Row&gt;</code> respectively. These
- * subclasses provide some extra methods useful when reading query results but otherwise don't alter
- * their behaviour.
- *
- * <p>You cannot instatiate a {@code ResultSetMappifier} directly. You can obtain an instance from a
- * {@link MappifierBox}.
- *
- * @author Ayco Holleman
- */
-public class DefaultMappifier implements ResultSetMappifier {
+class DefaultMappifier implements ResultSetMappifier {
 
-  final MapEntryWriter<?>[] writers;
+  private final ResultSet rs;
+  private final MapValueTransporter<?>[] transporters;
 
-  DefaultMappifier(MapEntryWriter<?>[] writers) {
-    this.writers = writers;
+  DefaultMappifier(ResultSet rs, MapValueTransporter<?>[] transporters) {
+    this.rs = rs;
+    this.transporters = transporters;
   }
 
   /**
@@ -43,10 +31,10 @@ public class DefaultMappifier implements ResultSetMappifier {
    *     ResultSet}.
    */
   @Override
-  public Optional<Row> mappify(ResultSet rs) {
+  public Optional<Row> mappify() {
     Check.notNull(rs);
     try {
-      return Optional.of(MapEntryWriter.toRow(rs, writers));
+      return Optional.of(MapValueTransporter.toRow(rs, transporters));
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
     }
@@ -63,14 +51,14 @@ public class DefaultMappifier implements ResultSetMappifier {
    * @return A {@code List} of <code>Map&lt;String,Object&gt;</code> instances
    */
   @Override
-  public List<Row> mappifyAtMost(ResultSet rs, int limit) {
+  public List<Row> mappifyAtMost(int limit) {
     Check.notNull(rs, "rs");
     Check.that(limit, "limit").is(gt(), 0);
     List<Row> all = new ArrayList<>(limit);
     int i = 0;
     try {
       do {
-        all.add(MapEntryWriter.toRow(rs, writers));
+        all.add(MapValueTransporter.toRow(rs, transporters));
       } while (++i < limit && rs.next());
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
@@ -88,8 +76,8 @@ public class DefaultMappifier implements ResultSetMappifier {
    * @return A {@code List} of <code>Map&lt;String,Object&gt;</code> instances
    */
   @Override
-  public List<Row> mappifyAll(ResultSet rs) {
-    return mappifyAll(rs, 16);
+  public List<Row> mappifyAll() {
+    return mappifyAll(16);
   }
 
   /**
@@ -104,13 +92,13 @@ public class DefaultMappifier implements ResultSetMappifier {
    * @return A {@code List} of <code>Map&lt;String,Object&gt;</code> instances
    */
   @Override
-  public List<Row> mappifyAll(ResultSet rs, int sizeEstimate) {
+  public List<Row> mappifyAll(int sizeEstimate) {
     Check.notNull(rs, "rs");
     Check.that(sizeEstimate, "sizeEstimate").is(gt(), 0);
     List<Row> all = new ArrayList<>(sizeEstimate);
     try {
       do {
-        all.add(MapEntryWriter.toRow(rs, writers));
+        all.add(MapValueTransporter.toRow(rs, transporters));
       } while (rs.next());
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
