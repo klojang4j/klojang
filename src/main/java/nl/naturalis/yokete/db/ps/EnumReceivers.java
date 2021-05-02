@@ -7,6 +7,9 @@ import static nl.naturalis.yokete.db.ps.ReceiverNegotiator.DEFAULT;
 
 class EnumReceivers extends HashMap<Integer, Receiver<?, ?>> {
 
+  static final Receiver<Enum<?>, String> ENUM_TO_STRING =
+      new Receiver<>(SET_STRING, Object::toString);
+
   EnumReceivers() {
     put(DEFAULT, new Receiver<Enum<?>, Integer>(SET_INT, Enum::ordinal));
     put(INTEGER, new Receiver<Enum<?>, Integer>(SET_INT, Enum::ordinal));

@@ -19,16 +19,26 @@ public class MapBinder {
     this.bindInfo = bindInfo;
   }
 
-  public void bindMap(PreparedStatement ps, Map<String, Object> map) throws SQLException {
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  public void bindMap(PreparedStatement ps, Map<String, Object> map) throws Throwable {
+    ReceiverNegotiator negotiator = ReceiverNegotiator.getInstance();
     for (NamedParameter param : params) {
-      if (!map.containsKey(param.getName())) {
+      String key = param.getName();
+      if (!map.containsKey(key)) {
         continue;
       }
-      Object v = map.getOrDefault(param, ABSENT);
+      Object v = map.getOrDefault(key, ABSENT);
       if (v == ABSENT) {
         continue;
       } else if (v == null) {
         bind(ps, param, (String) null);
+      } else if (Enum.class.isInstance(v) && bindInfo.saveEnumUsingToString(key)) {
+        bind(ps, param, ((Enum<?>) v).toString());
+      } else {
+        Receiver receiver = negotiator.getDefaultReceiver(v.getClass());
+        for (int idx : param.getIndices()) {
+          receiver.bind(ps, idx, v);
+        }
       }
     }
   }

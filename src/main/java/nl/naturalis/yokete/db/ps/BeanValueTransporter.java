@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import nl.naturalis.common.ClassMethods;
 import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.invoke.Getter;
 import nl.naturalis.common.invoke.GetterFactory;
@@ -37,13 +38,18 @@ class BeanValueTransporter<FIELD_TYPE, PARAM_TYPE> {
       if (getter == null) {
         continue;
       }
-      Class<?> fieldType = getter.getReturnType();
-      Integer sqlType = bindInfo.getTargetSqlType(param.getName(), fieldType);
+      String property = param.getName();
+      Class<?> type = getter.getReturnType();
       Receiver<?, ?> receiver;
-      if (sqlType == null) {
-        receiver = negotiator.getDefaultReceiver(fieldType);
+      if (ClassMethods.isA(type, Enum.class) && bindInfo.saveEnumUsingToString(property)) {
+        receiver = EnumReceivers.ENUM_TO_STRING;
       } else {
-        receiver = negotiator.getReceiver(fieldType, sqlType);
+        Integer sqlType = bindInfo.getSqlType(property, type);
+        if (sqlType == null) {
+          receiver = negotiator.getDefaultReceiver(type);
+        } else {
+          receiver = negotiator.getReceiver(type, sqlType);
+        }
       }
       vts.add(new BeanValueTransporter<>(getter, receiver, param));
     }
