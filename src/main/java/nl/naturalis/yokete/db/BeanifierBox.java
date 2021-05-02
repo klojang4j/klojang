@@ -18,12 +18,12 @@ import static nl.naturalis.yokete.db.rs.PropertyWriter.createWriters;
  */
 public class BeanifierBox<T> {
 
-  private final AtomicReference<ResultSetBeanifier<T>> ref = new AtomicReference<>();
-
-  private final Class<T> bc;
-  private final Supplier<T> bs;
+  private final Class<T> beanCLass;
+  private final Supplier<T> beanSupplier;
   private final UnaryOperator<String> mapper;
   private final boolean verify;
+
+  private AtomicReference<PropertyWriter<?, ?>[]> pwref = new AtomicReference<>();
 
   public BeanifierBox(Class<T> beanClass, Supplier<T> beanSupplier) {
     this(beanClass, beanSupplier, x -> x);
@@ -39,8 +39,8 @@ public class BeanifierBox<T> {
       Supplier<T> beanSupplier,
       UnaryOperator<String> columnToPropertyMapper,
       boolean verify) {
-    this.bc = Check.notNull(beanClass, "beanClass").ok();
-    this.bs = Check.notNull(beanSupplier, "beanSupplier").ok();
+    this.beanCLass = Check.notNull(beanClass, "beanClass").ok();
+    this.beanSupplier = Check.notNull(beanSupplier, "beanSupplier").ok();
     this.mapper = Check.notNull(columnToPropertyMapper, "columnToPropertyMapper").ok();
     this.verify = verify;
   }
@@ -49,18 +49,17 @@ public class BeanifierBox<T> {
     if (!rs.next()) {
       return EmptyBeanifier.INSTANCE;
     }
-    DefaultBeanifier<T> beanifier = (DefaultBeanifier<T>) ref.getPlain();
-    if (beanifier == null) {
+    PropertyWriter<?, ?>[] writers;
+    if ((writers = pwref.getPlain()) == null) {
       synchronized (this) {
-        if (ref.get() == null) { // Ask again, more forcefully
-          PropertyWriter<?, ?>[] writers = createWriters(rs.getMetaData(), bc, mapper);
-          beanifier = new DefaultBeanifier<>(writers, bs);
-          ref.set(beanifier);
+        if (pwref.get() == null) { // Ask again
+          writers = createWriters(rs.getMetaData(), beanCLass, mapper);
+          pwref.set(writers);
         }
       }
     } else if (verify) {
-      Writer.checkCompatibility(rs, beanifier.writers);
+      Writer.checkCompatibility(rs, writers);
     }
-    return beanifier;
+    return new DefaultBeanifier<>(rs, writers, beanSupplier);
   }
 }

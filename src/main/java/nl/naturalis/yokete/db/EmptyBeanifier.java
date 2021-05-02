@@ -1,6 +1,5 @@
 package nl.naturalis.yokete.db;
 
-import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -13,27 +12,30 @@ class EmptyBeanifier<T> implements ResultSetBeanifier<T> {
   private EmptyBeanifier() {}
 
   @Override
-  public Optional<T> beanify(ResultSet rs) {
+  public Optional<T> beanify() {
     return Optional.empty();
   }
 
   @Override
-  public List<T> beanifyAtMost(ResultSet rs, int limit) {
+  public List<T> beanifyAtMost(int limit) {
     return Collections.emptyList();
   }
 
   @Override
-  public List<T> beanifyAtMost(ResultSet rs, int from, int limit) {
+  public List<T> beanifyAtMost(int from, int limit) {
     return Collections.emptyList();
   }
 
   @Override
-  public List<T> beanifyAll(ResultSet rs) {
+  public List<T> beanifyAll() {
     return Collections.emptyList();
   }
 
   @Override
-  public List<T> beanifyAll(ResultSet rs, int sizeEstimate) {
+  public List<T> beanifyAll(int sizeEstimate) {
     return Collections.emptyList();
   }
+
+  @Override
+  public void close() {}
 }

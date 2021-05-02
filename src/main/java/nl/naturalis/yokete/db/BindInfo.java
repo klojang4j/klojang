@@ -1,6 +1,6 @@
 package nl.naturalis.yokete.db;
 
-public interface BindConfig {
+public interface BindInfo {
 
   @SuppressWarnings("unused")
   default Integer getSQLType(String propertyName, Class<?> propertyType) {

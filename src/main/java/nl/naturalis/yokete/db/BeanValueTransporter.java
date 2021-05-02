@@ -6,20 +6,20 @@ import java.util.List;
 import java.util.Map;
 import nl.naturalis.common.invoke.Getter;
 import nl.naturalis.common.invoke.GetterFactory;
-import nl.naturalis.yokete.db.ps.ReceiverSelector;
 import nl.naturalis.yokete.db.ps.Receiver;
+import nl.naturalis.yokete.db.ps.ReceiverSelector;
 
 class BeanValueTransporter<FIELD_TYPE, PARAM_TYPE> {
 
-  public static <T> void bindBean(
-      PreparedStatement ps, T bean, BeanValueTransporter<?, ?>[] transporters) throws Throwable {
+  static <T> void bindBean(PreparedStatement ps, T bean, BeanValueTransporter<?, ?>[] transporters)
+      throws Throwable {
     for (BeanValueTransporter<?, ?> transporter : transporters) {
       transporter.transportValue(ps, bean);
     }
   }
 
-  public static BeanValueTransporter<?, ?>[] createTransporters(
-      Class<?> beanClass, List<NamedParameter> params, BindConfig cfg) {
+  static BeanValueTransporter<?, ?>[] createTransporters(
+      Class<?> beanClass, List<NamedParameter> params, BindInfo cfg) {
     ReceiverSelector negotiator = ReceiverSelector.getInstance();
     Map<String, Getter> getters = GetterFactory.INSTANCE.getGetters(beanClass, true);
     List<BeanValueTransporter<?, ?>> vts = new ArrayList<>(params.size());

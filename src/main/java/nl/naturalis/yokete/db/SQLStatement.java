@@ -1,25 +1,31 @@
 package nl.naturalis.yokete.db;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import nl.naturalis.common.check.Check;
 
-public class SQLStatement {
+public abstract class SQLStatement {
 
-  public static SQLStatement create(String sql, BindConfig bindConfig) {
-    SQLStatementFactory ssf = new SQLStatementFactory(sql);
-    return new SQLStatement(ssf.getNormalizedSQL(), ssf.getParams(), bindConfig);
-  }
+  private final List<Object> bindables = new ArrayList<>(5);
 
-  private final String sql;
-  private final List<NamedParameter> params;
-  private final BindConfig bindConfig;
+  private final SQL sql;
 
-  private SQLStatement(String sql, List<NamedParameter> params, BindConfig bindConfig) {
+  SQLStatement(SQL sql) {
     this.sql = sql;
-    this.params = params;
-    this.bindConfig = bindConfig;
   }
 
-  public String getNormalizedSQL() {
-    return sql;
+  public void bind(Object bean) {
+    Check.notNull(bean).then(bindables::add);
+  }
+
+  public void bind(Map<String, Object> map) {
+    Check.notNull(map).then(bindables::add);
+  }
+
+  public void bind(String param, Object value) {
+    Check.notNull(param, "param");
+    bindables.add(Collections.singletonMap(param, value));
   }
 }

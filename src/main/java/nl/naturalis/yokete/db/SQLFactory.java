@@ -9,14 +9,14 @@ import nl.naturalis.yokete.YoketeRuntimeException;
 import static java.util.stream.Collectors.*;
 import static nl.naturalis.common.CollectionMethods.asIntArray;
 
-class SQLStatementFactory {
+class SQLFactory {
 
   // The processed SQL string in which all named parameters have
   // been replaced with positional parameters
   private final String normalizedSQL;
   private final List<NamedParameter> params;
 
-  SQLStatementFactory(String sql) {
+  SQLFactory(String sql) {
     StringBuilder out = new StringBuilder(sql);
     Map<String, List<Integer>> params = new HashMap<>();
     MutableInt position = new MutableInt();

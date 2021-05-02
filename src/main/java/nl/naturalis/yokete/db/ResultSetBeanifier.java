@@ -5,16 +5,16 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * A {@code ResultSetBeanifier} converts JDBC {@link ResultSet result sets} to JavaBeans. A single
- * {@code ResultSetBeanifier} exactly one SQL query. You cannot instantiate a {@code
- * ResultSetBeanifier} directly. Instead you obtain one from a {@link BeanifierBox}. When using a
- * {@code ResultSetBeanifier} to iterate over a {@code ResultSet} you should not call {@link
+ * A {@code ResultSetBeanifier} converts JDBC {@link ResultSet result sets} to JavaBeans. One {@code
+ * ResultSetBeanifier} instance caters for exactly one SQL query. You cannot instantiate a {@code
+ * ResultSetBeanifier} directly. You obtain one from a {@link BeanifierBox}. When using a {@code
+ * ResultSetBeanifier} to iterate over a {@code ResultSet} you should not call {@link
  * ResultSet#next()}) yourself. This is done by the {@code ResultSetBeanifier}.
  *
  * @author Ayco Holleman
  * @param <T> The type of the JavaBean
  */
-public interface ResultSetBeanifier<T> {
+public interface ResultSetBeanifier<T> extends AutoCloseable {
 
   /**
    * Converts the current row within the specified {@code ResultSet} into a JavaBean. If the {@code
@@ -25,7 +25,7 @@ public interface ResultSetBeanifier<T> {
    * @return An {@code Optional} containing the JavaBean or an empty {@code Optional} if the {@code
    *     ResultSet} contained no (more) rows
    */
-  Optional<T> beanify(ResultSet rs);
+  Optional<T> beanify();
 
   /**
    * Extracts and converts at most {@code limit} rows from the specified {@code ResultSet} into
@@ -37,7 +37,7 @@ public interface ResultSetBeanifier<T> {
    * @return A {@code List} of JavaBeans or an empty {@code List} if the {@code ResultSet} contained
    *     no (more) rows
    */
-  List<T> beanifyAtMost(ResultSet rs, int limit);
+  List<T> beanifyAtMost(int limit);
 
   /**
    * First skips {@code from} rows and then extracts and converts at most {@code limit} rows from
@@ -51,7 +51,7 @@ public interface ResultSetBeanifier<T> {
    * @return A {@code List} of JavaBeans or an empty {@code List} if the {@code ResultSet} contained
    *     no (more) rows
    */
-  List<T> beanifyAtMost(ResultSet rs, int from, int limit);
+  List<T> beanifyAtMost(int from, int limit);
 
   /**
    * Extract and converts all remaining rows within the specified {@code ResultSet} into JavaBeans.
@@ -60,7 +60,7 @@ public interface ResultSetBeanifier<T> {
    * @return A {@code List} of JavaBeans or an empty {@code List} if the {@code ResultSet} contained
    *     no (more) rows
    */
-  List<T> beanifyAll(ResultSet rs);
+  List<T> beanifyAll();
 
   /**
    * Extract and converts all remaining rows within the specified {@code ResultSet} into JavaBeans.
@@ -71,5 +71,8 @@ public interface ResultSetBeanifier<T> {
    * @return A {@code List} of JavaBeans or an empty {@code List} if the {@code ResultSet} contained
    *     no (more) rows
    */
-  List<T> beanifyAll(ResultSet rs, int sizeEstimate);
+  List<T> beanifyAll(int sizeEstimate);
+
+  @Override
+  void close();
 }
