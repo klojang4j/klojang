@@ -1,7 +1,9 @@
-package nl.naturalis.yokete.db;
+package nl.naturalis.yokete.db.ps;
 
 import java.sql.PreparedStatement;
 import java.util.List;
+import nl.naturalis.yokete.db.BindInfo;
+import nl.naturalis.yokete.db.NamedParameter;
 
 public class BeanBinder<T> {
 

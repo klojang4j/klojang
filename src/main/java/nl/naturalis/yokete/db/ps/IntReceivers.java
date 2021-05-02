@@ -5,7 +5,7 @@ import nl.naturalis.common.Bool;
 import nl.naturalis.common.NumberMethods;
 import static java.sql.Types.*;
 import static nl.naturalis.yokete.db.ps.PSSetter.*;
-import static nl.naturalis.yokete.db.ps.ReceiverSelector.DEFAULT;
+import static nl.naturalis.yokete.db.ps.ReceiverNegotiator.DEFAULT;
 
 class IntReceivers extends HashMap<Integer, Receiver<?, ?>> {
 

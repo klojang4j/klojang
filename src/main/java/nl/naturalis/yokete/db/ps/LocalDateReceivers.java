@@ -7,7 +7,7 @@ import static java.sql.Types.DATE;
 import static java.sql.Types.TIMESTAMP;
 import static nl.naturalis.yokete.db.ps.PSSetter.SET_DATE;
 import static nl.naturalis.yokete.db.ps.PSSetter.SET_OBJECT_FOR_TIMESTAMP;
-import static nl.naturalis.yokete.db.ps.ReceiverSelector.DEFAULT;
+import static nl.naturalis.yokete.db.ps.ReceiverNegotiator.DEFAULT;
 
 public class LocalDateReceivers extends HashMap<Integer, Receiver<?, ?>> {
 

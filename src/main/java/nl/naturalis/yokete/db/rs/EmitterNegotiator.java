@@ -16,13 +16,13 @@ import static nl.naturalis.yokete.db.SQLTypeNames.getTypeName;
  * ResultSet.getXXX method per se, but a Synapse, which is a combination of a ResultSet.getXXX
  * method and a converter function.
  */
-class EmitterSelector {
+class EmitterNegotiator {
 
-  private static EmitterSelector INSTANCE;
+  private static EmitterNegotiator INSTANCE;
 
-  static EmitterSelector getInstance() {
+  static EmitterNegotiator getInstance() {
     if (INSTANCE == null) {
-      INSTANCE = new EmitterSelector();
+      INSTANCE = new EmitterNegotiator();
     }
     return INSTANCE;
   }
@@ -36,12 +36,12 @@ class EmitterSelector {
 
   private final Map<Class<?>, Map<Integer, Emitter<?, ?>>> emittersByType;
 
-  private EmitterSelector() {
+  private EmitterNegotiator() {
     emittersByType = createEmitters();
   }
 
   @SuppressWarnings("unchecked")
-  <T, U> Emitter<T, U> getProducer(Class<U> fieldType, int sqlType) {
+  <T, U> Emitter<T, U> getEmitter(Class<U> fieldType, int sqlType) {
     if (!emittersByType.containsKey(fieldType)) {
       return Check.fail("Type not supported: %s", prettyClassName(fieldType));
     }

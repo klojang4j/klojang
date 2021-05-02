@@ -5,7 +5,7 @@ import java.util.HashMap;
 import nl.naturalis.common.Bool;
 import static java.sql.Types.*;
 import static nl.naturalis.yokete.db.rs.RSGetter.*;
-import static nl.naturalis.yokete.db.rs.EmitterSelector.DEFAULT;
+import static nl.naturalis.yokete.db.rs.EmitterNegotiator.DEFAULT;
 
 class BooleanEmitters extends HashMap<Integer, Emitter<?, ?>> {
 

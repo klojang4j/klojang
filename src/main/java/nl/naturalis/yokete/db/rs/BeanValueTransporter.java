@@ -36,7 +36,7 @@ public class BeanValueTransporter<COLUMN_TYPE, FIELD_TYPE> implements Transporte
       ResultSetMetaData rsmd, Class<?> beanClass, UnaryOperator<String> nameMapper)
       throws SQLException {
     Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(beanClass);
-    EmitterSelector negotiator = EmitterSelector.getInstance();
+    EmitterNegotiator negotiator = EmitterNegotiator.getInstance();
     int sz = rsmd.getColumnCount();
     List<BeanValueTransporter<?, ?>> transporters = new ArrayList<>(sz);
     for (int idx = 0; idx < sz; ++idx) {
@@ -47,7 +47,7 @@ public class BeanValueTransporter<COLUMN_TYPE, FIELD_TYPE> implements Transporte
       Setter setter = setters.get(property);
       if (setter != null) {
         Class<?> javaType = setter.getParamType();
-        Emitter<?, ?> synapse = negotiator.getProducer(javaType, sqlType);
+        Emitter<?, ?> synapse = negotiator.getEmitter(javaType, sqlType);
         transporters.add(new BeanValueTransporter<>(synapse, setter, jdbcIdx, sqlType));
       }
     }

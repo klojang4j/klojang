@@ -9,13 +9,13 @@ import nl.naturalis.common.collection.UnmodifiableTypeMap;
 import static nl.naturalis.common.ClassMethods.prettyClassName;
 import static nl.naturalis.yokete.db.SQLTypeNames.getTypeName;
 
-public class ReceiverSelector {
+public class ReceiverNegotiator {
 
-  private static ReceiverSelector INSTANCE;
+  private static ReceiverNegotiator INSTANCE;
 
-  public static ReceiverSelector getInstance() {
+  public static ReceiverNegotiator getInstance() {
     if (INSTANCE == null) {
-      INSTANCE = new ReceiverSelector();
+      INSTANCE = new ReceiverNegotiator();
     }
     return INSTANCE;
   }
@@ -29,7 +29,7 @@ public class ReceiverSelector {
 
   private final Map<Class<?>, Map<Integer, Receiver<?, ?>>> receiversByType;
 
-  private ReceiverSelector() {
+  private ReceiverNegotiator() {
     receiversByType = createReceivers();
   }
 

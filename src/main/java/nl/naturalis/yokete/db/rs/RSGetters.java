@@ -21,10 +21,10 @@ class RSGetters {
     return INSTANCE;
   }
 
-  private final Map<Integer, RSGetter<?>> getters;
+  private final Map<Integer, RSGetter<?>> cache;
 
   private RSGetters() {
-    getters = createCache();
+    cache = createCache();
   }
 
   @SuppressWarnings("unchecked")
@@ -32,8 +32,8 @@ class RSGetters {
     // This implicitly checks that the specified int is one of the
     // static final int constants in the java.sql.Types class
     String typeName = SQLTypeNames.getTypeName(sqlType);
-    Check.that(sqlType).is(keyIn(), getters, "Unsupported SQL type: %s", typeName);
-    return (RSGetter<T>) getters.get(sqlType);
+    Check.that(sqlType).is(keyIn(), cache, "Unsupported SQL type: %s", typeName);
+    return (RSGetter<T>) cache.get(sqlType);
   }
 
   private static Map<Integer, RSGetter<?>> createCache() {

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import nl.naturalis.common.ExceptionMethods;
+import nl.naturalis.yokete.db.ps.BeanBinder;
 
 public class SQL {
 

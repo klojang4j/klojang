@@ -24,8 +24,4 @@ public class NamedParameter {
   public int[] getIndices() {
     return Arrays.copyOf(indices, indices.length);
   }
-
-  int[] indices() {
-    return indices;
-  }
 }
