@@ -2,6 +2,7 @@ package nl.naturalis.yokete.db.rs;
 
 import java.sql.ResultSet;
 import java.util.function.Function;
+import nl.naturalis.common.ModulePrivate;
 
 /**
  * Extracts a single value from a {@link ResultSet} and possibly converts it to the type of the
@@ -11,7 +12,8 @@ import java.util.function.Function;
  * @param <COLUMN_TYPE>
  * @param <FIELD_TYPE>
  */
-class Emitter<COLUMN_TYPE, FIELD_TYPE> {
+@ModulePrivate
+public class Emitter<COLUMN_TYPE, FIELD_TYPE> {
 
   private final RSGetter<COLUMN_TYPE> reader;
   private final Adapter<COLUMN_TYPE, FIELD_TYPE> adapter;
@@ -31,7 +33,8 @@ class Emitter<COLUMN_TYPE, FIELD_TYPE> {
   }
 
   @SuppressWarnings("unchecked")
-  FIELD_TYPE getValue(ResultSet rs, int columnIndex, Class<FIELD_TYPE> toType) throws Throwable {
+  public FIELD_TYPE getValue(ResultSet rs, int columnIndex, Class<FIELD_TYPE> toType)
+      throws Throwable {
     COLUMN_TYPE val = reader.readColumn(rs, columnIndex);
     if (adapter == null) {
       return (FIELD_TYPE) val;

@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.yokete.db.rs.MapValueTransporter;
 import static nl.naturalis.common.check.CommonChecks.gt;
 
 class DefaultMappifier implements ResultSetMappifier {

@@ -1,13 +1,14 @@
-package nl.naturalis.yokete.db.rs;
+package nl.naturalis.yokete.db;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.Tuple;
-import nl.naturalis.yokete.db.Row;
+import nl.naturalis.yokete.db.rs.RSGetter;
+import nl.naturalis.yokete.db.rs.RSGetters;
+import nl.naturalis.yokete.db.rs.Transporter;
 
 /**
  * Transports a single value <i>out of</i> a {@code ResultSet} and <i>into</i> a <code>
@@ -16,10 +17,9 @@ import nl.naturalis.yokete.db.Row;
  * @author Ayco Holleman
  * @param <COLUMN_TYPE>
  */
-@ModulePrivate
-public class MapValueTransporter<COLUMN_TYPE> implements Transporter {
+class MapValueTransporter<COLUMN_TYPE> implements Transporter {
 
-  public static Row toRow(ResultSet rs, MapValueTransporter<?>[] transporters) throws Throwable {
+  static Row toRow(ResultSet rs, MapValueTransporter<?>[] transporters) throws Throwable {
     @SuppressWarnings("unchecked")
     Tuple<String, Object>[] tuples = new Tuple[transporters.length];
     for (int i = 0; i < transporters.length; ++i) {
@@ -28,8 +28,7 @@ public class MapValueTransporter<COLUMN_TYPE> implements Transporter {
     return Row.withData(tuples);
   }
 
-  public static MapValueTransporter<?>[] createTransporters(
-      ResultSet rs, UnaryOperator<String> mapper) {
+  static MapValueTransporter<?>[] createTransporters(ResultSet rs, UnaryOperator<String> mapper) {
     RSGetters getters = RSGetters.getInstance();
     try {
       ResultSetMetaData rsmd = rs.getMetaData();

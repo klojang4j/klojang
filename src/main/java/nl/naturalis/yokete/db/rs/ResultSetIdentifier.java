@@ -6,12 +6,12 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import nl.naturalis.common.ExceptionMethods;
 
-class ResultSetIdentifier {
+public class ResultSetIdentifier {
 
   private String[] colNames;
   private int[] colTypes;
 
-  ResultSetIdentifier(ResultSet rs) {
+  public ResultSetIdentifier(ResultSet rs) {
     try {
       ResultSetMetaData rsmd = rs.getMetaData();
       int sz = rsmd.getColumnCount();

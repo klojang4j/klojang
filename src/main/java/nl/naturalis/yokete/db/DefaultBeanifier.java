@@ -9,9 +9,8 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.yokete.db.rs.BeanValueTransporter;
 import static nl.naturalis.common.check.CommonChecks.gt;
-import static nl.naturalis.yokete.db.rs.BeanValueTransporter.toBean;
+import static nl.naturalis.yokete.db.BeanValueTransporter.toBean;
 
 class DefaultBeanifier<T> implements ResultSetBeanifier<T> {
 

@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.UnmodifiableTypeMap;
 import static nl.naturalis.common.ClassMethods.prettyClassName;
@@ -16,11 +17,12 @@ import static nl.naturalis.yokete.db.SQLTypeNames.getTypeName;
  * ResultSet.getXXX method per se, but a Synapse, which is a combination of a ResultSet.getXXX
  * method and a converter function.
  */
-class EmitterNegotiator {
+@ModulePrivate
+public class EmitterNegotiator {
 
   private static EmitterNegotiator INSTANCE;
 
-  static EmitterNegotiator getInstance() {
+  public static EmitterNegotiator getInstance() {
     if (INSTANCE == null) {
       INSTANCE = new EmitterNegotiator();
     }
@@ -41,7 +43,7 @@ class EmitterNegotiator {
   }
 
   @SuppressWarnings("unchecked")
-  <T, U> Emitter<T, U> getEmitter(Class<U> fieldType, int sqlType) {
+  public <T, U> Emitter<T, U> getEmitter(Class<U> fieldType, int sqlType) {
     if (!emittersByType.containsKey(fieldType)) {
       return Check.fail("Type not supported: %s", prettyClassName(fieldType));
     }

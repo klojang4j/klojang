@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.db.rs;
+package nl.naturalis.yokete.db;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -9,9 +9,11 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.invoke.Setter;
 import nl.naturalis.common.invoke.SetterFactory;
+import nl.naturalis.yokete.db.rs.Emitter;
+import nl.naturalis.yokete.db.rs.EmitterNegotiator;
+import nl.naturalis.yokete.db.rs.Transporter;
 
 /**
  * Transports a single value <i>out of</i> a {@code ResultSet} and <i>into</i> a JavaBean.
@@ -20,10 +22,9 @@ import nl.naturalis.common.invoke.SetterFactory;
  * @param <COLUMN_TYPE>
  * @param <FIELD_TYPE>
  */
-@ModulePrivate
-public class BeanValueTransporter<COLUMN_TYPE, FIELD_TYPE> implements Transporter {
+class BeanValueTransporter<COLUMN_TYPE, FIELD_TYPE> implements Transporter {
 
-  public static <U> U toBean(
+  static <U> U toBean(
       ResultSet rs, Supplier<U> beanSupplier, BeanValueTransporter<?, ?>[] transporters)
       throws Throwable {
     U bean = beanSupplier.get();
@@ -33,7 +34,7 @@ public class BeanValueTransporter<COLUMN_TYPE, FIELD_TYPE> implements Transporte
     return bean;
   }
 
-  public static BeanValueTransporter<?, ?>[] createTransporters(
+  static BeanValueTransporter<?, ?>[] createTransporters(
       ResultSet rs, Class<?> beanClass, UnaryOperator<String> nameMapper) {
     Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(beanClass);
     EmitterNegotiator negotiator = EmitterNegotiator.getInstance();

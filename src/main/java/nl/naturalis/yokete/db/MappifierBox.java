@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.yokete.db.rs.*;
 import static nl.naturalis.common.StringMethods.implode;
-import static nl.naturalis.yokete.db.rs.MapValueTransporter.*;
-import static nl.naturalis.yokete.db.rs.Transporter.*;
+import static nl.naturalis.yokete.db.MapValueTransporter.createTransporters;
+import static nl.naturalis.yokete.db.rs.Transporter.getMatchErrors;
+import static nl.naturalis.yokete.db.rs.Transporter.isCompatible;
 
 public class MappifierBox {
 
@@ -19,7 +19,7 @@ public class MappifierBox {
   private final boolean verify;
 
   public MappifierBox() {
-    this(x -> x);
+    this(UnaryOperator.identity());
   }
 
   public MappifierBox(UnaryOperator<String> columToKeyMapper) {

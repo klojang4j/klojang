@@ -6,9 +6,6 @@ import java.sql.ResultSet;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.yokete.db.rs.BeanValueTransporter;
-import nl.naturalis.yokete.db.rs.MapValueTransporter;
-import nl.naturalis.yokete.db.rs.TransporterCache;
 import static java.sql.Statement.NO_GENERATED_KEYS;
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
 

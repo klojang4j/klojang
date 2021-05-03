@@ -4,17 +4,19 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.db.SQLTypeNames;
 import static java.sql.Types.*;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 import static nl.naturalis.yokete.db.rs.RSGetter.*;
 
-class RSGetters {
+@ModulePrivate
+public class RSGetters {
 
   private static RSGetters INSTANCE;
 
-  static RSGetters getInstance() {
+  public static RSGetters getInstance() {
     if (INSTANCE == null) {
       INSTANCE = new RSGetters();
     }
@@ -28,7 +30,7 @@ class RSGetters {
   }
 
   @SuppressWarnings("unchecked")
-  <T> RSGetter<T> getReader(int sqlType) {
+  public <T> RSGetter<T> getReader(int sqlType) {
     // This implicitly checks that the specified int is one of the
     // static final int constants in the java.sql.Types class
     String typeName = SQLTypeNames.getTypeName(sqlType);

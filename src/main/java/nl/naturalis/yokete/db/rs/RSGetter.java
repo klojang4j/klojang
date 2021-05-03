@@ -8,9 +8,11 @@ import java.sql.ResultSet;
 import java.sql.Time;
 import java.sql.Timestamp;
 import nl.naturalis.common.ExceptionMethods;
+import nl.naturalis.common.ModulePrivate;
 import static java.lang.invoke.MethodHandles.lookup;
 
-class RSGetter<COLUMN_TYPE> {
+@ModulePrivate
+public class RSGetter<COLUMN_TYPE> {
 
   static final RSGetter<String> GET_STRING = getter("getString", String.class);
   static final RSGetter<Integer> GET_INT = getter("getInt", int.class);
@@ -23,8 +25,7 @@ class RSGetter<COLUMN_TYPE> {
   static final RSGetter<Date> GET_DATE = getter("getDate", Date.class);
   static final RSGetter<Time> GET_TIME = getter("getTime", Time.class);
   static final RSGetter<Timestamp> GET_TIMESTAMP = getter("getTimestamp", Timestamp.class);
-  static final RSGetter<BigDecimal> GET_BIG_DECIMAL =
-      getter("getBigDecimal", BigDecimal.class);
+  static final RSGetter<BigDecimal> GET_BIG_DECIMAL = getter("getBigDecimal", BigDecimal.class);
 
   // Invokes <T> ResultSet.getObject(columnIndex, Class<T>)
   static <T> RSGetter<T> objectGetter(Class<T> returnType) {
@@ -54,7 +55,7 @@ class RSGetter<COLUMN_TYPE> {
     this.classArg = classArg;
   }
 
-  COLUMN_TYPE readColumn(ResultSet rs, int columnIndex) throws Throwable {
+  public COLUMN_TYPE readColumn(ResultSet rs, int columnIndex) throws Throwable {
     COLUMN_TYPE val;
     if (classArg == null) {
       val = (COLUMN_TYPE) method.invoke(rs, columnIndex);

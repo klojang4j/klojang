@@ -17,7 +17,7 @@ public class Row {
   private static final String ERR1 = "Column %s not convertible to %s: %s";
   private static final String ERR2 = "Invalid column number: %d";
 
-  public static Row withData(Tuple<String, Object>[] tuples) {
+  static Row withData(Tuple<String, Object>[] tuples) {
     return new Row(tuples);
   }
 
