@@ -72,7 +72,7 @@ public class SQLInsert extends SQLStatement {
     int keys = returnKeys ? RETURN_GENERATED_KEYS : NO_GENERATED_KEYS;
     ps = con.prepareStatement(sql.getSQL(), keys);
     bind(ps);
-    ps.execute();
+    ps.executeUpdate();
   }
 
   @Override
