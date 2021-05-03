@@ -63,6 +63,12 @@ public class ReceiverNegotiator {
     receivers = my(new IntReceivers());
     tmp.put(Integer.class, receivers);
     tmp.put(int.class, receivers);
+    receivers = my(new LongReceivers());
+    tmp.put(Long.class, receivers);
+    tmp.put(long.class, receivers);
+    receivers = my(new DoubleReceivers());
+    tmp.put(Double.class, receivers);
+    tmp.put(double.class, receivers);
     receivers = my(new ByteReceivers());
     tmp.put(Byte.class, receivers);
     tmp.put(byte.class, receivers);

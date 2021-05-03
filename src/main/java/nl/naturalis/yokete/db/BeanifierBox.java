@@ -59,7 +59,7 @@ public class BeanifierBox<T> {
           // Ask again. Since we're now the only one in here, if pwref.get()
           // did *not* return null, another thread had slipped in just after
           // our first null check. That's fine. We are done.
-          transporters = createTransporters(rs.getMetaData(), beanCLass, mapper);
+          transporters = createTransporters(rs, beanCLass, mapper);
           pwref.set(transporters);
         }
       }

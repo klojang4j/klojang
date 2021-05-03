@@ -16,19 +16,19 @@ import static nl.naturalis.yokete.db.rs.BeanValueTransporter.toBean;
 class DefaultBeanifier<T> implements ResultSetBeanifier<T> {
 
   private final ResultSet rs;
-  private final BeanValueTransporter<?, ?>[] writers;
+  private final BeanValueTransporter<?, ?>[] transporters;
   private final Supplier<T> beanSupplier;
 
-  DefaultBeanifier(ResultSet rs, BeanValueTransporter<?, ?>[] writers, Supplier<T> beanSupplier) {
+  DefaultBeanifier(ResultSet rs, BeanValueTransporter<?, ?>[] ts, Supplier<T> bs) {
     this.rs = rs;
-    this.beanSupplier = beanSupplier;
-    this.writers = writers;
+    this.beanSupplier = bs;
+    this.transporters = ts;
   }
 
   @Override
   public Optional<T> beanify() {
     try {
-      return Optional.of(toBean(rs, beanSupplier, writers));
+      return Optional.of(toBean(rs, beanSupplier, transporters));
     } catch (Throwable e) {
       throw ExceptionMethods.uncheck(e);
     }
@@ -70,7 +70,7 @@ class DefaultBeanifier<T> implements ResultSetBeanifier<T> {
     List<T> all = new ArrayList<>(sizeEstimate);
     try {
       while (rs.next()) {
-        all.add(toBean(rs, beanSupplier, writers));
+        all.add(toBean(rs, beanSupplier, transporters));
       }
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
@@ -82,7 +82,7 @@ class DefaultBeanifier<T> implements ResultSetBeanifier<T> {
     List<T> all = new ArrayList<>(limit);
     int i = 0;
     do {
-      all.add(toBean(rs, beanSupplier, writers));
+      all.add(toBean(rs, beanSupplier, transporters));
     } while (++i < limit && rs.next());
     return all;
   }

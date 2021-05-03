@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.invoke.Setter;
 import nl.naturalis.common.invoke.SetterFactory;
@@ -33,25 +34,29 @@ public class BeanValueTransporter<COLUMN_TYPE, FIELD_TYPE> implements Transporte
   }
 
   public static BeanValueTransporter<?, ?>[] createTransporters(
-      ResultSetMetaData rsmd, Class<?> beanClass, UnaryOperator<String> nameMapper)
-      throws SQLException {
+      ResultSet rs, Class<?> beanClass, UnaryOperator<String> nameMapper) {
     Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(beanClass);
     EmitterNegotiator negotiator = EmitterNegotiator.getInstance();
-    int sz = rsmd.getColumnCount();
-    List<BeanValueTransporter<?, ?>> transporters = new ArrayList<>(sz);
-    for (int idx = 0; idx < sz; ++idx) {
-      int jdbcIdx = idx + 1; // JDBC is one-based
-      int sqlType = rsmd.getColumnType(jdbcIdx);
-      String label = rsmd.getColumnLabel(jdbcIdx);
-      String property = nameMapper.apply(label);
-      Setter setter = setters.get(property);
-      if (setter != null) {
-        Class<?> javaType = setter.getParamType();
-        Emitter<?, ?> synapse = negotiator.getEmitter(javaType, sqlType);
-        transporters.add(new BeanValueTransporter<>(synapse, setter, jdbcIdx, sqlType));
+    try {
+      ResultSetMetaData rsmd = rs.getMetaData();
+      int sz = rsmd.getColumnCount();
+      List<BeanValueTransporter<?, ?>> transporters = new ArrayList<>(sz);
+      for (int idx = 0; idx < sz; ++idx) {
+        int jdbcIdx = idx + 1; // JDBC is one-based
+        int sqlType = rsmd.getColumnType(jdbcIdx);
+        String label = rsmd.getColumnLabel(jdbcIdx);
+        String property = nameMapper.apply(label);
+        Setter setter = setters.get(property);
+        if (setter != null) {
+          Class<?> javaType = setter.getParamType();
+          Emitter<?, ?> synapse = negotiator.getEmitter(javaType, sqlType);
+          transporters.add(new BeanValueTransporter<>(synapse, setter, jdbcIdx, sqlType));
+        }
       }
+      return transporters.toArray(new BeanValueTransporter[transporters.size()]);
+    } catch (SQLException e) {
+      throw ExceptionMethods.uncheck(e);
     }
-    return transporters.toArray(new BeanValueTransporter[transporters.size()]);
   }
 
   private final Emitter<COLUMN_TYPE, FIELD_TYPE> emitter;

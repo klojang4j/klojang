@@ -11,15 +11,17 @@ class ByteReceivers extends HashMap<Integer, Receiver<?, ?>> {
   ByteReceivers() {
     put(DEFAULT, new Receiver<>(SET_BYTE));
     put(TINYINT, new Receiver<>(SET_BYTE));
-    put(INTEGER, new Receiver<Byte, Integer>(SET_INT));
-    put(BIGINT, new Receiver<Byte, Long>(SET_LONG));
-    put(NUMERIC, new Receiver<>(SET_BIG_DECIMAL));
+    put(INTEGER, new Receiver<>(SET_INT));
+    put(SMALLINT, new Receiver<>(SET_SHORT));
+    put(BIGINT, new Receiver<>(SET_LONG));
     put(REAL, new Receiver<>(SET_FLOAT));
     put(FLOAT, new Receiver<>(SET_DOUBLE));
     put(DOUBLE, new Receiver<>(SET_DOUBLE));
-    put(BOOLEAN, new Receiver<Integer, Boolean>(SET_BOOLEAN, Bool::from));
-    put(BIT, new Receiver<Integer, Boolean>(SET_BOOLEAN, Bool::from));
-    put(VARCHAR, new Receiver<Integer, String>(SET_STRING, String::valueOf));
-    put(CHAR, new Receiver<Integer, String>(SET_STRING, String::valueOf));
+    put(NUMERIC, new Receiver<>(SET_BIG_DECIMAL));
+    put(DECIMAL, new Receiver<>(SET_BIG_DECIMAL));
+    put(BOOLEAN, new Receiver<Byte, Boolean>(SET_BOOLEAN, Bool::from));
+    put(BIT, new Receiver<Byte, Boolean>(SET_BOOLEAN, Bool::from));
+    put(VARCHAR, new Receiver<Byte, String>(SET_STRING, String::valueOf));
+    put(CHAR, new Receiver<Byte, String>(SET_STRING, String::valueOf));
   }
 }

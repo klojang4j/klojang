@@ -13,7 +13,7 @@ class SQLFactory {
 
   // The processed SQL string in which all named parameters have
   // been replaced with positional parameters
-  private final String normalizedSQL;
+  private final String normalized;
   private final List<NamedParameter> params;
 
   SQLFactory(String sql) {
@@ -67,7 +67,7 @@ class SQLFactory {
         }
       }
     }
-    this.normalizedSQL = out.toString();
+    this.normalized = out.toString();
     this.params =
         params
             .entrySet()
@@ -76,11 +76,11 @@ class SQLFactory {
             .collect(toUnmodifiableList());
   }
 
-  String getNormalizedSQL() {
-    return normalizedSQL;
+  String sql() {
+    return normalized;
   }
 
-  List<NamedParameter> getParams() {
+  List<NamedParameter> params() {
     return params;
   }
 
