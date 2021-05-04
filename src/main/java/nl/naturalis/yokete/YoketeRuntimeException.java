@@ -7,8 +7,8 @@ package nl.naturalis.yokete;
  */
 public class YoketeRuntimeException extends RuntimeException {
 
-  public YoketeRuntimeException(String message) {
-    super(message);
+  public YoketeRuntimeException(String message, Object... msgArgs) {
+    super(String.format(message, msgArgs));
   }
 
   public YoketeRuntimeException(Throwable cause) {

@@ -1,27 +1,33 @@
 package nl.naturalis.yokete.db;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import nl.naturalis.common.util.MutableInt;
-import nl.naturalis.yokete.YoketeRuntimeException;
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static nl.naturalis.common.CollectionMethods.asIntArray;
 
 class SQLFactory {
 
+  private static final String ERR_ADJACENT_PARAMS =
+      "Adjacent parameters cannot yield valid SQL (positions %d,%d)";
+  private static final String ERR_EMPTY_NAME = "Zero-length parameter name at position %d";
+
   // The processed SQL string in which all named parameters have
   // been replaced with positional parameters
   private final String normalized;
+  private final Map<String, int[]> paramMap;
   private final List<NamedParameter> params;
 
+  @SuppressWarnings("unchecked")
   SQLFactory(String sql) {
-    StringBuilder out = new StringBuilder(sql);
-    Map<String, List<Integer>> params = new HashMap<>();
-    MutableInt position = new MutableInt();
+    StringBuilder out = new StringBuilder(sql.length());
+    Map<String, List<Integer>> paramMap = new LinkedHashMap<>();
+    MutableInt pCount = new MutableInt();
+    int pStartPos = -1;
     boolean inString = false;
-    boolean inParam = false;
     boolean escaped = false;
     StringBuilder param = null;
     for (int i = 0; i < sql.length(); ++i) {
@@ -33,32 +39,25 @@ class SQLFactory {
           else escaped = true;
         } else if (c == '\\') escaped = true;
         else escaped = false;
-      } else if (inParam) {
+      } else if (pStartPos != -1) { // we are assembling a parameter name
         if (isParamChar(c)) {
           param.append(c);
           if (i == sql.length() - 1) {
-            addParam(params, param, position);
+            addParam(paramMap, param, pCount, pStartPos);
           }
         } else {
-          addParam(params, param, position);
+          addParam(paramMap, param, pCount, pStartPos);
           out.append(c);
-          inParam = false;
+          pStartPos = -1;
           if (c == '\'') {
             inString = true;
           } else if (c == ':') {
-            /*
-             * Two adjacent parameters ... this can never be valid SQL, so we
-             * might as well stop here and throw an exception. But we don't,
-             * because we don't want to be a genuine SQL parser.
-             */
-            out.append('?');
-            inParam = true;
-            param = new StringBuilder();
+            throw new KSQLException(ERR_ADJACENT_PARAMS, pStartPos, i);
           }
         }
       } else if (c == ':') {
         out.append('?');
-        inParam = true;
+        pStartPos = i;
         param = new StringBuilder();
       } else {
         out.append(c);
@@ -68,12 +67,14 @@ class SQLFactory {
       }
     }
     this.normalized = out.toString();
+    this.paramMap =
+        Map.ofEntries(paramMap.entrySet().stream().map(this::toNewEntry).toArray(Map.Entry[]::new));
     this.params =
-        params
-            .entrySet()
-            .stream()
-            .map(e -> new NamedParameter(e.getKey(), asIntArray(e.getValue())))
-            .collect(toUnmodifiableList());
+        paramMap.entrySet().stream().map(this::toNamedParam).collect(toUnmodifiableList());
+  }
+
+  private NamedParameter toNamedParam(Entry<String, List<Integer>> e) {
+    return new NamedParameter(e.getKey(), asIntArray(e.getValue()));
   }
 
   String sql() {
@@ -84,15 +85,26 @@ class SQLFactory {
     return params;
   }
 
+  Map<String, int[]> paramMap() {
+    return paramMap;
+  }
+
   private static boolean isParamChar(char c) {
     return Character.isLetterOrDigit(c) || c == '_';
   }
 
   private static void addParam(
-      Map<String, List<Integer>> params, StringBuilder param, MutableInt pos) {
+      Map<String, List<Integer>> paramMap,
+      StringBuilder param,
+      MutableInt paramCount,
+      int startPos) {
     if (param.length() == 0) {
-      throw new YoketeRuntimeException("Zero-length parameter name in query string");
+      throw new KSQLException(ERR_EMPTY_NAME, startPos);
     }
-    params.computeIfAbsent(param.toString(), k -> new ArrayList<>(4)).add(pos.ppi());
+    paramMap.computeIfAbsent(param.toString(), k -> new ArrayList<>(4)).add(paramCount.ppi());
+  }
+
+  private Entry<String, int[]> toNewEntry(Entry<String, List<Integer>> e) {
+    return Map.entry(e.getKey(), asIntArray(e.getValue()));
   }
 }

@@ -15,18 +15,21 @@ public class SQL {
 
   public static SQL create(String sql, BindInfo bindInfo) {
     SQLFactory sf = new SQLFactory(sql);
-    return new SQL(sf.sql(), sf.params(), bindInfo);
+    return new SQL(sf.sql(), sf.params(), sf.paramMap(), bindInfo);
   }
 
   final Map<Class<?>, BeanBinder<?>> beanBinders = new HashMap<>();
 
   private final String sql;
   private final List<NamedParameter> params;
+  private final Map<String, int[]> paramMap;
   private final BindInfo bindInfo;
 
-  private SQL(String sql, List<NamedParameter> params, BindInfo bindInfo) {
+  private SQL(
+      String sql, List<NamedParameter> params, Map<String, int[]> paramMap, BindInfo bindInfo) {
     this.sql = sql;
     this.params = params;
+    this.paramMap = paramMap;
     this.bindInfo = bindInfo;
   }
 
@@ -48,12 +51,16 @@ public class SQL {
    *
    * @return
    */
-  public String getSQL() {
+  public String getNormalizedSQL() {
     return sql;
   }
 
   public List<NamedParameter> getParameters() {
     return params;
+  }
+
+  public Map<String, int[]> getParameterMap() {
+    return paramMap;
   }
 
   MapBinder getMapBinder() {

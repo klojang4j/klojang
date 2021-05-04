@@ -19,11 +19,40 @@ public class SQLInsert extends SQLStatement {
     super(conn, sql);
   }
 
-  public SQLInsert bindBack(boolean bindBack) {
-    this.bindBack = bindBack;
+  @Override
+  public SQLInsert bind(Object bean) {
+    return (SQLInsert) super.bind(bean);
+  }
+
+  @Override
+  public SQLInsert bind(Map<String, Object> map) {
+    return (SQLInsert) super.bind(map);
+  }
+
+  @Override
+  public SQLInsert bind(String param, Object value) {
+    return (SQLInsert) super.bind(param, value);
+  }
+
+  /**
+   * Causes auto-increment keys to be bound back into the JavaBean or {@code Map}. Hence, in case of
+   * a {@code Map}, make sure it is modifiable.
+   *
+   * @return This {@code SQLInsert} instance
+   */
+  public SQLInsert bindBack() {
+    this.bindBack = true;
     return this;
   }
 
+  /**
+   * Sets the column-to-property or column-to-key mapper to use when binding auto-increment keys
+   * back into the JavaBean or {@code Map}, or when calling {@link #executeAndReturnKeys()}. By
+   * default a one-to-one mapping is assumed.
+   *
+   * @param columnToKeyOrPropertyMapper
+   * @return
+   */
   public SQLInsert withMapper(UnaryOperator<String> columnToKeyOrPropertyMapper) {
     this.mapper = columnToKeyOrPropertyMapper;
     return this;
@@ -65,16 +94,16 @@ public class SQLInsert extends SQLStatement {
     return row.getInt(0);
   }
 
-  private void exec(boolean returnKeys) throws Throwable {
-    int keys = returnKeys ? RETURN_GENERATED_KEYS : NO_GENERATED_KEYS;
-    ps = con.prepareStatement(sql.getSQL(), keys);
-    bind(ps);
-    ps.executeUpdate();
-  }
-
   @Override
   public void close() {
     close(ps);
+  }
+
+  private void exec(boolean returnKeys) throws Throwable {
+    int keys = returnKeys ? RETURN_GENERATED_KEYS : NO_GENERATED_KEYS;
+    ps = con.prepareStatement(sql.getNormalizedSQL(), keys);
+    bind(ps);
+    ps.executeUpdate();
   }
 
   @SuppressWarnings("unchecked")

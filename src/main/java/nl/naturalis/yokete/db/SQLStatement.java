@@ -24,17 +24,17 @@ abstract class SQLStatement implements AutoCloseable {
     this.bindables = new ArrayList<>(2);
   }
 
-  public SQLStatement bind(Object bean) {
+  protected SQLStatement bind(Object bean) {
     Check.notNull(bean).then(bindables::add);
     return this;
   }
 
-  public SQLStatement bind(Map<String, Object> map) {
+  protected SQLStatement bind(Map<String, Object> map) {
     Check.notNull(map).then(bindables::add);
     return this;
   }
 
-  public SQLStatement bind(String param, Object value) {
+  protected SQLStatement bind(String param, Object value) {
     if (params == null) {
       params = sql.getParameters().stream().map(p -> p.getName()).collect(toSet());
     }
