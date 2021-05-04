@@ -30,7 +30,6 @@ public class ReceiverNegotiator {
 
   private ReceiverNegotiator() {
     receiversByType = createReceivers();
-    System.out.println(receiversByType);
   }
 
   public <T, U> Receiver<T, U> getDefaultReceiver(Class<T> fieldType) {
