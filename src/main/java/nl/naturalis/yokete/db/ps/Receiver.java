@@ -2,6 +2,7 @@ package nl.naturalis.yokete.db.ps;
 
 import java.sql.PreparedStatement;
 import java.util.function.Function;
+import static nl.naturalis.common.ObjectMethods.ifNotEmpty;
 
 /**
  * Binds a single value to a {@link PreparedStatement}, possibly after first converting it to the
@@ -24,7 +25,7 @@ public class Receiver<FIELD_TYPE, PARAM_TYPE> {
   }
 
   Receiver(PSSetter<PARAM_TYPE> setter, Function<FIELD_TYPE, PARAM_TYPE> adapter) {
-    this(setter, (x, y) -> adapter.apply(x));
+    this(setter, (x, y) -> ifNotEmpty(x, adapter::apply));
   }
 
   Receiver(PSSetter<PARAM_TYPE> setter, Adapter<FIELD_TYPE, PARAM_TYPE> adapter) {

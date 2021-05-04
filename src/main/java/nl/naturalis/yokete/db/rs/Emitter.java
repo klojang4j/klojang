@@ -3,6 +3,7 @@ package nl.naturalis.yokete.db.rs;
 import java.sql.ResultSet;
 import java.util.function.Function;
 import nl.naturalis.common.ModulePrivate;
+import static nl.naturalis.common.ObjectMethods.ifNotNull;
 
 /**
  * Extracts a single value from a {@link ResultSet} and possibly converts it to the type of the
@@ -24,7 +25,7 @@ public class Emitter<COLUMN_TYPE, FIELD_TYPE> {
   }
 
   Emitter(RSGetter<COLUMN_TYPE> reader, Function<COLUMN_TYPE, FIELD_TYPE> adapter) {
-    this(reader, (x, y) -> adapter.apply(x));
+    this(reader, (x, y) -> ifNotNull(x, adapter::apply));
   }
 
   Emitter(RSGetter<COLUMN_TYPE> reader, Adapter<COLUMN_TYPE, FIELD_TYPE> adapter) {
