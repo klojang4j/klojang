@@ -2,11 +2,10 @@ package nl.naturalis.yokete.db.rs;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.Map;
 import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.common.collection.UnmodifiableTypeMap;
+import nl.naturalis.common.collection.FlatTypeMap;
 import static nl.naturalis.common.ClassMethods.prettyClassName;
 import static nl.naturalis.yokete.db.SQLTypeNames.getTypeName;
 
@@ -61,25 +60,25 @@ public class EmitterNegotiator {
   }
 
   private static Map<Class<?>, Map<Integer, Emitter<?, ?>>> createEmitters() {
-    Map<Class<?>, Map<Integer, Emitter<?, ?>>> tmp = new HashMap<>();
+    FlatTypeMap<Map<Integer, Emitter<?, ?>>> map = new FlatTypeMap<>();
     Map<Integer, Emitter<?, ?>> emitters;
-    tmp.put(String.class, my(new StringEmitters()));
+    map.put(String.class, my(new StringEmitters()));
     emitters = my(new IntEmitters());
-    tmp.put(Integer.class, emitters);
-    tmp.put(int.class, emitters);
+    map.put(Integer.class, emitters);
+    map.put(int.class, emitters);
     emitters = my(new LongEmitters());
-    tmp.put(Long.class, emitters);
-    tmp.put(long.class, emitters);
+    map.put(Long.class, emitters);
+    map.put(long.class, emitters);
     emitters = my(new ByteEmitters());
-    tmp.put(Byte.class, emitters);
-    tmp.put(byte.class, emitters);
+    map.put(Byte.class, emitters);
+    map.put(byte.class, emitters);
     emitters = my(new BooleanEmitters());
-    tmp.put(Boolean.class, emitters);
-    tmp.put(boolean.class, emitters);
-    tmp.put(LocalDate.class, my(new LocalDateEmitters()));
-    tmp.put(LocalDateTime.class, my(new LocalDateTimeEmitters()));
-    tmp.put(Enum.class, new EnumEmitters());
-    return UnmodifiableTypeMap.copyOf(tmp);
+    map.put(Boolean.class, emitters);
+    map.put(boolean.class, emitters);
+    map.put(LocalDate.class, my(new LocalDateEmitters()));
+    map.put(LocalDateTime.class, my(new LocalDateTimeEmitters()));
+    map.put(Enum.class, new EnumEmitters());
+    return map;
   }
 
   private static Map<Integer, Emitter<?, ?>> my(Map<Integer, Emitter<?, ?>> src) {

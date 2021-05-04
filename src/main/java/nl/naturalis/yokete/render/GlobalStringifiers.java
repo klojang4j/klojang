@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
-import nl.naturalis.common.collection.TypeMap;
 import nl.naturalis.common.collection.UnmodifiableTypeMap;
 import static java.util.Collections.emptyMap;
 /**
@@ -80,7 +79,7 @@ public final class GlobalStringifiers {
     private final UnmodifiableTypeMap.Builder<Stringifier> typeMapBuilder;
 
     private Builder() {
-      this.typeMapBuilder = UnmodifiableTypeMap.build();
+      this.typeMapBuilder = UnmodifiableTypeMap.build(Stringifier.class);
     }
 
     /**

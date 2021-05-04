@@ -48,7 +48,8 @@ public class SQLInsert extends SQLStatement {
   /**
    * Sets the column-to-property or column-to-key mapper to use when binding auto-increment keys
    * back into the JavaBean or {@code Map}, or when calling {@link #executeAndReturnKeys()}. By
-   * default a one-to-one mapping is assumed.
+   * default a one-to-one mapping is assumed. If you don't want the keys to be bound back or
+   * returned, you don't need to specify a name mapper (it is ignored).
    *
    * @param columnToKeyOrPropertyMapper
    * @return

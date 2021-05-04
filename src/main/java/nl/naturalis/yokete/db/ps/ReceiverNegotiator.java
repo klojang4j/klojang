@@ -2,10 +2,9 @@ package nl.naturalis.yokete.db.ps;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.Map;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.common.collection.UnmodifiableTypeMap;
+import nl.naturalis.common.collection.FlatTypeMap;
 import static nl.naturalis.common.ClassMethods.prettyClassName;
 import static nl.naturalis.yokete.db.SQLTypeNames.getTypeName;
 
@@ -31,6 +30,7 @@ public class ReceiverNegotiator {
 
   private ReceiverNegotiator() {
     receiversByType = createReceivers();
+    System.out.println(receiversByType);
   }
 
   public <T, U> Receiver<T, U> getDefaultReceiver(Class<T> fieldType) {
@@ -57,28 +57,28 @@ public class ReceiverNegotiator {
   }
 
   private static Map<Class<?>, Map<Integer, Receiver<?, ?>>> createReceivers() {
-    Map<Class<?>, Map<Integer, Receiver<?, ?>>> tmp = new HashMap<>();
+    FlatTypeMap<Map<Integer, Receiver<?, ?>>> map = new FlatTypeMap<>();
     Map<Integer, Receiver<?, ?>> receivers;
-    tmp.put(String.class, my(new StringReceivers()));
+    map.put(String.class, my(new StringReceivers()));
     receivers = my(new IntReceivers());
-    tmp.put(Integer.class, receivers);
-    tmp.put(int.class, receivers);
+    map.put(Integer.class, receivers);
+    map.put(int.class, receivers);
     receivers = my(new LongReceivers());
-    tmp.put(Long.class, receivers);
-    tmp.put(long.class, receivers);
+    map.put(Long.class, receivers);
+    map.put(long.class, receivers);
     receivers = my(new DoubleReceivers());
-    tmp.put(Double.class, receivers);
-    tmp.put(double.class, receivers);
+    map.put(Double.class, receivers);
+    map.put(double.class, receivers);
     receivers = my(new ByteReceivers());
-    tmp.put(Byte.class, receivers);
-    tmp.put(byte.class, receivers);
+    map.put(Byte.class, receivers);
+    map.put(byte.class, receivers);
     receivers = my(new BooleanReceivers());
-    tmp.put(Boolean.class, receivers);
-    tmp.put(boolean.class, receivers);
-    tmp.put(LocalDate.class, my(new LocalDateReceivers()));
-    tmp.put(LocalDateTime.class, my(new LocalDateTimeReceivers()));
-    tmp.put(Enum.class, my(new EnumReceivers()));
-    return UnmodifiableTypeMap.copyOf(tmp);
+    map.put(Boolean.class, receivers);
+    map.put(boolean.class, receivers);
+    map.put(LocalDate.class, my(new LocalDateReceivers()));
+    map.put(LocalDateTime.class, my(new LocalDateTimeReceivers()));
+    map.put(Enum.class, my(new EnumReceivers()));
+    return map;
   }
 
   private static Map<Integer, Receiver<?, ?>> my(Map<Integer, Receiver<?, ?>> src) {
