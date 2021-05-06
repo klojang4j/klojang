@@ -76,6 +76,7 @@ public class SQLInsert extends SQLStatement {
     try {
       exec(true);
       try (ResultSet rs = ps.getGeneratedKeys()) {
+        rs.next();
         Row keys = getKeys(rs);
         if (bindBack) {
           bindBack(rs, keys);
