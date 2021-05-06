@@ -25,7 +25,7 @@ public class Emitter<COLUMN_TYPE, FIELD_TYPE> {
   }
 
   Emitter(RSGetter<COLUMN_TYPE> reader, Function<COLUMN_TYPE, FIELD_TYPE> adapter) {
-    this(reader, (x, y) -> ifNotNull(x, adapter::apply));
+    this(reader, (x, y) -> ifNotNull(x,adapter::apply));
   }
 
   Emitter(RSGetter<COLUMN_TYPE> reader, Adapter<COLUMN_TYPE, FIELD_TYPE> adapter) {
