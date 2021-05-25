@@ -70,8 +70,6 @@ class BeanValueTransporter<FIELD_TYPE, PARAM_TYPE> {
   private <T> void transportValue(PreparedStatement ps, T bean) throws Throwable {
     FIELD_TYPE beanValue = (FIELD_TYPE) getter.getMethod().invoke(bean);
     PARAM_TYPE paramValue = receiver.getParamValue(beanValue);
-    for (int paramIndex : param.getIndices()) {
-      receiver.bind(ps, paramIndex, paramValue);
-    }
+    param.getIndices().forEachThrowing(i -> receiver.bind(ps, i, paramValue));
   }
 }

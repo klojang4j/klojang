@@ -20,7 +20,7 @@ import static nl.naturalis.yokete.db.rs.Transporter.isCompatible;
  */
 public class BeanifierBox<T> {
 
-  private final Class<T> beanCLass;
+  private final Class<T> beanClass;
   private final Supplier<T> beanSupplier;
   private final UnaryOperator<String> mapper;
   private final boolean verify;
@@ -41,7 +41,7 @@ public class BeanifierBox<T> {
       Supplier<T> beanSupplier,
       UnaryOperator<String> columnToPropertyMapper,
       boolean verify) {
-    this.beanCLass = Check.notNull(beanClass, "beanClass").ok();
+    this.beanClass = Check.notNull(beanClass, "beanClass").ok();
     this.beanSupplier = Check.notNull(beanSupplier, "beanSupplier").ok();
     this.mapper = Check.notNull(columnToPropertyMapper, "columnToPropertyMapper").ok();
     this.verify = verify;
@@ -58,7 +58,7 @@ public class BeanifierBox<T> {
           // Ask again. Since we're now the only one in here, if pwref.get()
           // did *not* return null, another thread had slipped in just after
           // our first null check. That's fine. We are done.
-          transporters = createTransporters(rs, beanCLass, mapper);
+          transporters = createTransporters(rs, beanClass, mapper);
           pwref.set(transporters);
         }
       }

@@ -3,6 +3,8 @@ package nl.naturalis.yokete.db;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.Tuple;
@@ -26,6 +28,22 @@ class MapValueTransporter<COLUMN_TYPE> implements Transporter {
       tuples[i] = transporters[i].transferValue(rs);
     }
     return Row.withData(tuples);
+  }
+
+  static Map<String, Object> toMap(ResultSet rs, MapValueTransporter<?>[] transporters)
+      throws Throwable {
+    Map<String, Object> map = new HashMap<>(transporters.length);
+    populateMap(rs, map, transporters);
+    return map;
+  }
+
+  static void populateMap(
+      ResultSet rs, Map<String, Object> map, MapValueTransporter<?>[] transporters)
+      throws Throwable {
+    for (int i = 0; i < transporters.length; ++i) {
+      Tuple<String, Object> tuple = transporters[i].transferValue(rs);
+      tuple.insertInto(map);
+    }
   }
 
   static MapValueTransporter<?>[] createTransporters(ResultSet rs, UnaryOperator<String> mapper) {

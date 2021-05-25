@@ -8,7 +8,6 @@ import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
-import nl.naturalis.common.collection.UnmodifiableIntList;
 import nl.naturalis.yokete.render.Accessor;
 import nl.naturalis.yokete.render.RenderSession;
 import nl.naturalis.yokete.render.Stringifier;
@@ -389,7 +388,7 @@ public class Template {
         indices.computeIfAbsent(name, k -> new IntArrayList()).add(i);
       }
     }
-    indices.entrySet().forEach(e -> e.setValue(UnmodifiableIntList.copyOf(e.getValue())));
+    indices.entrySet().forEach(e -> e.setValue(IntList.copyOf(e.getValue())));
     return Collections.unmodifiableMap(indices);
   }
 
@@ -420,6 +419,6 @@ public class Template {
         indices.add(i);
       }
     }
-    return UnmodifiableIntList.copyOf(indices);
+    return IntList.copyOf(indices);
   }
 }

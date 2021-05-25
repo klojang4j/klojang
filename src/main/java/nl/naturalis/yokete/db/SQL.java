@@ -4,8 +4,10 @@ import java.sql.Connection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import nl.naturalis.common.collection.IntList;
 import nl.naturalis.yokete.db.ps.BeanBinder;
 import nl.naturalis.yokete.db.ps.MapBinder;
+import static nl.naturalis.common.CollectionMethods.convertValuesAndFreeze;
 
 public class SQL {
 
@@ -22,14 +24,14 @@ public class SQL {
 
   private final String sql;
   private final List<NamedParameter> params;
-  private final Map<String, int[]> paramMap;
+  private final Map<String, IntList> paramMap;
   private final BindInfo bindInfo;
 
   private SQL(
       String sql, List<NamedParameter> params, Map<String, int[]> paramMap, BindInfo bindInfo) {
     this.sql = sql;
     this.params = params;
-    this.paramMap = paramMap;
+    this.paramMap = convertValuesAndFreeze(paramMap, IntList::of);
     this.bindInfo = bindInfo;
   }
 
@@ -59,7 +61,7 @@ public class SQL {
     return params;
   }
 
-  public Map<String, int[]> getParameterMap() {
+  public Map<String, IntList> getParameterMap() {
     return paramMap;
   }
 

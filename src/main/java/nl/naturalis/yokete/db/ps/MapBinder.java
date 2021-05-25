@@ -36,17 +36,13 @@ public class MapBinder {
         bind(ps, param, ((Enum<?>) v).toString());
       } else {
         Receiver receiver = negotiator.getDefaultReceiver(v.getClass());
-        for (int idx : param.getIndices()) {
-          receiver.bind(ps, idx, v);
-        }
+        param.getIndices().forEachThrowing(i -> receiver.bind(ps, i, v));
       }
     }
   }
 
   private static void bind(PreparedStatement ps, NamedParameter param, String val)
       throws SQLException {
-    for (int idx : param.getIndices()) {
-      ps.setString(idx, val);
-    }
+    param.getIndices().forEachThrowing(i -> ps.setString(i, val));
   }
 }

@@ -3,25 +3,52 @@ package nl.naturalis.yokete.db;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.function.UnaryOperator;
+import java.util.function.Supplier;
 import nl.naturalis.common.ExceptionMethods;
+import nl.naturalis.common.Tuple;
+import nl.naturalis.common.check.Check;
 import static java.sql.Statement.NO_GENERATED_KEYS;
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
+import static nl.naturalis.yokete.db.MapValueTransporter.populateMap;
 
 public class SQLInsert extends SQLStatement {
 
+  private final List<Tuple<Object, String>> bindBackObjs = new ArrayList<>(4);
+
   private PreparedStatement ps;
-  private boolean bindBack;
-  private UnaryOperator<String> mapper = UnaryOperator.identity();
 
   public SQLInsert(Connection conn, SQL sql) {
     super(conn, sql);
   }
 
-  @Override
+  /**
+   * Binds the values in the specified bean into the {@link PreparedStatement} created for the SQL
+   * query.
+   *
+   * @param bean The bean whose properties to bind into the {@code PreparedStatement}
+   * @return This {@code SQLInsert} instance
+   */
   public SQLInsert bind(Object bean) {
     return (SQLInsert) super.bind(bean);
+  }
+
+  /**
+   * Binds the values in the specified bean into the {@link PreparedStatement} created for the SQL
+   * query. This method will cause the (supposedly auto-generated) value of the primary key column
+   * to be bound back to the specified property.
+   *
+   * @param bean
+   * @param idField
+   * @return
+   */
+  public SQLInsert bind(Object bean, String idProperty) {
+    Check.notNull(idProperty, "idProperty");
+    super.bind(bean);
+    bindBackObjs.add(Tuple.of(bean, idProperty));
+    return this;
   }
 
   @Override
@@ -29,42 +56,44 @@ public class SQLInsert extends SQLStatement {
     return (SQLInsert) super.bind(map);
   }
 
+  public SQLInsert bind(Map<String, Object> map, String idKey) {
+    Check.notNull(idKey, "idKey");
+    super.bind(map);
+    bindBackObjs.add(Tuple.of(map, idKey));
+    return this;
+  }
+
   @Override
   public SQLInsert bind(String param, Object value) {
     return (SQLInsert) super.bind(param, value);
   }
 
-  /**
-   * Causes auto-increment keys to be bound back into the JavaBean or {@code Map}. Hence, in case of
-   * a {@code Map}, make sure it is modifiable.
-   *
-   * @return This {@code SQLInsert} instance
-   */
-  public SQLInsert bindBack() {
-    this.bindBack = true;
-    return this;
-  }
-
-  /**
-   * Sets the column-to-property or column-to-key mapper to use when binding auto-increment keys
-   * back into the JavaBean or {@code Map}, or when calling {@link #executeAndReturnKeys()}. By
-   * default a one-to-one mapping is assumed. If you don't want the keys to be bound back or
-   * returned, you don't need to specify a name mapper (it is ignored).
-   *
-   * @param columnToKeyOrPropertyMapper
-   * @return
-   */
-  public SQLInsert withMapper(UnaryOperator<String> columnToKeyOrPropertyMapper) {
-    this.mapper = columnToKeyOrPropertyMapper;
-    return this;
-  }
-
-  public void execute() {
+  @SuppressWarnings("unchecked")
+  public <T> void execute() {
     try {
-      exec(bindBack);
-      if (bindBack) {
+      if (bindBackObjs.isEmpty()) {
+        exec(false);
+      } else {
+        exec(true);
         try (ResultSet rs = ps.getGeneratedKeys()) {
-          bindBack(rs);
+          if (!rs.next()) {
+            throw new KSQLException("No keys were generated during INSERT");
+          } else if (rs.getMetaData().getColumnCount() != 1) {
+            throw new KSQLException("Multiple auto-increment keys not supported");
+          }
+          for (Tuple<Object, String> t : bindBackObjs) {
+            if (t.getLeft() instanceof Map) {
+              MapValueTransporter<?>[] transporters =
+                  MapValueTransporter.createTransporters(rs, s -> t.getRight());
+              populateMap(rs, (Map<String, Object>) t.getLeft(), transporters);
+            } else {
+              Class<T> beanClass = (Class<T>) t.getLeft().getClass();
+              BeanValueTransporter<?, ?>[] transporters =
+                  BeanValueTransporter.createTransporters(rs, beanClass, s -> t.getRight());
+              Supplier<T> beanSupplier = () -> (T) t.getLeft();
+              BeanValueTransporter.toBean(rs, beanSupplier, transporters);
+            }
+          }
         }
       }
     } catch (Throwable t) {
@@ -72,28 +101,20 @@ public class SQLInsert extends SQLStatement {
     }
   }
 
-  public Row executeAndReturnKeys() {
+  public long executeAndGetId() {
     try {
       exec(true);
       try (ResultSet rs = ps.getGeneratedKeys()) {
-        rs.next();
-        Row keys = getKeys(rs);
-        if (bindBack) {
-          bindBack(rs, keys);
+        if (!rs.next()) {
+          throw new KSQLException("No keys were generated during INSERT");
+        } else if (rs.getMetaData().getColumnCount() != 1) {
+          throw new KSQLException("Multiple auto-increment keys not supported");
         }
-        return keys;
+        return rs.getLong(1);
       }
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
     }
-  }
-
-  public int executeAndReturnIntKey() {
-    Row row = executeAndReturnKeys();
-    if (row.getColumnCount() != 1) {
-      throw new ResultSetReadException("Cannot return int value for compound key");
-    }
-    return row.getInt(0);
   }
 
   @Override
@@ -106,41 +127,5 @@ public class SQLInsert extends SQLStatement {
     ps = con.prepareStatement(sql.getNormalizedSQL(), keys);
     bind(ps);
     ps.executeUpdate();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void bindBack(ResultSet rs, Row keys) throws Throwable {
-    TransporterCache tc = TransporterCache.INSTANCE;
-    for (Object obj : bindables) {
-      if (obj instanceof Map) {
-        ((Map<String, Object>) obj).putAll(keys.toMap());
-      } else {
-        BeanValueTransporter<?, ?>[] bvt = tc.getBeanValueTransporters(rs, obj.getClass(), mapper);
-        BeanValueTransporter.toBean(rs, () -> obj, bvt);
-      }
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  private void bindBack(ResultSet rs) throws Throwable {
-    TransporterCache tc = TransporterCache.INSTANCE;
-    Row keys = null;
-    for (Object obj : bindables) {
-      if (obj instanceof Map) {
-        if (keys == null) {
-          keys = getKeys(rs);
-        }
-        ((Map<String, Object>) obj).putAll(keys.toMap());
-      } else {
-        BeanValueTransporter<?, ?>[] bvt = tc.getBeanValueTransporters(rs, obj.getClass(), mapper);
-        BeanValueTransporter.toBean(rs, () -> obj, bvt);
-      }
-    }
-  }
-
-  private Row getKeys(ResultSet rs) throws Throwable {
-    TransporterCache tc = TransporterCache.INSTANCE;
-    MapValueTransporter<?>[] mvt = tc.getMapValueTransporters(rs, mapper);
-    return MapValueTransporter.toRow(rs, mvt);
   }
 }
