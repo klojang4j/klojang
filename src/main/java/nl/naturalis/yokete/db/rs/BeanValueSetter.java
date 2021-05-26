@@ -18,16 +18,16 @@ import nl.naturalis.common.invoke.SetterFactory;
 public class BeanValueSetter<COLUMN_TYPE, FIELD_TYPE> implements Transporter {
 
   public static <U> U toBean(
-      ResultSet rs, Supplier<U> beanSupplier, BeanValueSetter<?, ?>[] transporters)
+      ResultSet rs, Supplier<U> beanSupplier, BeanValueSetter<?, ?>[] setters)
       throws Throwable {
     U bean = beanSupplier.get();
-    for (BeanValueSetter<?, ?> t : transporters) {
-      t.transferValue(rs, bean);
+    for (BeanValueSetter<?, ?> setter : setters) {
+      setter.setValue(rs, bean);
     }
     return bean;
   }
 
-  public static BeanValueSetter<?, ?>[] createTransporters(
+  public static BeanValueSetter<?, ?>[] createSetters(
       ResultSet rs, Class<?> beanClass, UnaryOperator<String> nameMapper) {
     Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(beanClass);
     EmitterNegotiator negotiator = EmitterNegotiator.getInstance();
@@ -72,7 +72,7 @@ public class BeanValueSetter<COLUMN_TYPE, FIELD_TYPE> implements Transporter {
   }
 
   @SuppressWarnings("unchecked")
-  private <U> void transferValue(ResultSet rs, U bean) throws Throwable {
+  private <U> void setValue(ResultSet rs, U bean) throws Throwable {
     FIELD_TYPE val = emitter.getValue(rs, jdbcIdx, (Class<FIELD_TYPE>) setter.getParamType());
     setter.getMethod().invoke(bean, val);
   }

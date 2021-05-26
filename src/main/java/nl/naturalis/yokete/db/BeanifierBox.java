@@ -9,7 +9,7 @@ import java.util.function.UnaryOperator;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.db.rs.BeanValueSetter;
 import static nl.naturalis.common.StringMethods.implode;
-import static nl.naturalis.yokete.db.rs.BeanValueSetter.createTransporters;
+import static nl.naturalis.yokete.db.rs.BeanValueSetter.createSetters;
 import static nl.naturalis.yokete.db.rs.Transporter.getMatchErrors;
 import static nl.naturalis.yokete.db.rs.Transporter.isCompatible;
 
@@ -59,7 +59,7 @@ public class BeanifierBox<T> {
           // Ask again. Since we're now the only one in here, if pwref.get()
           // did *not* return null, another thread had slipped in just after
           // our first null check. That's fine. We are done.
-          transporters = createTransporters(rs, beanClass, mapper);
+          transporters = createSetters(rs, beanClass, mapper);
           pwref.set(transporters);
         }
       }

@@ -3,10 +3,7 @@ package nl.naturalis.yokete.db;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.db.ps.BeanBinder;
@@ -27,12 +24,6 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
   @SuppressWarnings("unchecked")
   public T bind(Object bean) {
     Check.notNull(bean, "bean").then(bindables::add);
-    return (T) this;
-  }
-
-  @SuppressWarnings("unchecked")
-  public T bind(Map<String, Object> map) {
-    Check.notNull(map, "map").then(bindables::add);
     return (T) this;
   }
 

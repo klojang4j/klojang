@@ -32,36 +32,24 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
   }
 
   /**
-   * Binds the values in the specified bean into the {@link PreparedStatement} created from the
-   * INSERT statement within the {@link SQL} instance. All properties whose name correspond to one
-   * of the named parameters in the {@code SQL} instance passed in through the constructor will be
-   * used to populate the {@code PreparedStatement}. Any other properties will be silently ignored.
+   * Binds the values in the specified JavaBean or <code>Map&lt;String,Object&gt;</code> into the
+   * {@link PreparedStatement} created to execute the INSERT statement. All properties whose name
+   * correspond to one of the named parameters in the {@code SQL} instance passed in through the
+   * constructor will be used to populate the {@code PreparedStatement}. Any other properties will
+   * be silently ignored. The effect of passing any other than a proper JavaBean or <code>
+   * Map&lt;String,Object&gt;</code> (e.g. a {@code Collection}) is undefined.
    *
-   * @param bean The bean whose properties to bind into the {@code PreparedStatement}
+   * @param beanOrMap The bean or {@code Map} whose values to bind into the {@code
+   *     PreparedStatement}
    * @return This {@code SQLInsert} instance
    */
-  public SQLInsert bind(Object bean) {
-    return super.bind(mruObject = bean);
-  }
-
-  /**
-   * Binds the values in the specified {@code Map} into the {@link PreparedStatement} created from
-   * the INSERT statement within the {@link SQL} instance. All map keys whose name correspond to one
-   * of the named parameters in the {@code SQL} instance passed in through the constructor will be
-   * used to populate the {@code PreparedStatement}. Any other keys will be silently ignored.
-   *
-   * @param bean The map whose values to bind into the {@code PreparedStatement}
-   * @return This {@code SQLInsert} instance
-   */
-  @Override
-  public SQLInsert bind(Map<String, Object> map) {
-    mruObject = map;
-    return super.bind(map);
+  public SQLInsert bind(Object beanOrMap) {
+    return super.bind(mruObject = beanOrMap);
   }
 
   /**
    * Causes the auto-incremented value of the primary key column to be bound back into the bean or
-   * {@code Map} specified through one of the {@code bind} methods.
+   * {@code Map} specified through the {@code bind} method.
    *
    * @param keyOrProperty The map key or bean property to which to bind the auto-incremented value
    * @return This {@code SQLInsert} instance
@@ -97,10 +85,10 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
               populateMap(rs, (Map<String, Object>) t.getLeft(), transporters);
             } else {
               Class<T> beanClass = (Class<T>) t.getLeft().getClass();
-              BeanValueSetter<?, ?>[] transporters =
-                  BeanValueSetter.createTransporters(rs, beanClass, s -> t.getRight());
+              BeanValueSetter<?, ?>[] setters =
+                  BeanValueSetter.createSetters(rs, beanClass, s -> t.getRight());
               Supplier<T> beanSupplier = () -> (T) t.getLeft();
-              BeanValueSetter.toBean(rs, beanSupplier, transporters);
+              BeanValueSetter.toBean(rs, beanSupplier, setters);
             }
           }
         }
@@ -126,7 +114,7 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
     }
   }
 
-  /** Closes the {@link PreparedStatement} created from the INSERT statement. */
+  /** Closes the {@link PreparedStatement} created for the INSERT statement. */
   @Override
   public void close() {
     close(ps);
