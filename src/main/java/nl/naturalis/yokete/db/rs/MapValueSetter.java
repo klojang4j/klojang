@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.db;
+package nl.naturalis.yokete.db.rs;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -7,58 +7,51 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.ExceptionMethods;
+import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.Tuple;
-import nl.naturalis.yokete.db.rs.RSGetter;
-import nl.naturalis.yokete.db.rs.RSGetters;
-import nl.naturalis.yokete.db.rs.Transporter;
+import nl.naturalis.yokete.db.Row;
 
-/**
- * Transports a single value <i>out of</i> a {@code ResultSet} and <i>into</i> a <code>
- * Map&lt;String,Object&gt;</code> instance.
- *
- * @author Ayco Holleman
- * @param <COLUMN_TYPE>
- */
-class MapValueTransporter<COLUMN_TYPE> implements Transporter {
+/* Transports a single value from a ResultSet to a Map<String,Object> */
+@ModulePrivate
+public class MapValueSetter<COLUMN_TYPE> implements Transporter {
 
-  static Row toRow(ResultSet rs, MapValueTransporter<?>[] transporters) throws Throwable {
+  public static Row toRow(ResultSet rs, MapValueSetter<?>[] transporters) throws Throwable {
     @SuppressWarnings("unchecked")
     Tuple<String, Object>[] tuples = new Tuple[transporters.length];
     for (int i = 0; i < transporters.length; ++i) {
       tuples[i] = transporters[i].transferValue(rs);
     }
-    return Row.withData(tuples);
+    return Row.withColumns(tuples);
   }
 
-  static Map<String, Object> toMap(ResultSet rs, MapValueTransporter<?>[] transporters)
+  public static Map<String, Object> toMap(ResultSet rs, MapValueSetter<?>[] transporters)
       throws Throwable {
     Map<String, Object> map = new HashMap<>(transporters.length);
     populateMap(rs, map, transporters);
     return map;
   }
 
-  static void populateMap(
-      ResultSet rs, Map<String, Object> map, MapValueTransporter<?>[] transporters)
-      throws Throwable {
+  public static void populateMap(
+      ResultSet rs, Map<String, Object> map, MapValueSetter<?>[] transporters) throws Throwable {
     for (int i = 0; i < transporters.length; ++i) {
       Tuple<String, Object> tuple = transporters[i].transferValue(rs);
       tuple.insertInto(map);
     }
   }
 
-  static MapValueTransporter<?>[] createTransporters(ResultSet rs, UnaryOperator<String> mapper) {
+  public static MapValueSetter<?>[] createTransporters(ResultSet rs, UnaryOperator<String> mapper) {
     RSGetters getters = RSGetters.getInstance();
     try {
       ResultSetMetaData rsmd = rs.getMetaData();
       int sz = rsmd.getColumnCount();
-      MapValueTransporter<?>[] transporters = new MapValueTransporter[sz];
+      MapValueSetter<?>[] transporters = new MapValueSetter[sz];
       for (int idx = 0; idx < sz; ++idx) {
         int jdbcIdx = idx + 1; // JDBC is one-based
         int sqlType = rsmd.getColumnType(jdbcIdx);
         RSGetter<?> getter = getters.getReader(sqlType);
         String label = rsmd.getColumnLabel(jdbcIdx);
         String mapKey = mapper.apply(label);
-        transporters[idx] = new MapValueTransporter<>(getter, jdbcIdx, sqlType, mapKey);
+        transporters[idx] = new MapValueSetter<>(getter, jdbcIdx, sqlType, mapKey);
       }
       return transporters;
     } catch (SQLException e) {
@@ -71,7 +64,7 @@ class MapValueTransporter<COLUMN_TYPE> implements Transporter {
   private final int sqlType;
   private final String key;
 
-  private MapValueTransporter(RSGetter<COLUMN_TYPE> reader, int jdbcIdx, int sqlType, String key) {
+  private MapValueSetter(RSGetter<COLUMN_TYPE> reader, int jdbcIdx, int sqlType, String key) {
     this.rsGetter = reader;
     this.jdbcIdx = jdbcIdx;
     this.sqlType = sqlType;

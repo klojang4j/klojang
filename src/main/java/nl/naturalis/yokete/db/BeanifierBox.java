@@ -7,8 +7,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.check.Check;
+import nl.naturalis.yokete.db.rs.BeanValueSetter;
 import static nl.naturalis.common.StringMethods.implode;
-import static nl.naturalis.yokete.db.BeanValueTransporter.createTransporters;
+import static nl.naturalis.yokete.db.rs.BeanValueSetter.createTransporters;
 import static nl.naturalis.yokete.db.rs.Transporter.getMatchErrors;
 import static nl.naturalis.yokete.db.rs.Transporter.isCompatible;
 
@@ -25,7 +26,7 @@ public class BeanifierBox<T> {
   private final UnaryOperator<String> mapper;
   private final boolean verify;
 
-  private AtomicReference<BeanValueTransporter<?, ?>[]> pwref = new AtomicReference<>();
+  private AtomicReference<BeanValueSetter<?, ?>[]> pwref = new AtomicReference<>();
 
   public BeanifierBox(Class<T> beanClass, Supplier<T> beanSupplier) {
     this(beanClass, beanSupplier, UnaryOperator.identity());
@@ -51,7 +52,7 @@ public class BeanifierBox<T> {
     if (!rs.next()) {
       return EmptyBeanifier.INSTANCE;
     }
-    BeanValueTransporter<?, ?>[] transporters;
+    BeanValueSetter<?, ?>[] transporters;
     if ((transporters = pwref.getPlain()) == null) {
       synchronized (this) {
         if (pwref.get() == null) {

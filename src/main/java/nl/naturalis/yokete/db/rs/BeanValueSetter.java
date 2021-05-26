@@ -1,4 +1,4 @@
-package nl.naturalis.yokete.db;
+package nl.naturalis.yokete.db.rs;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -9,39 +9,32 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.ExceptionMethods;
+import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.invoke.Setter;
 import nl.naturalis.common.invoke.SetterFactory;
-import nl.naturalis.yokete.db.rs.Emitter;
-import nl.naturalis.yokete.db.rs.EmitterNegotiator;
-import nl.naturalis.yokete.db.rs.Transporter;
 
-/**
- * Transports a single value <i>out of</i> a {@code ResultSet} and <i>into</i> a JavaBean.
- *
- * @author Ayco Holleman
- * @param <COLUMN_TYPE>
- * @param <FIELD_TYPE>
- */
-class BeanValueTransporter<COLUMN_TYPE, FIELD_TYPE> implements Transporter {
+/* Transports a single value from a ResultSet to a bean */
+@ModulePrivate
+public class BeanValueSetter<COLUMN_TYPE, FIELD_TYPE> implements Transporter {
 
-  static <U> U toBean(
-      ResultSet rs, Supplier<U> beanSupplier, BeanValueTransporter<?, ?>[] transporters)
+  public static <U> U toBean(
+      ResultSet rs, Supplier<U> beanSupplier, BeanValueSetter<?, ?>[] transporters)
       throws Throwable {
     U bean = beanSupplier.get();
-    for (BeanValueTransporter<?, ?> t : transporters) {
+    for (BeanValueSetter<?, ?> t : transporters) {
       t.transferValue(rs, bean);
     }
     return bean;
   }
 
-  static BeanValueTransporter<?, ?>[] createTransporters(
+  public static BeanValueSetter<?, ?>[] createTransporters(
       ResultSet rs, Class<?> beanClass, UnaryOperator<String> nameMapper) {
     Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(beanClass);
     EmitterNegotiator negotiator = EmitterNegotiator.getInstance();
     try {
       ResultSetMetaData rsmd = rs.getMetaData();
       int sz = rsmd.getColumnCount();
-      List<BeanValueTransporter<?, ?>> transporters = new ArrayList<>(sz);
+      List<BeanValueSetter<?, ?>> transporters = new ArrayList<>(sz);
       for (int idx = 0; idx < sz; ++idx) {
         int jdbcIdx = idx + 1; // JDBC is one-based
         int sqlType = rsmd.getColumnType(jdbcIdx);
@@ -51,10 +44,10 @@ class BeanValueTransporter<COLUMN_TYPE, FIELD_TYPE> implements Transporter {
         if (setter != null) {
           Class<?> javaType = setter.getParamType();
           Emitter<?, ?> synapse = negotiator.getEmitter(javaType, sqlType);
-          transporters.add(new BeanValueTransporter<>(synapse, setter, jdbcIdx, sqlType));
+          transporters.add(new BeanValueSetter<>(synapse, setter, jdbcIdx, sqlType));
         }
       }
-      return transporters.toArray(new BeanValueTransporter[transporters.size()]);
+      return transporters.toArray(new BeanValueSetter[transporters.size()]);
     } catch (SQLException e) {
       throw ExceptionMethods.uncheck(e);
     }
@@ -65,7 +58,7 @@ class BeanValueTransporter<COLUMN_TYPE, FIELD_TYPE> implements Transporter {
   private final int jdbcIdx;
   private final int sqlType;
 
-  private BeanValueTransporter(
+  private BeanValueSetter(
       Emitter<COLUMN_TYPE, FIELD_TYPE> emitter, Setter setter, int jdbcIdx, int sqlType) {
     this.emitter = emitter;
     this.setter = setter;

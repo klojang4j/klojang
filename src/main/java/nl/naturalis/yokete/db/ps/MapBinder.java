@@ -4,9 +4,11 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.yokete.db.BindInfo;
 import nl.naturalis.yokete.db.NamedParameter;
 
+@ModulePrivate
 public class MapBinder {
 
   private static final Object ABSENT = new Object();

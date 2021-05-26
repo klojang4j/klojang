@@ -9,6 +9,12 @@ import nl.naturalis.yokete.db.ps.BeanBinder;
 import nl.naturalis.yokete.db.ps.MapBinder;
 import static nl.naturalis.common.CollectionMethods.convertValuesAndFreeze;
 
+/**
+ * A container of a single SQL query with named parameters. This class functions as a factory for
+ * {@link SQLQuery}, {@link SQLInsert} and {@link SQLUpdate} instances.
+ *
+ * @author Ayco Holleman
+ */
 public class SQL {
 
   public static SQL create(String sql) {
@@ -20,7 +26,7 @@ public class SQL {
     return new SQL(sf.sql(), sf.params(), sf.paramMap(), bindInfo);
   }
 
-  final Map<Class<?>, BeanBinder<?>> beanBinders = new HashMap<>();
+  private final Map<Class<?>, BeanBinder<?>> beanBinders = new HashMap<>();
 
   private final String sql;
   private final List<NamedParameter> params;

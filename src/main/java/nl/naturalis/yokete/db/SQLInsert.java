@@ -3,69 +3,78 @@ package nl.naturalis.yokete.db;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
+import nl.naturalis.yokete.db.rs.BeanValueSetter;
+import nl.naturalis.yokete.db.rs.MapValueSetter;
 import static java.sql.Statement.NO_GENERATED_KEYS;
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
-import static nl.naturalis.yokete.db.MapValueTransporter.populateMap;
+import static nl.naturalis.common.check.CommonChecks.illegalState;
+import static nl.naturalis.common.check.CommonChecks.in;
+import static nl.naturalis.common.check.CommonChecks.notNull;
+import static nl.naturalis.yokete.db.rs.MapValueSetter.populateMap;
 
-public class SQLInsert extends SQLStatement {
+public class SQLInsert extends SQLStatement<SQLInsert> {
 
-  private final List<Tuple<Object, String>> bindBackObjs = new ArrayList<>(4);
+  private final Set<Tuple<Object, String>> bindBackObjs = new HashSet<>(4);
 
   private PreparedStatement ps;
+
+  private Object mruObject;
 
   public SQLInsert(Connection conn, SQL sql) {
     super(conn, sql);
   }
 
   /**
-   * Binds the values in the specified bean into the {@link PreparedStatement} created for the SQL
-   * query.
+   * Binds the values in the specified bean into the {@link PreparedStatement} created from the
+   * INSERT statement within the {@link SQL} instance. All properties whose name correspond to one
+   * of the named parameters in the {@code SQL} instance passed in through the constructor will be
+   * used to populate the {@code PreparedStatement}. Any other properties will be silently ignored.
    *
    * @param bean The bean whose properties to bind into the {@code PreparedStatement}
    * @return This {@code SQLInsert} instance
    */
   public SQLInsert bind(Object bean) {
-    return (SQLInsert) super.bind(bean);
+    return super.bind(mruObject = bean);
   }
 
   /**
-   * Binds the values in the specified bean into the {@link PreparedStatement} created for the SQL
-   * query. This method will cause the (supposedly auto-generated) value of the primary key column
-   * to be bound back to the specified property.
+   * Binds the values in the specified {@code Map} into the {@link PreparedStatement} created from
+   * the INSERT statement within the {@link SQL} instance. All map keys whose name correspond to one
+   * of the named parameters in the {@code SQL} instance passed in through the constructor will be
+   * used to populate the {@code PreparedStatement}. Any other keys will be silently ignored.
    *
-   * @param bean
-   * @param idField
-   * @return
+   * @param bean The map whose values to bind into the {@code PreparedStatement}
+   * @return This {@code SQLInsert} instance
    */
-  public SQLInsert bind(Object bean, String idProperty) {
-    Check.notNull(idProperty, "idProperty");
-    super.bind(bean);
-    bindBackObjs.add(Tuple.of(bean, idProperty));
-    return this;
-  }
-
   @Override
   public SQLInsert bind(Map<String, Object> map) {
-    return (SQLInsert) super.bind(map);
+    mruObject = map;
+    return super.bind(map);
   }
 
-  public SQLInsert bind(Map<String, Object> map, String idKey) {
-    Check.notNull(idKey, "idKey");
-    super.bind(map);
-    bindBackObjs.add(Tuple.of(map, idKey));
+  /**
+   * Causes the auto-incremented value of the primary key column to be bound back into the bean or
+   * {@code Map} specified through one of the {@code bind} methods.
+   *
+   * @param keyOrProperty The map key or bean property to which to bind the auto-incremented value
+   * @return This {@code SQLInsert} instance
+   */
+  public SQLInsert bindBack(String keyOrProperty) {
+    Check.on(illegalState(), mruObject)
+        .is(notNull(), "No bean or map to bind back to specified yet");
+    Check.notNull(keyOrProperty);
+    Tuple<Object, String> tuple = Tuple.of(mruObject, keyOrProperty);
+    Check.that(tuple)
+        .isNot(in(), bindBackObjs, "No new bean or map to bind back to specified yet")
+        .then(bindBackObjs::add);
     return this;
-  }
-
-  @Override
-  public SQLInsert bind(String param, Object value) {
-    return (SQLInsert) super.bind(param, value);
   }
 
   @SuppressWarnings("unchecked")
@@ -83,15 +92,15 @@ public class SQLInsert extends SQLStatement {
           }
           for (Tuple<Object, String> t : bindBackObjs) {
             if (t.getLeft() instanceof Map) {
-              MapValueTransporter<?>[] transporters =
-                  MapValueTransporter.createTransporters(rs, s -> t.getRight());
+              MapValueSetter<?>[] transporters =
+                  MapValueSetter.createTransporters(rs, s -> t.getRight());
               populateMap(rs, (Map<String, Object>) t.getLeft(), transporters);
             } else {
               Class<T> beanClass = (Class<T>) t.getLeft().getClass();
-              BeanValueTransporter<?, ?>[] transporters =
-                  BeanValueTransporter.createTransporters(rs, beanClass, s -> t.getRight());
+              BeanValueSetter<?, ?>[] transporters =
+                  BeanValueSetter.createTransporters(rs, beanClass, s -> t.getRight());
               Supplier<T> beanSupplier = () -> (T) t.getLeft();
-              BeanValueTransporter.toBean(rs, beanSupplier, transporters);
+              BeanValueSetter.toBean(rs, beanSupplier, transporters);
             }
           }
         }
@@ -106,7 +115,7 @@ public class SQLInsert extends SQLStatement {
       exec(true);
       try (ResultSet rs = ps.getGeneratedKeys()) {
         if (!rs.next()) {
-          throw new KSQLException("No keys were generated during INSERT");
+          throw new KSQLException("No keys were generated");
         } else if (rs.getMetaData().getColumnCount() != 1) {
           throw new KSQLException("Multiple auto-increment keys not supported");
         }
@@ -117,6 +126,7 @@ public class SQLInsert extends SQLStatement {
     }
   }
 
+  /** Closes the {@link PreparedStatement} created from the INSERT statement. */
   @Override
   public void close() {
     close(ps);
