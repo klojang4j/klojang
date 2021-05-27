@@ -28,7 +28,7 @@ class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
       Collection<NamedParameter> bound) {
     ReceiverNegotiator negotiator = ReceiverNegotiator.getInstance();
     Map<String, Getter> getters = GetterFactory.INSTANCE.getGetters(beanClass, true);
-    List<BeanValueBinder<?, ?>> vts = new ArrayList<>(params.size());
+    List<BeanValueBinder<?, ?>> binders = new ArrayList<>(params.size());
     for (NamedParameter param : params) {
       Getter getter = getters.get(param.getName());
       if (getter == null) {
@@ -48,9 +48,9 @@ class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
           receiver = negotiator.getReceiver(type, sqlType);
         }
       }
-      vts.add(new BeanValueBinder<>(getter, receiver, param));
+      binders.add(new BeanValueBinder<>(getter, receiver, param));
     }
-    return vts.toArray(BeanValueBinder[]::new);
+    return binders.toArray(BeanValueBinder[]::new);
   }
 
   private final Getter getter;

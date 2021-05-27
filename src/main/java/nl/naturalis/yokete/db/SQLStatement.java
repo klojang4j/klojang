@@ -22,13 +22,13 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
   SQLStatement(Connection con, SQL sql) {
     this.con = con;
     this.sql = sql;
-    this.bindables = new ArrayList<>(2);
+    this.bindables = new ArrayList<>(4);
     this.bound = new HashSet<>(sql.getParameters().size(), 1.0F);
   }
 
   @SuppressWarnings("unchecked")
-  public T bind(Object bean) {
-    Check.notNull(bean, "bean").then(bindables::add);
+  public T bind(Object beanOrMap) {
+    Check.notNull(beanOrMap, "beanOrMap").then(bindables::add);
     return (T) this;
   }
 
@@ -41,7 +41,7 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
   }
 
   @SuppressWarnings("unchecked")
-  <U> void bind(PreparedStatement ps) throws Throwable {
+  <U> void applyBindings(PreparedStatement ps) throws Throwable {
     for (Object obj : bindables) {
       if (obj instanceof Map) {
         Map<String, Object> map = (Map<String, Object>) obj;
@@ -52,17 +52,9 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
         bound.addAll(binder.getBoundParameters());
       }
     }
-  }
-
-  boolean isExecutable() {
-    return bound.size() == sql.getParameters().size();
-  }
-
-  KSQLException notExecutable() {
-    Set<NamedParameter> params = new HashSet<>(sql.getParameters());
-    params.removeAll(bound);
-    List<String> unbound = params.stream().map(NamedParameter::getName).collect(toList());
-    return new KSQLException("Some query parameters have not been bound yet: ", implode(unbound));
+    if (bound.size() != sql.getParameters().size()) {
+      throw notExecutable();
+    }
   }
 
   static void close(PreparedStatement ps) {
@@ -75,5 +67,12 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
         throw ExceptionMethods.uncheck(e);
       }
     }
+  }
+
+  private KSQLException notExecutable() {
+    Set<NamedParameter> params = new HashSet<>(sql.getParameters());
+    params.removeAll(bound);
+    List<String> unbound = params.stream().map(NamedParameter::getName).collect(toList());
+    return new KSQLException("Some query parameters have not been bound yet: %s", implode(unbound));
   }
 }

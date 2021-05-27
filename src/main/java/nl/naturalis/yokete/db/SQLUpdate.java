@@ -15,7 +15,7 @@ public class SQLUpdate extends SQLStatement<SQLUpdate> {
   public int execute() {
     try {
       ps = con.prepareStatement(sql.getNormalizedSQL());
-      bind(ps);
+      applyBindings(ps);
       return ps.executeUpdate();
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
