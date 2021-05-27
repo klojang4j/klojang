@@ -7,6 +7,8 @@ import java.util.*;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.db.ps.BeanBinder;
+import static java.util.stream.Collectors.toList;
+import static nl.naturalis.common.StringMethods.implode;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoCloseable {
@@ -15,10 +17,13 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
   final SQL sql;
   final List<Object> bindables;
 
+  private final Set<NamedParameter> bound;
+
   SQLStatement(Connection con, SQL sql) {
     this.con = con;
     this.sql = sql;
     this.bindables = new ArrayList<>(2);
+    this.bound = new HashSet<>(sql.getParameters().size(), 1.0F);
   }
 
   @SuppressWarnings("unchecked")
@@ -39,15 +44,28 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
   <U> void bind(PreparedStatement ps) throws Throwable {
     for (Object obj : bindables) {
       if (obj instanceof Map) {
-        sql.getMapBinder().bindMap(ps, (Map<String, Object>) obj);
+        Map<String, Object> map = (Map<String, Object>) obj;
+        sql.getMapBinder().bindMap(ps, map, bound);
       } else {
         BeanBinder<U> binder = sql.getBeanBinder((Class<U>) obj.getClass());
         binder.bindBean(ps, (U) obj);
+        bound.addAll(binder.getBoundParameters());
       }
     }
   }
 
-  void close(PreparedStatement ps) {
+  boolean isExecutable() {
+    return bound.size() == sql.getParameters().size();
+  }
+
+  KSQLException notExecutable() {
+    Set<NamedParameter> params = new HashSet<>(sql.getParameters());
+    params.removeAll(bound);
+    List<String> unbound = params.stream().map(NamedParameter::getName).collect(toList());
+    return new KSQLException("Some query parameters have not been bound yet: ", implode(unbound));
+  }
+
+  static void close(PreparedStatement ps) {
     if (ps != null) {
       try {
         if (!ps.isClosed()) {

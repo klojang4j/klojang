@@ -15,7 +15,7 @@ import nl.naturalis.common.invoke.SetterFactory;
 
 /* Transports a single value from a ResultSet to a bean */
 @ModulePrivate
-public class BeanValueSetter<COLUMN_TYPE, FIELD_TYPE> implements Transporter {
+public class BeanValueSetter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransporter {
 
   public static <U> U toBean(
       ResultSet rs, Supplier<U> beanSupplier, BeanValueSetter<?, ?>[] setters)

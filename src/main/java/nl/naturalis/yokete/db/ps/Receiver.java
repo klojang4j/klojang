@@ -3,6 +3,7 @@ package nl.naturalis.yokete.db.ps;
 import java.sql.PreparedStatement;
 import java.util.function.Function;
 import static nl.naturalis.common.ObjectMethods.ifNotEmpty;
+import static nl.naturalis.yokete.db.ps.PSSetter.SET_STRING;
 
 /**
  * Binds a single value to a {@link PreparedStatement}, possibly after first converting it to the
@@ -14,7 +15,10 @@ import static nl.naturalis.common.ObjectMethods.ifNotEmpty;
  * @param <PARAM_TYPE> The type to which the value is converted before being passed on to one of the
  *     {@code setXXX} methods of {@link PreparedStatement}
  */
-public class Receiver<FIELD_TYPE, PARAM_TYPE> {
+class Receiver<FIELD_TYPE, PARAM_TYPE> {
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  static final Receiver<?, String> ANY_TO_STRING = new Receiver(SET_STRING, String::valueOf);
 
   private final PSSetter<PARAM_TYPE> setter;
   private final Adapter<FIELD_TYPE, PARAM_TYPE> adapter;
@@ -34,13 +38,14 @@ public class Receiver<FIELD_TYPE, PARAM_TYPE> {
   }
 
   @SuppressWarnings("unchecked")
-  public PARAM_TYPE getParamValue(FIELD_TYPE beanValue) {
+  PARAM_TYPE getParamValue(FIELD_TYPE beanValue) {
     return adapter == null
         ? (PARAM_TYPE) beanValue
         : adapter.adapt(beanValue, setter.getParamType());
   }
 
-  public void bind(PreparedStatement ps, int paramIndex, PARAM_TYPE value) throws Throwable {
+  void bind(PreparedStatement ps, int paramIndex, PARAM_TYPE value) throws Throwable {
+    System.out.printf("Binding %s to position %d using %s%n", value, paramIndex, setter.getName());
     setter.bindValue(ps, paramIndex, value);
   }
 }

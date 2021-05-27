@@ -1,21 +1,28 @@
 package nl.naturalis.yokete.db.ps;
 
-import java.util.HashMap;
 import static java.sql.Types.BIT;
 import static java.sql.Types.BOOLEAN;
+import static java.sql.Types.CHAR;
+import static java.sql.Types.VARCHAR;
 import static nl.naturalis.yokete.db.ps.PSSetter.SET_BOOLEAN;
 import static nl.naturalis.yokete.db.ps.PSSetter.SET_STRING;
-import static nl.naturalis.yokete.db.ps.ReceiverNegotiator.DEFAULT;
 
-class BooleanReceivers extends HashMap<Integer, Receiver<?, ?>> {
+class BooleanReceivers extends ReceiverLookup<Boolean> {
+
+  static final Receiver<Boolean, ?> DEFAULT = new Receiver<>(SET_BOOLEAN);
 
   BooleanReceivers() {
-    put(DEFAULT, new Receiver<>(SET_STRING, this::asNumberString));
-    put(BOOLEAN, new Receiver<>(SET_BOOLEAN));
-    put(BIT, new Receiver<>(SET_BOOLEAN));
+    put(BOOLEAN, DEFAULT);
+    put(BIT, DEFAULT);
+    putMultiple(new Receiver<>(SET_STRING, this::asNumberString), VARCHAR, CHAR);
   }
 
   private String asNumberString(Boolean b) {
     return b == null || b.equals(Boolean.FALSE) ? "0" : "1";
+  }
+
+  @Override
+  Receiver<Boolean, ?> getDefaultReceiver() {
+    return DEFAULT;
   }
 }

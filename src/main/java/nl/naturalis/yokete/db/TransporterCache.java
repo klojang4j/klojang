@@ -16,7 +16,7 @@ class TransporterCache {
 
   private TransporterCache() {}
 
-  BeanValueSetter<?, ?>[] getBeanValueTransporters(
+  BeanValueSetter<?, ?>[] getBeanValueSetters(
       ResultSet rs, Class<?> clazz, UnaryOperator<String> mapper) {
     ResultSetIdentifier id = new ResultSetIdentifier(rs);
     return bvt.computeIfAbsent(id, k -> BeanValueSetter.createSetters(rs, clazz, mapper));
@@ -24,6 +24,6 @@ class TransporterCache {
 
   MapValueSetter<?>[] getMapValueTransporters(ResultSet rs, UnaryOperator<String> mapper) {
     ResultSetIdentifier id = new ResultSetIdentifier(rs);
-    return mvt.computeIfAbsent(id, k -> MapValueSetter.createTransporters(rs, mapper));
+    return mvt.computeIfAbsent(id, k -> MapValueSetter.createMapValueSetters(rs, mapper));
   }
 }

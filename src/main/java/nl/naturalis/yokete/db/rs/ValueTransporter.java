@@ -8,8 +8,9 @@ import java.util.List;
 import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.yokete.db.SQLTypeNames;
 
+/* Transports a single value from a ResultSet to a JavaBean or Map<String,Object> */
 @ModulePrivate
-public interface Transporter {
+public interface ValueTransporter {
 
   /**
    * Verifies that the specified {@code Resultset} can be beanified/mappified by the specified
@@ -22,7 +23,8 @@ public interface Transporter {
    * @return
    * @throws SQLException
    */
-  public static boolean isCompatible(ResultSet rs, Transporter[] transporters) throws SQLException {
+  public static boolean isCompatible(ResultSet rs, ValueTransporter[] transporters)
+      throws SQLException {
     ResultSetMetaData rsmd = rs.getMetaData();
     if (rsmd.getColumnCount() != transporters.length) {
       return false;
@@ -35,7 +37,7 @@ public interface Transporter {
     return true;
   }
 
-  public static List<String> getMatchErrors(ResultSet rs, Transporter[] transporters)
+  public static List<String> getMatchErrors(ResultSet rs, ValueTransporter[] transporters)
       throws SQLException {
     ResultSetMetaData rsmd = rs.getMetaData();
     List<String> errors = new ArrayList<>();

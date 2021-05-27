@@ -3,10 +3,12 @@ package nl.naturalis.yokete.db.ps;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.math.BigDecimal;
-import java.sql.*;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.Time;
+import java.sql.Timestamp;
 import nl.naturalis.common.ExceptionMethods;
 import static java.lang.invoke.MethodHandles.lookup;
-import static java.sql.Types.*;
 
 /**
  * Represents one of the {@code setXXX} methods of {@link PreparedStatement} and contains a {@link
@@ -30,26 +32,40 @@ public class PSSetter<PARAM_TYPE> {
   static PSSetter<Time> SET_TIME = setter("setTime", Time.class);
   static PSSetter<Timestamp> SET_TIMESTAMP = setter("setTimestamp", Timestamp.class);
 
-  static final PSSetter<Object> SET_OBJECT_FOR_TIMESTAMP = objectSetter(TIMESTAMP);
-
+  private final String name;
   private final MethodHandle method;
   private final Class<PARAM_TYPE> paramType;
   private final Integer targetSqlType;
 
-  private PSSetter(MethodHandle method, Class<PARAM_TYPE> paramType) {
-    this.method = method;
-    this.paramType = paramType;
-    this.targetSqlType = null;
+  private PSSetter(String name, MethodHandle method, Class<PARAM_TYPE> paramType) {
+    this(name, method, paramType, null);
   }
 
-  private PSSetter(MethodHandle method, Class<PARAM_TYPE> paramType, int targetSqlType) {
+  private PSSetter(
+      String name, MethodHandle method, Class<PARAM_TYPE> paramType, Integer targetSqlType) {
+    this.name = name;
     this.method = method;
     this.paramType = paramType;
     this.targetSqlType = targetSqlType;
   }
 
+  String getName() {
+    return name;
+  }
+
   Class<PARAM_TYPE> getParamType() {
     return paramType;
+  }
+
+  static PSSetter<Object> setObject(int targetSqlType) {
+    MethodType mt = MethodType.methodType(void.class, int.class, Object.class, int.class);
+    MethodHandle mh;
+    try {
+      mh = lookup().findVirtual(PreparedStatement.class, "setObject", mt);
+    } catch (NoSuchMethodException | IllegalAccessException e) {
+      throw ExceptionMethods.uncheck(e);
+    }
+    return new PSSetter<>("setObject", mh, Object.class, targetSqlType);
   }
 
   void bindValue(PreparedStatement ps, int paramIndex, PARAM_TYPE paramValue) throws Throwable {
@@ -62,17 +78,6 @@ public class PSSetter<PARAM_TYPE> {
     }
   }
 
-  private static PSSetter<Object> objectSetter(int targetSqlType) {
-    MethodType mt = MethodType.methodType(void.class, int.class, Object.class, int.class);
-    MethodHandle mh;
-    try {
-      mh = lookup().findVirtual(PreparedStatement.class, "setObject", mt);
-    } catch (NoSuchMethodException | IllegalAccessException e) {
-      throw ExceptionMethods.uncheck(e);
-    }
-    return new PSSetter<>(mh, Object.class, targetSqlType);
-  }
-
   private static <X> PSSetter<X> setter(String methodName, Class<X> paramType) {
     MethodType mt = MethodType.methodType(void.class, int.class, paramType);
     MethodHandle mh;
@@ -81,6 +86,6 @@ public class PSSetter<PARAM_TYPE> {
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw ExceptionMethods.uncheck(e);
     }
-    return new PSSetter<>(mh, paramType);
+    return new PSSetter<>(methodName, mh, paramType);
   }
 }

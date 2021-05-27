@@ -10,11 +10,11 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.db.rs.BeanValueSetter;
 import static nl.naturalis.common.StringMethods.implode;
 import static nl.naturalis.yokete.db.rs.BeanValueSetter.createSetters;
-import static nl.naturalis.yokete.db.rs.Transporter.getMatchErrors;
-import static nl.naturalis.yokete.db.rs.Transporter.isCompatible;
+import static nl.naturalis.yokete.db.rs.ValueTransporter.getMatchErrors;
+import static nl.naturalis.yokete.db.rs.ValueTransporter.isCompatible;
 
 /**
- * Creates and holds a {@link DefaultMappifier}
+ * Contains and supplies a {@link ResultSetBeanifier} for a single SQL query.
  *
  * @author Ayco Holleman
  * @param <T>
@@ -26,7 +26,7 @@ public class BeanifierBox<T> {
   private final UnaryOperator<String> mapper;
   private final boolean verify;
 
-  private AtomicReference<BeanValueSetter<?, ?>[]> pwref = new AtomicReference<>();
+  private AtomicReference<BeanValueSetter<?, ?>[]> ref = new AtomicReference<>();
 
   public BeanifierBox(Class<T> beanClass, Supplier<T> beanSupplier) {
     this(beanClass, beanSupplier, UnaryOperator.identity());
@@ -52,21 +52,21 @@ public class BeanifierBox<T> {
     if (!rs.next()) {
       return EmptyBeanifier.INSTANCE;
     }
-    BeanValueSetter<?, ?>[] transporters;
-    if ((transporters = pwref.getPlain()) == null) {
+    BeanValueSetter<?, ?>[] setters;
+    if ((setters = ref.getPlain()) == null) {
       synchronized (this) {
-        if (pwref.get() == null) {
+        if (ref.get() == null) {
           // Ask again. Since we're now the only one in here, if pwref.get()
           // did *not* return null, another thread had slipped in just after
           // our first null check. That's fine. We are done.
-          transporters = createSetters(rs, beanClass, mapper);
-          pwref.set(transporters);
+          setters = createSetters(rs, beanClass, mapper);
+          ref.set(setters);
         }
       }
-    } else if (verify && !isCompatible(rs, transporters)) {
-      List<String> errors = getMatchErrors(rs, transporters);
+    } else if (verify && !isCompatible(rs, setters)) {
+      List<String> errors = getMatchErrors(rs, setters);
       throw new ResultSetMismatchException(implode(errors, ". "));
     }
-    return new DefaultBeanifier<>(rs, transporters, beanSupplier);
+    return new DefaultBeanifier<>(rs, setters, beanSupplier);
   }
 }

@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.yokete.db.ps.BeanBinder;
 import nl.naturalis.yokete.db.ps.MapBinder;
@@ -11,7 +13,9 @@ import static nl.naturalis.common.CollectionMethods.convertValuesAndFreeze;
 
 /**
  * A container of a single SQL query with named parameters. This class functions as a factory for
- * {@link SQLQuery}, {@link SQLInsert} and {@link SQLUpdate} instances.
+ * {@link SQLQuery}, {@link SQLInsert} and {@link SQLUpdate} instances. If the query contains a lot
+ * of parameters and it is going to be executed often, storing the {@code SQL} instance into a
+ * static final variable (e.g. in your DAO class) may improve performance.
  *
  * @author Ayco Holleman
  */
@@ -26,12 +30,16 @@ public class SQL {
     return new SQL(sf.sql(), sf.params(), sf.paramMap(), bindInfo);
   }
 
-  private final Map<Class<?>, BeanBinder<?>> beanBinders = new HashMap<>();
+  /* These maps are unlikely to grow beyond one, maybe two entries */
+  private final Map<Class<?>, BeanBinder<?>> beanBinders = new HashMap<>(4);
+  private final Map<Class<?>, BeanifierBox<?>> beanifierBoxes = new HashMap<>(4);
 
   private final String sql;
   private final List<NamedParameter> params;
   private final Map<String, IntList> paramMap;
   private final BindInfo bindInfo;
+
+  private MappifierBox mappifierBox;
 
   private SQL(
       String sql, List<NamedParameter> params, Map<String, int[]> paramMap, BindInfo bindInfo) {
@@ -79,5 +87,20 @@ public class SQL {
   <T> BeanBinder<T> getBeanBinder(Class<T> beanClass) {
     return (BeanBinder<T>)
         beanBinders.computeIfAbsent(beanClass, k -> new BeanBinder<>(k, params, bindInfo));
+  }
+
+  @SuppressWarnings("unchecked")
+  <T> BeanifierBox<T> getBeanifierBox(
+      Class<T> beanClass, Supplier<T> beanSupplier, UnaryOperator<String> columnToPropertyMapper) {
+    return (BeanifierBox<T>)
+        beanifierBoxes.computeIfAbsent(
+            beanClass, k -> new BeanifierBox<>(beanClass, beanSupplier, columnToPropertyMapper));
+  }
+
+  MappifierBox getMappifierBox(UnaryOperator<String> columnToKeyMapper) {
+    if (mappifierBox == null) {
+      mappifierBox = new MappifierBox(columnToKeyMapper);
+    }
+    return mappifierBox;
   }
 }

@@ -2,6 +2,7 @@ package nl.naturalis.yokete.db.ps;
 
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import nl.naturalis.common.ClassMethods;
@@ -13,15 +14,18 @@ import nl.naturalis.yokete.db.NamedParameter;
 /* Binds a single value from a JavaBean into a PreparedStatement */
 class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
 
-  static <T> void bindBean(PreparedStatement ps, T bean, BeanValueBinder<?, ?>[] valueBinders)
+  static <T> void bindBean(PreparedStatement ps, T bean, BeanValueBinder<?, ?>[] binders)
       throws Throwable {
-    for (BeanValueBinder<?, ?> binder : valueBinders) {
+    for (BeanValueBinder<?, ?> binder : binders) {
       binder.bindValue(ps, bean);
     }
   }
 
   static BeanValueBinder<?, ?>[] createBeanValueBinders(
-      Class<?> beanClass, List<NamedParameter> params, BindInfo bindInfo) {
+      Class<?> beanClass,
+      List<NamedParameter> params,
+      BindInfo bindInfo,
+      Collection<NamedParameter> bound) {
     ReceiverNegotiator negotiator = ReceiverNegotiator.getInstance();
     Map<String, Getter> getters = GetterFactory.INSTANCE.getGetters(beanClass, true);
     List<BeanValueBinder<?, ?>> vts = new ArrayList<>(params.size());
@@ -30,6 +34,7 @@ class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
       if (getter == null) {
         continue;
       }
+      bound.add(param);
       String property = param.getName();
       Class<?> type = getter.getReturnType();
       Receiver<?, ?> receiver;
@@ -62,6 +67,7 @@ class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
   private <T> void bindValue(PreparedStatement ps, T bean) throws Throwable {
     FIELD_TYPE beanValue = (FIELD_TYPE) getter.getMethod().invoke(bean);
     PARAM_TYPE paramValue = receiver.getParamValue(beanValue);
+    System.out.printf("Processing named parameter %s%n", param.getName());
     param.getIndices().forEachThrowing(i -> receiver.bind(ps, i, paramValue));
   }
 }

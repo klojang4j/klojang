@@ -1,19 +1,18 @@
 package nl.naturalis.yokete.db.ps;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
 import nl.naturalis.common.Bool;
 import nl.naturalis.common.NumberMethods;
 import static java.sql.Types.*;
 import static nl.naturalis.yokete.db.ps.PSSetter.*;
-import static nl.naturalis.yokete.db.ps.ReceiverNegotiator.DEFAULT;
 
-class StringReceivers extends HashMap<Integer, Receiver<?, ?>> {
+class StringReceivers extends ReceiverLookup<String> {
+
+  static final Receiver<String, String> DEFAULT = new Receiver<>(SET_STRING);
 
   StringReceivers() {
-    put(DEFAULT, new Receiver<>(SET_STRING));
-    put(VARCHAR, new Receiver<>(SET_STRING));
-    put(CHAR, new Receiver<>(SET_STRING));
+    put(VARCHAR, DEFAULT);
+    put(CHAR, DEFAULT);
     put(INTEGER, new Receiver<String, Integer>(SET_INT, NumberMethods::parse));
     put(SMALLINT, new Receiver<String, Short>(SET_SHORT, NumberMethods::parse));
     put(TINYINT, new Receiver<String, Byte>(SET_BYTE, NumberMethods::parse));
@@ -24,5 +23,10 @@ class StringReceivers extends HashMap<Integer, Receiver<?, ?>> {
     put(DOUBLE, new Receiver<String, Double>(SET_DOUBLE, NumberMethods::parse));
     put(BOOLEAN, new Receiver<String, Boolean>(SET_BOOLEAN, Bool::from));
     put(BIT, new Receiver<Integer, Boolean>(SET_BOOLEAN, Bool::from));
+  }
+
+  @Override
+  Receiver<String, ?> getDefaultReceiver() {
+    return DEFAULT;
   }
 }
