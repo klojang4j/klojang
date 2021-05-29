@@ -45,7 +45,8 @@ class Receiver<FIELD_TYPE, PARAM_TYPE> {
   }
 
   void bind(PreparedStatement ps, int paramIndex, PARAM_TYPE value) throws Throwable {
-    System.out.printf("Binding %s to parameter %d using %s%n", value, paramIndex, setter.getName());
+    // System.out.printf("Binding %s to parameter %d using %s%n", value, paramIndex,
+    // setter.getName());
     setter.bindValue(ps, paramIndex, value);
   }
 }

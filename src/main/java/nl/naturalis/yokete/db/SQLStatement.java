@@ -40,6 +40,10 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
     return (T) this;
   }
 
+  public SQL getSQL() {
+    return sql;
+  }
+
   @SuppressWarnings("unchecked")
   <U> void applyBindings(PreparedStatement ps) throws Throwable {
     for (Object obj : bindables) {

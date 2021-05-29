@@ -12,10 +12,11 @@ import nl.naturalis.yokete.db.ps.MapBinder;
 import static nl.naturalis.common.CollectionMethods.convertValuesAndFreeze;
 
 /**
- * A container of a single SQL query with named parameters. This class functions as a factory for
- * {@link SQLQuery}, {@link SQLInsert} and {@link SQLUpdate} instances. If the query contains a lot
- * of parameters and it is going to be executed often, storing the {@code SQL} instance into a
- * static final variable (e.g. in your DAO class) may improve performance.
+ * A container for a single SQL query. The SQL query is assumed to be parametrized using named
+ * parameters. This class functions as a factory for {@link SQLQuery}, {@link SQLInsert} and {@link
+ * SQLUpdate} instances. If the query contains a lot of parameters and it is going to be executed
+ * often, storing the {@code SQL} instance into a static final variable (e.g. in your DAO class) may
+ * improve performance.
  *
  * @author Ayco Holleman
  */
@@ -27,7 +28,7 @@ public class SQL {
 
   public static SQL create(String sql, BindInfo bindInfo) {
     SQLFactory sf = new SQLFactory(sql);
-    return new SQL(sf.sql(), sf.params(), sf.paramMap(), bindInfo);
+    return new SQL(sql, sf.sql(), sf.params(), sf.paramMap(), bindInfo);
   }
 
   /* These maps are unlikely to grow beyond one, maybe two entries */
@@ -35,6 +36,7 @@ public class SQL {
   private final Map<Class<?>, BeanifierBox<?>> beanifierBoxes = new HashMap<>(4);
 
   private final String sql;
+  private final String normalized;
   private final List<NamedParameter> params;
   private final Map<String, IntList> paramMap;
   private final BindInfo bindInfo;
@@ -42,8 +44,13 @@ public class SQL {
   private MappifierBox mappifierBox;
 
   private SQL(
-      String sql, List<NamedParameter> params, Map<String, int[]> paramMap, BindInfo bindInfo) {
+      String sql,
+      String normalized,
+      List<NamedParameter> params,
+      Map<String, int[]> paramMap,
+      BindInfo bindInfo) {
     this.sql = sql;
+    this.normalized = normalized;
     this.params = params;
     this.paramMap = convertValuesAndFreeze(paramMap, IntList::of);
     this.bindInfo = bindInfo;
@@ -62,13 +69,23 @@ public class SQL {
   }
 
   /**
-   * Returns an SQL string where all named parameters have been replaced with positional parameters
+   * Returns the SQL query from which this instance was created with any named parameters still left
+   * in place.
+   *
+   * @return
+   */
+  public String getOriginalSQL() {
+    return sql;
+  }
+
+  /**
+   * Returns a SQL query where all named parameters have been replaced with positional parameters
    * (question marks).
    *
    * @return
    */
   public String getNormalizedSQL() {
-    return sql;
+    return normalized;
   }
 
   public List<NamedParameter> getParameters() {
