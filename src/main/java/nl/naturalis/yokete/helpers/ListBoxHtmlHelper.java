@@ -146,9 +146,9 @@ public class ListBoxHtmlHelper<T> {
       RenderSession session = page.newRenderSession();
       session.set("name", name);
       session.set("ylbKey", key);
-      session.fill("options", dataSupplier.get());
+      session.populate("options", dataSupplier.get());
       if (initOption != NOT_SET) {
-        session.fillTupleTemplate("initOption", List.of(Tuple.of(initVal, initOption)));
+        session.populateTuple("initOption", List.of(Tuple.of(initVal, initOption)));
       }
       return session.createRenderable();
     } catch (ParseException | RenderException e) {

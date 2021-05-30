@@ -46,7 +46,7 @@ public class RenderSession1Test {
     depts.add(dept);
 
     RenderSession session = page.newRenderSession();
-    session.add(data);
+    session.inject(data);
 
     session.render(System.out);
   }

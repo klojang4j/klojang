@@ -61,7 +61,7 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown during a multi-pass {@link RenderSession#fill(String, Object, EscapeType, String...)
+   * Thrown during a multi-pass {@link RenderSession#populate(String, Object, EscapeType, String...)
    * fill} of a nested template if, in the second pass, you don't specify the same number of source
    * data objects as in the first pass. The number of source data objects you specify in the first
    * call to {@code fill} determines how often the template is going to repeat itself. Obviously
@@ -125,7 +125,7 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#fillMonoTemplate(String, Object) RenderSession.fillOne}
+   * Thrown if you call {@link RenderSession#populateSingle(String, Object) RenderSession.fillOne}
    * for a nested template that does not contain exactly one variable and zero doubly-nested
    * templates.
    */
@@ -136,7 +136,7 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#fillTupleTemplate(String, Object)
+   * Thrown if you call {@link RenderSession#populateTuple(String, Object)
    * RenderSession.fillTwo} for a nested template that does not contain exactly two variables and
    * zero doubly-nested templates.
    */

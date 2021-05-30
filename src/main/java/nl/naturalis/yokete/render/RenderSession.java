@@ -254,7 +254,7 @@ public class RenderSession {
    * Populates a <i>nested</i> template. The template is populated with values retrieved from the
    * specified source data. Only variables and (doubly) nested templates whose name is present in
    * the {@code names} argument will be populated. No escaping will be applied to the values
-   * retrieved from the data object. See {@link #fill(String, Object, EscapeType, String...)}.
+   * retrieved from the data object. See {@link #populate(String, Object, EscapeType, String...)}.
    *
    * @param nestedTemplateName The name of the nested template
    * @param sourceData An object that provides data for all or some of the nested template's
@@ -262,9 +262,9 @@ public class RenderSession {
    * @param names The names of the variables and doubly-nested templates that you want to be
    *     populated using the specified data object
    */
-  public RenderSession fill(String nestedTemplateName, Object sourceData, String... names)
+  public RenderSession populate(String nestedTemplateName, Object sourceData, String... names)
       throws RenderException {
-    return fill(nestedTemplateName, sourceData, ESCAPE_NONE, names);
+    return populate(nestedTemplateName, sourceData, ESCAPE_NONE, names);
   }
 
   /**
@@ -300,7 +300,7 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fill(
+  public RenderSession populate(
       String nestedTemplateName, Object sourceData, EscapeType escapeType, String... names)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
@@ -319,7 +319,7 @@ public class RenderSession {
       throws RenderException {
     RenderSession[] sessions = state.getOrCreateChildSessions(t, data);
     for (int i = 0; i < sessions.length; ++i) {
-      sessions[i].add(data.get(i), escapeType, names);
+      sessions[i].inject(data.get(i), escapeType, names);
     }
     return this;
   }
@@ -366,25 +366,25 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly one variable and zero
-   * doubly-nested templates. See {@link #fillMonoTemplate(String, Object, EscapeType)}.
+   * doubly-nested templates. See {@link #populateSingle(String, Object, EscapeType)}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillMonoTemplate(String nestedTemplateName, Object value)
+  public RenderSession populateSingle(String nestedTemplateName, Object value)
       throws RenderException {
-    return fillMonoTemplate(nestedTemplateName, value, ESCAPE_NONE);
+    return populateSingle(nestedTemplateName, value, ESCAPE_NONE);
   }
 
   /**
    * Convenience method for populating a nested template that contains exactly one variable and zero
-   * doubly-nested templates. The variable may still occur multiple times within the template.
-   * Contrary to the other {@code fill} methods the {@code value} argument really is the value that
-   * is going to be assigned to the value, rather than a source data object that is going to be
-   * accessed by the session's {@link Accessor}. This method bypasses the session's {@code Accessor}
-   * and uses a {@link SelfAccessor} instead.
+   * doubly-nested templates. The variable may still occur multiple times within the template
+   * though. Contrary to the other {@code fill} methods the {@code value} argument really is the
+   * value that is going to be assigned to the value, rather than a source data object that is going
+   * to be accessed by the session's {@link Accessor}. This method bypasses the session's {@code
+   * Accessor} and uses a {@link SelfAccessor} instead.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
@@ -394,7 +394,7 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession fillMonoTemplate(
+  public RenderSession populateSingle(
       String nestedTemplateName, Object value, EscapeType escapeType) throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Template t = getNestedTemplate(nestedTemplateName);
@@ -404,14 +404,14 @@ public class RenderSession {
     List<?> values = asUnsafeList(value);
     RenderSession[] sessions = state.getOrCreateChildSessions(t, new SelfAccessor(), values.size());
     for (int i = 0; i < sessions.length; ++i) {
-      sessions[i].add(values.get(i), escapeType);
+      sessions[i].inject(values.get(i), escapeType);
     }
     return this;
   }
 
   /**
    * Convenience method for populating a nested template that contains exactly two variables and
-   * zero doubly-nested templates. See {@link #fillTupleTemplate(String, List, EscapeType)}.
+   * zero doubly-nested templates. See {@link #populateTuple(String, List, EscapeType)}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly two
    *     variables
@@ -419,9 +419,9 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public <T, U> RenderSession fillTupleTemplate(String nestedTemplateName, List<Tuple<T, U>> tuples)
+  public <T, U> RenderSession populateTuple(String nestedTemplateName, List<Tuple<T, U>> tuples)
       throws RenderException {
-    return fillTupleTemplate(nestedTemplateName, tuples, ESCAPE_NONE);
+    return populateTuple(nestedTemplateName, tuples, ESCAPE_NONE);
   }
 
   /**
@@ -439,7 +439,7 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public <T, U> RenderSession fillTupleTemplate(
+  public <T, U> RenderSession populateTuple(
       String nestedTemplateName, List<Tuple<T, U>> tuples, EscapeType escapeType)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
@@ -457,7 +457,7 @@ public class RenderSession {
     RenderSession[] sessions =
         state.getOrCreateChildSessions(t, new MapAccessorInternal(), data.size());
     for (int i = 0; i < sessions.length; ++i) {
-      sessions[i].add(data.get(i), escapeType);
+      sessions[i].inject(data.get(i), escapeType);
     }
     return this;
   }
@@ -478,8 +478,8 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession add(Object sourceData, String... names) throws RenderException {
-    return add(sourceData, ESCAPE_NONE, names);
+  public RenderSession inject(Object sourceData, String... names) throws RenderException {
+    return inject(sourceData, ESCAPE_NONE, names);
   }
 
   /**
@@ -502,7 +502,7 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession add(Object sourceData, EscapeType escapeType, String... names)
+  public RenderSession inject(Object sourceData, EscapeType escapeType, String... names)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     if (sourceData == null) {
@@ -551,7 +551,7 @@ public class RenderSession {
     for (String name : tmplNames) {
       Object nestedData = acc.access(data, name);
       if (nestedData != UNDEFINED) {
-        fill(name, nestedData, escapeType, names);
+        populate(name, nestedData, escapeType, names);
       }
     }
   }
