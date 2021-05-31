@@ -16,7 +16,7 @@ import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.common.check.CommonChecks.gt;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 import static nl.naturalis.common.check.CommonChecks.notNull;
-import static nl.naturalis.yokete.render.TemplateStringifiers.BASIC;
+import static nl.naturalis.yokete.render.TemplateStringifiers.SIMPLE_STRINGIFIER;
 
 public class ListBoxHtmlHelper<T> {
 
@@ -142,7 +142,7 @@ public class ListBoxHtmlHelper<T> {
 
   private Renderable refresh() {
     try {
-      Page page = Page.configure(getTemplate(), (x, y) -> accessor, BASIC);
+      Page page = Page.configure(getTemplate(), (x, y) -> accessor, SIMPLE_STRINGIFIER);
       RenderSession session = page.newRenderSession();
       session.set("name", name);
       session.set("ylbKey", key);

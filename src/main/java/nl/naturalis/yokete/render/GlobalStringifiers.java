@@ -7,19 +7,20 @@ import java.util.Map;
 import nl.naturalis.common.collection.UnmodifiableTypeMap;
 import static java.util.Collections.emptyMap;
 /**
- * A repository and provider of centrally-managed, type-based stringfiers. The {@code
- * GlobalStringifiers} class is built around a {@link TypeMap}. If a stringifier is requested for
- * some type, and that type is not in the {@code TypeMap}, but one of its super types is, then you
- * get that super type's stringifier. For example, if the {@code TypeMap} contains a {@code Number}
- * stringifier and you request an {@code Integer} stringifier, you get the {@code Number}
- * stringifier. This saves you from having to specify a stringifier for every subclass of {@code
- * Number} if they are all stringified in the same way.
+ * A repository and provider of type-based stringifiers. These stringifiers are not associated with
+ * any template or template variable in particular. The stringify values purely based on their
+ * datatype. The {@code GlobalStringifiers} class is built around a {@link TypeMap}. If a
+ * stringifier is requested for some type, and that type is not in the {@code TypeMap}, but one of
+ * its super types is, then you get that super type's stringifier. For example, if the {@code
+ * TypeMap} contains a {@code Number} stringifier and you request an {@code Integer} stringifier,
+ * you get the {@code Number} stringifier. This saves you from having to specify a stringifier for
+ * every subclass of {@code Number} if they are all stringified in the same way.
  *
  * <p>The {@code GlobalStringifiers} class is not meant to be used directly. It does not even have a
  * public interface. Instead, you should configure an instance of it (most likely a singleton
  * instance) and pass it to {@link
  * TemplateStringifiers#configure(nl.naturalis.yokete.template.Template, GlobalStringifiers)
- * StringifierProvider.configure}.
+ * TemplateStringifiers.configure}.
  *
  * <h4>Providing alternative stringifiers for a single type</h4>
  *

@@ -11,22 +11,19 @@ import nl.naturalis.yokete.template.Template;
 import static java.util.Collections.emptyMap;
 import static nl.naturalis.common.check.CommonChecks.deepNotEmpty;
 import static nl.naturalis.common.check.CommonChecks.in;
-import static nl.naturalis.common.check.CommonChecks.notNull;
-import static nl.naturalis.yokete.template.TemplateUtils.*;
+import static nl.naturalis.yokete.template.TemplateUtils.getFQName;
+import static nl.naturalis.yokete.template.TemplateUtils.getVarsPerTemplate;
 
 /**
  * Provides {@link Stringifier stringifiers} for template variables. In principle every template
  * variable must be associated with a {@code Stringifier}. That includes not just the variables in
  * the template nominally being rendered, but also all variables in all templates nested inside it.
- * In practice, though, you're likely to define very few template-specific stringifiers. If a
- * variable's value can be stringified by calling {@code toString()} on it, or to an empty string if
- * null, you don't need to specify a strinifier for the variable because this is {@link
- * Stringifier#DEFAULT default} behaviour. In addition, for most variables stringification does not
- * depend the variable per s&#233;, but rather on the variable's data type. These type-based
- * stringifiers are defined centrally, through the {@link GlobalStringifiers} class. (An example of
- * a type-based stringifier would be a {@link LocalDate} stringifier, or a {@link Number}
- * stringifier.) Only if a variable has very specific stringification requirements would you
- * register the stringifier with the {@code TemplateStringifier} class.
+ * In practice, however, you are likely to define very few template-specific stringifiers. If a
+ * variable's value can be stringified by calling {@code toString()} on it (or to an empty string if
+ * null), you don't need to specify a strinifier it because this is {@link Stringifier#DEFAULT
+ * default} behaviour. In addition, for most variables stringification does not depend the variable
+ * per s&#233;, but on the variable's data type. These generic, type-based stringifiers are defined
+ * centrally, in the {@link GlobalStringifiers} class.
  *
  * @author Ayco Holleman
  */
@@ -38,7 +35,8 @@ public final class TemplateStringifiers {
    * stringifier}, whatever the template, whatever the variable. Unlikely to be satisfactory in the
    * end, but handy in the early stages of development.
    */
-  public static final TemplateStringifiers BASIC = new TemplateStringifiers(emptyMap());
+  public static final TemplateStringifiers SIMPLE_STRINGIFIER =
+      new TemplateStringifiers(emptyMap());
 
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
 
@@ -50,7 +48,6 @@ public final class TemplateStringifiers {
   public static class Builder {
 
     private static final String LOOKUP_FAILED = "No stringifier found for type %s";
-    private static final String GSP_NOT_SET = "GlobalTemplateStringifiers not set";
     private static final String NO_SUCH_VARIABLE = "No such variable: \"%s\"";
     private static final String ALREADY_SET = "Stringifier already set for variable %s";
 
@@ -125,7 +122,6 @@ public final class TemplateStringifiers {
       Check.notNull(type, "type").is(globals::hasStringifier, LOOKUP_FAILED, type.getName());
       Check.notNull(template, "template");
       Check.that(varNames, "varNames").is(deepNotEmpty());
-      Check.that(globals).is(notNull(), GSP_NOT_SET);
       register(globals.getStringifier(type), template, varNames);
       return this;
     }
@@ -163,6 +159,8 @@ public final class TemplateStringifiers {
    *     instance
    */
   public static Builder configure(Template template, GlobalStringifiers globalStringifiers) {
+    Check.notNull(template, "template");
+    Check.notNull(globalStringifiers, "globalStringifiers");
     return new Builder(template, globalStringifiers);
   }
 
