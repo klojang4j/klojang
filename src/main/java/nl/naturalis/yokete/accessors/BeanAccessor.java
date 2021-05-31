@@ -15,6 +15,11 @@ public class BeanAccessor<T> implements Accessor<T> {
   private final BeanReader<T> reader;
   private final Map<String, String> nameMap;
 
+  public BeanAccessor(Class<T> beanClass) {
+    this.reader = Check.notNull(beanClass, "beanClass").ok(BeanReader::new);
+    this.nameMap = null;
+  }
+
   public BeanAccessor(Class<T> beanClass, Template template) {
     this(beanClass, template, NameMapper.NOOP);
   }

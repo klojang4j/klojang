@@ -169,7 +169,7 @@ public class RenderSession {
     Check.on(illegalValue("escapeType", escapeType), escapeType).is(notNull());
     Check.on(badEscapeType(), escapeType).isNot(sameAs(), NOT_SPECIFIED);
     Template t = page.getTemplate();
-    Check.on(noSuchVariable(t, varName), varName).is(in(), t.getVars());
+    Check.on(noSuchVariable(t, varName), varName).is(in(), t.getVariables());
     Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
     IntList indices = page.getTemplate().getVarPartIndices().get(varName);
     if (values.isEmpty()) {
@@ -241,7 +241,7 @@ public class RenderSession {
     Check.on(illegalValue("varName", varName), varName).is(notNull());
     Check.on(illegalValue("renderable", renderable), renderable).is(notNull());
     Template t = page.getTemplate();
-    Check.on(noSuchVariable(t, varName), varName).is(in(), t.getVars());
+    Check.on(noSuchVariable(t, varName), varName).is(in(), t.getVariables());
     Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
     IntList indices = page.getTemplate().getVarPartIndices().get(varName);
     indices.forEach(i -> state.setVar(i, renderable));
@@ -399,7 +399,7 @@ public class RenderSession {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Template t = getNestedTemplate(nestedTemplateName);
     Check.on(noMonoTemplate(t), t)
-        .has(tmpl -> tmpl.getVars().size(), eq(), 1)
+        .has(tmpl -> tmpl.getVariables().size(), eq(), 1)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
     List<?> values = asUnsafeList(value);
     RenderSession[] sessions = state.getOrCreateChildSessions(t, new SelfAccessor(), values.size());
@@ -446,9 +446,9 @@ public class RenderSession {
     Check.on(illegalValue("tuples", tuples), tuples).is(neverNull());
     Template t = getNestedTemplate(nestedTemplateName);
     Check.on(noTupleTemplate(t), t)
-        .has(tmpl -> tmpl.getVars().size(), eq(), 2)
+        .has(tmpl -> tmpl.getVariables().size(), eq(), 2)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
-    String[] vars = t.getVars().toArray(new String[2]);
+    String[] vars = t.getVariables().toArray(new String[2]);
     List<Map<String, Object>> data =
         tuples
             .stream()
@@ -523,9 +523,9 @@ public class RenderSession {
       throws RenderException {
     Set<String> varNames;
     if (isEmpty(names)) {
-      varNames = page.getTemplate().getVars();
+      varNames = page.getTemplate().getVariables();
     } else {
-      varNames = new HashSet<>(page.getTemplate().getVars());
+      varNames = new HashSet<>(page.getTemplate().getVariables());
       varNames.retainAll(Set.of(names));
     }
     Accessor<T> acc = (Accessor<T>) page.getAccessor(data);

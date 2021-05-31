@@ -26,7 +26,7 @@ class RenderState {
     int sz = factory.getTemplate().countNestedTemplates();
     this.sessions = new IdentityHashMap<>(sz);
     this.varValues = new HashMap<>(sz);
-    this.todo = new HashSet<>(factory.getTemplate().getVars());
+    this.todo = new HashSet<>(factory.getTemplate().getVariables());
   }
 
   Page getSessionFactory() {

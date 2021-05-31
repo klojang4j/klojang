@@ -19,7 +19,7 @@ public class TupleAccessor implements Accessor<Tuple<?, ?>> {
   private final String[] vars;
 
   public TupleAccessor(Template template) {
-    this.vars = Check.notNull(template).ok().getVars().toArray(String[]::new);
+    this.vars = Check.notNull(template).ok().getVariables().toArray(String[]::new);
   }
 
   @Override

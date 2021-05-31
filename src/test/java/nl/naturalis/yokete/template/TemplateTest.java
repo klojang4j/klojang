@@ -14,25 +14,25 @@ public class TemplateTest {
   @Test
   public void test00() throws ParseException {
     Template t0 = Template.parseResource(getClass(), "TemplateTest.main.html");
-    assertEquals(0, t0.countVars());
+    assertEquals(0, t0.countVariables());
     assertEquals(1, t0.countNestedTemplates());
     assertEquals("company", t0.getNestedTemplates().iterator().next().getName());
     Template t0_0 = t0.getNestedTemplate("company");
-    assertEquals(5, t0_0.countVars());
+    assertEquals(5, t0_0.countVariables());
     assertEquals(1, t0_0.countNestedTemplates());
-    assertEquals(List.of("name", "poBox", "established", "director"), List.copyOf(t0_0.getVars()));
+    assertEquals(List.of("name", "poBox", "established", "director"), List.copyOf(t0_0.getVariables()));
     Template t0_0_0 = t0_0.getNestedTemplate("departments");
-    assertEquals(2, t0_0_0.countVars());
+    assertEquals(2, t0_0_0.countVariables());
     assertEquals(1, t0_0_0.countNestedTemplates());
-    assertEquals(List.of("name", "managerName"), List.copyOf(t0_0_0.getVars()));
+    assertEquals(List.of("name", "managerName"), List.copyOf(t0_0_0.getVariables()));
     Template t0_0_0_0 = t0_0_0.getNestedTemplate("employees");
-    assertEquals(2, t0_0_0_0.countVars());
+    assertEquals(2, t0_0_0_0.countVariables());
     assertEquals(1, t0_0_0_0.countNestedTemplates());
-    assertEquals(List.of("name", "age"), List.copyOf(t0_0_0_0.getVars()));
+    assertEquals(List.of("name", "age"), List.copyOf(t0_0_0_0.getVariables()));
     Template t0_0_0_0_0 = t0_0_0_0.getNestedTemplate("roles");
-    assertEquals(1, t0_0_0_0_0.countVars());
+    assertEquals(1, t0_0_0_0_0.countVariables());
     assertEquals(0, t0_0_0_0_0.countNestedTemplates());
-    assertEquals(List.of("role"), List.copyOf(t0_0_0_0_0.getVars()));
+    assertEquals(List.of("role"), List.copyOf(t0_0_0_0_0.getVariables()));
   }
 
   @Test // getVariableNamesPerTemplate
@@ -44,7 +44,8 @@ public class TemplateTest {
             + "employees:name;employees:age;"
             + "roles:role;";
     StringBuilder sb = new StringBuilder(100);
-    t0.getVarsPerTemplate().forEach(t -> append(sb, t.getLeft().getName(), ":", t.getRight(), ";"));
+    TemplateUtils.getVarsPerTemplate(t0)
+        .forEach(t -> append(sb, t.getLeft().getName(), ":", t.getRight(), ";"));
     assertEquals(expected, sb.toString());
   }
 
@@ -60,7 +61,7 @@ public class TemplateTest {
   @Test // getVarPartIndices
   public void test03() throws ParseException {
     Template t0 = Template.parseResource(getClass(), "TemplateTest.main.html");
-    t0.getNestedTemplatesRecursive()
+    TemplateUtils.getNestedTemplatesRecursive(t0)
         .forEach(t -> System.out.println(TemplateUtils.getFQName(t, "test")));
   }
 
@@ -83,7 +84,7 @@ public class TemplateTest {
         "topdeskId, id, department, instituteCode, collectionCode, firstNumber, lastNumber, amount, issueDate";
     String[] varNames = varStr.split(",");
     List<String> expected = Arrays.stream(varNames).map(String::strip).collect(Collectors.toList());
-    List<String> actual = new ArrayList<>(t0.getVars());
+    List<String> actual = new ArrayList<>(t0.getVariables());
     assertEquals(expected, actual);
   }
 }

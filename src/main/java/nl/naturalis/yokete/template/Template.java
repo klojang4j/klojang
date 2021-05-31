@@ -1,17 +1,14 @@
 package nl.naturalis.yokete.template;
 
-import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.*;
 import nl.naturalis.common.StringMethods;
-import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.yokete.render.Accessor;
 import nl.naturalis.yokete.render.RenderSession;
 import nl.naturalis.yokete.render.Stringifier;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
@@ -21,10 +18,10 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
  * knowledge repository for a particular template and it used as such by the {@link RenderSession},
  * and by you as you configure your {@link Stringifier stringifiers} and {@link Accessor accessors}.
  *
- * <p>{@code Template} instances are immutable, expensive-to-create and heavy-weight objects. They
- * should be created just once per source file, cached somewhere, and then reused for as long as the
- * application lasts. Creating a new {@code Template} instance for each new request would be very
- * inefficient.
+ * <p>{@code Template} instances are unmodifiable, expensive-to-create and heavy-weight objects.
+ * They should be created just once per source file, cached somewhere, and then reused for as long
+ * as the application lasts. Creating a new {@code Template} instance for each new request would be
+ * very inefficient.
  *
  * @author Ayco Holleman
  */
@@ -150,7 +147,7 @@ public class Template {
    * parent template, while the source code for an included template resides in a different file,
    * there is no functional difference between them.
    *
-   * <p>The returned {@code List} is immutable.
+   * <p>The returned {@code List} is unmodifiable.
    *
    * @return The constituent parts of the template file
    */
@@ -162,7 +159,7 @@ public class Template {
    * Returns the indices of the parts in the {@link #getParts() parts list} that contain variables.
    * The returned {@code Map} maps each variable name to an {@link IntList}, since one variable may
    * occur multiple times in the same template. In other words, you may find the same variable in
-   * multiple parts of the parts list. The returned {@code Map} is immutable.
+   * multiple parts of the parts list. The returned {@code Map} is unmodifiable.
    *
    * @return The list indices of parts that contain variables
    */
@@ -174,7 +171,7 @@ public class Template {
    * Returns the indices of the parts in the {@link #getParts() parts list} that contain nested
    * templates. The returned {@code Map} maps each template name to exactly one {@code List} index,
    * since template names must be unique within the parent template. The returned {@code Map} is
-   * immutable.
+   * unmodifiable.
    *
    * @return The list indices of parts that contain nested templates
    */
@@ -185,7 +182,7 @@ public class Template {
   /**
    * Returns the indices of the parts in the {@link #getParts() parts list} that contain literal
    * text. Each element in the returned {@link IntList} is an index into the parts list. The
-   * returned {@code IntList} is immutable.
+   * returned {@code IntList} is unmodifiable.
    *
    * @return The list indices of parts that contain literal text
    */
@@ -194,12 +191,12 @@ public class Template {
   }
 
   /**
-   * Returns the names of all variables in this {@code Template}, in order of their first appearance
-   * in the template. The returned {@code Set} is immutable.
+   * Returns the names of all variables in this {@code Template} (non-recursive), in order of their
+   * first appearance in the template. The returned {@code Set} is unmodifiable.
    *
    * @return The names of all variables in this {@code Template}
    */
-  public Set<String> getVars() {
+  public Set<String> getVariables() {
     return varIndices.keySet();
   }
 
@@ -209,59 +206,46 @@ public class Template {
    * @param name The name of the variable
    * @return Whether or not this {@code Template} contains a variable with the specified name
    */
-  public boolean containsVar(String name) {
+  public boolean containsVariable(String name) {
     return Check.notNull(name).ok(varIndices::containsKey);
   }
 
   /**
    * Returns the total number of variables in this {@code Template}. Note that this method does not
-   * count the number of <i>unique</i> variable names (which would be {@link #getVars()
+   * count the number of <i>unique</i> variable names (which would be {@link #getVariables()
    * getVars().size()}).
    *
    * @return The total number of variables in this {@code Template}
    */
-  public int countVars() {
+  public int countVariables() {
     return (int) parts.stream().filter(VariablePart.class::isInstance).count();
   }
 
-  /**
-   * Returns, for this {@code Template} and all templates descending from it, the names of their
-   * variables. Each tuple in the returned {@code List} contains a {@code Template} instance and a
-   * variable name. The returned {@code List} is created on demand and mutable.
-   *
-   * @return All variable names in this {@code Template} and the templates nested inside it
-   */
-  public List<Tuple<Template, String>> getVarsPerTemplate() {
-    ArrayList<Tuple<Template, String>> tuples = new ArrayList<>(25);
-    collectVarsPerTemplate(this, tuples);
-    return tuples;
-  }
-
-  private static void collectVarsPerTemplate(
-      Template t0, ArrayList<Tuple<Template, String>> tuples) {
-    t0.getVars().stream().map(s -> Tuple.of(t0, s)).forEach(tuples::add);
-    t0.getNestedTemplates().forEach(t -> collectVarsPerTemplate(t, tuples));
-  }
+  private List<Template> nestedTemplates;
 
   /**
    * Returns all templates nested inside this {@code Template} (non-recursive). The returned {@code
-   * List} is created on demand and mutable.
+   * List} is unmodifiable.
    *
    * @return All templates nested inside this {@code Template}
    */
   public List<Template> getNestedTemplates() {
-    return tmplIndices
-        .values()
-        .stream()
-        .map(parts::get)
-        .map(NestedTemplatePart.class::cast)
-        .map(NestedTemplatePart::getTemplate)
-        .collect(toList());
+    if (nestedTemplates == null) {
+      return nestedTemplates =
+          tmplIndices
+              .values()
+              .stream()
+              .map(parts::get)
+              .map(NestedTemplatePart.class::cast)
+              .map(NestedTemplatePart::getTemplate)
+              .collect(toUnmodifiableList());
+    }
+    return nestedTemplates;
   }
 
   /**
    * Returns the names of all templates nested inside this {@code Template} (non-recursive). The
-   * returned {@code Set} is immutable.
+   * returned {@code Set} is unmodifiable.
    *
    * @return The names of all nested templates
    */
@@ -303,26 +287,8 @@ public class Template {
   }
 
   /**
-   * Returns this {@code Template} and all templates descending from it. The returned {@code List}
-   * is created on demand and mutable.
-   *
-   * @return This {@code Template} and all templates descending from it
-   */
-  public List<Template> getNestedTemplatesRecursive() {
-    ArrayList<Template> tmpls = new ArrayList<>(20);
-    tmpls.add(this);
-    collectTmplsRecursive(this, tmpls);
-    return tmpls;
-  }
-
-  private static void collectTmplsRecursive(Template t0, ArrayList<Template> tmpls) {
-    List<Template> myTmpls = t0.getNestedTemplates();
-    tmpls.addAll(myTmpls);
-    myTmpls.forEach(t -> collectTmplsRecursive(t, tmpls));
-  }
-  /**
-   * Returns the names of all variables and nested templates in this {@code Template}
-   * (non-recursive). The returned {@code List} is immutable.
+   * Returns the names of all variables and nested templates within this {@code Template}
+   * (non-recursive). The returned {@code List} is unmodifiable.
    *
    * @return The names of all variables and nested templates in this {@code Template}
    */
@@ -342,8 +308,8 @@ public class Template {
 
   /**
    * The {@code Template} class explicitly overrides the {@code equals()} method such that the only
-   * object equal to a {@code Template} instance is the instance itself. Therefore you should be
-   * wary of creating two {@code Template} instances from the same source file.
+   * object equal to a {@code Template} instance is the instance itself. Therefore you avoid
+   * creating two {@code Template} instances from the same source file.
    */
   @Override
   public boolean equals(Object obj) {
@@ -364,16 +330,6 @@ public class Template {
   @Override
   public String toString() {
     return StringMethods.implode(parts, "");
-  }
-
-  /**
-   * Prints out the constituent parts of this {@code Template}. Can be useful when debugging your
-   * template.
-   *
-   * @param out The {@code PrintStream} to which to print
-   */
-  public void printParts(PrintStream out) {
-    new PartsPrinter(this).printParts(out);
   }
 
   /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */

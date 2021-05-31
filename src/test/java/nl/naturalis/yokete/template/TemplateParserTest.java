@@ -151,6 +151,6 @@ public class TemplateParserTest {
   public void allTogetherNow00() throws ParseException {
     String path = "TemplateParserTest.allTogetherNow00.html";
     Template template = Template.parseResource(getClass(), path);
-    template.printParts(System.out);
+    TemplateUtils.printParts(template, System.out);
   }
 }

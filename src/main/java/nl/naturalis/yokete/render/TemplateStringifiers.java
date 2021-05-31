@@ -12,7 +12,7 @@ import static java.util.Collections.emptyMap;
 import static nl.naturalis.common.check.CommonChecks.deepNotEmpty;
 import static nl.naturalis.common.check.CommonChecks.in;
 import static nl.naturalis.common.check.CommonChecks.notNull;
-import static nl.naturalis.yokete.template.TemplateUtils.getFQName;
+import static nl.naturalis.yokete.template.TemplateUtils.*;
 
 /**
  * Provides {@link Stringifier stringifiers} for template variables. In principle every template
@@ -63,7 +63,7 @@ public final class TemplateStringifiers {
     private Builder(Template tmpl, GlobalStringifiers globals) {
       this.template = tmpl;
       this.globals = globals;
-      this.vars = new HashSet<>(tmpl.getVarsPerTemplate());
+      this.vars = new HashSet<>(getVarsPerTemplate(tmpl));
     }
 
     /**
