@@ -2,6 +2,7 @@ package nl.naturalis.yokete.accessors;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.invoke.BeanReader;
 import nl.naturalis.common.invoke.NoSuchPropertyException;
@@ -9,6 +10,7 @@ import nl.naturalis.yokete.render.Accessor;
 import nl.naturalis.yokete.render.NameMapper;
 import nl.naturalis.yokete.render.RenderException;
 import nl.naturalis.yokete.template.Template;
+import static nl.naturalis.yokete.template.TemplateUtils.getAllNames;
 
 public class BeanAccessor<T> implements Accessor<T> {
 
@@ -16,20 +18,24 @@ public class BeanAccessor<T> implements Accessor<T> {
   private final Map<String, String> nameMap;
 
   public BeanAccessor(Class<T> beanClass) {
-    this.reader = Check.notNull(beanClass, "beanClass").ok(BeanReader::new);
-    this.nameMap = null;
+    reader = Check.notNull(beanClass, "beanClass").ok(BeanReader::new);
+    nameMap = null;
   }
 
   public BeanAccessor(Class<T> beanClass, Template template) {
-    this(beanClass, template, NameMapper.NOOP);
+    Check.notNull(beanClass, "beanClass");
+    Check.notNull(template, "template");
+    reader = new BeanReader<>(beanClass, getAllNames(template).toArray(String[]::new));
+    nameMap = null;
   }
 
   public BeanAccessor(Class<T> beanClass, Template template, NameMapper mapper) {
     Check.notNull(beanClass, "beanClass");
     Check.notNull(template, "template");
     Check.notNull(mapper, "mapper");
-    Map<String, String> tmp = new HashMap<>(template.getNames().size());
-    template.getNames().forEach(n -> tmp.put(n, mapper.map(template, n)));
+    Set<String> names = getAllNames(template);
+    Map<String, String> tmp = new HashMap<>(names.size());
+    names.forEach(n -> tmp.put(n, mapper.map(template, n)));
     String[] properties = tmp.values().toArray(String[]::new);
     reader = new BeanReader<>(beanClass, properties);
     tmp.keySet().removeAll(reader.getUsedProperties());
@@ -39,12 +45,16 @@ public class BeanAccessor<T> implements Accessor<T> {
   @Override
   public Object access(T sourceData, String name) throws RenderException {
     Check.notNull(sourceData, "sourceData");
-    String key = Check.notNull(name, "name").ok(nameMap::get);
-    if (key == null) {
-      return UNDEFINED;
-    }
+    Check.notNull(name, "name");
     try {
-      return reader.read(sourceData, key);
+      if (nameMap == null) {
+        return reader.read(sourceData, name);
+      }
+      String property = nameMap.get(name);
+      if (property == null) {
+        return UNDEFINED;
+      }
+      return reader.read(sourceData, property);
     } catch (NoSuchPropertyException e) {
       return UNDEFINED;
     }
