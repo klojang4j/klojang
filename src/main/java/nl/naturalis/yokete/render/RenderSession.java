@@ -325,8 +325,8 @@ public class RenderSession {
   }
 
   /**
-   * Enables rendering of a text-only nested template. Equivalent to {@link #show(String, int)
-   * show(nestedTemplateName, 1)}.
+   * Causes the specified nested text-only template to be rendered. Equivalent to {@link
+   * #show(String, int) show(nestedTemplateName, 1)}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> be a text-only template,
    *     otherwise a {@code RenderException} is thrown
@@ -338,12 +338,13 @@ public class RenderSession {
   }
 
   /**
-   * Enables/disables rendering of a text-only nested template. In other words: a nested template
-   * without any variables or doubly-nested templates. One reason you might want to have such a
-   * template is that you want to conditionally render it. In principle you could achieve the same
-   * by calling {@code fill(nestedTemplateName, null}. However, this is cleaner and it bypasses some
-   * unnecessary code. To disable rendering, specify 0 (zero) for the {@code repeats} argument, or
-   * just don't call this method.
+   * Causes the specified nested text-only template to be rendered. In other words: a nested
+   * template without any variables or doubly-nested templates. One reason you might want to have
+   * such a template is that you want to conditionally render it. You could achieve the same by
+   * calling {@code populate(nestedTemplateName, null}. However, this method bypasses some code that
+   * is irrelevant to text-only templates. To disable rendering, specify 0 (zero) for the {@code
+   * repeats} argument. Note, however, that by default template variables and nested templates are
+   * not rendered, so you could also just not call this method.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> be a text-only template,
    *     otherwise a {@code RenderException} is thrown
@@ -353,10 +354,28 @@ public class RenderSession {
    */
   public RenderSession show(String nestedTemplateName, int repeats) throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    Check.on(illegalValue("repeats", repeats), repeats).is(gte(), 0);
+    Check.that(repeats, "repeats").is(gte(), 0);
     Template t = getNestedTemplate(nestedTemplateName);
     Check.on(noTextOnly(t), t.isTextOnly()).is(yes());
     return show(t, repeats);
+  }
+
+  /**
+   * causes all of the specified nested text-only templates to be rendered.
+   *
+   * @param nestedTemplateNames The names of the nested text-only templates
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession showAll(String... nestedTemplateNames) throws RenderException {
+    Check.on(frozenSession(), state.isFrozen()).is(no());
+    Check.that(nestedTemplateNames, "nestedTemplateNames").is(neverNull());
+    for (String name : nestedTemplateNames) {
+      Check.on(noSuchTemplate(page.getTemplate(), name), name).is(validTemplateName());
+      Template t = page.getTemplate().getNestedTemplate(name);
+      state.getOrCreateTextOnlyChildSessions(t, 1);
+    }
+    return this;
   }
 
   private RenderSession show(Template nested, int repeats) throws RenderException {
@@ -722,7 +741,7 @@ public class RenderSession {
   }
 
   private Template getNestedTemplate(String name) throws RenderException {
-    Check.on(illegalValue("nestedTemplateName", name), name).is(notNull());
+    Check.notNull(name, "nestedTemplateName");
     Check.on(noSuchTemplate(page.getTemplate(), name), name).is(validTemplateName());
     return page.getTemplate().getNestedTemplate(name);
   }
