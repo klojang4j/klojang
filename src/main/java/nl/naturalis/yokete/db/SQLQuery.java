@@ -36,6 +36,34 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     }
   }
 
+  public ResultSet executeAndNext() {
+    try {
+      ResultSet rs = resultSet();
+      if (!rs.next()) {
+        throw new KSQLException("Query returned zero rows");
+      }
+      return rs;
+    } catch (Throwable t) {
+      throw ExceptionMethods.uncheck(t);
+    }
+  }
+
+  public int getInt() {
+    try {
+      return executeAndNext().getInt(1);
+    } catch (SQLException e) {
+      throw ExceptionMethods.uncheck(e);
+    }
+  }
+
+  public String getString() {
+    try {
+      return executeAndNext().getString(1);
+    } catch (SQLException e) {
+      throw ExceptionMethods.uncheck(e);
+    }
+  }
+
   public List<Row> mappifyAtMost(int limit) {
     try {
       MappifierBox mb = sql.getMappifierBox(nameMapper);
