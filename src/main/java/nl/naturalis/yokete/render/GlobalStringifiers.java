@@ -4,17 +4,18 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
-import nl.naturalis.common.collection.UnmodifiableTypeMap;
+import nl.naturalis.common.check.Check;
+import nl.naturalis.common.collection.FlatTypeMap;
 import static java.util.Collections.emptyMap;
 /**
  * A repository and provider of type-based stringifiers. These stringifiers are not associated with
  * any template or template variable in particular. The stringify values purely based on their
- * datatype. The {@code GlobalStringifiers} class is built around a {@link TypeMap}. If a
+ * datatype. The {@code GlobalStringifiers} class is built around a {@link FlatTypeMap}. If a
  * stringifier is requested for some type, and that type is not in the {@code TypeMap}, but one of
- * its super types is, then you get that super type's stringifier. For example, if the {@code
- * TypeMap} contains a {@code Number} stringifier and you request an {@code Integer} stringifier,
- * you get the {@code Number} stringifier. This saves you from having to specify a stringifier for
- * every subclass of {@code Number} if they are all stringified in the same way.
+ * its super types is, then you get stringifier associated with the super type. For example, if the
+ * {@code TypeMap} contains a {@code Number} stringifier and you request an {@code Integer}
+ * stringifier, you get the {@code Number} stringifier. This saves you from having to specify a
+ * stringifier for every subclass of {@code Number} if they are all stringified in the same way.
  *
  * <p>The {@code GlobalStringifiers} class is not meant to be used directly. It does not even have a
  * public interface. Instead, you should configure an instance of it (most likely a singleton
@@ -77,10 +78,10 @@ public final class GlobalStringifiers {
    * @author Ayco Holleman
    */
   public static final class Builder {
-    private final UnmodifiableTypeMap.Builder<Stringifier> typeMapBuilder;
+    private final FlatTypeMap<Stringifier> typeMap;
 
     private Builder() {
-      this.typeMapBuilder = UnmodifiableTypeMap.build(Stringifier.class);
+      this.typeMap = new FlatTypeMap<>();
     }
 
     /**
@@ -93,7 +94,9 @@ public final class GlobalStringifiers {
      *     it <b>must never</b> return null
      */
     public void register(Class<?> type, Stringifier stringifier) {
-      typeMapBuilder.add(type, stringifier);
+      Check.notNull(type, "type");
+      Check.notNull(stringifier, "stringifier");
+      typeMap.put(type, stringifier);
     }
 
     /**
@@ -102,7 +105,7 @@ public final class GlobalStringifiers {
      * @return A new, immutable {@code GlobalStringifiers} instance
      */
     public GlobalStringifiers freeze() {
-      return new GlobalStringifiers(typeMapBuilder.freeze());
+      return new GlobalStringifiers(typeMap);
     }
   }
 

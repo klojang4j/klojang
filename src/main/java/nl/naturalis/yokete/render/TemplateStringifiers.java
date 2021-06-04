@@ -30,10 +30,10 @@ import static nl.naturalis.yokete.template.TemplateUtils.getVarsPerTemplate;
 public final class TemplateStringifiers {
 
   /**
-   * A simple, brute-force {@code TemplateStringifiers} whose {@link #getStringifier(Template,
-   * String) getStringifier} method always returns the {@link Stringifier#DEFAULT default
-   * stringifier}, whatever the template, whatever the variable. Unlikely to be satisfactory in the
-   * end, but handy in the early stages of development.
+   * A simple, brute-force {@code TemplateStringifiers} instance that always returns the {@link
+   * Stringifier#DEFAULT default stringifier}, whatever template and whatever variable is passed to
+   * its {@link #getStringifier(Template, String)} method. Unlikely to be satisfactory in the end,
+   * but handy in the early stages of development.
    */
   public static final TemplateStringifiers SIMPLE_STRINGIFIER =
       new TemplateStringifiers(emptyMap());
