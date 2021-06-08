@@ -18,12 +18,13 @@ import static nl.naturalis.yokete.template.TemplateUtils.getVarsPerTemplate;
  * Provides {@link Stringifier stringifiers} for template variables. In principle every template
  * variable must be associated with a {@code Stringifier}. That includes not just the variables in
  * the template nominally being rendered, but also all variables in all templates nested inside it.
- * In practice, however, you are likely to define very few template-specific stringifiers. If a
+ * In practice, however, you are unlikely to define many template-specific stringifiers. If a
  * variable's value can be stringified by calling {@code toString()} on it (or to an empty string if
- * null), you don't need to specify a strinifier it because this is {@link Stringifier#DEFAULT
- * default} behaviour. In addition, for most variables stringification does not depend the variable
- * per s&#233;, but on the variable's data type. These generic, type-based stringifiers are defined
- * centrally, in the {@link GlobalStringifiers} class.
+ * null), you don't need to specify a stringifier for it because this is {@link Stringifier#DEFAULT
+ * default} behaviour. In addition, most variables can be stringified based solely on their data
+ * type. These generic, type-based stringifiers are defined centrally, in the {@link
+ * GlobalStringifiers} class. Only if a template variable has very specific stringification
+ * requirements would you register the stringifier with a {@code TemplateStringifiers}.
  *
  * @author Ayco Holleman
  */
@@ -31,9 +32,8 @@ public final class TemplateStringifiers {
 
   /**
    * A simple, brute-force {@code TemplateStringifiers} instance that always returns the {@link
-   * Stringifier#DEFAULT default stringifier}, whatever template and whatever variable is passed to
-   * its {@link #getStringifier(Template, String)} method. Unlikely to be satisfactory in the end,
-   * but handy in the early stages of development.
+   * Stringifier#DEFAULT default stringifier}, whatever the template and whatever the variable.
+   * Unlikely to be satisfactory in the end, but handy in the early stages of development.
    */
   public static final TemplateStringifiers SIMPLE_STRINGIFIER =
       new TemplateStringifiers(emptyMap());
@@ -73,8 +73,8 @@ public final class TemplateStringifiers {
      * @param varNames The variables
      * @return This {@code Builder}
      */
-    public Builder setStringifier(Stringifier stringifier, String... varNames) {
-      return setStringifier(stringifier, template, varNames);
+    public Builder register(Stringifier stringifier, String... varNames) {
+      return register(stringifier, template, varNames);
     }
 
     /**
@@ -87,11 +87,11 @@ public final class TemplateStringifiers {
      * @param varNames The variables
      * @return This {@code Builder}
      */
-    public Builder setStringifier(Stringifier stringifier, Template template, String... varNames) {
+    public Builder register(Stringifier stringifier, Template template, String... varNames) {
       Check.notNull(stringifier, "stringifier");
       Check.notNull(template, "template");
       Check.that(varNames, "varNames").is(deepNotEmpty());
-      register(stringifier, template, varNames);
+      doRegister(stringifier, template, varNames);
       return this;
     }
 
@@ -122,7 +122,7 @@ public final class TemplateStringifiers {
       Check.notNull(type, "type").is(globals::hasStringifier, LOOKUP_FAILED, type.getName());
       Check.notNull(template, "template");
       Check.that(varNames, "varNames").is(deepNotEmpty());
-      register(globals.getStringifier(type), template, varNames);
+      doRegister(globals.getStringifier(type), template, varNames);
       return this;
     }
 
@@ -135,7 +135,7 @@ public final class TemplateStringifiers {
       return new TemplateStringifiers(Map.copyOf(stringifiers));
     }
 
-    private void register(Stringifier stringifier, Template template, String... varNames) {
+    private void doRegister(Stringifier stringifier, Template template, String... varNames) {
       for (String varName : varNames) {
         Tuple<Template, String> var = Tuple.of(template, varName);
         Check.that(var)

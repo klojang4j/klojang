@@ -9,7 +9,7 @@ import nl.naturalis.yokete.template.Template;
 
 /**
  * An {@code Accessor} implementation specialized at accessing {@link Tuple} objects. This {@code
- * Accessor} is used by the render session's {@link RenderSession#populateTuple(String,
+ * Accessor} is used by the render session's {@link RenderSession#populate2(String,
  * java.util.List, nl.naturalis.yokete.render.EscapeType) fillTuple} method.
  *
  * @author Ayco Holleman

@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.common.collection.FlatTypeMap;
+import nl.naturalis.common.collection.TypeMap;
 import static nl.naturalis.common.ClassMethods.prettyClassName;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 import static nl.naturalis.yokete.db.SQLTypeNames.getTypeName;
@@ -47,7 +47,7 @@ public class ReceiverNegotiator {
   }
 
   private static Map<Class<?>, ReceiverLookup<?>> createReceivers() {
-    FlatTypeMap<ReceiverLookup<?>> map = new FlatTypeMap<>();
+    TypeMap<ReceiverLookup<?>> map = new TypeMap<>();
     ReceiverLookup<?> receivers;
     map.put(String.class, new StringReceivers());
     receivers = new IntReceivers();

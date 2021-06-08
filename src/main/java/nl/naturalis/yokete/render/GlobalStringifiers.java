@@ -5,15 +5,15 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.common.collection.FlatTypeMap;
+import nl.naturalis.common.collection.TypeMap;
 import static java.util.Collections.emptyMap;
 /**
  * A repository and provider of type-based stringifiers. These stringifiers are not associated with
- * any template or template variable in particular. The stringify values purely based on their
- * datatype. The {@code GlobalStringifiers} class is built around a {@link FlatTypeMap}. If a
+ * any template or template variable in particular. They stringify values based on their data type.
+ * The {@code GlobalStringifiers} class is built around a {@link TypeMap}. This means that if a
  * stringifier is requested for some type, and that type is not in the {@code TypeMap}, but one of
- * its super types is, then you get stringifier associated with the super type. For example, if the
- * {@code TypeMap} contains a {@code Number} stringifier and you request an {@code Integer}
+ * its super types is, then you get the stringifier associated with the super type. For example, if
+ * the {@code TypeMap} contains a {@code Number} stringifier and you request an {@code Integer}
  * stringifier, you get the {@code Number} stringifier. This saves you from having to specify a
  * stringifier for every subclass of {@code Number} if they are all stringified in the same way.
  *
@@ -78,10 +78,10 @@ public final class GlobalStringifiers {
    * @author Ayco Holleman
    */
   public static final class Builder {
-    private final FlatTypeMap<Stringifier> typeMap;
+    private final TypeMap<Stringifier> typeMap;
 
     private Builder() {
-      this.typeMap = new FlatTypeMap<>();
+      this.typeMap = new TypeMap<>();
     }
 
     /**

@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.common.collection.FlatTypeMap;
+import nl.naturalis.common.collection.TypeMap;
 import static nl.naturalis.common.ClassMethods.prettyClassName;
 import static nl.naturalis.yokete.db.SQLTypeNames.getTypeName;
 
@@ -60,7 +60,7 @@ public class EmitterNegotiator {
   }
 
   private static Map<Class<?>, Map<Integer, Emitter<?, ?>>> createEmitters() {
-    FlatTypeMap<Map<Integer, Emitter<?, ?>>> map = new FlatTypeMap<>();
+    TypeMap<Map<Integer, Emitter<?, ?>>> map = new TypeMap<>();
     Map<Integer, Emitter<?, ?>> emitters;
     map.put(String.class, my(new StringEmitters()));
     emitters = my(new IntEmitters());

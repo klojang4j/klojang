@@ -125,7 +125,7 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#populateSingle(String, Object) RenderSession.fillOne}
+   * Thrown if you call {@link RenderSession#populate1(String, Object) RenderSession.fillOne}
    * for a nested template that does not contain exactly one variable and zero doubly-nested
    * templates.
    */
@@ -136,7 +136,7 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#populateTuple(String, Object)
+   * Thrown if you call {@link RenderSession#populate2(String, Object)
    * RenderSession.fillTwo} for a nested template that does not contain exactly two variables and
    * zero doubly-nested templates.
    */
