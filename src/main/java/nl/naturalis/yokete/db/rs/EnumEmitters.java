@@ -41,6 +41,9 @@ class EnumEmitters extends HashMap<Integer, Emitter<?, ?>> {
   }
 
   private static <T extends Number> Enum<?> asOrdinal(T number, Class<Enum<?>> t) {
+    if (number == null) {
+      return null;
+    }
     int i = number.intValue();
     if (i < 0 || i >= t.getEnumConstants().length) {
       String fmt = "Invalid ordinal number for enum type %s: %d";
@@ -51,6 +54,9 @@ class EnumEmitters extends HashMap<Integer, Emitter<?, ?>> {
   }
 
   private static Enum<?> asName(String s, Class<Enum<?>> t) {
+    if (s == null) {
+      return null;
+    }
     for (Enum<?> c : t.getEnumConstants()) {
       if (s.equals(c.name()) || s.equals(c.toString())) {
         return c;

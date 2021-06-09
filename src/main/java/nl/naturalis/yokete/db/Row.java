@@ -3,6 +3,7 @@ package nl.naturalis.yokete.db;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import nl.naturalis.common.NumberMethods;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
@@ -119,6 +120,25 @@ public class Row {
 
   public byte getByte(String colName, byte nullValue) {
     return ifNotNull(getValue(colName), v -> getNumber(colName, v, Byte.class), nullValue);
+  }
+
+  public <T extends Enum<T>> T getEnum(String colName, Class<T> enumClass) {
+    return getEnum(colName, enumClass, null);
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T extends Enum<T>> T getEnum(String colName, Class<T> enumClass, Enum<T> nullValue) {
+    return (T) ifNotNull(getValue(colName), enumClass::cast, nullValue);
+  }
+
+  public <T extends Enum<T>> T getEnum(String colName, Function<Object, T> parser) {
+    return getEnum(colName, parser, null);
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T extends Enum<T>> T getEnum(
+      String colName, Function<Object, T> parser, Enum<T> nullValue) {
+    return (T) ifNotNull(getValue(colName), parser::apply, nullValue);
   }
 
   // TODO: more of this
