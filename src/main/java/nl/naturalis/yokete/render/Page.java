@@ -6,11 +6,11 @@ import nl.naturalis.yokete.template.Template;
 
 /**
  * The {@code Page} class is a factory for {@link RenderSession render sessions}. Its main component
- * is the {@link Template HTML template}. Besides that it contains the {@link Accessor} to be used
- * to extract values from the source data (e.g. your model beans) and the {@link
- * TemplateStringifiers stringifiers} that will stringify those values. The {@code Page} class is
- * not only a factory for render sessions, it also injects itself into the {@code RenderSession}
- * instances it creates, so they have access to each of these components.
+ * is the {@link Template} to be rendered. Besides that it contains an {@link AccessorFactory} that
+ * provides {@link Accessor accessors} for the data fed into the template and a {@link
+ * TemplateStringifiers} telling the {@code RenderSession} how to stringify values. The {@code Page}
+ * class is not only a factory for render sessions, it also injects itself into the {@code
+ * RenderSession} instances it creates, so they have access to each of these components.
  *
  * <p>Note that the name <i>Page</i> is somewhat misleading because an HTML template need not be a
  * full-blown HTML page. It can also be an HTML snippet that you insert into other pages.
@@ -18,6 +18,37 @@ import nl.naturalis.yokete.template.Template;
  * @author Ayco Holleman
  */
 public final class Page {
+
+  /**
+   * Returns a {@code Page} that will produce {@link RenderSession} instances lacking an {@link
+   * Accessor} and using the {@link Stringifier#DEFAULT default stringifier} to stringify values.
+   *
+   * @param template
+   * @return
+   */
+  public static Page configure(Template template) {
+    return configure(template, TemplateStringifiers.SIMPLE_STRINGIFIER);
+  }
+
+  /**
+   * Returns a {@code Page} that will produce {@link RenderSession} instances lacking an {@link
+   * Accessor}. That means you <i>cannot</i> call the {@link RenderSession#populate(String, Object,
+   * String...) populate} and {@link RenderSession#insert(Object, EscapeType, String...) insert}
+   * methods of {@code RenderSession} to populate the template. If you do, a {@link RenderException}
+   * is thrown.
+   *
+   * @param template
+   * @param stringifiers
+   * @return
+   */
+  public static Page configure(Template template, TemplateStringifiers stringifiers) {
+    Accessor<?> acc =
+        (x, y) -> {
+          throw RenderException.noAccessorProvided();
+        };
+    AccessorFactory af = (x, y) -> acc;
+    return configure(template, af, stringifiers);
+  }
 
   /**
    * Creates a {@code Page} that will produce {@link RenderSession render sessions} for the

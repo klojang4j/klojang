@@ -1,6 +1,7 @@
 package nl.naturalis.yokete.render;
 
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,7 @@ import java.util.function.Predicate;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
+import nl.naturalis.common.io.UnsafeByteArrayOutputStream;
 import nl.naturalis.yokete.accessors.BypassAccessor;
 import nl.naturalis.yokete.accessors.SelfAccessor;
 import nl.naturalis.yokete.template.Part;
@@ -359,7 +361,7 @@ public class RenderSession {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Check.that(repeats, "repeats").is(gte(), 0);
     Template t = getNestedTemplate(nestedTemplateName);
-    Check.on(noTextOnly(t), t.isTextOnly()).is(yes());
+    Check.on(notTextOnly(t), t.isTextOnly()).is(yes());
     return show(t, repeats);
   }
 
@@ -395,8 +397,7 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession populate1(String nestedTemplateName, Object value)
-      throws RenderException {
+  public RenderSession populate1(String nestedTemplateName, Object value) throws RenderException {
     return populate1(nestedTemplateName, value, ESCAPE_NONE);
   }
 
@@ -417,11 +418,11 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession populate1(
-      String nestedTemplateName, Object value, EscapeType escapeType) throws RenderException {
+  public RenderSession populate1(String nestedTemplateName, Object value, EscapeType escapeType)
+      throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Template t = getNestedTemplate(nestedTemplateName);
-    Check.on(noMonoTemplate(t), t)
+    Check.on(notMonoTemplate(t), t)
         .has(tmpl -> tmpl.getVariables().size(), eq(), 1)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
     List<?> values = asUnsafeList(value);
@@ -468,7 +469,7 @@ public class RenderSession {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Check.on(illegalValue("tuples", tuples), tuples).is(neverNull());
     Template t = getNestedTemplate(nestedTemplateName);
-    Check.on(noTupleTemplate(t), t)
+    Check.on(notTupleTemplate(t), t)
         .has(tmpl -> tmpl.getVariables().size(), eq(), 2)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
     String[] vars = t.getVariables().toArray(new String[2]);
@@ -501,7 +502,7 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession inject(Object sourceData, String... names) throws RenderException {
+  public RenderSession insert(Object sourceData, String... names) throws RenderException {
     return insert(sourceData, ESCAPE_NONE, names);
   }
 
@@ -530,7 +531,7 @@ public class RenderSession {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     if (sourceData == null) {
       Template t = page.getTemplate();
-      Check.on(noTextOnly(t), t.isTextOnly()).is(yes());
+      Check.on(notTextOnly(t), t.isTextOnly()).is(yes());
       // If we get past this check, the entire template is in fact
       // static HTML. Pretty expensive way to render static HTML,
       // but no reason not to support it.
@@ -730,6 +731,12 @@ public class RenderSession {
    */
   public void render(StringBuilder sb) {
     createRenderable().render(sb);
+  }
+
+  public String render() {
+    UnsafeByteArrayOutputStream out = new UnsafeByteArrayOutputStream(1024);
+    createRenderable().render(out);
+    return new String(out.toByteArray(), 0, out.byteCount(), StandardCharsets.UTF_8);
   }
 
   @Override
