@@ -84,7 +84,7 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#populate1(String, Object)} for a nested template that
+   * Thrown if you call {@link RenderSession#populateMonoTemplate(String, Object)} for a nested template that
    * does not contain exactly one variable and zero doubly-nested templates.
    */
   public static Function<String, RenderException> notMonoTemplate(Template t) {
@@ -94,7 +94,7 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#populate2(String, Object)} for a nested template that
+   * Thrown if you call {@link RenderSession#populateTupleTemplate(String, Object)} for a nested template that
    * does not contain exactly two variables and zero doubly-nested templates.
    */
   public static Function<String, RenderException> notTupleTemplate(Template t) {

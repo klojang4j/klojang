@@ -390,15 +390,16 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly one variable and zero
-   * doubly-nested templates. See {@link #populate1(String, Object, EscapeType)}.
+   * doubly-nested templates. See {@link #populateMonoTemplate(String, Object, EscapeType)}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession populate1(String nestedTemplateName, Object value) throws RenderException {
-    return populate1(nestedTemplateName, value, ESCAPE_NONE);
+  public RenderSession populateMonoTemplate(String nestedTemplateName, Object value)
+      throws RenderException {
+    return populateMonoTemplate(nestedTemplateName, value, ESCAPE_NONE);
   }
 
   /**
@@ -418,8 +419,8 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession populate1(String nestedTemplateName, Object value, EscapeType escapeType)
-      throws RenderException {
+  public RenderSession populateMonoTemplate(
+      String nestedTemplateName, Object value, EscapeType escapeType) throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Template t = getNestedTemplate(nestedTemplateName);
     Check.on(notMonoTemplate(t), t)
@@ -435,7 +436,7 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly two variables and
-   * zero doubly-nested templates. See {@link #populate2(String, List, EscapeType)}.
+   * zero doubly-nested templates. See {@link #populateTupleTemplate(String, List, EscapeType)}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly two
    *     variables
@@ -443,9 +444,9 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public <T, U> RenderSession populate2(String nestedTemplateName, List<Tuple<T, U>> tuples)
-      throws RenderException {
-    return populate2(nestedTemplateName, tuples, ESCAPE_NONE);
+  public <T, U> RenderSession populateTupleTemplate(
+      String nestedTemplateName, List<Tuple<T, U>> tuples) throws RenderException {
+    return populateTupleTemplate(nestedTemplateName, tuples, ESCAPE_NONE);
   }
 
   /**
@@ -463,7 +464,7 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public <T, U> RenderSession populate2(
+  public <T, U> RenderSession populateTupleTemplate(
       String nestedTemplateName, List<Tuple<T, U>> tuples, EscapeType escapeType)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
@@ -473,6 +474,8 @@ public class RenderSession {
         .has(tmpl -> tmpl.getVariables().size(), eq(), 2)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
     String[] vars = t.getVariables().toArray(new String[2]);
+    // Convert each tuple to a map with two entries and then use a regular map
+    // accessor to read the data
     List<Map<String, Object>> data =
         tuples
             .stream()

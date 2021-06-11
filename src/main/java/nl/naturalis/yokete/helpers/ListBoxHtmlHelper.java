@@ -147,7 +147,7 @@ public class ListBoxHtmlHelper<T> {
       session.set("name", name);
       session.set("ylbKey", key);
       if (initOption != NOT_SET) {
-        session.populate2("initOption", List.of(Tuple.of(initVal, initOption)));
+        session.populateTupleTemplate("initOption", List.of(Tuple.of(initVal, initOption)));
       }
       session.populate("options", dataSupplier.get());
       return session.createRenderable();

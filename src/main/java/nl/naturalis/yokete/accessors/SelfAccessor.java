@@ -7,7 +7,7 @@ import nl.naturalis.yokete.render.RenderSession;
 
 /**
  * An {@code Accessor} implementation that returns the source data itself rather than any particular
- * value within it. Used by the render session's {@link RenderSession#populate1(String,
+ * value within it. Used by the render session's {@link RenderSession#populateMonoTemplate(String,
  * Object, EscapeType) fillMono} method.
  *
  * @author Ayco Holleman
