@@ -128,7 +128,7 @@ class Parser {
     for (Part p : in) {
       if (p.getClass() == UnparsedPart.class) {
         UnparsedPart unparsed = (UnparsedPart) p;
-        if (unparsed.text().strip().length() != 0) {
+        if (unparsed.text().length() != 0) {
           checkGarbage(unparsed);
           out.add(unparsed.toTextPart());
         }
@@ -141,9 +141,13 @@ class Parser {
 
   private List<Part> parseInlineTmpls(UnparsedPart unparsed, Set<String> names)
       throws ParseException {
+    Matcher m = match(REGEX_NESTED, unparsed);
+    if (!m.find()) {
+      return Collections.singletonList(unparsed);
+    }
     List<Part> parts = new ArrayList<>();
     int offset = unparsed.start(), end = 0;
-    for (Matcher m = match(REGEX_NESTED, unparsed); m.find(); end = m.end()) {
+    do {
       if (m.start() > end) {
         parts.add(todo(unparsed, end, m.start()));
       }
@@ -157,7 +161,8 @@ class Parser {
       Parser parser = new Parser(name, clazz, mySrc);
       Template nested = parser.parse();
       parts.add(new InlineTemplatePart(nested, offset + m.start()));
-    }
+      end = m.end();
+    } while (m.find());
     if (end < unparsed.text().length()) {
       parts.add(todo(unparsed, end, unparsed.text().length()));
     }
@@ -166,9 +171,13 @@ class Parser {
 
   private List<Part> parseIncludedTmpls(UnparsedPart unparsed, Set<String> names)
       throws ParseException {
+    Matcher m = match(REGEX_INCLUDE, unparsed);
+    if (!m.find()) {
+      return Collections.singletonList(unparsed);
+    }
     List<Part> parts = new ArrayList<>();
     int offset = unparsed.start(), end = 0;
-    for (Matcher m = match(REGEX_INCLUDE, unparsed); m.find(); end = m.end()) {
+    do {
       if (m.start() > end) {
         parts.add(todo(unparsed, end, m.start()));
       }
@@ -189,7 +198,8 @@ class Parser {
       Parser parser = new Parser(name, clazz, Path.of(path));
       Template nested = parser.parse();
       parts.add(new IncludedTemplatePart(nested, offset + m.start()));
-    }
+      end = m.end();
+    } while (m.find());
     if (end < unparsed.text().length()) {
       parts.add(todo(unparsed, end, unparsed.text().length()));
     }
@@ -197,9 +207,13 @@ class Parser {
   }
 
   private List<Part> parseVars(UnparsedPart unparsed, Set<String> names) throws ParseException {
+    Matcher m = match(REGEX_VARIABLE, unparsed);
+    if (!m.find()) {
+      return Collections.singletonList(unparsed);
+    }
     List<Part> parts = new ArrayList<>();
     int offset = unparsed.start(), end = 0;
-    for (Matcher m = match(REGEX_VARIABLE, unparsed); m.find(); end = m.end()) {
+    do {
       if (m.start() > end) {
         parts.add(todo(unparsed, end, m.start()));
       }
@@ -213,7 +227,8 @@ class Parser {
       Check.on(emptyVarName(src, offset + m.start(3)), name).isNot(blank());
       Check.on(duplicateVarName(src, offset + m.start(3), name), name).isNot(in(), names);
       parts.add(new VariablePart(escType, name, offset + m.start()));
-    }
+      end = m.end();
+    } while (m.find());
     if (end < unparsed.text().length()) {
       parts.add(todo(unparsed, end, unparsed.text().length()));
     }

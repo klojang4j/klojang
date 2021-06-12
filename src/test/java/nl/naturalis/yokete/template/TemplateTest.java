@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import nl.naturalis.common.collection.IntList;
+import nl.naturalis.yokete.render.Page;
+import nl.naturalis.yokete.render.RenderException;
+import nl.naturalis.yokete.render.RenderSession;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static nl.naturalis.common.StringMethods.append;
 
@@ -20,7 +23,8 @@ public class TemplateTest {
     Template t0_0 = t0.getNestedTemplate("company");
     assertEquals(5, t0_0.countVariables());
     assertEquals(1, t0_0.countNestedTemplates());
-    assertEquals(List.of("name", "poBox", "established", "director"), List.copyOf(t0_0.getVariables()));
+    assertEquals(
+        List.of("name", "poBox", "established", "director"), List.copyOf(t0_0.getVariables()));
     Template t0_0_0 = t0_0.getNestedTemplate("departments");
     assertEquals(2, t0_0_0.countVariables());
     assertEquals(1, t0_0_0.countNestedTemplates());
@@ -86,5 +90,49 @@ public class TemplateTest {
     List<String> expected = Arrays.stream(varNames).map(String::strip).collect(Collectors.toList());
     List<String> actual = new ArrayList<>(t0.getVariables());
     assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testAdjacentVars01() throws ParseException, RenderException {
+    String s = "~%var1%~%var2%";
+    Template t0 = Template.parseString(s);
+    assertEquals(2, t0.getParts().size());
+    RenderSession rs = Page.configure(t0).newRenderSession();
+    rs.set("var2", "Bar");
+    rs.set("var1", "Foo");
+    assertEquals("FooBar", rs.render());
+  }
+
+  @Test
+  public void testAdjacentVars02() throws ParseException, RenderException {
+    String s = " ~%var1%~%var2% ";
+    Template t0 = Template.parseString(s);
+    assertEquals(4, t0.getParts().size());
+    RenderSession rs = Page.configure(t0).newRenderSession();
+    rs.set("var2", "Bar");
+    rs.set("var1", "Foo");
+    assertEquals(" FooBar ", rs.render());
+  }
+
+  @Test
+  public void testAdjacentVars03() throws ParseException, RenderException {
+    String s = "~%var1%%~%var2%";
+    Template t0 = Template.parseString(s);
+    assertEquals(3, t0.getParts().size());
+    RenderSession rs = Page.configure(t0).newRenderSession();
+    rs.set("var2", "Bar");
+    rs.set("var1", "Foo");
+    assertEquals("Foo%Bar", rs.render());
+  }
+
+  @Test
+  public void testAdjacentVars04() throws ParseException, RenderException {
+    String s = "~%var1%~~%var2%";
+    Template t0 = Template.parseString(s);
+    assertEquals(3, t0.getParts().size());
+    RenderSession rs = Page.configure(t0).newRenderSession();
+    rs.set("var2", "Bar");
+    rs.set("var1", "Foo");
+    assertEquals("Foo~Bar", rs.render());
   }
 }
