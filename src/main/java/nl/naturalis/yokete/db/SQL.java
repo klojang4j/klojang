@@ -120,4 +120,9 @@ public class SQL {
     }
     return mappifierBox;
   }
+
+  @Override
+  public String toString() {
+    return sql;
+  }
 }

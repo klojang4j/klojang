@@ -105,7 +105,7 @@ public class ListBoxHtmlHelper<T> {
     return Check.that(key).is(keyIn(), CACHE, ERR_BAD_KEY, key).ok(CACHE::get);
   }
 
-  private final String key;
+  private final String id;
   private final String name;
   private final Supplier<List<T>> dataSupplier;
   private final Accessor<T> accessor;
@@ -115,13 +115,13 @@ public class ListBoxHtmlHelper<T> {
   private Renderable renderable;
 
   private ListBoxHtmlHelper(
-      String key,
+      String id,
       String name,
       Supplier<List<T>> dataSupplier,
       Accessor<T> accessor,
       String initOption,
       String initVal) {
-    this.key = key;
+    this.id = id;
     this.name = name;
     this.dataSupplier = dataSupplier;
     this.accessor = accessor;
@@ -145,7 +145,7 @@ public class ListBoxHtmlHelper<T> {
       Page page = Page.configure(getTemplate(), (x, y) -> accessor, SIMPLE_STRINGIFIER);
       RenderSession session = page.newRenderSession();
       session.set("name", name);
-      session.set("ylbKey", key);
+      session.set("id", id);
       if (initOption != NOT_SET) {
         session.populateTupleTemplate("initOption", List.of(Tuple.of(initVal, initOption)));
       }

@@ -64,6 +64,15 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     }
   }
 
+  public Optional<Row> mappify() {
+    try {
+      MappifierBox mb = sql.getMappifierBox(nameMapper);
+      return mb.get(resultSet()).mappify();
+    } catch (Throwable t) {
+      throw ExceptionMethods.uncheck(t);
+    }
+  }
+
   public List<Row> mappifyAtMost(int limit) {
     try {
       MappifierBox mb = sql.getMappifierBox(nameMapper);
