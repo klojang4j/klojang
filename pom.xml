@@ -49,11 +49,11 @@
 	<distributionManagement>
 		<repository>
 			<id>naturalis</id>
-			<url>http://mvnrepository.naturalis.io:8081/repository/naturalis/</url>
+			<url>http://mvnrepository.naturalis.io/repository/naturalis</url>
 		</repository>
 		<snapshotRepository>
 			<id>naturalis</id>
-			<url>http://mvnrepository.naturalis.io:8081/repository/naturalis/</url>
+			<url>http://mvnrepository.naturalis.io/repository/naturalis</url>
 		</snapshotRepository>
 	</distributionManagement>
 
