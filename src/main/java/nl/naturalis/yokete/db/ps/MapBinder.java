@@ -1,7 +1,6 @@
 package nl.naturalis.yokete.db.ps;
 
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -33,22 +32,21 @@ public class MapBinder {
         continue;
       }
       bound.add(param);
-      Object v = map.getOrDefault(key, ABSENT);
-      if (v == ABSENT) {
+      Object input = map.getOrDefault(key, ABSENT);
+      if (input == ABSENT) {
         continue;
-      } else if (v == null) {
-        bind(ps, param, (String) null);
-      } else if (Enum.class.isInstance(v) && bindInfo.saveEnumUsingToString(key)) {
-        bind(ps, param, ((Enum<?>) v).toString());
+      } else if (input == null) {
+        param.getIndices().forEachThrowing(i -> ps.setString(i, null));
       } else {
-        Receiver receiver = negotiator.getDefaultReceiver(v.getClass());
-        param.getIndices().forEachThrowing(i -> receiver.bind(ps, i, v));
+        Receiver receiver;
+        if (Enum.class.isInstance(input) && bindInfo.saveEnumUsingToString(key)) {
+          receiver = EnumReceivers.ENUM_TO_STRING;
+        } else {
+          receiver = negotiator.getDefaultReceiver(input.getClass());
+        }
+        Object output = receiver.getParamValue(input);
+        param.getIndices().forEachThrowing(i -> receiver.bind(ps, i, output));
       }
     }
-  }
-
-  private static void bind(PreparedStatement ps, NamedParameter param, String val)
-      throws SQLException {
-    param.getIndices().forEachThrowing(i -> ps.setString(i, val));
   }
 }

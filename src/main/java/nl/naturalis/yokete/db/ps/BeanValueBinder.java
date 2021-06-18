@@ -67,7 +67,6 @@ class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
   private <T> void bindValue(PreparedStatement ps, T bean) throws Throwable {
     FIELD_TYPE beanValue = (FIELD_TYPE) getter.getMethod().invoke(bean);
     PARAM_TYPE paramValue = receiver.getParamValue(beanValue);
-    // System.out.printf("Processing named parameter %s%n", param.getName());
     param.getIndices().forEachThrowing(i -> receiver.bind(ps, i, paramValue));
   }
 }
