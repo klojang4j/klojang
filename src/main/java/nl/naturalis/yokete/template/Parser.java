@@ -195,8 +195,7 @@ class Parser {
       Check.on(invalidIncludePath(src, offset + m.start(3), path), clazz.getResource(path))
           .is(notNull());
       names.add(name);
-      Parser parser = new Parser(name, clazz, Path.of(path));
-      Template nested = parser.parse();
+      Template nested = TemplateCache.INSTANCE.get(name, clazz, path);
       parts.add(new IncludedTemplatePart(nested, offset + m.start()));
       end = m.end();
     } while (m.find());

@@ -6,40 +6,30 @@ import nl.naturalis.common.StringMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
-import nl.naturalis.yokete.render.Accessor;
-import nl.naturalis.yokete.render.RenderSession;
-import nl.naturalis.yokete.render.Stringifier;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 /**
- * A {@code Template} captures the result of parsing a template file. Together with the {@link
- * RenderSession} class this class forms the heart of the Yokete library. It functions as a
- * knowledge repository for a particular template and it used as such by the {@link RenderSession},
- * and by you as you configure your {@link Stringifier stringifiers} and {@link Accessor accessors}.
+ * A {@code Template} captures the result of parsing a template file.
  *
  * <p>{@code Template} instances are unmodifiable, expensive-to-create and heavy-weight objects.
- * They should be created just once per source file, cached somewhere, and then reused for as long
- * as the application lasts. Creating a new {@code Template} instance for each new request would be
- * very inefficient.
  *
  * @author Ayco Holleman
  */
 public class Template {
 
   /**
-   * The name of the root template: "@root". Any {@code Template} that is explicitly instantiated by
-   * calling one of the {@code parse(...)} methods gets this name. Templates nested inside this
-   * template get their name from the source code (for example: {@code ~%%begin:foo%} or {@code
-   * ~%%include:/views/foo.html%} or {@code ~%%include:foo:/views/bar.html%}).
+   * The name given to the root template: "@root". Any {@code Template} that is explicitly
+   * instantiated by calling one of the {@code parse} methods gets this name. Templates nested
+   * inside this template get their name from the source code (for example: {@code ~%%begin:foo%} or
+   * {@code ~%%include:/views/foo.html%} or {@code ~%%include:foo:/views/bar.html%}).
    */
   public static final String ROOT_TEMPLATE_NAME = "@root";
 
   /**
-   * Parses the specified source code (presumably an HTML page or an HTML snippet) into a {@code
-   * Template} instance. Only use this constructor if the template does not {@code include} other
-   * templates (using {@code ~%%include:path/to/other/source/file%}). Otherwise a {@code
-   * ParseException} is thrown.
+   * Parses the specified source code into a {@code Template} instance. Only use this constructor if
+   * the template does not {@code include} other templates (using {@code
+   * ~%%include:path/to/other/source/file%}). Otherwise a {@code ParseException} is thrown.
    *
    * @param source The source code for the {@code Template}
    * @return a new {@code Template} instance
@@ -287,7 +277,7 @@ public class Template {
   }
 
   /**
-   * Returns the names of all variables and nested templates within this {@code Template}
+   * Returns the names of all variables and all nested templates within this {@code Template}
    * (non-recursive). The returned {@code List} is unmodifiable.
    *
    * @return The names of all variables and nested templates in this {@code Template}
@@ -297,8 +287,8 @@ public class Template {
   }
 
   /**
-   * Returns whether or not this is a text-only template. In other words: whether or not this is a
-   * template without any variables or nested templates.
+   * Returns whether or not this is a text-only template. In other words, whether this is a template
+   * without variables or nested templates.
    *
    * @return
    */

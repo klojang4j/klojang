@@ -120,7 +120,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
 
   public Optional<Row> mappify() {
     try {
-      MappifierBox mb = sql.getMappifierBox(nameMapper);
+      MappifierBox mb = new MappifierBox(nameMapper);
       return mb.get(resultSet()).mappify();
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
@@ -129,7 +129,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
 
   public List<Row> mappifyAtMost(int limit) {
     try {
-      MappifierBox mb = sql.getMappifierBox(nameMapper);
+      MappifierBox mb = new MappifierBox(nameMapper);
       return mb.get(resultSet()).mappifyAtMost(limit);
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
@@ -138,7 +138,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
 
   public List<Row> mappifyAll() {
     try {
-      MappifierBox mb = sql.getMappifierBox(nameMapper);
+      MappifierBox mb = new MappifierBox(nameMapper);
       return mb.get(resultSet()).mappifyAll();
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
@@ -147,7 +147,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
 
   public List<Row> mappifyAll(int sizeEstimate) {
     try {
-      MappifierBox mb = sql.getMappifierBox(nameMapper);
+      MappifierBox mb = new MappifierBox(nameMapper);
       return mb.get(resultSet()).mappifyAll(sizeEstimate);
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);

@@ -6,9 +6,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.yokete.db.ps.BeanBinder;
 import nl.naturalis.yokete.db.ps.MapBinder;
+import nl.naturalis.yokete.render.Page;
+import nl.naturalis.yokete.render.RenderException;
+import nl.naturalis.yokete.render.RenderSession;
+import nl.naturalis.yokete.template.ParseException;
+import nl.naturalis.yokete.template.Template;
 import static nl.naturalis.common.CollectionMethods.convertValuesAndFreeze;
 
 /**
@@ -36,12 +42,14 @@ public class SQL {
   private final Map<Class<?>, BeanifierBox<?>> beanifierBoxes = new HashMap<>(4);
 
   private final String sql;
-  private final String normalized;
   private final List<NamedParameter> params;
   private final Map<String, IntList> paramMap;
   private final BindInfo bindInfo;
 
-  private MappifierBox mappifierBox;
+  private String normalized;
+
+  private Page page;
+  private RenderSession session;
 
   private SQL(
       String sql,
@@ -56,15 +64,40 @@ public class SQL {
     this.bindInfo = bindInfo;
   }
 
+  public SQL set(String placeholder, String value) throws ParseException, RenderException {
+    Check.notNull(placeholder, "placeholder");
+    Check.notNull(value, "value");
+    if (session == null) {
+      if (page == null) {
+        page = Page.configure(Template.parseString(normalized));
+      }
+      session = page.newRenderSession();
+    }
+    session.set(placeholder, value);
+    return this;
+  }
+
   public SQLQuery prepareQuery(Connection con) {
+    if (session != null) {
+      normalized = session.render();
+      session = null;
+    }
     return new SQLQuery(con, this);
   }
 
   public SQLInsert prepareInsert(Connection con) {
+    if (session != null) {
+      normalized = session.render();
+      session = null;
+    }
     return new SQLInsert(con, this);
   }
 
   public SQLUpdate prepareUpdate(Connection con) {
+    if (session != null) {
+      normalized = session.render();
+      session = null;
+    }
     return new SQLUpdate(con, this);
   }
 
@@ -112,13 +145,6 @@ public class SQL {
     return (BeanifierBox<T>)
         beanifierBoxes.computeIfAbsent(
             beanClass, k -> new BeanifierBox<>(beanClass, beanSupplier, columnToPropertyMapper));
-  }
-
-  MappifierBox getMappifierBox(UnaryOperator<String> columnToKeyMapper) {
-    if (mappifierBox == null) {
-      mappifierBox = new MappifierBox(columnToKeyMapper);
-    }
-    return mappifierBox;
   }
 
   @Override
