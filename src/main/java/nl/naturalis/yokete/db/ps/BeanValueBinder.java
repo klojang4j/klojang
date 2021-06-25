@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import nl.naturalis.common.ClassMethods;
 import nl.naturalis.common.invoke.Getter;
 import nl.naturalis.common.invoke.GetterFactory;
@@ -14,8 +16,11 @@ import nl.naturalis.yokete.db.NamedParameter;
 /* Binds a single value from a JavaBean into a PreparedStatement */
 class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
 
+  private static final Logger LOG = LoggerFactory.getLogger(BeanValueBinder.class);
+
   static <T> void bindBean(PreparedStatement ps, T bean, BeanValueBinder<?, ?>[] binders)
       throws Throwable {
+    LOG.debug("Binding {} to PreparedStatement", bean.getClass().getSimpleName());
     for (BeanValueBinder<?, ?> binder : binders) {
       binder.bindValue(ps, bean);
     }
@@ -67,6 +72,13 @@ class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
   private <T> void bindValue(PreparedStatement ps, T bean) throws Throwable {
     FIELD_TYPE beanValue = (FIELD_TYPE) getter.getMethod().invoke(bean);
     PARAM_TYPE paramValue = receiver.getParamValue(beanValue);
+    if (LOG.isDebugEnabled()) {
+      if (beanValue == paramValue) { // No adapter defined
+        LOG.debug("Parameter {}: {}", getter.getProperty(), paramValue);
+      } else {
+        LOG.debug("Parameter {}: {} (bean value: {})", param.getName(), paramValue, beanValue);
+      }
+    }
     param.getIndices().forEachThrowing(i -> receiver.bind(ps, i, paramValue));
   }
 }

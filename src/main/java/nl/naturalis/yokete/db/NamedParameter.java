@@ -12,9 +12,9 @@ public class NamedParameter {
   private final String name;
   private final IntList indices;
 
-  NamedParameter(String paramName, int[] indices) {
+  NamedParameter(String paramName, IntList indices) {
     this.name = paramName;
-    this.indices = IntList.of(indices);
+    this.indices = indices;
   }
 
   public String getName() {

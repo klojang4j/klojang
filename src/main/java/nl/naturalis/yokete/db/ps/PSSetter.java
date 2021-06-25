@@ -7,6 +7,8 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Time;
 import java.sql.Timestamp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import nl.naturalis.common.ExceptionMethods;
 import static java.lang.invoke.MethodHandles.lookup;
 
@@ -18,6 +20,8 @@ import static java.lang.invoke.MethodHandles.lookup;
  * @param <PARAM_TYPE>
  */
 public class PSSetter<PARAM_TYPE> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(PSSetter.class);
 
   static PSSetter<String> SET_STRING = setter("setString", String.class);
   static PSSetter<Integer> SET_INT = setter("setInt", int.class);
@@ -69,6 +73,7 @@ public class PSSetter<PARAM_TYPE> {
   }
 
   void bindValue(PreparedStatement ps, int paramIndex, PARAM_TYPE paramValue) throws Throwable {
+    LOG.trace("Binding <<<{}>>> to parameter {}", paramValue, paramIndex);
     if (paramValue == null) {
       SET_STRING.method.invoke(ps, paramIndex, (String) null);
     } else if (targetSqlType == null) {

@@ -122,7 +122,7 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
 
   private void exec(boolean returnKeys) throws Throwable {
     int keys = returnKeys ? RETURN_GENERATED_KEYS : NO_GENERATED_KEYS;
-    ps = con.prepareStatement(sql.getNormalizedSQL(), keys);
+    ps = con.prepareStatement(sql.getJdbcSQL(), keys);
     applyBindings(ps);
     ps.executeUpdate();
   }

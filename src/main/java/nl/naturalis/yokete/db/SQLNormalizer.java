@@ -1,31 +1,37 @@
 package nl.naturalis.yokete.db;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import nl.naturalis.common.collection.IntArrayList;
+import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.util.MutableInt;
-import static java.util.stream.Collectors.toUnmodifiableList;
-import static nl.naturalis.common.CollectionMethods.asIntArray;
+import static nl.naturalis.common.CollectionMethods.convertAndFreeze;
+import static nl.naturalis.common.CollectionMethods.freezeIntoList;
 
-class SQLFactory {
+/**
+ * Extracts named parameters from a SQL query string and replaces them with positional parameters
+ * (question marks).
+ *
+ * @author Ayco Holleman
+ */
+class SQLNormalizer {
 
   private static final String ERR_ADJACENT_PARAMS =
       "Adjacent parameters cannot yield valid SQL (positions %d,%d)";
   private static final String ERR_EMPTY_NAME = "Zero-length parameter name at position %d";
 
-  // The processed SQL string in which all named parameters have
-  // been replaced with positional parameters
+  private final String unparsed;
   private final String normalized;
-  private final Map<String, int[]> paramMap;
+  private final Map<String, IntList> paramMap;
   private final List<NamedParameter> params;
 
-  @SuppressWarnings("unchecked")
-  SQLFactory(String sql) {
+  SQLNormalizer(String sql) {
+    this.unparsed = sql;
+    Map<String, IntList> tmp = new LinkedHashMap<>();
     StringBuilder out = new StringBuilder(sql.length());
-    Map<String, List<Integer>> paramMap = new LinkedHashMap<>();
-    MutableInt pCount = new MutableInt();
+    MutableInt pCount = new MutableInt(); // parameter counter
     int pStartPos = -1;
     boolean inString = false;
     boolean escaped = false;
@@ -43,10 +49,10 @@ class SQLFactory {
         if (isParamChar(c)) {
           param.append(c);
           if (i == sql.length() - 1) {
-            addParam(paramMap, param, pCount, pStartPos);
+            addParam(tmp, param, pCount, pStartPos);
           }
         } else {
-          addParam(paramMap, param, pCount, pStartPos);
+          addParam(tmp, param, pCount, pStartPos);
           out.append(c);
           pStartPos = -1;
           if (c == '\'') {
@@ -67,25 +73,23 @@ class SQLFactory {
       }
     }
     this.normalized = out.toString();
-    this.paramMap =
-        Map.ofEntries(paramMap.entrySet().stream().map(this::toNewEntry).toArray(Map.Entry[]::new));
-    this.params =
-        paramMap.entrySet().stream().map(this::toNamedParam).collect(toUnmodifiableList());
+    this.paramMap = convertAndFreeze(tmp, IntList::copyOf);
+    this.params = freezeIntoList(tmp.entrySet(), this::toNamedParam);
   }
 
-  private NamedParameter toNamedParam(Entry<String, List<Integer>> e) {
-    return new NamedParameter(e.getKey(), asIntArray(e.getValue()));
+  String getUnparsedSQL() {
+    return unparsed;
   }
 
-  String sql() {
+  String getNormalizedSQL() {
     return normalized;
   }
 
-  List<NamedParameter> params() {
+  List<NamedParameter> getNamedParameters() {
     return params;
   }
 
-  Map<String, int[]> paramMap() {
+  Map<String, IntList> getParameterMap() {
     return paramMap;
   }
 
@@ -94,17 +98,14 @@ class SQLFactory {
   }
 
   private static void addParam(
-      Map<String, List<Integer>> paramMap,
-      StringBuilder param,
-      MutableInt paramCount,
-      int startPos) {
+      Map<String, IntList> paramMap, StringBuilder param, MutableInt pCount, int startPos) {
     if (param.length() == 0) {
       throw new KSQLException(ERR_EMPTY_NAME, startPos);
     }
-    paramMap.computeIfAbsent(param.toString(), k -> new ArrayList<>(4)).add(paramCount.ppi());
+    paramMap.computeIfAbsent(param.toString(), k -> new IntArrayList()).add(pCount.ppi());
   }
 
-  private Entry<String, int[]> toNewEntry(Entry<String, List<Integer>> e) {
-    return Map.entry(e.getKey(), asIntArray(e.getValue()));
+  private NamedParameter toNamedParam(Entry<String, IntList> e) {
+    return new NamedParameter(e.getKey(), IntList.copyOf(e.getValue()));
   }
 }

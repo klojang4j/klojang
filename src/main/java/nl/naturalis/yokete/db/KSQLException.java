@@ -9,7 +9,11 @@ public class KSQLException extends YoketeRuntimeException {
     super(message, msgArgs);
   }
 
+  public KSQLException(Throwable cause) {
+    super(cause);
+  }
+
   public KSQLException(SQL sql, SQLException e) {
-    super(e.toString() + "  *****  " + sql.getNormalizedSQL());
+    super(e.toString() + "  *****  " + sql.getJdbcSQL());
   }
 }

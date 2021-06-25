@@ -61,15 +61,17 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
     }
   }
 
-  static void close(PreparedStatement ps) {
-    if (ps != null) {
-      try {
-        if (!ps.isClosed()) {
+  void close(PreparedStatement ps) {
+    try {
+      if (ps != null) {
+        try {
           ps.close();
+        } catch (SQLException e) {
+          throw ExceptionMethods.uncheck(e);
         }
-      } catch (SQLException e) {
-        throw ExceptionMethods.uncheck(e);
       }
+    } finally {
+      sql.unlock();
     }
   }
 

@@ -4,12 +4,16 @@ import java.sql.PreparedStatement;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.yokete.db.BindInfo;
 import nl.naturalis.yokete.db.NamedParameter;
 
 @ModulePrivate
 public class MapBinder {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MapBinder.class);
 
   private static final Object ABSENT = new Object();
 
@@ -45,6 +49,13 @@ public class MapBinder {
           receiver = negotiator.getDefaultReceiver(input.getClass());
         }
         Object output = receiver.getParamValue(input);
+        if (LOG.isDebugEnabled()) {
+          if (input == output) {
+            LOG.debug("Parameter {}: {}", key, output);
+          } else {
+            LOG.debug("Parameter {}: {} (input value: {})", key, output, input);
+          }
+        }
         param.getIndices().forEachThrowing(i -> receiver.bind(ps, i, output));
       }
     }

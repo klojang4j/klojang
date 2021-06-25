@@ -1,21 +1,25 @@
 package nl.naturalis.yokete.db;
 
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.yokete.db.ps.BeanBinder;
 import nl.naturalis.yokete.db.ps.MapBinder;
 import nl.naturalis.yokete.render.Page;
-import nl.naturalis.yokete.render.RenderException;
 import nl.naturalis.yokete.render.RenderSession;
-import nl.naturalis.yokete.template.ParseException;
 import nl.naturalis.yokete.template.Template;
-import static nl.naturalis.common.CollectionMethods.convertValuesAndFreeze;
+import static nl.naturalis.common.check.CommonChecks.illegalState;
+import static nl.naturalis.common.check.CommonChecks.no;
+import static nl.naturalis.common.check.CommonChecks.notNull;
 
 /**
  * A container for a single SQL query. The SQL query is assumed to be parametrized using named
@@ -28,115 +32,112 @@ import static nl.naturalis.common.CollectionMethods.convertValuesAndFreeze;
  */
 public class SQL {
 
+  private static final String ERR_LOCKED =
+      "An SQLQuery, SQLInsert or SQLUpdate is still active. "
+          + "Did you forget to call close() on it?";
+  private static final String ERR_NO_JDBC_SQL =
+      "No valid JDBC SQL has been generated yet. "
+          + "Call prepareQuery/prepareInsert/prepareUpdate first";
+
   public static SQL create(String sql) {
     return create(sql, new BindInfo() {});
   }
 
   public static SQL create(String sql, BindInfo bindInfo) {
-    SQLFactory sf = new SQLFactory(sql);
-    return new SQL(sql, sf.sql(), sf.params(), sf.paramMap(), bindInfo);
+    return new SQL(new SQLNormalizer(sql), bindInfo);
   }
 
   /* These maps are unlikely to grow beyond one, maybe two entries */
   private final Map<Class<?>, BeanBinder<?>> beanBinders = new HashMap<>(4);
   private final Map<Class<?>, BeanifierBox<?>> beanifierBoxes = new HashMap<>(4);
 
-  private final String sql;
-  private final List<NamedParameter> params;
-  private final Map<String, IntList> paramMap;
+  private final ReentrantLock lock = new ReentrantLock();
+
+  private final SQLNormalizer normalizer;
   private final BindInfo bindInfo;
 
-  private String normalized;
-
   private Page page;
-  private RenderSession session;
+  private List<Tuple<String, Object>> vars;
+  private String jdbcSQL;
 
-  private SQL(
-      String sql,
-      String normalized,
-      List<NamedParameter> params,
-      Map<String, int[]> paramMap,
-      BindInfo bindInfo) {
-    this.sql = sql;
-    this.normalized = normalized;
-    this.params = params;
-    this.paramMap = convertValuesAndFreeze(paramMap, IntList::of);
+  private SQL(SQLNormalizer normalizer, BindInfo bindInfo) {
+    this.normalizer = normalizer;
     this.bindInfo = bindInfo;
   }
 
-  public SQL set(String placeholder, String value) throws ParseException, RenderException {
-    Check.notNull(placeholder, "placeholder");
+  public SQL set(String varName, Object value) {
+    Check.notNull(varName, "varName");
     Check.notNull(value, "value");
-    if (session == null) {
-      if (page == null) {
-        page = Page.configure(Template.parseString(normalized));
-      }
-      session = page.newRenderSession();
+    if (vars == null) {
+      vars = new ArrayList<>();
     }
-    session.set(placeholder, value);
+    vars.add(Tuple.of(varName, value));
     return this;
   }
 
+  public SQL setSortColumn(Object sortColumn) {
+    return set("sortColumn", sortColumn);
+  }
+
+  public SQL setSortOrder(Object sortOrder) {
+    return set("sortOrder", sortOrder);
+  }
+
+  public SQL setOrderBy(Object sortColumn, Object sortOrder) {
+    return setSortColumn(sortColumn).setSortOrder(sortOrder);
+  }
+
   public SQLQuery prepareQuery(Connection con) {
-    if (session != null) {
-      normalized = session.render();
-      session = null;
-    }
-    return new SQLQuery(con, this);
+    return prepare(con, SQLQuery::new);
   }
 
   public SQLInsert prepareInsert(Connection con) {
-    if (session != null) {
-      normalized = session.render();
-      session = null;
-    }
-    return new SQLInsert(con, this);
+    return prepare(con, SQLInsert::new);
   }
 
   public SQLUpdate prepareUpdate(Connection con) {
-    if (session != null) {
-      normalized = session.render();
-      session = null;
-    }
-    return new SQLUpdate(con, this);
+    return prepare(con, SQLUpdate::new);
   }
 
-  /**
-   * Returns the SQL query from which this instance was created with any named parameters still left
-   * in place.
-   *
-   * @return
-   */
   public String getOriginalSQL() {
-    return sql;
+    return normalizer.getUnparsedSQL();
   }
 
-  /**
-   * Returns a SQL query where all named parameters have been replaced with positional parameters
-   * (question marks).
-   *
-   * @return
-   */
   public String getNormalizedSQL() {
-    return normalized;
+    return normalizer.getNormalizedSQL();
+  }
+
+  public String getJdbcSQL() {
+    return Check.that(jdbcSQL).is(notNull(), ERR_NO_JDBC_SQL).ok();
   }
 
   public List<NamedParameter> getParameters() {
-    return params;
+    return normalizer.getNamedParameters();
   }
 
   public Map<String, IntList> getParameterMap() {
-    return paramMap;
+    return normalizer.getParameterMap();
+  }
+
+  @Override
+  public String toString() {
+    return getNormalizedSQL();
+  }
+
+  void unlock() {
+    vars = null;
+    jdbcSQL = null;
+    lock.unlock();
   }
 
   MapBinder getMapBinder() {
-    return new MapBinder(params, bindInfo);
+    return new MapBinder(getParameters(), bindInfo);
   }
 
   @SuppressWarnings("unchecked")
   <T> BeanBinder<T> getBeanBinder(Class<T> beanClass) {
     return (BeanBinder<T>)
-        beanBinders.computeIfAbsent(beanClass, k -> new BeanBinder<>(k, params, bindInfo));
+        beanBinders.computeIfAbsent(beanClass, k -> new BeanBinder<>(k, getParameters(), bindInfo));
   }
 
   @SuppressWarnings("unchecked")
@@ -147,8 +148,27 @@ public class SQL {
             beanClass, k -> new BeanifierBox<>(beanClass, beanSupplier, columnToPropertyMapper));
   }
 
-  @Override
-  public String toString() {
-    return sql;
+  private <T extends SQLStatement<?>> T prepare(
+      Connection con, BiFunction<Connection, SQL, T> constructor) {
+    Check.on(illegalState(), lock.isHeldByCurrentThread()).is(no(), ERR_LOCKED);
+    lock.lock();
+    try {
+      if (vars != null) {
+        if (page == null) {
+          page = Page.configure(Template.parseString(getNormalizedSQL()));
+        }
+        RenderSession session = page.newRenderSession();
+        for (Tuple<String, Object> var : vars) {
+          session.set(var.getLeft(), var.getRight());
+        }
+        jdbcSQL = session.render();
+      } else {
+        jdbcSQL = getNormalizedSQL();
+      }
+      return constructor.apply(con, this);
+    } catch (Throwable t) {
+      unlock();
+      throw new KSQLException(t);
+    }
   }
 }

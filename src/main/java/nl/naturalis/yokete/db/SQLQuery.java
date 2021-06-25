@@ -165,21 +165,12 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
 
   @Override
   public void close() {
-    if (rs != null) {
-      try {
-        if (!rs.isClosed()) {
-          rs.close();
-        }
-      } catch (SQLException e) {
-        throw ExceptionMethods.uncheck(e);
-      }
-    }
     close(ps);
   }
 
   private PreparedStatement preparedStatement() throws Throwable {
     if (ps == null) {
-      ps = con.prepareStatement(sql.getNormalizedSQL());
+      ps = con.prepareStatement(sql.getJdbcSQL());
       applyBindings(ps);
     }
     return ps;
