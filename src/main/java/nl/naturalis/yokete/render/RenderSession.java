@@ -92,6 +92,13 @@ public class RenderSession {
    */
   public RenderSession set(String varName, Object value, EscapeType escapeType)
       throws RenderException {
+    Check.on(frozenSession(), state.isFrozen()).is(no());
+    Check.notNull(varName, "varName");
+    Check.notNull(escapeType, "escapeType")
+        .isNot(sameAs(), NOT_SPECIFIED, "Invalid escape type: NOT_SPECIFIED");
+    Template t = page.getTemplate();
+    Check.on(noSuchVariable(t, varName), varName).is(in(), t.getVariables());
+    Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
     if (value == UNDEFINED) {
       // Unless the user is manually going through, and accessing the properties of some source data
       // object, specifying UNDEFINED misses the point of that constant, but since we can't know
