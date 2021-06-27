@@ -4,7 +4,7 @@ import java.util.function.UnaryOperator;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.http.client.utils.URIBuilder;
 import nl.naturalis.common.check.Check;
-import static nl.naturalis.common.StringMethods.*;
+import static nl.naturalis.common.StringMethods.isEmpty;
 
 /**
  * Symbolic constants for various text-escaping methods.
@@ -21,7 +21,11 @@ public enum EscapeType {
    * However, if a template variable's escape type is {@code NOT_SPECIFIED}, its value will be
    * escaped using whatever {@code EscapeTye} <i>is</i> passed to these methods.
    */
-  NOT_SPECIFIED(null, Check.fail("Invalid escape type: NOT_SPECIFIED")),
+  NOT_SPECIFIED(
+      null,
+      s -> {
+        throw new UnsupportedOperationException();
+      }),
 
   /**
    * Do not apply any escaping. This is (most likely) the {@code EscapeType} to use if a template
