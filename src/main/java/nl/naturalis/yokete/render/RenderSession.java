@@ -73,16 +73,7 @@ public class RenderSession {
    * @throws RenderException
    */
   public RenderSession set(String varName, Object value) throws RenderException {
-    if (value == UNDEFINED) {
-      /*
-       * Unless the user is manually going through, and accessing the properties of some source data
-       * object, specifying UNDEFINED misses the point of that constant, but since we can't know
-       * this, we'll have to accept that value and process it as it is meant to be processed (namely:
-       * not).
-       */
-      return this;
-    }
-    return set(varName, asUnsafeList(value), ESCAPE_NONE);
+    return set(varName, value, ESCAPE_NONE);
   }
 
   /**
@@ -102,9 +93,27 @@ public class RenderSession {
   public RenderSession set(String varName, Object value, EscapeType escapeType)
       throws RenderException {
     if (value == UNDEFINED) {
+      // Unless the user is manually going through, and accessing the properties of some source data
+      // object, specifying UNDEFINED misses the point of that constant, but since we can't know
+      // this, we'll have to accept that value and process it as it is meant to be processed
+      // (namely: not).
       return this;
     }
-    return set(varName, asUnsafeList(value), escapeType);
+    String stringified = page.stringify(varName, value);
+    IntList indices = page.getTemplate().getVarPartIndices().get(varName);
+    List<Part> parts = page.getTemplate().getParts();
+    for (int i = 0; i < indices.size(); ++i) {
+      int idx = indices.get(i);
+      VariablePart part = (VariablePart) parts.get(idx);
+      EscapeType myEscType = part.getEscapeType();
+      if (myEscType == NOT_SPECIFIED) {
+        myEscType = escapeType;
+      }
+      String escaped = myEscType.apply(stringified);
+      state.setVar(idx, new String[] {escaped});
+    }
+    state.done(varName);
+    return this;
   }
 
   /**

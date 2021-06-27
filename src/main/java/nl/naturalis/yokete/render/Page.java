@@ -118,6 +118,19 @@ public final class Page {
     return strs;
   }
 
+  String stringify(String varName, Object value) throws RenderException {
+    Stringifier stringifier = stringifiers.getStringifier(template, varName);
+    try {
+      String s = stringifier.toString(value);
+      if (s == null) {
+        throw BadStringifierException.stringifierReturnedNull(template, varName);
+      }
+      return s;
+    } catch (NullPointerException e) {
+      throw BadStringifierException.stringifierNotNullResistant(template, varName);
+    }
+  }
+
   Template getTemplate() {
     return template;
   }
