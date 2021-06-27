@@ -103,7 +103,7 @@ public final class Page {
     return factory.newRenderSession();
   }
 
-  String[] toString(String varName, List<?> values) throws RenderException {
+  String[] stringify(String varName, List<?> values) throws RenderException {
     String[] strs = new String[values.size()];
     for (int i = 0; i < values.size(); ++i) {
       Stringifier stringifier = stringifiers.getStringifier(template, varName);

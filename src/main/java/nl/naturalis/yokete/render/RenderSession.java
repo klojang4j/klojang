@@ -177,8 +177,7 @@ public class RenderSession {
     if (values.isEmpty()) {
       indices.forEach(i -> state.setVar(i, EMPTY_STRING_ARRAY));
     } else {
-      String[] strings = page.toString(varName, values);
-      indices.forEach(i -> setVar(i, strings, escapeType, prefix, separator, suffix));
+      indices.forEachThrowing(i -> setVar(i, values, escapeType, prefix, separator, suffix));
     }
     state.done(varName);
     return this;
@@ -186,11 +185,12 @@ public class RenderSession {
 
   private void setVar(
       int partIndex,
-      String[] values,
+      List<?> values,
       EscapeType escapeType,
       String prefix,
       String separator,
-      String suffix) {
+      String suffix)
+      throws RenderException {
     List<Part> parts = page.getTemplate().getParts();
     VariablePart part = (VariablePart) parts.get(partIndex);
     EscapeType myEscType = part.getEscapeType();
@@ -202,8 +202,9 @@ public class RenderSession {
     suffix = n2e(suffix);
     boolean escape = myEscType != ESCAPE_NONE;
     boolean enrich = !prefix.isEmpty() || !separator.isEmpty() || !suffix.isEmpty();
-    for (int i = 0; i < values.length; ++i) {
-      String s = values[i];
+    String[] stringified = page.stringify(part.getName(), values);
+    for (int i = 0; i < stringified.length; ++i) {
+      String s = stringified[i];
       if (escape) {
         if (enrich) {
           if (i == 0) {
@@ -214,17 +215,17 @@ public class RenderSession {
         } else {
           s = myEscType.apply(s);
         }
-        values[i] = s;
+        stringified[i] = s;
       } else if (enrich) {
         if (i == 0) {
           s = prefix + s + suffix;
         } else {
           s = separator + prefix + s + suffix;
         }
-        values[i] = s;
+        stringified[i] = s;
       }
     }
-    state.setVar(partIndex, values);
+    state.setVar(partIndex, stringified);
   }
 
   /**
