@@ -84,8 +84,8 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#populateMonoTemplate(String, Object)} for a nested template that
-   * does not contain exactly one variable and zero doubly-nested templates.
+   * Thrown if you call {@link RenderSession#populateMonoTemplate(String, Object)} for a nested
+   * template that does not contain exactly one variable and zero doubly-nested templates.
    */
   public static Function<String, RenderException> notMonoTemplate(Template t) {
     String fqn = TemplateUtils.getFQName(t);
@@ -94,8 +94,8 @@ public class RenderException extends YoketeException {
   }
 
   /**
-   * Thrown if you call {@link RenderSession#populateTupleTemplate(String, Object)} for a nested template that
-   * does not contain exactly two variables and zero doubly-nested templates.
+   * Thrown if you call {@link RenderSession#populateTupleTemplate(String, Object)} for a nested
+   * template that does not contain exactly two variables and zero doubly-nested templates.
    */
   public static Function<String, RenderException> notTupleTemplate(Template t) {
     String fqn = TemplateUtils.getFQName(t);
@@ -110,17 +110,6 @@ public class RenderException extends YoketeException {
   public static Function<String, RenderException> missingSourceData(Template t) {
     String fqn = TemplateUtils.getFQName(t);
     String fmt = "Source data must not be null for non-text-only template %s";
-    return s -> new RenderException(format(fmt, fqn));
-  }
-
-  /**
-   * Thrown if you attempt to {@link RenderSession#createChildSessions(String, Accessor, int)
-   * create} a child session for the specified template, but one or more child sessions have already
-   * been created for it.
-   */
-  public static Function<String, RenderException> childSessionsAlreadyCreated(Template t) {
-    String fqn = TemplateUtils.getFQName(t);
-    String fmt = "Child sessions already created for template %s";
     return s -> new RenderException(format(fmt, fqn));
   }
 

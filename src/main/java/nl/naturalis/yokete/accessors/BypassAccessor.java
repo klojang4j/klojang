@@ -2,14 +2,9 @@ package nl.naturalis.yokete.accessors;
 
 import nl.naturalis.yokete.render.Accessor;
 import nl.naturalis.yokete.render.RenderException;
-import nl.naturalis.yokete.render.RenderSession;
 
 /**
- * A dummy {@code Accessor} implementation. Could be used when manually creating {@link
- * RenderSession#createChildSessions(String, Accessor, int) child sessions} for text-only templates,
- * or for templates that need to be populated in some bespoke way. The {@code BypassAccessor} throws
- * an {@link UnsupportedOperationException} from both methods declared by the {@code Accessor}
- * interface to ensure you don't implicitly rely on them being called.
+ * A dummy {@code Accessor} implementation.
  *
  * @author Ayco Holleman
  */

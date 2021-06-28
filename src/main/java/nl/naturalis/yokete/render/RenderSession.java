@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import nl.naturalis.common.ArrayMethods;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.io.UnsafeByteArrayOutputStream;
-import nl.naturalis.yokete.accessors.BypassAccessor;
 import nl.naturalis.yokete.accessors.SelfAccessor;
 import nl.naturalis.yokete.template.Part;
 import nl.naturalis.yokete.template.Template;
@@ -23,7 +23,6 @@ import static nl.naturalis.common.CollectionMethods.asUnsafeList;
 import static nl.naturalis.common.ObjectMethods.isEmpty;
 import static nl.naturalis.common.ObjectMethods.n2e;
 import static nl.naturalis.common.check.CommonChecks.*;
-import static nl.naturalis.yokete.accessors.BypassAccessor.BYPASS_ACCESSOR;
 import static nl.naturalis.yokete.render.Accessor.UNDEFINED;
 import static nl.naturalis.yokete.render.EscapeType.ESCAPE_NONE;
 import static nl.naturalis.yokete.render.EscapeType.NOT_SPECIFIED;
@@ -97,7 +96,7 @@ public class RenderSession {
     Check.notNull(escapeType, "escapeType")
         .isNot(sameAs(), NOT_SPECIFIED, "Invalid escape type: NOT_SPECIFIED");
     Template t = page.getTemplate();
-    Check.on(noSuchVariable(t, varName), varName).is(in(), t.getVariables());
+    Check.on(noSuchVariable(t, varName), t.getVariables()).is(containing(), varName);
     Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
     if (value == UNDEFINED) {
       // Unless the user is manually going through, and accessing the properties of some source data
@@ -187,7 +186,7 @@ public class RenderSession {
     Check.on(illegalValue("escapeType", escapeType), escapeType).is(notNull());
     Check.on(badEscapeType(), escapeType).isNot(sameAs(), NOT_SPECIFIED);
     Template t = page.getTemplate();
-    Check.on(noSuchVariable(t, varName), varName).is(in(), t.getVariables());
+    Check.on(noSuchVariable(t, varName), t.getVariables()).is(containing(), varName);
     Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
     IntList indices = page.getTemplate().getVarPartIndices().get(varName);
     if (values.isEmpty()) {
@@ -260,7 +259,7 @@ public class RenderSession {
     Check.on(illegalValue("varName", varName), varName).is(notNull());
     Check.on(illegalValue("renderable", renderable), renderable).is(notNull());
     Template t = page.getTemplate();
-    Check.on(noSuchVariable(t, varName), varName).is(in(), t.getVariables());
+    Check.on(noSuchVariable(t, varName), t.getVariables()).is(containing(), varName);
     Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
     IntList indices = page.getTemplate().getVarPartIndices().get(varName);
     indices.forEach(i -> state.setVar(i, renderable));
@@ -307,7 +306,7 @@ public class RenderSession {
    *
    * <h4>Text-only templates</h4>
    *
-   * <p>Although the {@code RenderSession} has a {@link #show(String, int) separate method} for
+   * <p>Although the {@code RenderSession} has a {@link #show(int, String) separate method} for
    * dealing with text-only templates, they can also be made to be rendered by this method.
    *
    * @param nestedTemplateName The name of the nested template
@@ -328,7 +327,7 @@ public class RenderSession {
     Template t = getNestedTemplate(nestedTemplateName);
     List<?> data = asUnsafeList(sourceData);
     if (t.isTextOnly()) {
-      return show(t, data.size());
+      return show(data.size(), t);
     }
     Check.on(missingSourceData(t), data).is(neverNull());
     return repeat(t, data, escapeType, names);
@@ -336,71 +335,83 @@ public class RenderSession {
 
   private RenderSession repeat(Template t, List<?> data, EscapeType escapeType, String... names)
       throws RenderException {
-    RenderSession[] sessions = state.getOrCreateChildSessions(t, data);
+    RenderSession[] sessions = state.getOrCreateChildSessions(t, data.size());
     for (int i = 0; i < sessions.length; ++i) {
       sessions[i].insert(data.get(i), escapeType, names);
     }
     return this;
   }
 
-  /**
-   * Causes the specified nested text-only template to be rendered. Equivalent to {@link
-   * #show(String, int) show(nestedTemplateName, 1)}.
-   *
-   * @param nestedTemplateName The name of the nested template. <i>Must</i> be a text-only template,
-   *     otherwise a {@code RenderException} is thrown
-   * @return This {@code RenderSession}
-   * @throws RenderException
-   */
-  public RenderSession show(String nestedTemplateName) throws RenderException {
-    return show(nestedTemplateName, 1);
+  public RenderSession enableTextOnlyTemplates() throws RenderException {
+    return show(ArrayMethods.EMPTY_STRING_ARRAY);
   }
 
   /**
-   * Causes the specified nested text-only template to be rendered. A text-only template is a
-   * template that does not contain any variables or nested templates. One reason you might want to
-   * have such a template is that you want to conditionally render it. Another reason could be that
-   * you want to reduce clutter in your main template.
+   * Causes each of the specified templates to be rendered. The specified templates <i>must</i> all
+   * be text-only templates, otherwise a {@link RenderException} is thrown. Equivalent to {@link
+   * #show(int, String...) show(1, nestedTemplateNames)}.
+   *
+   * @param nestedTemplateNames The names of the nested templates to be rendered.
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession show(String... nestedTemplateNames) throws RenderException {
+    return show(1, nestedTemplateNames);
+  }
+
+  /**
+   * Causes each of the specified templates to be rendered {@code repeats} times. The specified
+   * templates <i>must</i> all be text-only templates, otherwise a {@link RenderException} is
+   * thrown. A text-only template is a template that does not contain any variables or nested
+   * templates. Some reasons you might want to have such a template are:
+   *
+   * <p>
+   *
+   * <ul>
+   *   <li>You want to conditionally render the (static) HTML inside it
+   *   <li>You want to include it in multiple parent templates
+   *   <li>You want to reduce clutter in your main template
+   * </ul>
+   *
+   * <p>To <i>disable</i> rendering of a text-only template, specify 0 (zero) for the {@code
+   * repeats} argument. Note, however, that by default template variables and nested templates are
+   * not rendered in the first place, so you could also just not call this method for the template
+   * in question.
+   *
+   * <p>If you specify an empty array of template names, all text-only templates that have not been
+   * explicitly enabled or disabled yet will now be enabled or disabled, depending on the value of
+   * the {@code repeats} argument. In that case it <i>does</i> make sense to first explicitly
+   * disable the text-only templates that should not be rendered.
    *
    * <p>You could achieve the same by calling {@code populate(nestedTemplateName, null}. However,
-   * the {@code show} method bypasses some code that is irrelevant to text-only templates. To
-   * disable rendering, specify 0 (zero) for the {@code repeats} argument. Note, however, that by
-   * default template variables and nested templates are not rendered, so you could also just not
-   * call this method.
-   *
-   * @param nestedTemplateName The name of the nested template. <i>Must</i> be a text-only template,
-   *     otherwise a {@code RenderException} is thrown
-   * @param repeats The number of times you want the template to be repeated in the render result
-   * @return This {@code RenderSession}
-   * @throws RenderException
-   */
-  public RenderSession show(String nestedTemplateName, int repeats) throws RenderException {
-    Check.on(frozenSession(), state.isFrozen()).is(no());
-    Check.that(repeats, "repeats").is(gte(), 0);
-    Template t = getNestedTemplate(nestedTemplateName);
-    Check.on(notTextOnly(t), t.isTextOnly()).is(yes());
-    return show(t, repeats);
-  }
-
-  /**
-   * Causes all of the specified nested text-only templates to be rendered.
+   * the {@code show} method bypasses some code that is irrelevant to text-only templates.
    *
    * @param nestedTemplateNames The names of the nested text-only templates you want to be rendered
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession showAll(String... nestedTemplateNames) throws RenderException {
+  public RenderSession show(int repeats, String... nestedTemplateNames) throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    Check.that(nestedTemplateNames, "nestedTemplateNames").is(neverNull());
-    for (String name : nestedTemplateNames) {
-      Check.on(noSuchTemplate(page.getTemplate(), name), name).is(validTemplateName());
-      Template t = page.getTemplate().getNestedTemplate(name);
-      state.getOrCreateTextOnlyChildSessions(t, 1);
+    Check.that(repeats, "repeats").is(gte(), 0);
+    Check.notNull(nestedTemplateNames, "nestedTemplateNames");
+    if (nestedTemplateNames.length == 0) {
+      for (Template t : page.getTemplate().getNestedTemplates()) {
+        if (t.isTextOnly() && state.getChildSessions(t) == null) {
+          show(repeats, t);
+        }
+      }
+    } else {
+      for (String name : nestedTemplateNames) {
+        Check.that(name).is(notNull(), "Template name must not be null");
+        Check.on(noSuchTemplate(page.getTemplate(), name), name).is(validTemplateName());
+        Template t = getNestedTemplate(name);
+        Check.on(notTextOnly(t), t.isTextOnly()).is(yes()).then(foo -> show(repeats, t));
+      }
     }
     return this;
   }
 
-  private RenderSession show(Template nested, int repeats) throws RenderException {
+  private RenderSession show(int repeats, Template nested) throws RenderException {
     state.getOrCreateTextOnlyChildSessions(nested, repeats);
     return this;
   }
@@ -603,90 +614,18 @@ public class RenderSession {
   /* MISCELLANEOUS METHODS */
 
   /**
-   * Creates a render session for the specified nested template. See {@link
-   * #createChildSession(String, Accessor)}. This method lets you concicely render a template that
-   * is itself not text-only, but contains only templates that are:
+   * Returns a {@code RenderSession} for the specified nested template. The {@code RenderSession}
+   * inherits the {@link AccessorFactory accessors} and {@link TemplateStringifiers stringifiers}
+   * from the parent session (i.e. <i>this</i> {@code RenderSession}).
    *
-   * <p>
-   *
-   * <pre>
-   * session.createChildSession("textOnlyContainer").show("textOnlyTemplate1").show("textOnlyTemplate2");
-   * </pre>
-   *
-   * <p>This is substantially less verbose than:
-   *
-   * <pre>
-   * session.populate(
-   *  new MapWriter()
-   *    .in("textOnlyContainer")
-   *    .write("textOnlyTemplate1", null)
-   *    .write("textOnlyTemplate2", null)
-   *    .getMap());
-   * </pre>
-   *
-   * <p>(See {@link nl.naturalis.common.path.MapWriter MapWriter}.)
-   *
-   * @param nestedTemplateName The nested template for which to create the child sessions
+   * @param nestedTemplateName The nested template for which to create the child session
    * @return A child session that you can (and should) populate yourself
    * @throws RenderException
    */
-  public RenderSession createChildSession(String nestedTemplateName) throws RenderException {
-    return createChildSession(nestedTemplateName, BYPASS_ACCESSOR);
-  }
-
-  /**
-   * Creates a render session for the specified nested template. See {@link
-   * #createChildSessions(String, Accessor, int)}.
-   *
-   * @param nestedTemplateName The nested template for which to create the child sessions
-   * @param accessor The {@code Accessor} implementation to be used to extract values from the
-   *     source data for the template
-   * @return A child session that you can (and should) populate yourself
-   * @throws RenderException
-   */
-  public RenderSession createChildSession(String nestedTemplateName, Accessor<?> accessor)
-      throws RenderException {
+  public RenderSession in(String nestedTemplateName) throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Template t = getNestedTemplate(nestedTemplateName);
-    return state.createChildSessions(t, accessor, 1)[0];
-  }
-
-  /**
-   * Creates render sessions for a repeating template within the parent template. Each of the
-   * sessions will use a {@link BypassAccessor} to access any source data for the template
-   * (effectively meaning you're own your own). See {@link #createChildSessions(String, Accessor,
-   * int)}.
-   *
-   * @param nestedTemplateName The nested template for which to create the child sessions
-   * @param repeats The number of times you want the template to repeat itself
-   * @return A {@code List} of child sessions that you can (and should) populate yourself
-   * @throws RenderException
-   */
-  public List<RenderSession> createChildSessions(String nestedTemplateName, int repeats)
-      throws RenderException {
-    return createChildSessions(nestedTemplateName, BYPASS_ACCESSOR, repeats);
-  }
-
-  /**
-   * Creates render sessions for a repeating template within the parent template. Note that child
-   * sessions are automatically and implicitly created when populating a template with a source data
-   * object that reflects its structure. This method gives you more fine-grained control over the
-   * rendering process, should you need it. Although you could, you should not in principle render
-   * the child sessions yourself. They are still attached to the parent session and will be rendered
-   * (again) when the parent session is rendered.
-   *
-   * @param nestedTemplateName The nested template for which to create the child sessions
-   * @param accessor The {@code Accessor} implementation to be used to extract values from the
-   *     source data for the template
-   * @param repeats The number of times you want the template to repeat itself
-   * @return A {@code List} of child sessions that you can (and should) populate yourself
-   * @throws RenderException
-   */
-  public List<RenderSession> createChildSessions(
-      String nestedTemplateName, Accessor<?> accessor, int repeats) throws RenderException {
-    Check.on(frozenSession(), state.isFrozen()).is(no());
-    Template t = getNestedTemplate(nestedTemplateName);
-    return List.of(state.createChildSessions(t, accessor, repeats));
+    return state.getOrCreateChildSession(t);
   }
 
   /**
