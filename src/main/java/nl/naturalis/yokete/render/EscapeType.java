@@ -54,6 +54,14 @@ public enum EscapeType {
    * </pre>
    */
   ESCAPE_HTML("html", StringEscapeUtils::escapeHtml4),
+
+  /**
+   * The escape type to use inside an HTML attribute.
+   *
+   * <p>This escape type can be specified within the template variable itself using the {@code attr}
+   */
+  ESCAPE_ATTR("attr", EscapeType::escapeAttr),
+
   /**
    * The type of escaping to be used for template variables inserted into Javascript. For example:
    *
@@ -82,7 +90,8 @@ public enum EscapeType {
    * The type of escaping to use if a template variable is embedded as a path segment within a URL.
    * Note that it does not matter whether the URL as a whole is the value of a JavaScript variable
    * or the contents of an HTML tag. The result of applying this escape type does not change when
-   * subsequently applying JavaScript or HTML escaping.
+   * subsequently applying JavaScript or HTML escaping. This escape type can be specified within the
+   * template variable itself using the {@code ps} prefix.
    */
   ESCAPE_URL_PATH_SEGMENT("ps", EscapeType::escapeUrlPathSegment),
 
@@ -92,7 +101,8 @@ public enum EscapeType {
    * as the <i>name</i> of the query parameter, because names and values are escaped in the same way
    * in a URL. Note that it does not matter whether the URL as a whole is the value of a JavaScript
    * variable or the contents of an HTML tag. The result of applying this escape type does not
-   * change when subsequently applying JavaScript or HTML escaping.
+   * change when subsequently applying JavaScript or HTML escaping. This escape type can be
+   * specified within the template variable itself using the {@code qp} prefix.
    */
   ESCAPE_URL_QUERY_PARAM("qp", EscapeType::escapeUrlQueryParam);
 
@@ -114,6 +124,8 @@ public enum EscapeType {
         return ESCAPE_NONE;
       case "html":
         return ESCAPE_HTML;
+      case "attr":
+        return ESCAPE_ATTR;
       case "js":
         return ESCAPE_JS;
       case "ps":
@@ -148,6 +160,20 @@ public enum EscapeType {
    */
   public String apply(String raw) {
     return escaper.apply(raw);
+  }
+
+  private static String escapeAttr(String s) {
+    StringBuilder sb = new StringBuilder(s.length() + 5);
+    for (int i = 0; i < s.length(); ++i) {
+      if (s.charAt(i) == '\'') {
+        sb.append("&#39;");
+      } else if (s.charAt(i) == '"') {
+        sb.append("&#34;");
+      } else {
+        sb.append(s.charAt(i));
+      }
+    }
+    return sb.toString();
   }
 
   private static String escapeUrlPathSegment(String s) {

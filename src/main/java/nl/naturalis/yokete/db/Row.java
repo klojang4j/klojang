@@ -1,69 +1,94 @@
 package nl.naturalis.yokete.db;
 
-import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import nl.naturalis.common.NumberMethods;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
-import static java.util.stream.Collectors.toList;
+import nl.naturalis.common.collection.IntList;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
-import static nl.naturalis.common.check.CommonChecks.arrayIndexOf;
+import static nl.naturalis.common.check.CommonChecks.between;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 public class Row {
 
-  private static final String ERR0 = "Column not present in ResultSet: \"%s\"";
+  private static final String ERR0 = "No such column: \"%s\"";
   private static final String ERR1 = "Column %s not convertible to %s: %s";
   private static final String ERR2 = "Invalid column number: %d";
+  private static final String ERR3 = "Columns already exists: %d";
 
   public static Row withColumns(Tuple<String, Object>[] columns) {
     return new Row(columns);
   }
 
-  private final Tuple<String, Object>[] tuples;
-
-  private Map<String, Object> map;
-
-  private Row(Tuple<String, Object>[] tuples) {
-    this.tuples = tuples;
+  public static Row fromMap(Map<String, Object> data) {
+    return new Row(data);
   }
 
-  public int getColumnCount() {
-    return tuples.length;
+  private final Map<String, Object> map;
+
+  private Row(Tuple<String, Object>[] columns) {
+    // Reserve some extra space for potentital additions
+    map = Tuple.toMap(columns, () -> new LinkedHashMap<>(columns.length + 4));
+  }
+
+  private Row(Map<String, Object> data) {
+    map = new LinkedHashMap<>(data.size() + 4);
+    map.putAll(data);
+  }
+
+  public int size() {
+    return map.size();
+  }
+
+  public String getColumnName(int colNum) {
+    Check.that(colNum).is(between(), IntList.of(0, map.size()), ERR2, colNum);
+    return (String) map.keySet().toArray()[colNum];
+  }
+
+  public int getColumnNumber(String colName) {
+    Check.notNull(colName).is(keyIn(), map, ERR0, colName).ok(map::get);
+    return List.copyOf(map.keySet()).indexOf(colName);
   }
 
   public List<String> getColumnNames() {
-    return Arrays.stream(tuples).map(Tuple::getLeft).collect(toList());
+    return List.copyOf(map.keySet());
   }
 
   public boolean hasColumn(String colName) {
-    return map().keySet().contains(colName);
+    return map.containsKey(colName);
   }
 
   public Map<String, Object> toMap() {
-    return map;
+    return Map.copyOf(map);
+  }
+
+  public Object getValue(String colName) {
+    return Check.notNull(colName, "colName").is(keyIn(), map, ERR0, colName).ok(map::get);
+  }
+
+  public Object getValue(int colNum) {
+    return map.get(getColumnName(colNum));
   }
 
   @SuppressWarnings("unchecked")
   public <T> T get(String colName) {
-    return (T) Check.that(colName).is(keyIn(), map(), ERR0, colName).ok(map::get);
+    return (T) getValue(colName);
   }
 
   @SuppressWarnings("unchecked")
   public <T> T get(int colNum) {
-    return (T) Check.that(colNum).is(arrayIndexOf(), tuples).ok(i -> tuples[i]);
+    return (T) getValue(colNum);
   }
 
   public String getString(String colName) {
-    Object v = Check.that(colName).is(keyIn(), map(), ERR0, colName).ok(map::get);
-    return v == null ? null : v.toString();
+    return ifNotNull(get(colName), Object::toString);
   }
 
   public String getString(int colNum) {
-    Object v = Check.that(colNum).is(arrayIndexOf(), tuples).ok(i -> tuples[i]);
-    return v == null ? null : v.toString();
+    return ifNotNull(get(colNum), Object::toString);
   }
 
   public Integer getInteger(String colName) {
@@ -141,16 +166,25 @@ public class Row {
     return (T) ifNotNull(getValue(colName), parser::apply, nullValue);
   }
 
-  // TODO: more of this
+  // TODO: more of the above
 
-  private Object getValue(String colName) {
-    return Check.that(colName).is(keyIn(), map(), ERR0, colName).ok(map::get);
+  public void setColumn(String colName, Object value) {
+    Check.notNull(colName, "colName").is(keyIn(), map, ERR0, colName);
+    map.put(colName, value);
   }
 
-  private Object getValue(int colNum) {
-    return Check.that(colNum)
-        .is(arrayIndexOf(), tuples, ERR2, colNum)
-        .ok(i -> tuples[i].getRight());
+  public void setColumn(int colNum, Object value) {
+    map.put(getColumnName(colNum), value);
+  }
+
+  public void addColumn(String colName, Object value) {
+    Check.notNull(colName, "colName").isNot(keyIn(), map, ERR3, colName);
+    map.put(colName, value);
+  }
+
+  public void setOrAddColumn(String colName, Object value) {
+    Check.notNull(colName, "colName");
+    map.put(colName, value);
   }
 
   private static <T extends Number> T getNumber(int colNum, Object val, Class<T> targetType) {
@@ -170,19 +204,11 @@ public class Row {
     Object val = getValue(colName);
     if (val == null) {
       return null;
-    }
-    if (val instanceof Number) {
+    } else if (val instanceof Number) {
       return NumberMethods.convert((Number) val, targetType);
     } else if (val.getClass() == String.class) {
       return NumberMethods.parse((String) val, targetType);
     }
     return Check.fail(ERR1, colName, targetType, val);
-  }
-
-  private Map<String, Object> map() {
-    if (map == null) {
-      map = Tuple.toMap(tuples);
-    }
-    return map;
   }
 }
