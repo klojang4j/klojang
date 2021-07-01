@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
-import nl.naturalis.common.ArrayMethods;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.io.UnsafeByteArrayOutputStream;
 import nl.naturalis.yokete.accessors.SelfAccessor;
+import nl.naturalis.yokete.accessors.TupleAccessor;
 import nl.naturalis.yokete.template.Part;
 import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.TemplateUtils;
@@ -342,13 +342,9 @@ public class RenderSession {
     return this;
   }
 
-  public RenderSession enableTextOnlyTemplates() throws RenderException {
-    return show(ArrayMethods.EMPTY_STRING_ARRAY);
-  }
-
   /**
-   * Causes each of the specified templates to be rendered. The specified templates <i>must</i> all
-   * be text-only templates, otherwise a {@link RenderException} is thrown. Equivalent to {@link
+   * Causes each of the specified templates to be rendered. The specified templates must all be
+   * text-only templates, otherwise a {@link RenderException} is thrown. Equivalent to {@link
    * #show(int, String...) show(1, nestedTemplateNames)}.
    *
    * @param nestedTemplateNames The names of the nested templates to be rendered.
@@ -360,8 +356,8 @@ public class RenderSession {
   }
 
   /**
-   * Causes each of the specified templates to be rendered {@code repeats} times. The specified
-   * templates <i>must</i> all be text-only templates, otherwise a {@link RenderException} is
+   * Causes each of the specified nested templates to be rendered {@code repeats} times. The
+   * specified templates must all be text-only templates, otherwise a {@link RenderException} is
    * thrown. A text-only template is a template that does not contain any variables or nested
    * templates. Some reasons you might want to have such a template are:
    *
@@ -378,13 +374,14 @@ public class RenderSession {
    * not rendered in the first place, so you could also just not call this method for the template
    * in question.
    *
-   * <p>If you specify an empty array of template names, all text-only templates that have not been
-   * explicitly enabled or disabled yet will now be enabled or disabled, depending on the value of
-   * the {@code repeats} argument. In that case it <i>does</i> make sense to first explicitly
+   * <p>Specify an empty array to enable <i>all</i> text-only templates that have not been
+   * explicitly enabled or disabled yet. In that case it <i>does</i> make sense to first explicitly
    * disable the text-only templates that should not be rendered.
    *
-   * <p>You could achieve the same by calling {@code populate(nestedTemplateName, null}. However,
-   * the {@code show} method bypasses some code that is irrelevant to text-only templates.
+   * <p>You could achieve the same by calling {@code populate(nestedTemplateName, null} or {@code
+   * populate(nestedTemplateName, new Object[6]} (repeat six times) or {@code
+   * populate(nestedTemplateName, new Object[0]} (disable the template). However, the {@code show}
+   * method bypasses some code that is irrelevant to text-only templates.
    *
    * @param nestedTemplateNames The names of the nested text-only templates you want to be rendered
    * @return This {@code RenderSession}
@@ -418,25 +415,22 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly one variable and zero
-   * doubly-nested templates. See {@link #populateMonoTemplate(String, Object, EscapeType)}.
+   * nested templates. See {@link #populateWithValue(String, Object, EscapeType)}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession populateMonoTemplate(String nestedTemplateName, Object value)
+  public RenderSession populateWithValue(String nestedTemplateName, Object value)
       throws RenderException {
-    return populateMonoTemplate(nestedTemplateName, value, ESCAPE_NONE);
+    return populateWithValue(nestedTemplateName, value, ESCAPE_NONE);
   }
 
   /**
    * Convenience method for populating a nested template that contains exactly one variable and zero
-   * doubly-nested templates. The variable may still occur multiple times within the template
-   * though. Contrary to the other {@code populate} methods the {@code value} argument really is the
-   * value that is going to be assigned to the one variable within the nested template, rather than
-   * a source data object from which values are going to be extracted by the session's {@link
-   * Accessor}. This method bypasses the session's {@code Accessor} and uses a {@link SelfAccessor}
+   * nested templates. The variable may still occur multiple times within the template though. This
+   * method ignores the session's {@link AccessorFactory} (if any) and uses a {@link SelfAccessor}
    * instead.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
@@ -447,7 +441,7 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession populateMonoTemplate(
+  public RenderSession populateWithValue(
       String nestedTemplateName, Object value, EscapeType escapeType) throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Template t = getNestedTemplate(nestedTemplateName);
@@ -464,7 +458,7 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly two variables and
-   * zero doubly-nested templates. See {@link #populateTupleTemplate(String, List, EscapeType)}.
+   * zero nested templates. See {@link #populateWithTuple(String, List, EscapeType)}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly two
    *     variables
@@ -472,18 +466,16 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public <T, U> RenderSession populateTupleTemplate(
-      String nestedTemplateName, List<Tuple<T, U>> tuples) throws RenderException {
-    return populateTupleTemplate(nestedTemplateName, tuples, ESCAPE_NONE);
+  public <T, U> RenderSession populateWithTuple(String nestedTemplateName, List<Tuple<T, U>> tuples)
+      throws RenderException {
+    return populateWithTuple(nestedTemplateName, tuples, ESCAPE_NONE);
   }
 
   /**
-   * Convenience method for populating a nested template that contains exactly two variables. The
-   * template must not containing any doubly-nested templates, but the variables may occur multiple
-   * times within the template. The values in the specified {@link Tuple} instances <i>must</i> be
-   * in the same order as the encounter order of the two variables within the template. This method
-   * could be used, for example, to populate <code>&lt;select&gt;
-   * </code> elements with <code>&lt;option&gt;</code> elements and their {@code value} attribute.
+   * Convenience method for populating a nested template that contains exactly two variables and
+   * zero nested templates. The variables may occur multiple times within the template. This method
+   * ignores the session's {@link AccessorFactory} (if any) and uses a {@link TupleAccessor}
+   * instead. instead.
    *
    * @param nestedTemplateName The name of the nested template
    * @param tuples A list of value pairs
@@ -492,7 +484,7 @@ public class RenderSession {
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public <T, U> RenderSession populateTupleTemplate(
+  public <T, U> RenderSession populateWithTuple(
       String nestedTemplateName, List<Tuple<T, U>> tuples, EscapeType escapeType)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());

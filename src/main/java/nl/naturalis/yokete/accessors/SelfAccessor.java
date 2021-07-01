@@ -6,9 +6,9 @@ import nl.naturalis.yokete.render.RenderException;
 import nl.naturalis.yokete.render.RenderSession;
 
 /**
- * An {@code Accessor} implementation that returns the source data itself rather than any particular
- * value within it. Used by the render session's {@link RenderSession#populateMonoTemplate(String,
- * Object, EscapeType) fillMono} method.
+ * An {@code Accessor} implementation that returns any value passed to it as-is. Used by the render
+ * session's {@link RenderSession#populateWithValue(String, Object, EscapeType) populateWithValue}
+ * method.
  *
  * @author Ayco Holleman
  */
