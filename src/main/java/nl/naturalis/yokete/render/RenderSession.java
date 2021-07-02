@@ -343,8 +343,8 @@ public class RenderSession {
   }
 
   /**
-   * Causes each of the specified templates to be rendered. The specified templates must all be
-   * text-only templates, otherwise a {@link RenderException} is thrown. Equivalent to {@link
+   * Enabled or disables the rendering of the specified templates. The specified templates must all
+   * be text-only templates, otherwise a {@link RenderException} is thrown. Equivalent to {@link
    * #show(int, String...) show(1, nestedTemplateNames)}.
    *
    * @param nestedTemplateNames The names of the nested templates to be rendered.
@@ -356,10 +356,11 @@ public class RenderSession {
   }
 
   /**
-   * Causes each of the specified nested templates to be rendered {@code repeats} times. The
-   * specified templates must all be text-only templates, otherwise a {@link RenderException} is
-   * thrown. A text-only template is a template that does not contain any variables or nested
-   * templates. Some reasons you might want to have such a template are:
+   * Enabled or disables the rendering of the specified templates. Each of the specified templates
+   * will be repeated the specified number of times. The specified templates must all be text-only
+   * templates, otherwise a {@link RenderException} is thrown. A text-only template is a template
+   * that does not contain any variables or nested templates. Some reasons you might want to have
+   * such a template are:
    *
    * <p>
    *
@@ -374,9 +375,9 @@ public class RenderSession {
    * not rendered in the first place, so you could also just not call this method for the template
    * in question.
    *
-   * <p>Specify an empty array to enable <i>all</i> text-only templates that have not been
-   * explicitly enabled or disabled yet. In that case it <i>does</i> make sense to first explicitly
-   * disable the text-only templates that should not be rendered.
+   * <p>Specify an empty {@code String} array to enable <i>all</i> text-only templates that have not
+   * been explicitly enabled or disabled yet. In that case it <i>does</i> make sense to first
+   * explicitly disable the text-only templates that should not be rendered.
    *
    * <p>You could achieve the same by calling {@code populate(nestedTemplateName, null} or {@code
    * populate(nestedTemplateName, new Object[6]} (repeat six times) or {@code
@@ -400,9 +401,9 @@ public class RenderSession {
     } else {
       for (String name : nestedTemplateNames) {
         Check.that(name).is(notNull(), "Template name must not be null");
-        Check.on(noSuchTemplate(page.getTemplate(), name), name).is(validTemplateName());
         Template t = getNestedTemplate(name);
-        Check.on(notTextOnly(t), t.isTextOnly()).is(yes()).then(foo -> show(repeats, t));
+        Check.on(notTextOnly(t), t.isTextOnly()).is(yes());
+        show(repeats, t);
       }
     }
     return this;
@@ -411,6 +412,54 @@ public class RenderSession {
   private RenderSession show(int repeats, Template nested) throws RenderException {
     state.getOrCreateTextOnlyChildSessions(nested, repeats);
     return this;
+  }
+
+  /**
+   * Enables the rendering of the specified templates. The templates may themselves contain
+   * text-only templates, but they must not contain variables or templates containing variables.
+   *
+   * @param nestedTemplateNames The names of the nested text-only templates you want to be rendered
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession showRecursive(String... nestedTemplateNames) throws RenderException {
+    Check.on(frozenSession(), state.isFrozen()).is(no());
+    Check.notNull(nestedTemplateNames, "nestedTemplateNames");
+    if (nestedTemplateNames.length == 0) {
+      for (Template t : page.getTemplate().getNestedTemplates()) {
+        if (t.countVariables() == 0 && state.getChildSessions(t) == null) {
+          /*
+           * NB Only at this level do we skip templates that cannot possibly be recursively
+           * text-only (because the variables already spoil it). As soon as we recurse into deeper
+           * nesting levels there is no difference any longer between this branch of the main "if"
+           * branch and the other branch: at deeper levels templates must simply be either text-only
+           * templates themselves or only contain templates that themselves are (recursively)
+           * text-only.
+           */
+          showRecursive(this, t);
+        }
+      }
+    } else {
+      for (String name : nestedTemplateNames) {
+        Check.that(name).is(notNull(), "Template name must not be null");
+        Template t = getNestedTemplate(name);
+        showRecursive(this, t);
+      }
+    }
+    return this;
+  }
+
+  private static void showRecursive(RenderSession s0, Template t0) throws RenderException {
+    Check.on(notTextOnly(t0), t0.countVariables()).is(zero());
+    if (t0.isTextOnly()) {
+      s0.show(1, t0);
+      return;
+    }
+    for (Template t : t0.getNestedTemplates()) {
+      Check.on(notTextOnly(t), t.countVariables()).is(zero());
+      RenderSession s = s0.state.getOrCreateChildSession(t);
+      showRecursive(s, t);
+    }
   }
 
   /**
