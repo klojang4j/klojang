@@ -450,14 +450,13 @@ public class RenderSession {
   }
 
   private static void showRecursive(RenderSession s0, Template t0) throws RenderException {
-    Check.on(notTextOnly(t0), t0.countVariables()).is(zero());
     if (t0.isTextOnly()) {
       s0.show(1, t0);
       return;
     }
+    Check.on(notTextOnly(t0), t0.countVariables()).is(zero());
+    RenderSession s = s0.state.getOrCreateChildSession(t0);
     for (Template t : t0.getNestedTemplates()) {
-      Check.on(notTextOnly(t), t.countVariables()).is(zero());
-      RenderSession s = s0.state.getOrCreateChildSession(t);
       showRecursive(s, t);
     }
   }
