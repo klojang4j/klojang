@@ -43,7 +43,7 @@ class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
       String property = param.getName();
       Class<?> type = getter.getReturnType();
       Receiver<?, ?> receiver;
-      if (ClassMethods.isA(type, Enum.class) && bindInfo.saveEnumUsingToString(property)) {
+      if (ClassMethods.isA(type, Enum.class) && bindInfo.bindEnumUsingToString(property)) {
         receiver = EnumReceivers.ENUM_TO_STRING;
       } else {
         Integer sqlType = bindInfo.getSqlType(property, type);
@@ -72,12 +72,11 @@ class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
   private <T> void bindValue(PreparedStatement ps, T bean) throws Throwable {
     FIELD_TYPE beanValue = (FIELD_TYPE) getter.getMethod().invoke(bean);
     PARAM_TYPE paramValue = receiver.getParamValue(beanValue);
-    if (LOG.isDebugEnabled()) {
-      if (beanValue == paramValue) { // No adapter defined
-        LOG.debug("Parameter {}: {}", getter.getProperty(), paramValue);
-      } else {
-        LOG.debug("Parameter {}: {} (bean value: {})", param.getName(), paramValue, beanValue);
-      }
+    if (beanValue == paramValue) { // No adapter defined
+      LOG.debug("-> Parameter \"{}\": {}", getter.getProperty(), paramValue);
+    } else {
+      String fmt = "-> Parameter \"{}\": {} (bean value: {})";
+      LOG.debug(fmt, param.getName(), paramValue, beanValue);
     }
     param.getIndices().forEachThrowing(i -> receiver.bind(ps, i, paramValue));
   }

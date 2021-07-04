@@ -8,7 +8,7 @@ public interface BindInfo {
   }
 
   @SuppressWarnings("unused")
-  default boolean saveEnumUsingToString(String enumProperty) {
+  default boolean bindEnumUsingToString(String enumProperty) {
     return false;
   }
 }

@@ -40,15 +40,13 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     }
   }
 
-  public ResultSet executeAndNext() throws KSQLException {
+  public ResultSet executeAndNext() {
     try {
       ResultSet rs = resultSet();
       if (!rs.next()) {
         throw new KSQLException("Query returned zero rows");
       }
       return rs;
-    } catch (KSQLException e0) {
-      throw e0;
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
     }

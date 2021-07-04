@@ -43,7 +43,7 @@ public class MapBinder {
         param.getIndices().forEachThrowing(i -> ps.setString(i, null));
       } else {
         Receiver receiver;
-        if (Enum.class.isInstance(input) && bindInfo.saveEnumUsingToString(key)) {
+        if (Enum.class.isInstance(input) && bindInfo.bindEnumUsingToString(key)) {
           receiver = EnumReceivers.ENUM_TO_STRING;
         } else {
           receiver = negotiator.getDefaultReceiver(input.getClass());
@@ -51,9 +51,9 @@ public class MapBinder {
         Object output = receiver.getParamValue(input);
         if (LOG.isDebugEnabled()) {
           if (input == output) {
-            LOG.debug("Parameter {}: {}", key, output);
+            LOG.debug("--> Parameter \"{}\": {}", key, output);
           } else {
-            LOG.debug("Parameter {}: {} (input value: {})", key, output, input);
+            LOG.debug("--> Parameter \"{}\": {} (input value: {})", key, output, input);
           }
         }
         param.getIndices().forEachThrowing(i -> receiver.bind(ps, i, output));

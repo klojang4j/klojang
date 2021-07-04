@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import nl.naturalis.common.ExceptionMethods;
 import static java.lang.invoke.MethodHandles.lookup;
+import static nl.naturalis.common.StringMethods.lpad;
 
 /**
  * Represents one of the {@code setXXX} methods of {@link PreparedStatement} and contains a {@link
@@ -73,7 +74,7 @@ public class PSSetter<PARAM_TYPE> {
   }
 
   void bindValue(PreparedStatement ps, int paramIndex, PARAM_TYPE paramValue) throws Throwable {
-    LOG.trace("Binding <<<{}>>> to parameter {}", paramValue, paramIndex);
+    LOG.trace("----> Parameter {}: {}", lpad(paramIndex, 2), paramValue);
     if (paramValue == null) {
       SET_STRING.method.invoke(ps, paramIndex, (String) null);
     } else if (targetSqlType == null) {

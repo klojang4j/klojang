@@ -14,6 +14,6 @@ public class KSQLException extends YoketeRuntimeException {
   }
 
   public KSQLException(SQL sql, SQLException e) {
-    super(e.toString() + "  *****  " + sql.getJdbcSQL());
+    super(e.getMessage() + "\n" + sql.getJdbcSQL());
   }
 }
