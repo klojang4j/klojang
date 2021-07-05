@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import nl.naturalis.common.collection.IntList;
+import nl.naturalis.yokete.render.Accessor;
 import nl.naturalis.yokete.render.Page;
 import nl.naturalis.yokete.render.RenderException;
 import nl.naturalis.yokete.render.RenderSession;
@@ -134,5 +135,12 @@ public class TemplateTest {
     rs.set("var2", "Bar");
     rs.set("var1", "Foo");
     assertEquals("Foo~Bar", rs.render());
+  }
+
+  @Test
+  public void test100() {
+    Package pkg0 = RenderSession.class.getPackage();
+    Package pkg1 = Accessor.class.getPackage();
+    assertEquals(pkg0, pkg1);
   }
 }

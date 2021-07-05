@@ -93,10 +93,11 @@ public final class GlobalStringifiers {
      *     Stringifier} implementations, the function <b>must</b> be able to handle null values and
      *     it <b>must never</b> return null
      */
-    public void register(Class<?> type, Stringifier stringifier) {
+    public Builder register(Class<?> type, Stringifier stringifier) {
       Check.notNull(type, "type");
       Check.notNull(stringifier, "stringifier");
       typeMap.put(type, stringifier);
+      return this;
     }
 
     /**

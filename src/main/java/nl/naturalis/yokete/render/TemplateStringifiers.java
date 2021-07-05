@@ -9,6 +9,7 @@ import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.Template;
 import static java.util.Collections.emptyMap;
+import static nl.naturalis.common.ObjectMethods.ifNull;
 import static nl.naturalis.common.check.CommonChecks.deepNotEmpty;
 import static nl.naturalis.common.check.CommonChecks.in;
 import static nl.naturalis.yokete.template.TemplateUtils.getFQName;
@@ -36,7 +37,20 @@ public final class TemplateStringifiers {
    * Unlikely to be satisfactory in the end, but handy in the early stages of development.
    */
   public static final TemplateStringifiers SIMPLE_STRINGIFIER =
-      new TemplateStringifiers(emptyMap());
+      new TemplateStringifiers(emptyMap(), GlobalStringifiers.EMPTY);
+
+  /**
+   * Returns a {@code TemplateStringifiers} instance which relies on global (type-based)
+   * stringifiers only, doing completely without any template-specific and variable-specific
+   * stringifiers.
+   *
+   * @param stringifiers The {@code GlobalStringifiers} instance providing the stringifiers
+   * @return A {@code TemplateStringifiers} instance which relies on global (type-based)
+   *     stringifiers only
+   */
+  public static TemplateStringifiers globalStringifiersOnly(GlobalStringifiers stringifiers) {
+    return new TemplateStringifiers(emptyMap(), stringifiers);
+  }
 
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
 
@@ -65,16 +79,16 @@ public final class TemplateStringifiers {
 
     /**
      * Associates the specified stringifier with the specified variables. The variables must be
-     * declared in the template being configured (rather than in one the templates nested inside
-     * it). If a variable's value can be stringified using the {@link Stringifier#DEFAULT default
-     * stringifier}, you don't need to call {@code setStringifier} for that variable.
+     * declared in the template being configured rather than in one the templates nested inside it.
+     * If a variable's value can be stringified using the {@link Stringifier#DEFAULT default
+     * stringifier}, you don't need to call {@code register} for that variable.
      *
      * @param stringifier The stringifier
      * @param varNames The variables
      * @return This {@code Builder}
      */
-    public Builder register(Stringifier stringifier, String... varNames) {
-      return register(stringifier, template, varNames);
+    public Builder setStringifier(Stringifier stringifier, String... varNames) {
+      return setStringifier(stringifier, template, varNames);
     }
 
     /**
@@ -87,7 +101,7 @@ public final class TemplateStringifiers {
      * @param varNames The variables
      * @return This {@code Builder}
      */
-    public Builder register(Stringifier stringifier, Template template, String... varNames) {
+    public Builder setStringifier(Stringifier stringifier, Template template, String... varNames) {
       Check.notNull(stringifier, "stringifier");
       Check.notNull(template, "template");
       Check.that(varNames, "varNames").is(deepNotEmpty());
@@ -98,20 +112,26 @@ public final class TemplateStringifiers {
     /**
      * Looks up a stringifier for the specified type in the {@link GlobalStringifiers} instance and
      * associates it with the specified variables. The variable must be declared in the template
-     * being configured, rather than in one the templates nested inside it.
+     * being configured rather than in one the templates nested inside it. Only call this method if
+     * a variable needs to be associated with a global stringifier other than the one already
+     * associated with the <i>data type</i> of that variable. For example if all {@code LocalDate}
+     * variables can be stringified using one date format, but there is one variable in one template
+     * that requires a different date format, then you would call this method to cover that
+     * particular variable.
      *
      * @param type The data type for which to retrieve a stringifier from the {@link
      *     GlobalStringifiers} instance (for example: a {@link LocalDate} stringifier)
      * @param varNames The name of the variables
      * @return This {@code Builder}
      */
-    public Builder addGlobalStringifier(Class<?> type, String... varNames) {
+    public Builder setGlobalStringifier(Class<?> type, String... varNames) {
       return addGlobalStringifier(type, template, varNames);
     }
 
     /**
      * Looks up a stringifier for the specified type in the {@link GlobalStringifiers} instance and
-     * associates it with the specified variables.
+     * associates it with the specified variables. The specified {@code Template} must either be the
+     * {@code Template} that is being configured or one of the templates nested inside it.
      *
      * @param type The type of the variable
      * @param template The template containing the variable
@@ -132,7 +152,7 @@ public final class TemplateStringifiers {
      * @return A new, immutable {@code TemplateStringifiers} instance
      */
     public TemplateStringifiers freeze() {
-      return new TemplateStringifiers(Map.copyOf(stringifiers));
+      return new TemplateStringifiers(Map.copyOf(stringifiers), globals);
     }
 
     private void doRegister(Stringifier stringifier, Template template, String... varNames) {
@@ -165,9 +185,12 @@ public final class TemplateStringifiers {
   }
 
   private final Map<Tuple<Template, String>, Stringifier> stringifiers;
+  private final GlobalStringifiers globals;
 
-  private TemplateStringifiers(Map<Tuple<Template, String>, Stringifier> stringifiers) {
+  private TemplateStringifiers(
+      Map<Tuple<Template, String>, Stringifier> stringifiers, GlobalStringifiers globals) {
     this.stringifiers = stringifiers;
+    this.globals = globals;
   }
 
   /**
@@ -177,8 +200,15 @@ public final class TemplateStringifiers {
    * @param varName The variable
    * @return The stringifier
    */
-  public Stringifier getStringifier(Template template, String varName) {
+  public Stringifier getStringifier(Template template, String varName, Object value) {
     Tuple<Template, String> key = Tuple.of(template, varName);
-    return stringifiers.getOrDefault(key, Stringifier.DEFAULT);
+    Stringifier stringifier = stringifiers.get(key);
+    if (stringifier != null) {
+      return stringifier;
+    }
+    if (value != null) {
+      stringifier = globals.getStringifier(value.getClass());
+    }
+    return ifNull(stringifier, Stringifier.DEFAULT);
   }
 }

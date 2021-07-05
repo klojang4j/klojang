@@ -120,7 +120,7 @@ public final class Page {
   String[] stringify(String varName, List<?> values) throws RenderException {
     String[] strs = new String[values.size()];
     for (int i = 0; i < values.size(); ++i) {
-      Stringifier stringifier = stringifiers.getStringifier(template, varName);
+      Stringifier stringifier = stringifiers.getStringifier(template, varName, values.get(i));
       try {
         if (null == (strs[i] = stringifier.toString(values.get(i)))) {
           throw BadStringifierException.stringifierReturnedNull(template, varName);
@@ -133,7 +133,7 @@ public final class Page {
   }
 
   String stringify(String varName, Object value) throws RenderException {
-    Stringifier stringifier = stringifiers.getStringifier(template, varName);
+    Stringifier stringifier = stringifiers.getStringifier(template, varName, value);
     try {
       String s = stringifier.toString(value);
       if (s == null) {

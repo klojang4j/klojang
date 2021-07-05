@@ -9,6 +9,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
@@ -17,6 +19,7 @@ import nl.naturalis.yokete.db.ps.MapBinder;
 import nl.naturalis.yokete.render.Page;
 import nl.naturalis.yokete.render.RenderSession;
 import nl.naturalis.yokete.template.Template;
+import static nl.naturalis.common.ObjectMethods.ifNull;
 import static nl.naturalis.common.check.CommonChecks.illegalState;
 import static nl.naturalis.common.check.CommonChecks.no;
 import static nl.naturalis.common.check.CommonChecks.notNull;
@@ -31,6 +34,8 @@ import static nl.naturalis.common.check.CommonChecks.notNull;
  * @author Ayco Holleman
  */
 public class SQL {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SQL.class);
 
   private static final String ERR_LOCKED =
       "An SQLQuery, SQLInsert or SQLUpdate is still active. "
@@ -121,7 +126,7 @@ public class SQL {
 
   @Override
   public String toString() {
-    return getNormalizedSQL();
+    return ifNull(jdbcSQL, getNormalizedSQL());
   }
 
   void unlock() {
@@ -154,11 +159,13 @@ public class SQL {
     lock.lock();
     try {
       if (vars != null) {
+        LOG.debug("Processing SQL template variables");
         if (page == null) {
           page = Page.configure(Template.parseString(getNormalizedSQL()));
         }
         RenderSession session = page.newRenderSession();
         for (Tuple<String, Object> var : vars) {
+          LOG.debug("** Variable \"{}\": {}", var.getLeft(), var.getRight());
           session.set(var.getLeft(), var.getRight());
         }
         jdbcSQL = session.render();

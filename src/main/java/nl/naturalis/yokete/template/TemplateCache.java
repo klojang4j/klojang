@@ -25,11 +25,14 @@ class TemplateCache {
     }
 
     public boolean removeEldestEntry(Map.Entry<Tuple<Package, String>, Template> e) {
-      if (LOG.isTraceEnabled()) {
-        String fmt = "Template {} ({}) evicted from cache";
-        LOG.trace(fmt, getFQName(e.getValue()), e.getKey().getRight());
+      if (size() > maxCapacity) {
+        if (LOG.isTraceEnabled()) {
+          String fmt = "Template {} ({}) evicted from cache";
+          LOG.trace(fmt, getFQName(e.getValue()), e.getKey().getRight());
+        }
+        return true;
       }
-      return size() > maxCapacity;
+      return false;
     }
   }
 
@@ -39,7 +42,7 @@ class TemplateCache {
 
   private TemplateCache() {
     String prop = "org.klojang.template.cacheSize";
-    String val = System.getProperty(prop, "100");
+    String val = System.getProperty(prop, "50");
     int i = Check.that(val, prop).is(integer()).ok(NumberMethods::parseInt);
     cache = new TC(i);
   }
