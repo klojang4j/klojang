@@ -3,7 +3,7 @@ package nl.naturalis.yokete.render;
 import java.util.List;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.Template;
-import static nl.naturalis.yokete.render.TemplateStringifiers.SIMPLE_STRINGIFIER;
+import static nl.naturalis.yokete.render.TemplateStringifiers.BASIC_STRINGIFIER;
 
 /**
  * A {@code Page} is a factory for {@link RenderSession render sessions}. Its main component is the
@@ -30,7 +30,7 @@ public final class Page {
    *     template
    */
   public static Page configure(Template template) {
-    return configure(template, SIMPLE_STRINGIFIER);
+    return configure(template, BASIC_STRINGIFIER);
   }
 
   /**
@@ -54,13 +54,13 @@ public final class Page {
    * Creates a {@code Page} that will produce {@link RenderSession render sessions} for the
    * specified template, using the specified {@code specified AccessorFactory} to produce {@link
    * Accessor accessors} for source data for the template, and using the {@link
-   * TemplateStringifiers#SIMPLE_STRINGIFIER default stringifier} to stringify the source data.
+   * TemplateStringifiers#BASIC_STRINGIFIER default stringifier} to stringify the source data.
    *
    * @param template
    * @return
    */
   public static Page configure(Template template, AccessorFactory accessor) {
-    return configure(template, accessor, SIMPLE_STRINGIFIER);
+    return configure(template, accessor, BASIC_STRINGIFIER);
   }
 
   /**
