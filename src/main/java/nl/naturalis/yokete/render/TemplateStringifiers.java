@@ -18,7 +18,7 @@ import static nl.naturalis.yokete.template.TemplateUtils.getVarsPerTemplate;
 /**
  * Provides {@link Stringifier stringifiers} for template variables. In principle each and every
  * template variable must be associated with a {@code Stringifier}. In practice, however, it is
- * unlikely you will define many template-specific stringifiers. If a variable's value can be
+ * unlikely you will define many variable-specific stringifiers. If a variable's value can be
  * stringified by calling {@code toString()} on it (or to an empty string if null), you don't need
  * to specify a stringifier for it because this is default behaviour (see {@link
  * Stringifier#DEFAULT}). In addition, most variables can be stringified based solely on their data
@@ -44,6 +44,7 @@ import static nl.naturalis.yokete.template.TemplateUtils.getVarsPerTemplate;
  *   <li>Otherwise {@link Stringifier#DEFAULT} is going to be used.
  * </ol>
  *
+ * @see Page
  * @author Ayco Holleman
  */
 public final class TemplateStringifiers {
@@ -182,8 +183,8 @@ public final class TemplateStringifiers {
      * @param varNames The name of the variables
      * @return This {@code Builder}
      */
-    public Builder setGlobalStringifier(Class<?> type, String... varNames) {
-      return setGlobalStringifier(type, template, varNames);
+    public Builder setTypeStringifier(Class<?> type, String... varNames) {
+      return setTypeStringifier(type, template, varNames);
     }
 
     /**
@@ -196,7 +197,7 @@ public final class TemplateStringifiers {
      * @param varName The name of the variable
      * @return This {@code Builder}
      */
-    public Builder setGlobalStringifier(Class<?> type, Template template, String... varNames) {
+    public Builder setTypeStringifier(Class<?> type, Template template, String... varNames) {
       Check.notNull(type, "type")
           .is(typeStringifiers::hasStringifier, LOOKUP_FAILED, type.getName());
       Check.notNull(template, "template");
@@ -211,7 +212,7 @@ public final class TemplateStringifiers {
      * @return A new, immutable {@code TemplateStringifiers} instance
      */
     public TemplateStringifiers freeze() {
-      return new TemplateStringifiers(Map.copyOf(stringifiers), typeStringifiers, defStringifier);
+      return new TemplateStringifiers(stringifiers, typeStringifiers, defStringifier);
     }
 
     private void doRegister(Stringifier stringifier, Template template, String... varNames) {
@@ -254,7 +255,7 @@ public final class TemplateStringifiers {
       Map<Tuple<Template, String>, Stringifier> stringifiers,
       TypeStringifiers typeStringifiers,
       Stringifier defStringifier) {
-    this.stringifiers = stringifiers;
+    this.stringifiers = Map.copyOf(stringifiers);
     this.typeStringifiers = typeStringifiers;
     this.defStringifier = defStringifier;
   }
