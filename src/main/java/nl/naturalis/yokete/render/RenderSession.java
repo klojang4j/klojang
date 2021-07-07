@@ -655,7 +655,7 @@ public class RenderSession {
 
   /**
    * Returns a {@code RenderSession} for the specified nested template. The {@code RenderSession}
-   * inherits the {@link AccessorFactory accessors} and {@link TemplateStringifiers stringifiers}
+   * inherits the {@link AccessorFactory accessors} and {@link StringifierFactory stringifiers}
    * from the parent session (i.e. <i>this</i> {@code RenderSession}).
    *
    * @param nestedTemplateName The nested template for which to create the child session

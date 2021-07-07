@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Set;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
+import static java.util.Arrays.copyOfRange;
+import static nl.naturalis.common.check.CommonChecks.empty;
+import static nl.naturalis.common.check.CommonChecks.in;
 
 /**
  * Utility class extending extending the functionality of the {@link Template} class.
@@ -81,6 +84,7 @@ public class TemplateUtils {
    *     templates descending from it
    */
   public static Set<String> getAllNames(Template template) {
+    Check.notNull(template, "template");
     Set<String> names = new HashSet<>();
     collectNames(template, names);
     return names;
@@ -101,6 +105,7 @@ public class TemplateUtils {
    * @return A {@code List} containing the {@code Template} and all templates descending from it
    */
   public static List<Template> getNestedTemplatesRecursive(Template template) {
+    Check.notNull(template, "template");
     ArrayList<Template> tmpls = new ArrayList<>(20);
     tmpls.add(template);
     collectTemplates(template, tmpls);
@@ -111,6 +116,31 @@ public class TemplateUtils {
     List<Template> myTmpls = t0.getNestedTemplates();
     tmpls.addAll(myTmpls);
     myTmpls.forEach(t -> collectTemplates(t, tmpls));
+  }
+
+  /**
+   * Returns the (possibly deeply) nested template corresponding to the specified fully-qualified
+   * name. The fully-qualified name must be relative to the specified template and should not start
+   * with the specified template's name.
+   *
+   * @param template The template containing the (deeply) nested template
+   * @param fqName The fully qualified name of the nested template
+   * @return The (possibly deeply) nested template corresponding to the specified fully-qualified
+   *     name
+   */
+  public static Template getDeeplyNestedTemplate(Template template, String fqName) {
+    Check.notNull(template, "template");
+    Check.that(fqName, "fqName").isNot(empty());
+    return getDeeplyNestedTemplate(template, fqName, fqName.split("\\."));
+  }
+
+  private static Template getDeeplyNestedTemplate(Template t0, String fqName, String[] names) {
+    if (names.length == 0) {
+      return t0;
+    }
+    Check.that(names[0]).is(in(), t0.getNestedTemplateNames(), "No such template: \"%s\"", fqName);
+    t0 = t0.getNestedTemplate(names[0]);
+    return getDeeplyNestedTemplate(t0, fqName, copyOfRange(names, 1, names.length));
   }
 
   /**

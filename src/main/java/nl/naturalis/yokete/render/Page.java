@@ -3,13 +3,13 @@ package nl.naturalis.yokete.render;
 import java.util.List;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.Template;
-import static nl.naturalis.yokete.render.TemplateStringifiers.BASIC_STRINGIFIER;
+import static nl.naturalis.yokete.render.StringifierFactory.BASIC_STRINGIFIER;
 
 /**
  * A {@code Page} is a factory for {@link RenderSession render sessions}. Its main component is the
  * {@link Template} to be rendered. Besides that it contains an {@link AccessorFactory} that
  * provides {@link Accessor accessors} for the data fed into the template and a {@link
- * TemplateStringifiers} telling the {@code RenderSession} how to stringify values.
+ * StringifierFactory} telling the {@code RenderSession} how to stringify values.
  *
  * <p>Note that the name <i>Page</i> is somewhat misleading because an HTML template need not be a
  * full-blown HTML page. It can also be an HTML snippet that you include or {@link
@@ -44,7 +44,7 @@ public final class Page {
    * @param stringifiers
    * @return
    */
-  public static Page configure(Template template, TemplateStringifiers stringifiers) {
+  public static Page configure(Template template, StringifierFactory stringifiers) {
     Accessor<?> acc = (x, y) -> Check.fail(RenderException::noAccessorProvided);
     AccessorFactory af = (x, y) -> acc;
     return configure(template, af, stringifiers);
@@ -54,7 +54,7 @@ public final class Page {
    * Creates a {@code Page} that will produce {@link RenderSession render sessions} for the
    * specified template, using the specified {@code specified AccessorFactory} to produce {@link
    * Accessor accessors} for source data for the template, and using the {@link
-   * TemplateStringifiers#BASIC_STRINGIFIER default stringifier} to stringify the source data.
+   * StringifierFactory#BASIC_STRINGIFIER default stringifier} to stringify the source data.
    *
    * @param template
    * @return
@@ -67,17 +67,17 @@ public final class Page {
    * Creates a {@code Page} that will produce {@link RenderSession render sessions} for the
    * specified template, using the specified {@code specified AccessorFactory} to produce {@link
    * Accessor accessors} for the source data for the template, and using the specified {@code
-   * TemplateStringifiers} to obtain stringifiers to stringify the values retrieved by the
+   * StringifierFactory} to obtain stringifiers to stringify the values retrieved by the
    * accessors.
    *
    * @param template The template for which the {@code Page} will create render sessions
    * @param accessor The {@code Accessor} implementation to use for extracting values from source
    *     data
-   * @param stringifiers The {@code TemplateStringifiers} instance to use for stringifying values.
+   * @param stringifiers The {@code StringifierFactory} instance to use for stringifying values.
    * @return A {@code Page} instance
    */
   public static Page configure(
-      Template template, AccessorFactory accessor, TemplateStringifiers stringifiers) {
+      Template template, AccessorFactory accessor, StringifierFactory stringifiers) {
     Check.notNull(template);
     Check.notNull(accessor);
     Check.notNull(stringifiers);
@@ -86,7 +86,7 @@ public final class Page {
 
   private final Template template;
   private final AccessorFactory accFactory;
-  private final TemplateStringifiers stringifiers;
+  private final StringifierFactory stringifiers;
 
   /**
    * Initiates a new {@code RenderSession}.
@@ -97,7 +97,7 @@ public final class Page {
     return new RenderSession(this);
   }
 
-  private Page(Template template, AccessorFactory accFactory, TemplateStringifiers stringifiers) {
+  private Page(Template template, AccessorFactory accFactory, StringifierFactory stringifiers) {
     this.template = template;
     this.accFactory = accFactory;
     this.stringifiers = stringifiers;
