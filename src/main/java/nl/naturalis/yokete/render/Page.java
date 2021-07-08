@@ -67,8 +67,7 @@ public final class Page {
    * Creates a {@code Page} that will produce {@link RenderSession render sessions} for the
    * specified template, using the specified {@code specified AccessorFactory} to produce {@link
    * Accessor accessors} for the source data for the template, and using the specified {@code
-   * StringifierFactory} to obtain stringifiers to stringify the values retrieved by the
-   * accessors.
+   * StringifierFactory} to obtain stringifiers to stringify the values retrieved by the accessors.
    *
    * @param template The template for which the {@code Page} will create render sessions
    * @param accessor The {@code Accessor} implementation to use for extracting values from source
@@ -101,6 +100,18 @@ public final class Page {
     this.template = template;
     this.accFactory = accFactory;
     this.stringifiers = stringifiers;
+  }
+
+  public Template getTemplate() {
+    return template;
+  }
+
+  public AccessorFactory getAccessorFactory() {
+    return accFactory;
+  }
+
+  public StringifierFactory getStringifierFactory() {
+    return stringifiers;
   }
 
   Accessor<?> getAccessor(Object sourceData) {
@@ -143,13 +154,5 @@ public final class Page {
     } catch (NullPointerException e) {
       throw BadStringifierException.stringifierNotNullResistant(template, varName);
     }
-  }
-
-  Template getTemplate() {
-    return template;
-  }
-
-  AccessorFactory getAccessorFactory() {
-    return accFactory;
   }
 }

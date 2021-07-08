@@ -8,10 +8,10 @@ import nl.naturalis.common.collection.TypeMap;
 import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.TemplateUtils;
 import static java.util.Collections.emptyMap;
-import static nl.naturalis.common.ArrayMethods.pack;
 import static nl.naturalis.common.ObjectMethods.ifNull;
 import static nl.naturalis.common.check.CommonChecks.deepNotEmpty;
 import static nl.naturalis.common.check.CommonChecks.in;
+import static nl.naturalis.common.check.CommonChecks.keyIn;
 import static nl.naturalis.common.check.CommonChecks.yes;
 import static nl.naturalis.yokete.template.TemplateUtils.getDeeplyNestedTemplate;
 
@@ -23,10 +23,10 @@ import static nl.naturalis.yokete.template.TemplateUtils.getDeeplyNestedTemplate
  * to specify a stringifier for it because this is default behaviour. In addition, all variables
  * with the same data type will usually also have to be stringified in the same way. (For example
  * you may want to format all integers according to your country's locale.) These generic,
- * type-based stringifiers can be configured using {@link Builder#setTypeStringifier(Class,
- * String...) Builder.setTypeStringifier}. Only if a template variable has very specific
- * stringification requirements would you register the stringifier using {@link
- * Builder#setStringifier(Stringifier, String...) Builder.setStringifier}.
+ * type-based stringifiers can be configured using {@link Builder#setTypeStringifier(String...,
+ * Class) Builder.setTypeStringifier}. Only if a template variable has very specific stringification
+ * requirements would you register the stringifier using {@link Builder#setStringifier(Stringifier,
+ * String...) Builder.setStringifier}.
  *
  * <p>Type-based stringifiers are internally kept in a {@link TypeMap}. This means that if a
  * stringifier is requested for some type, and that type is not in the {@code TypeMap}, but one of
@@ -46,7 +46,7 @@ import static nl.naturalis.yokete.template.TemplateUtils.getDeeplyNestedTemplate
  *       then that is the stringifier that is going to be used.
  *   <li>If a stringifier has been defined for all variables with that particular name (irrespective
  *       of which template they belong to), then that is the stringifier that is going to be used.
- *       See {@link Builder#setNameBasedStringifier(Stringifier, String...)
+ *       See {@link Builder#setNameBasedStringifier(String..., Stringifier)
  *       setNameBasedStringifier}.
  *   <li>If a stringifier has been defined for the data type of that particular variable, then that
  *       is the stringifier that is going to be used.
@@ -93,7 +93,8 @@ public final class StringifierFactory {
   public static class Builder {
 
     private static final String NO_SUCH_VARIABLE = "No such variable: \"%s\"";
-    private static final String ALREADY_SET = "Stringifier already set for variable \"%s\"";
+    private static final String VAR_ASSIGNED = "Stringifier already set for variable \"%s\"";
+    private static final String TYPE_ASSIGNED = "Stringifier already set for type \"%s\"";
 
     private final Map<Tuple<Template, String>, Stringifier> stringifiers = new HashMap<>();
 
@@ -165,17 +166,20 @@ public final class StringifierFactory {
      * @param varNames The variable names to associate the stringifier with.
      * @return This {@code Builder}
      */
-    public Builder setNameBasedStringifier(String varName, Stringifier stringifier) {
+    public Builder setNameBasedStringifier(Stringifier stringifier, String... varNames) {
       Check.notNull(stringifier, "stringifier");
-      Check.notNull(varName, "varName");
-      doRegister(stringifier, null, pack(varName));
+      Check.that(varNames, "varNames").is(deepNotEmpty());
+      doRegister(stringifier, null, varNames);
       return this;
     }
 
-    public Builder setTypeStringifier(Class<?> type, Stringifier stringifier) {
-      Check.notNull(type, "type");
+    public Builder setTypeStringifier(Stringifier stringifier, Class<?>... types) {
       Check.notNull(stringifier, "stringifier");
-      typeStringifiers.put(type, stringifier);
+      Check.that(types, "types").is(deepNotEmpty());
+      for (Class<?> t : types) {
+        Check.that(t).isNot(keyIn(), typeStringifiers, TYPE_ASSIGNED, t.getName());
+        typeStringifiers.put(t, stringifier);
+      }
       return this;
     }
 
@@ -192,10 +196,10 @@ public final class StringifierFactory {
       for (String varName : varNames) {
         Tuple<Template, String> var = Tuple.of(t, varName);
         if (t == null) {
-          Check.that(var).isNot(in(), stringifiers.keySet(), ALREADY_SET, varName);
+          Check.that(var).isNot(in(), stringifiers.keySet(), VAR_ASSIGNED, varName);
         } else {
           Check.that(varName).has(t::containsVariable, yes(), NO_SUCH_VARIABLE, varName);
-          Check.that(var).isNot(in(), stringifiers.keySet(), ALREADY_SET, varName);
+          Check.that(var).isNot(in(), stringifiers.keySet(), VAR_ASSIGNED, varName);
         }
         stringifiers.put(var, stringifier);
       }
@@ -232,7 +236,7 @@ public final class StringifierFactory {
 
   /**
    * Returns a new {@code StringifierFactory} instance enriched with the specified name-based
-   * stringifier. See {@link Builder#setNameBasedStringifier(Stringifier, String...)
+   * stringifier. See {@link Builder#setNameBasedStringifier(String..., Stringifier)
    * Builder.setNameBasedStringifier}.
    *
    * @param varName The variable name that the stringifier is associated with
@@ -244,7 +248,7 @@ public final class StringifierFactory {
     Check.notNull(varName, "varName");
     Check.notNull(stringifier, "stringifier");
     Tuple<Template, String> t = Tuple.of(null, varName);
-    Check.that(t).isNot(in(), stringifiers.keySet(), Builder.ALREADY_SET, varName);
+    Check.that(t).isNot(in(), stringifiers.keySet(), Builder.VAR_ASSIGNED, varName);
     Map<Tuple<Template, String>, Stringifier> stringifiers = new HashMap<>(this.stringifiers);
     stringifiers.put(t, stringifier);
     return new StringifierFactory(stringifiers, typeStringifiers, defStringifier);
