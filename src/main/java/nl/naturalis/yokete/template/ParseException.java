@@ -1,6 +1,5 @@
 package nl.naturalis.yokete.template;
 
-import java.nio.file.Path;
 import java.util.function.Function;
 import nl.naturalis.common.StringMethods;
 import nl.naturalis.yokete.YoketeException;
@@ -17,7 +16,7 @@ public class ParseException extends YoketeException {
 
   private static final String EMPTY_VARIABLE_NAME = ERR_BASE + "empty variable name";
 
-  private static final String INVALID_PATH = "File not found: \"%s\"";
+  private static final String INVALID_PATH = "Invalid path: \"%s\"";
 
   private static final String INVALID_INCLUDE_PATH = ERR_BASE + INVALID_PATH;
 
@@ -43,12 +42,8 @@ public class ParseException extends YoketeException {
 
   private static final String INCLUDE_NOT_TERMINATED = ERR_BASE + "include not terminated";
 
-  static Function<String, ParseException> invalidPath(Path path) {
-    return s -> new ParseException(String.format(INVALID_PATH, path));
-  }
-
-  static Function<String, ParseException> invalidIncludePath(String src, int pos, String path) {
-    return exc1(INVALID_INCLUDE_PATH, src, pos, path);
+  static ParseException invalidIncludePath(String src, int pos, String path) {
+    return exc0(INVALID_INCLUDE_PATH, src, pos, path);
   }
 
   static Function<String, ParseException> emptyPath(String src, int pos) {
@@ -96,7 +91,7 @@ public class ParseException extends YoketeException {
     return exc0(DANGLING_END_OF_TMPL, src, pos);
   }
 
-  private ParseException(String message) {
+  ParseException(String message) {
     super(message);
   }
 

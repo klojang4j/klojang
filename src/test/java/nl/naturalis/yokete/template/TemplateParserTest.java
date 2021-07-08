@@ -45,7 +45,7 @@ public class TemplateParserTest {
   @Test
   public void parseVariables02() throws ParseException {
     String src = "<tr>\n<td>~%html:foo%</td>\n<!-- some comment -->\n<td>~%text:bar%</td>\n</tr>";
-    Template template = Template.parseString(getClass(), src);
+    Template template = Template.parseString(src);
     // System.out.println(template);
     List<Part> parts = template.getParts();
     assertEquals(5, parts.size());

@@ -1,13 +1,15 @@
 package nl.naturalis.yokete.template;
 
-import java.nio.file.Path;
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import nl.naturalis.common.StringMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
+import static nl.naturalis.yokete.template.TemplateSourceType.*;
 
 /**
  * A {@code Template} captures the result of parsing a template file.
@@ -18,6 +20,8 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
  */
 public class Template {
 
+  private static final Logger LOG = LoggerFactory.getLogger(Template.class);
+
   /**
    * The name given to the root template: "@root". Any {@code Template} that is explicitly
    * instantiated by calling one of the {@code parse} methods gets this name. Templates nested
@@ -27,16 +31,19 @@ public class Template {
   public static final String ROOT_TEMPLATE_NAME = "@root";
 
   /**
-   * Parses the specified source code into a {@code Template} instance. Only use this constructor if
-   * the template does not {@code include} other templates (using {@code
-   * ~%%include:path/to/other/source/file%}). Otherwise a {@code ParseException} is thrown.
+   * Parses the specified source code into a {@code Template} instance. The specified class will be
+   * used to include other template files by calling {@link Class#getResourceAsStream(String)
+   * getResourceAsStream("/path/to/other/source/file")} on it.
    *
+   * @param clazz Any {@code Class} object that provides access to the included tempate files by
+   *     calling {@code getResourceAsStream} on it
    * @param source The source code for the {@code Template}
    * @return a new {@code Template} instance
    * @throws ParseException
    */
   public static Template parseString(String source) throws ParseException {
-    return parseString((Class<?>) null, source);
+    Check.notNull(source, "source");
+    return new Parser(ROOT_TEMPLATE_NAME, new TemplateId(), source).parse();
   }
 
   /**
@@ -51,26 +58,46 @@ public class Template {
    * @throws ParseException
    */
   public static Template parseString(Class<?> clazz, String source) throws ParseException {
-    return new Parser(ROOT_TEMPLATE_NAME, clazz, source).parse();
+    Check.notNull(clazz, "clazz");
+    Check.notNull(source, "source");
+    return new Parser(ROOT_TEMPLATE_NAME, new TemplateId(clazz), source).parse();
   }
 
   /**
-   * Loads the template file at the specified location by calling {@code
-   * clazz.getResourceAsStream(path.toString())} and parses its contents into a {@code Template}
-   * instance. The specified class will also be used to {@code include} other template files.
+   * Returns the {@code Template} corresponding to the resource. The resource is read using {@code
+   * clazz.getResourceAsStream(path)}. Since templates created from a resource are cached, calling
+   * this method multiple times with the same arguments will always returns the same {@code
+   * Template} instance. (Actually it is the package containing the class, rather than the class
+   * itself, that is used to identify the template - along with the specified path.)
    *
-   * @param clazz Any {@code Class} object that provides access to the tempate files by calling
+   * @param clazz Any {@code Class} object that provides access to the tempate file by calling
    *     {@code getResourceAsStream} on it
    * @param path The location of the template file
    * @return a new {@code Template} instance
    * @throws ParseException
    */
   public static Template parseResource(Class<?> clazz, String path) throws ParseException {
-    return new Parser(ROOT_TEMPLATE_NAME, clazz, Path.of(path)).parse();
+    Check.notNull(clazz, "clazz");
+    Check.notNull(path, "path");
+    return TemplateCache.INSTANCE.get(ROOT_TEMPLATE_NAME, new TemplateId(clazz, path));
+  }
+
+  /**
+   * Returns the {@code Template} corresponding to the specified path. Since templates created from
+   * a file are cached, calling this method multiple times with the same {@code path} argument will
+   * always returns the same {@code Template} instance.
+   *
+   * @param path The path of the file to be parsed
+   * @return The
+   * @throws ParseException
+   */
+  public static Template parseFile(String path) throws ParseException {
+    Check.notNull(path, "path");
+    return TemplateCache.INSTANCE.get(ROOT_TEMPLATE_NAME, new TemplateId(path));
   }
 
   private final String name;
-  private final Path path;
+  private final TemplateId id;
   private final List<Part> parts;
   private final Map<String, IntList> varIndices;
   private final IntList textIndices;
@@ -79,9 +106,9 @@ public class Template {
 
   private Template parent;
 
-  Template(String name, Path path, List<Part> parts) {
+  Template(String name, TemplateId id, List<Part> parts) {
     this.name = name;
-    this.path = path;
+    this.id = id.sourceType() == STRING ? null : id;
     this.parts = parts;
     this.varIndices = getVarIndices(parts);
     this.tmplIndices = getTmplIndices(parts);
@@ -124,8 +151,8 @@ public class Template {
    *
    * @return The file location (if any) of the source code for this {@code Template}
    */
-  public Path getPath() {
-    return path;
+  public TemplateId getPath() {
+    return id;
   }
 
   /**
@@ -296,20 +323,24 @@ public class Template {
     return names.isEmpty();
   }
 
-  /**
-   * The {@code Template} class explicitly overrides the {@code equals()} method such that the only
-   * object equal to a {@code Template} instance is the instance itself. Therefore you avoid
-   * creating two {@code Template} instances from the same source file.
-   */
   @Override
   public boolean equals(Object obj) {
-    return this == obj;
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    if (id == null) {
+      LOG.warn("Unreliable equals call on template created from anonymous string");
+      return false;
+    }
+    return id.equals(((Template) obj).id);
   }
 
-  /** Returns {@code System.identityHashCode(this)}. */
   @Override
   public int hashCode() {
-    return System.identityHashCode(this);
+    return id == null ? 0 : id.hashCode();
   }
 
   /**

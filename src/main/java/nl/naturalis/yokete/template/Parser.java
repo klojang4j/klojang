@@ -1,13 +1,9 @@
 package nl.naturalis.yokete.template;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Path;
+import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.IOMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.function.ThrowingBiFunction;
 import nl.naturalis.yokete.render.EscapeType;
@@ -21,27 +17,19 @@ class Parser {
       extends ThrowingBiFunction<UnparsedPart, Set<String>, List<Part>, ParseException> {}
 
   private final String tmplName;
-  private final Class<?> clazz;
-  private final Path path;
+  private final TemplateId id;
   private final String src;
 
-  Parser(String tmplName, Class<?> clazz, String src) {
+  Parser(String tmplName, TemplateId id, String src) {
     this.tmplName = tmplName;
-    this.path = null;
-    this.src = Check.notNull(src).ok();
-    this.clazz = clazz;
+    this.id = id;
+    this.src = src;
   }
 
-  Parser(String tmplName, Class<?> clazz, Path path) throws ParseException {
+  Parser(String tmplName, TemplateId id) throws InvalidPathException {
     this.tmplName = tmplName;
-    this.clazz = Check.notNull(clazz).ok();
-    this.path = path;
-    try (InputStream in = clazz.getResourceAsStream(path.toString())) {
-      Check.on(invalidPath(path), in).is(notNull());
-      this.src = IOMethods.toString(in);
-    } catch (IOException e) {
-      throw ExceptionMethods.uncheck(e);
-    }
+    this.id = id;
+    this.src = id.getSource();
   }
 
   Template parse() throws ParseException {
@@ -55,7 +43,7 @@ class Parser {
     parts = parse(parts, namesInUse, this::parseIncludedTmpls);
     parts = parse(parts, namesInUse, this::parseVars);
     parts = collectTextParts(parts);
-    return new Template(tmplName, path, List.copyOf(parts));
+    return new Template(tmplName, id, List.copyOf(parts));
   }
 
   /*
@@ -158,7 +146,7 @@ class Parser {
           .isNot(in(), names)
           .isNot(equalTo(), Template.ROOT_TEMPLATE_NAME);
       names.add(name);
-      Parser parser = new Parser(name, clazz, mySrc);
+      Parser parser = new Parser(name, id, mySrc);
       Template nested = parser.parse();
       parts.add(new InlineTemplatePart(nested, offset + m.start()));
       end = m.end();
@@ -191,11 +179,27 @@ class Parser {
       Check.on(duplicateTemplateName(src, offset + m.start(2), name), name)
           .isNot(in(), names)
           .isNot(equalTo(), Template.ROOT_TEMPLATE_NAME);
-      Check.on(missingClassObject(src, offset + m.start(3), name, path), clazz).is(notNull());
-      Check.on(invalidIncludePath(src, offset + m.start(3), path), clazz.getResource(path))
-          .is(notNull());
+
+      TemplateId newId;
+      if (id.clazz() != null) { // Load as resource
+        if (id.clazz().getResource(path) == null) {
+          throw invalidIncludePath(src, offset + m.start(3), path);
+        }
+        newId = new TemplateId(id.clazz(), path);
+      } else if (id.pathResolver() != null) { // Load using path resolver
+        PathResolver pr = id.pathResolver();
+        if (!pr.isValidPath(path).isEmpty() && !pr.isValidPath(path).get()) {
+          throw invalidIncludePath(src, offset + m.start(3), path);
+        }
+        newId = new TemplateId(id.pathResolver(), path);
+      } else { // Load from file system
+        if (!new File(path).isFile()) {
+          throw invalidIncludePath(src, offset + m.start(3), path);
+        }
+        newId = new TemplateId(path);
+      }
       names.add(name);
-      Template nested = TemplateCache.INSTANCE.get(name, clazz, path);
+      Template nested = TemplateCache.INSTANCE.get(name, newId);
       parts.add(new IncludedTemplatePart(nested, offset + m.start()));
       end = m.end();
     } while (m.find());
