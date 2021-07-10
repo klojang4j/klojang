@@ -10,8 +10,8 @@ class IntEmitters extends HashMap<Integer, Emitter<?, ?>> {
 
   IntEmitters() {
     put(INTEGER, new Emitter<>(GET_INT));
-    put(SMALLINT, new Emitter<>(GET_SHORT));
-    put(TINYINT, new Emitter<>(GET_BYTE));
+    put(SMALLINT, new Emitter<>(GET_SHORT, x -> NumberMethods.convert(x, Integer.class)));
+    put(TINYINT, new Emitter<>(GET_BYTE, x -> NumberMethods.convert(x, Integer.class)));
     put(REAL, new Emitter<Float, Integer>(GET_FLOAT, NumberMethods::convert));
     put(BIGINT, new Emitter<Long, Integer>(GET_LONG, NumberMethods::convert));
     Emitter<Double, Integer> vp0 = new Emitter<>(GET_DOUBLE, NumberMethods::convert);
