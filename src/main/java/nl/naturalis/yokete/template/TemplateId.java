@@ -9,7 +9,7 @@ import static nl.naturalis.common.StringMethods.concat;
 import static nl.naturalis.common.check.CommonChecks.illegalState;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 import static nl.naturalis.yokete.template.TemplateSourceType.COMPUTED;
-import static nl.naturalis.yokete.template.TemplateSourceType.FILE;
+import static nl.naturalis.yokete.template.TemplateSourceType.FILE_SYSTEM;
 import static nl.naturalis.yokete.template.TemplateSourceType.RESOURCE;
 import static nl.naturalis.yokete.template.TemplateSourceType.STRING;
 
@@ -35,7 +35,7 @@ public class TemplateId {
 
   TemplateId(File file) {
     this.path = Check.notNull(file, "file").ok().getAbsolutePath();
-    this.tst = FILE;
+    this.tst = FILE_SYSTEM;
     this.pathResolver = null;
     this.clazz = null;
   }
@@ -65,7 +65,7 @@ public class TemplateId {
   String getSource() throws InvalidPathException {
     if (path == null) {
       return Check.fail(illegalState(), ERR_NO_PATH, this);
-    } else if (tst == FILE) {
+    } else if (tst == FILE_SYSTEM) {
       try {
         return getSource(new FileInputStream(new File(path)));
       } catch (FileNotFoundException e) {
@@ -150,7 +150,7 @@ public class TemplateId {
           ";package=",
           clazz.getPackage().getName(),
           "]");
-    } else if (tst == FILE) {
+    } else if (tst == FILE_SYSTEM) {
       return concat("TemplateId[sourceType=", tst, ";path=", path, "]");
     }
     return concat("TemplateId[sourceType=", tst, ";path=", path, ";resolver=", pathResolver, "]");

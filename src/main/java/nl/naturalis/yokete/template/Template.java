@@ -23,12 +23,12 @@ public class Template {
   private static final Logger LOG = LoggerFactory.getLogger(Template.class);
 
   /**
-   * The name given to the root template: "@root". Any {@code Template} that is explicitly
+   * The name given to the root template: "{root}". Any {@code Template} that is explicitly
    * instantiated by calling one of the {@code parse} methods gets this name. Templates nested
    * inside this template get their name from the source code (for example: {@code ~%%begin:foo%} or
    * {@code ~%%include:/views/foo.html%} or {@code ~%%include:foo:/views/bar.html%}).
    */
-  public static final String ROOT_TEMPLATE_NAME = "@root";
+  public static final String ROOT_TEMPLATE_NAME = "{root}";
 
   /**
    * Parses the specified source code into a {@code Template} instance. The specified class will be
