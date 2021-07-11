@@ -63,9 +63,9 @@ class TemplateCache {
         String eldest = entries.pop();
         LOG.trace("Cache overflow. Evicting {}", eldest);
         cache.remove(eldest);
+        entries.add(id.path());
       }
       cache.put(id.path(), t);
-      entries.add(id.path());
     } else {
       LOG.trace("Found!");
     }
