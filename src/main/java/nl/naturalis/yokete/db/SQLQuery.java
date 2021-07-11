@@ -12,8 +12,8 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.yokete.db.rs.Emitter;
-import nl.naturalis.yokete.db.rs.EmitterNegotiator;
+import nl.naturalis.yokete.db.rs.RsExtractor;
+import nl.naturalis.yokete.db.rs.ExtractorNegotiator;
 import static nl.naturalis.common.ObjectMethods.ifNull;
 
 public class SQLQuery extends SQLStatement<SQLQuery> {
@@ -64,7 +64,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     ResultSet rs = executeAndNext();
     try {
       int sqlType = rs.getMetaData().getColumnType(1);
-      Emitter<?, T> emitter = EmitterNegotiator.getInstance().getEmitter(clazz, sqlType);
+      RsExtractor<?, T> emitter = ExtractorNegotiator.getInstance().findExtractor(clazz, sqlType);
       return emitter.getValue(rs, 1, clazz);
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
@@ -105,10 +105,10 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
         return Collections.emptyList();
       }
       int sqlType = rs.getMetaData().getColumnType(1);
-      Emitter<?, T> emitter = EmitterNegotiator.getInstance().getEmitter(clazz, sqlType);
+      RsExtractor<?, T> extractor = ExtractorNegotiator.getInstance().findExtractor(clazz, sqlType);
       List<T> list = new ArrayList<>(expectedSize);
       do {
-        list.add(emitter.getValue(rs, 1, clazz));
+        list.add(extractor.getValue(rs, 1, clazz));
       } while (rs.next());
       return list;
     } catch (Throwable t) {

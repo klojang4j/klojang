@@ -4,42 +4,40 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.db.SQLTypeNames;
 import static java.sql.Types.*;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
-import static nl.naturalis.yokete.db.rs.RSGetter.*;
+import static nl.naturalis.yokete.db.rs.RsMethod.*;
 
-@ModulePrivate
-public class RSGetters {
+class RsGetters {
 
-  private static RSGetters INSTANCE;
+  private static RsGetters INSTANCE;
 
-  public static RSGetters getInstance() {
+  public static RsGetters getInstance() {
     if (INSTANCE == null) {
-      INSTANCE = new RSGetters();
+      INSTANCE = new RsGetters();
     }
     return INSTANCE;
   }
 
-  private final Map<Integer, RSGetter<?>> cache;
+  private final Map<Integer, RsMethod<?>> cache;
 
-  private RSGetters() {
+  private RsGetters() {
     cache = createCache();
   }
 
   @SuppressWarnings("unchecked")
-  public <T> RSGetter<T> getReader(int sqlType) {
+  public <T> RsMethod<T> getReader(int sqlType) {
     // This implicitly checks that the specified int is one of the
     // static final int constants in the java.sql.Types class
     String typeName = SQLTypeNames.getTypeName(sqlType);
     Check.that(sqlType).is(keyIn(), cache, "Unsupported SQL type: %s", typeName);
-    return (RSGetter<T>) cache.get(sqlType);
+    return (RsMethod<T>) cache.get(sqlType);
   }
 
-  private static Map<Integer, RSGetter<?>> createCache() {
-    Map<Integer, RSGetter<?>> tmp = new HashMap<>();
+  private static Map<Integer, RsMethod<?>> createCache() {
+    Map<Integer, RsMethod<?>> tmp = new HashMap<>();
     tmp.put(VARCHAR, GET_STRING);
     tmp.put(LONGVARCHAR, GET_STRING);
     tmp.put(NVARCHAR, GET_STRING);

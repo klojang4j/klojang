@@ -8,27 +8,32 @@ import java.sql.ResultSet;
 import java.sql.Time;
 import java.sql.Timestamp;
 import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.ModulePrivate;
 import static java.lang.invoke.MethodHandles.lookup;
 
-@ModulePrivate
-public class RSGetter<COLUMN_TYPE> {
+/**
+ * Represents one of the {@code getXXX} methods of {@code ResultSet}. Note that in spite of the name
+ * this class is not built around Java reflection but rather relies on {@code java.lang.invoke}.
+ *
+ * @author Ayco Holleman
+ * @param <COLUMN_TYPE>
+ */
+class RsMethod<COLUMN_TYPE> {
 
-  static final RSGetter<String> GET_STRING = getter("getString", String.class);
-  static final RSGetter<Integer> GET_INT = getter("getInt", int.class);
-  static final RSGetter<Float> GET_FLOAT = getter("getFloat", float.class);
-  static final RSGetter<Double> GET_DOUBLE = getter("getDouble", double.class);
-  static final RSGetter<Long> GET_LONG = getter("getLong", long.class);
-  static final RSGetter<Short> GET_SHORT = getter("getShort", short.class);
-  static final RSGetter<Byte> GET_BYTE = getter("getByte", byte.class);
-  static final RSGetter<Boolean> GET_BOOLEAN = getter("getBoolean", boolean.class);
-  static final RSGetter<Date> GET_DATE = getter("getDate", Date.class);
-  static final RSGetter<Time> GET_TIME = getter("getTime", Time.class);
-  static final RSGetter<Timestamp> GET_TIMESTAMP = getter("getTimestamp", Timestamp.class);
-  static final RSGetter<BigDecimal> GET_BIG_DECIMAL = getter("getBigDecimal", BigDecimal.class);
+  static final RsMethod<String> GET_STRING = getter("getString", String.class);
+  static final RsMethod<Integer> GET_INT = getter("getInt", int.class);
+  static final RsMethod<Float> GET_FLOAT = getter("getFloat", float.class);
+  static final RsMethod<Double> GET_DOUBLE = getter("getDouble", double.class);
+  static final RsMethod<Long> GET_LONG = getter("getLong", long.class);
+  static final RsMethod<Short> GET_SHORT = getter("getShort", short.class);
+  static final RsMethod<Byte> GET_BYTE = getter("getByte", byte.class);
+  static final RsMethod<Boolean> GET_BOOLEAN = getter("getBoolean", boolean.class);
+  static final RsMethod<Date> GET_DATE = getter("getDate", Date.class);
+  static final RsMethod<Time> GET_TIME = getter("getTime", Time.class);
+  static final RsMethod<Timestamp> GET_TIMESTAMP = getter("getTimestamp", Timestamp.class);
+  static final RsMethod<BigDecimal> GET_BIG_DECIMAL = getter("getBigDecimal", BigDecimal.class);
 
   // Invokes <T> ResultSet.getObject(columnIndex, Class<T>)
-  static <T> RSGetter<T> objectGetter(Class<T> returnType) {
+  static <T> RsMethod<T> objectGetter(Class<T> returnType) {
     MethodType mt = MethodType.methodType(Object.class, int.class, Class.class);
     MethodHandle mh;
     try {
@@ -36,7 +41,7 @@ public class RSGetter<COLUMN_TYPE> {
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw ExceptionMethods.uncheck(e);
     }
-    return new RSGetter<>(mh, returnType);
+    return new RsMethod<>(mh, returnType);
   }
 
   private final MethodHandle method;
@@ -46,11 +51,11 @@ public class RSGetter<COLUMN_TYPE> {
   // getObject. In anyother case classArg will be null.
   private final Class<?> classArg;
 
-  private RSGetter(MethodHandle method) {
+  private RsMethod(MethodHandle method) {
     this(method, null);
   }
 
-  private RSGetter(MethodHandle method, Class<?> classArg) {
+  private RsMethod(MethodHandle method, Class<?> classArg) {
     this.method = method;
     this.classArg = classArg;
   }
@@ -65,7 +70,7 @@ public class RSGetter<COLUMN_TYPE> {
     return rs.wasNull() ? null : val;
   }
 
-  private static <T> RSGetter<T> getter(String methodName, Class<T> returnType) {
+  private static <T> RsMethod<T> getter(String methodName, Class<T> returnType) {
     MethodType mt = MethodType.methodType(returnType, int.class);
     MethodHandle mh;
     try {
@@ -73,6 +78,6 @@ public class RSGetter<COLUMN_TYPE> {
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw ExceptionMethods.uncheck(e);
     }
-    return new RSGetter<>(mh);
+    return new RsMethod<>(mh);
   }
 }

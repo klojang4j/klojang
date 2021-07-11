@@ -18,8 +18,7 @@ import nl.naturalis.common.invoke.SetterFactory;
 public class BeanValueSetter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransporter {
 
   public static <U> U toBean(
-      ResultSet rs, Supplier<U> beanSupplier, BeanValueSetter<?, ?>[] setters)
-      throws Throwable {
+      ResultSet rs, Supplier<U> beanSupplier, BeanValueSetter<?, ?>[] setters) throws Throwable {
     U bean = beanSupplier.get();
     for (BeanValueSetter<?, ?> setter : setters) {
       setter.setValue(rs, bean);
@@ -30,7 +29,7 @@ public class BeanValueSetter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransporte
   public static BeanValueSetter<?, ?>[] createSetters(
       ResultSet rs, Class<?> beanClass, UnaryOperator<String> nameMapper) {
     Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(beanClass);
-    EmitterNegotiator negotiator = EmitterNegotiator.getInstance();
+    ExtractorNegotiator negotiator = ExtractorNegotiator.getInstance();
     try {
       ResultSetMetaData rsmd = rs.getMetaData();
       int sz = rsmd.getColumnCount();
@@ -43,7 +42,7 @@ public class BeanValueSetter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransporte
         Setter setter = setters.get(property);
         if (setter != null) {
           Class<?> javaType = setter.getParamType();
-          Emitter<?, ?> synapse = negotiator.getEmitter(javaType, sqlType);
+          RsExtractor<?, ?> synapse = negotiator.findExtractor(javaType, sqlType);
           transporters.add(new BeanValueSetter<>(synapse, setter, jdbcIdx, sqlType));
         }
       }
@@ -53,13 +52,13 @@ public class BeanValueSetter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransporte
     }
   }
 
-  private final Emitter<COLUMN_TYPE, FIELD_TYPE> emitter;
+  private final RsExtractor<COLUMN_TYPE, FIELD_TYPE> emitter;
   private final Setter setter;
   private final int jdbcIdx;
   private final int sqlType;
 
   private BeanValueSetter(
-      Emitter<COLUMN_TYPE, FIELD_TYPE> emitter, Setter setter, int jdbcIdx, int sqlType) {
+      RsExtractor<COLUMN_TYPE, FIELD_TYPE> emitter, Setter setter, int jdbcIdx, int sqlType) {
     this.emitter = emitter;
     this.setter = setter;
     this.jdbcIdx = jdbcIdx;

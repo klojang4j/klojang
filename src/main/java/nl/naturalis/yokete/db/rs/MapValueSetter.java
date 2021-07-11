@@ -41,7 +41,7 @@ public class MapValueSetter<COLUMN_TYPE> implements ValueTransporter {
 
   public static MapValueSetter<?>[] createMapValueSetters(
       ResultSet rs, UnaryOperator<String> mapper) {
-    RSGetters getters = RSGetters.getInstance();
+    RsGetters getters = RsGetters.getInstance();
     try {
       ResultSetMetaData rsmd = rs.getMetaData();
       int sz = rsmd.getColumnCount();
@@ -49,7 +49,7 @@ public class MapValueSetter<COLUMN_TYPE> implements ValueTransporter {
       for (int idx = 0; idx < sz; ++idx) {
         int jdbcIdx = idx + 1; // JDBC is one-based
         int sqlType = rsmd.getColumnType(jdbcIdx);
-        RSGetter<?> getter = getters.getReader(sqlType);
+        RsMethod<?> getter = getters.getReader(sqlType);
         String label = rsmd.getColumnLabel(jdbcIdx);
         String mapKey = mapper.apply(label);
         setters[idx] = new MapValueSetter<>(getter, jdbcIdx, sqlType, mapKey);
@@ -60,12 +60,12 @@ public class MapValueSetter<COLUMN_TYPE> implements ValueTransporter {
     }
   }
 
-  private final RSGetter<COLUMN_TYPE> rsGetter;
+  private final RsMethod<COLUMN_TYPE> rsGetter;
   private final int jdbcIdx;
   private final int sqlType;
   private final String key;
 
-  private MapValueSetter(RSGetter<COLUMN_TYPE> reader, int jdbcIdx, int sqlType, String key) {
+  private MapValueSetter(RsMethod<COLUMN_TYPE> reader, int jdbcIdx, int sqlType, String key) {
     this.rsGetter = reader;
     this.jdbcIdx = jdbcIdx;
     this.sqlType = sqlType;
