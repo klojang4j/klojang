@@ -29,27 +29,27 @@ public class ExtractorNegotiator {
   }
 
   /*
-   * The entry within the nested maps of the emittersByType that points to the Emitter to use if the
+   * The entry within the nested maps of the extractorsByType that points to the Emitter to use if the
    * nested map does not contain a specific Emitter for the requested SQL type. Make sure DEFAULT
    * does not correspond to any of the int constants in the java.sql.Types class.
    */
   static final Integer DEFAULT = Integer.MIN_VALUE;
 
-  private final Map<Class<?>, Map<Integer, RsExtractor<?, ?>>> emittersByType;
+  private final Map<Class<?>, Map<Integer, RsExtractor<?, ?>>> extractorsByType;
 
   private ExtractorNegotiator() {
-    emittersByType = createEmitters();
+    extractorsByType = configure();
   }
 
   @SuppressWarnings("unchecked")
   public <T, U> RsExtractor<T, U> findExtractor(Class<U> fieldType, int sqlType) {
-    if (!emittersByType.containsKey(fieldType)) {
+    if (!extractorsByType.containsKey(fieldType)) {
       return Check.fail("Type not supported: %s", prettyClassName(fieldType));
     }
     // This implicitly checks that the specified int is one of the
     // static final int constants in the java.sql.Types class
     String sqlTypeName = sqlType == DEFAULT ? null : getTypeName(sqlType);
-    Map<Integer, RsExtractor<?, ?>> extractors = emittersByType.get(fieldType);
+    Map<Integer, RsExtractor<?, ?>> extractors = extractorsByType.get(fieldType);
     if (!extractors.containsKey(sqlType)) {
       if (extractors.containsKey(DEFAULT)) {
         return (RsExtractor<T, U>) extractors.get(DEFAULT);
@@ -59,7 +59,7 @@ public class ExtractorNegotiator {
     return (RsExtractor<T, U>) extractors.get(sqlType);
   }
 
-  private static Map<Class<?>, Map<Integer, RsExtractor<?, ?>>> createEmitters() {
+  private static Map<Class<?>, Map<Integer, RsExtractor<?, ?>>> configure() {
     TypeMap<Map<Integer, RsExtractor<?, ?>>> map = new TypeMap<>();
     Map<Integer, RsExtractor<?, ?>> extractors;
     map.put(String.class, my(new StringExtractors()));
@@ -77,7 +77,7 @@ public class ExtractorNegotiator {
     map.put(boolean.class, extractors);
     map.put(LocalDate.class, my(new LocalDateExtractors()));
     map.put(LocalDateTime.class, my(new LocalDateTimeExtractors()));
-    map.put(Enum.class, new EnumExtractors());
+    map.put(Enum.class, my(new EnumExtractors()));
     return map;
   }
 

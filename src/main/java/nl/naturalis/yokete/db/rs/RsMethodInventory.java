@@ -10,25 +10,25 @@ import static java.sql.Types.*;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 import static nl.naturalis.yokete.db.rs.RsMethod.*;
 
-class RsGetters {
+class RsMethodInventory {
 
-  private static RsGetters INSTANCE;
+  private static RsMethodInventory INSTANCE;
 
-  public static RsGetters getInstance() {
+  static RsMethodInventory getInstance() {
     if (INSTANCE == null) {
-      INSTANCE = new RsGetters();
+      INSTANCE = new RsMethodInventory();
     }
     return INSTANCE;
   }
 
   private final Map<Integer, RsMethod<?>> cache;
 
-  private RsGetters() {
+  private RsMethodInventory() {
     cache = createCache();
   }
 
   @SuppressWarnings("unchecked")
-  public <T> RsMethod<T> getReader(int sqlType) {
+  <T> RsMethod<T> getMethod(int sqlType) {
     // This implicitly checks that the specified int is one of the
     // static final int constants in the java.sql.Types class
     String typeName = SQLTypeNames.getTypeName(sqlType);

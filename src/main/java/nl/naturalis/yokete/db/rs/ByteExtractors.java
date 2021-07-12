@@ -10,7 +10,6 @@ import static nl.naturalis.yokete.db.rs.ExtractorNegotiator.DEFAULT;
 class ByteExtractors extends HashMap<Integer, RsExtractor<?, ?>> {
 
   ByteExtractors() {
-
     put(TINYINT, new RsExtractor<Byte, Byte>(GET_BYTE));
     put(INTEGER, new RsExtractor<Integer, Byte>(GET_INT, NumberMethods::convert));
     put(SMALLINT, new RsExtractor<Short, Byte>(GET_SHORT, NumberMethods::convert));

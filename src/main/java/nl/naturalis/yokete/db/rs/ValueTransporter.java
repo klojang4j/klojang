@@ -8,7 +8,11 @@ import java.util.List;
 import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.yokete.db.SQLTypeNames;
 
-/* Transports a single value from a ResultSet to a JavaBean or Map<String,Object> */
+/**
+ * Transports a single value from the {@code ResultSet} to the JavaBean or <code>
+ * Map&lt;String,Object&gt;</code>. It embodies the very last step in the journey from {@code
+ * ResultSet} to bean/map.
+ */
 @ModulePrivate
 public interface ValueTransporter {
 

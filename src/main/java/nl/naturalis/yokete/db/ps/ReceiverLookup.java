@@ -7,7 +7,7 @@ abstract class ReceiverLookup<T> extends HashMap<Integer, Receiver<?, ?>> {
 
   ReceiverLookup() {}
 
-  void putMultiple(Receiver<?, ?> receiver, int... sqlTypes) {
+  void putMultiple(Receiver<T, ?> receiver, int... sqlTypes) {
     IntStream.of(sqlTypes).forEach(i -> put(i, receiver));
   }
 

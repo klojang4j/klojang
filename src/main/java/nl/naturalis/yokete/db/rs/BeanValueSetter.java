@@ -42,8 +42,8 @@ public class BeanValueSetter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransporte
         Setter setter = setters.get(property);
         if (setter != null) {
           Class<?> javaType = setter.getParamType();
-          RsExtractor<?, ?> synapse = negotiator.findExtractor(javaType, sqlType);
-          transporters.add(new BeanValueSetter<>(synapse, setter, jdbcIdx, sqlType));
+          RsExtractor<?, ?> extractor = negotiator.findExtractor(javaType, sqlType);
+          transporters.add(new BeanValueSetter<>(extractor, setter, jdbcIdx, sqlType));
         }
       }
       return transporters.toArray(new BeanValueSetter[transporters.size()]);
@@ -52,14 +52,14 @@ public class BeanValueSetter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransporte
     }
   }
 
-  private final RsExtractor<COLUMN_TYPE, FIELD_TYPE> emitter;
+  private final RsExtractor<COLUMN_TYPE, FIELD_TYPE> extractor;
   private final Setter setter;
   private final int jdbcIdx;
   private final int sqlType;
 
   private BeanValueSetter(
-      RsExtractor<COLUMN_TYPE, FIELD_TYPE> emitter, Setter setter, int jdbcIdx, int sqlType) {
-    this.emitter = emitter;
+      RsExtractor<COLUMN_TYPE, FIELD_TYPE> extractor, Setter setter, int jdbcIdx, int sqlType) {
+    this.extractor = extractor;
     this.setter = setter;
     this.jdbcIdx = jdbcIdx;
     this.sqlType = sqlType;
@@ -72,7 +72,7 @@ public class BeanValueSetter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransporte
 
   @SuppressWarnings("unchecked")
   private <U> void setValue(ResultSet rs, U bean) throws Throwable {
-    FIELD_TYPE val = emitter.getValue(rs, jdbcIdx, (Class<FIELD_TYPE>) setter.getParamType());
+    FIELD_TYPE val = extractor.getValue(rs, jdbcIdx, (Class<FIELD_TYPE>) setter.getParamType());
     setter.getMethod().invoke(bean, val);
   }
 }

@@ -11,13 +11,13 @@ import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.db.rs.BeanValueSetter;
-import nl.naturalis.yokete.db.rs.MapValueSetter;
+import nl.naturalis.yokete.db.rs.MapEntryProducer;
 import static java.sql.Statement.NO_GENERATED_KEYS;
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
 import static nl.naturalis.common.check.CommonChecks.illegalState;
 import static nl.naturalis.common.check.CommonChecks.in;
 import static nl.naturalis.common.check.CommonChecks.notNull;
-import static nl.naturalis.yokete.db.rs.MapValueSetter.populateMap;
+import static nl.naturalis.yokete.db.rs.MapEntryProducer.populateMap;
 
 public class SQLInsert extends SQLStatement<SQLInsert> {
 
@@ -80,8 +80,8 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
           }
           for (Tuple<Object, String> t : bindBackObjs) {
             if (t.getLeft() instanceof Map) {
-              MapValueSetter<?>[] transporters =
-                  MapValueSetter.createMapValueSetters(rs, s -> t.getRight());
+              MapEntryProducer<?>[] transporters =
+                  MapEntryProducer.createMapValueSetters(rs, s -> t.getRight());
               populateMap(rs, (Map<String, Object>) t.getLeft(), transporters);
             } else {
               Class<T> beanClass = (Class<T>) t.getLeft().getClass();

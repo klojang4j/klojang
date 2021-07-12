@@ -6,15 +6,15 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.yokete.db.rs.MapValueSetter;
+import nl.naturalis.yokete.db.rs.MapEntryProducer;
 import static nl.naturalis.common.StringMethods.implode;
-import static nl.naturalis.yokete.db.rs.MapValueSetter.createMapValueSetters;
+import static nl.naturalis.yokete.db.rs.MapEntryProducer.createMapValueSetters;
 import static nl.naturalis.yokete.db.rs.ValueTransporter.getMatchErrors;
 import static nl.naturalis.yokete.db.rs.ValueTransporter.isCompatible;
 
 public class MappifierBox {
 
-  private final AtomicReference<MapValueSetter<?>[]> ref = new AtomicReference<>();
+  private final AtomicReference<MapEntryProducer<?>[]> ref = new AtomicReference<>();
 
   private final UnaryOperator<String> mapper;
   private final boolean verify;
@@ -36,7 +36,7 @@ public class MappifierBox {
     if (!rs.next()) {
       return EmptyMappifier.INSTANCE;
     }
-    MapValueSetter<?>[] setters;
+    MapEntryProducer<?>[] setters;
     if ((setters = ref.getPlain()) == null) {
       synchronized (this) {
         if (ref.get() == null) {

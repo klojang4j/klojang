@@ -36,7 +36,7 @@ public class RsExtractor<COLUMN_TYPE, FIELD_TYPE> {
   @SuppressWarnings("unchecked")
   public FIELD_TYPE getValue(ResultSet rs, int columnIndex, Class<FIELD_TYPE> toType)
       throws Throwable {
-    COLUMN_TYPE val = reader.readColumn(rs, columnIndex);
+    COLUMN_TYPE val = reader.call(rs, columnIndex);
     if (adapter == null) {
       return (FIELD_TYPE) val;
     }

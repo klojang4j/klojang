@@ -60,7 +60,7 @@ class RsMethod<COLUMN_TYPE> {
     this.classArg = classArg;
   }
 
-  public COLUMN_TYPE readColumn(ResultSet rs, int columnIndex) throws Throwable {
+  public COLUMN_TYPE call(ResultSet rs, int columnIndex) throws Throwable {
     COLUMN_TYPE val;
     if (classArg == null) {
       val = (COLUMN_TYPE) method.invoke(rs, columnIndex);

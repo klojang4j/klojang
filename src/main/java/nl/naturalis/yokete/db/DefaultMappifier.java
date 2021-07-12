@@ -6,15 +6,15 @@ import java.util.List;
 import java.util.Optional;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.yokete.db.rs.MapValueSetter;
+import nl.naturalis.yokete.db.rs.MapEntryProducer;
 import static nl.naturalis.common.check.CommonChecks.gt;
 
 class DefaultMappifier implements ResultSetMappifier {
 
   private final ResultSet rs;
-  private final MapValueSetter<?>[] transporters;
+  private final MapEntryProducer<?>[] transporters;
 
-  DefaultMappifier(ResultSet rs, MapValueSetter<?>[] transporters) {
+  DefaultMappifier(ResultSet rs, MapEntryProducer<?>[] transporters) {
     this.rs = rs;
     this.transporters = transporters;
   }
@@ -34,7 +34,7 @@ class DefaultMappifier implements ResultSetMappifier {
   public Optional<Row> mappify() {
     Check.notNull(rs);
     try {
-      return Optional.of(MapValueSetter.toRow(rs, transporters));
+      return Optional.of(MapEntryProducer.toRow(rs, transporters));
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
     }
@@ -58,7 +58,7 @@ class DefaultMappifier implements ResultSetMappifier {
     int i = 0;
     try {
       do {
-        all.add(MapValueSetter.toRow(rs, transporters));
+        all.add(MapEntryProducer.toRow(rs, transporters));
       } while (++i < limit && rs.next());
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
@@ -98,7 +98,7 @@ class DefaultMappifier implements ResultSetMappifier {
     List<Row> all = new ArrayList<>(sizeEstimate);
     try {
       do {
-        all.add(MapValueSetter.toRow(rs, transporters));
+        all.add(MapEntryProducer.toRow(rs, transporters));
       } while (rs.next());
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);

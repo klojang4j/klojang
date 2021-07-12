@@ -1,5 +1,6 @@
 package nl.naturalis.yokete.db;
 
+import java.sql.ResultSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,10 +9,22 @@ import nl.naturalis.common.NumberMethods;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
+import nl.naturalis.yokete.accessors.RowAccessor;
+import nl.naturalis.yokete.template.Template;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.common.check.CommonChecks.between;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
+/**
+ * A thin wrapper around a {@code Map&lt;String,Object&gt;} instance that mimicks some of the
+ * behaviours of {@link ResultSet}. {@code Row} objects are produced by a {@link ResultSetMappifier}
+ * and can be quickly pushed up into the higher layers of your application without them actually
+ * acquiring an awkward dependency on {@code java.sql}. Once there they can be processed by a {@link
+ * RowAccessor} in order to populate a {@link Template}. Note that an important difference between a
+ * {@code Row} and a {@code ResultSet} is that a {@code Row} is writable, too.
+ *
+ * @author Ayco Holleman
+ */
 public class Row {
 
   private static final String ERR0 = "No such column: \"%s\"";
