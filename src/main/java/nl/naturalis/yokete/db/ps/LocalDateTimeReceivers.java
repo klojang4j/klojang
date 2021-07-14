@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import static java.sql.Types.*;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
-import static nl.naturalis.yokete.db.ps.PSSetter.SET_TIMESTAMP;
+import static nl.naturalis.yokete.db.ps.PsSetter.SET_TIMESTAMP;
 
 public class LocalDateTimeReceivers extends ReceiverLookup<LocalDateTime> {
 

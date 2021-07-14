@@ -3,10 +3,10 @@ package nl.naturalis.yokete.db.ps;
 import nl.naturalis.common.Bool;
 import nl.naturalis.common.NumberMethods;
 import static java.sql.Types.*;
-import static nl.naturalis.yokete.db.ps.PSSetter.SET_BOOLEAN;
-import static nl.naturalis.yokete.db.ps.PSSetter.SET_BYTE;
-import static nl.naturalis.yokete.db.ps.PSSetter.SET_INT;
-import static nl.naturalis.yokete.db.ps.PSSetter.SET_SHORT;
+import static nl.naturalis.yokete.db.ps.PsSetter.SET_BOOLEAN;
+import static nl.naturalis.yokete.db.ps.PsSetter.SET_BYTE;
+import static nl.naturalis.yokete.db.ps.PsSetter.SET_INT;
+import static nl.naturalis.yokete.db.ps.PsSetter.SET_SHORT;
 
 class IntReceivers extends ReceiverLookup<Integer> {
 

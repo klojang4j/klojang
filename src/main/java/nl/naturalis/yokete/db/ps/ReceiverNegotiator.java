@@ -9,11 +9,11 @@ import static nl.naturalis.common.ClassMethods.prettyClassName;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 import static nl.naturalis.yokete.db.SQLTypeNames.getTypeName;
 
-public class ReceiverNegotiator {
+class ReceiverNegotiator {
 
   private static ReceiverNegotiator INSTANCE;
 
-  public static ReceiverNegotiator getInstance() {
+  static ReceiverNegotiator getInstance() {
     if (INSTANCE == null) {
       INSTANCE = new ReceiverNegotiator();
     }
@@ -26,12 +26,12 @@ public class ReceiverNegotiator {
     all = createReceivers();
   }
 
-  public <T, U> Receiver<T, U> getDefaultReceiver(Class<T> fieldType) {
-    return getReceiver(fieldType, null);
+  <T, U> Receiver<T, U> getDefaultReceiver(Class<T> fieldType) {
+    return findReceiver(fieldType, null);
   }
 
   @SuppressWarnings("unchecked")
-  public <T, U> Receiver<T, U> getReceiver(Class<T> fieldType, Integer sqlType) {
+  <T, U> Receiver<T, U> findReceiver(Class<T> fieldType, Integer sqlType) {
     Check.that(fieldType).is(keyIn(), all, "Type not supported: %s", prettyClassName(fieldType));
     if (sqlType == null) {
       return (Receiver<T, U>) all.get(fieldType).getDefaultReceiver();

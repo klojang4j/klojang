@@ -44,23 +44,23 @@ public class PagingDataHelper {
     this.windowSize = Check.that(windowSize, "windowSize").is(gte(), 2).intValue();
   }
 
-  public PagingDataHelper rowCount(int rowCount) {
+  public PagingDataHelper setRowCount(int rowCount) {
     this.rowCount = Check.that(rowCount).isNot(negative()).intValue();
     return this;
   }
 
-  public PagingDataHelper rowsPerPage(int rowsPerPage) {
+  public PagingDataHelper setRowsPerPage(int rowsPerPage) {
     this.rowsPerPage = Check.that(rowsPerPage).is(positive()).intValue();
     return this;
   }
 
-  public PagingDataHelper firstPage() {
+  public PagingDataHelper selectFirstPage() {
     page = 0;
     first = 0;
     return this;
   }
 
-  public PagingDataHelper prevPage() {
+  public PagingDataHelper selectPreviousPage() {
     page = Math.max(0, --page);
     if (page < first) {
       first = shift() ? page : nextWindow();
@@ -68,7 +68,7 @@ public class PagingDataHelper {
     return this;
   }
 
-  public PagingDataHelper nextPage() {
+  public PagingDataHelper selectNextPage() {
     page = clamp(++page);
     if (page >= first + windowSize) {
       if (shift()) {
@@ -80,7 +80,7 @@ public class PagingDataHelper {
     return this;
   }
 
-  public PagingDataHelper lastPage() {
+  public PagingDataHelper selectLastPage() {
     Check.that(rowCount).is(ne(), -1, ERR_NO_ROW_COUNT);
     page = clamp(getPageCount());
     if (shift()) {
@@ -91,7 +91,7 @@ public class PagingDataHelper {
     return this;
   }
 
-  public PagingDataHelper page(int pageNo) {
+  public PagingDataHelper setSelectedPage(int pageNo) {
     Check.that(rowCount).is(ne(), -1, ERR_NO_ROW_COUNT);
     page = clamp(pageNo);
     if (page < first) {

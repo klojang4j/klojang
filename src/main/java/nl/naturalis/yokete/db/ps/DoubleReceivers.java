@@ -3,7 +3,7 @@ package nl.naturalis.yokete.db.ps;
 import nl.naturalis.common.Bool;
 import nl.naturalis.common.NumberMethods;
 import static java.sql.Types.*;
-import static nl.naturalis.yokete.db.ps.PSSetter.*;
+import static nl.naturalis.yokete.db.ps.PsSetter.*;
 
 class DoubleReceivers extends ReceiverLookup<Double> {
 

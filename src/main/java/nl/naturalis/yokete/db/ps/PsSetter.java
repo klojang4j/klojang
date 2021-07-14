@@ -20,33 +20,33 @@ import static nl.naturalis.common.StringMethods.lpad;
  * @author Ayco Holleman
  * @param <PARAM_TYPE>
  */
-public class PSSetter<PARAM_TYPE> {
+public class PsSetter<PARAM_TYPE> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PSSetter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(PsSetter.class);
 
-  static PSSetter<String> SET_STRING = setter("setString", String.class);
-  static PSSetter<Integer> SET_INT = setter("setInt", int.class);
-  static PSSetter<Double> SET_DOUBLE = setter("setDouble", double.class);
-  static PSSetter<Long> SET_LONG = setter("setLong", long.class);
-  static PSSetter<Float> SET_FLOAT = setter("setFloat", float.class);
-  static PSSetter<Short> SET_SHORT = setter("setShort", short.class);
-  static PSSetter<Byte> SET_BYTE = setter("setByte", byte.class);
-  static PSSetter<Boolean> SET_BOOLEAN = setter("setBoolean", boolean.class);
-  static PSSetter<BigDecimal> SET_BIG_DECIMAL = setter("setBigDecimal", BigDecimal.class);
-  static PSSetter<Date> SET_DATE = setter("setDate", Date.class);
-  static PSSetter<Time> SET_TIME = setter("setTime", Time.class);
-  static PSSetter<Timestamp> SET_TIMESTAMP = setter("setTimestamp", Timestamp.class);
+  static PsSetter<String> SET_STRING = setter("setString", String.class);
+  static PsSetter<Integer> SET_INT = setter("setInt", int.class);
+  static PsSetter<Double> SET_DOUBLE = setter("setDouble", double.class);
+  static PsSetter<Long> SET_LONG = setter("setLong", long.class);
+  static PsSetter<Float> SET_FLOAT = setter("setFloat", float.class);
+  static PsSetter<Short> SET_SHORT = setter("setShort", short.class);
+  static PsSetter<Byte> SET_BYTE = setter("setByte", byte.class);
+  static PsSetter<Boolean> SET_BOOLEAN = setter("setBoolean", boolean.class);
+  static PsSetter<BigDecimal> SET_BIG_DECIMAL = setter("setBigDecimal", BigDecimal.class);
+  static PsSetter<Date> SET_DATE = setter("setDate", Date.class);
+  static PsSetter<Time> SET_TIME = setter("setTime", Time.class);
+  static PsSetter<Timestamp> SET_TIMESTAMP = setter("setTimestamp", Timestamp.class);
 
   private final String name;
   private final MethodHandle method;
   private final Class<PARAM_TYPE> paramType;
   private final Integer targetSqlType;
 
-  private PSSetter(String name, MethodHandle method, Class<PARAM_TYPE> paramType) {
+  private PsSetter(String name, MethodHandle method, Class<PARAM_TYPE> paramType) {
     this(name, method, paramType, null);
   }
 
-  private PSSetter(
+  private PsSetter(
       String name, MethodHandle method, Class<PARAM_TYPE> paramType, Integer targetSqlType) {
     this.name = name;
     this.method = method;
@@ -62,7 +62,7 @@ public class PSSetter<PARAM_TYPE> {
     return paramType;
   }
 
-  static PSSetter<Object> setObject(int targetSqlType) {
+  static PsSetter<Object> setObject(int targetSqlType) {
     MethodType mt = MethodType.methodType(void.class, int.class, Object.class, int.class);
     MethodHandle mh;
     try {
@@ -70,7 +70,7 @@ public class PSSetter<PARAM_TYPE> {
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw ExceptionMethods.uncheck(e);
     }
-    return new PSSetter<>("setObject", mh, Object.class, targetSqlType);
+    return new PsSetter<>("setObject", mh, Object.class, targetSqlType);
   }
 
   void bindValue(PreparedStatement ps, int paramIndex, PARAM_TYPE paramValue) throws Throwable {
@@ -84,7 +84,7 @@ public class PSSetter<PARAM_TYPE> {
     }
   }
 
-  private static <X> PSSetter<X> setter(String methodName, Class<X> paramType) {
+  private static <X> PsSetter<X> setter(String methodName, Class<X> paramType) {
     MethodType mt = MethodType.methodType(void.class, int.class, paramType);
     MethodHandle mh;
     try {
@@ -92,6 +92,6 @@ public class PSSetter<PARAM_TYPE> {
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw ExceptionMethods.uncheck(e);
     }
-    return new PSSetter<>(methodName, mh, paramType);
+    return new PsSetter<>(methodName, mh, paramType);
   }
 }

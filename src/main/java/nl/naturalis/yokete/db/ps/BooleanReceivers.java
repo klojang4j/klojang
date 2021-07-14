@@ -4,8 +4,8 @@ import static java.sql.Types.BIT;
 import static java.sql.Types.BOOLEAN;
 import static java.sql.Types.CHAR;
 import static java.sql.Types.VARCHAR;
-import static nl.naturalis.yokete.db.ps.PSSetter.SET_BOOLEAN;
-import static nl.naturalis.yokete.db.ps.PSSetter.SET_STRING;
+import static nl.naturalis.yokete.db.ps.PsSetter.SET_BOOLEAN;
+import static nl.naturalis.yokete.db.ps.PsSetter.SET_STRING;
 
 class BooleanReceivers extends ReceiverLookup<Boolean> {
 

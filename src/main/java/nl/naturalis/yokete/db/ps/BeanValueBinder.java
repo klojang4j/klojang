@@ -50,7 +50,7 @@ class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
         if (sqlType == null) {
           receiver = negotiator.getDefaultReceiver(type);
         } else {
-          receiver = negotiator.getReceiver(type, sqlType);
+          receiver = negotiator.findReceiver(type, sqlType);
         }
       }
       binders.add(new BeanValueBinder<>(getter, receiver, param));
