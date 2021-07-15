@@ -15,25 +15,25 @@ import nl.naturalis.common.invoke.SetterFactory;
 
 /* Transports a single value from a ResultSet to a bean */
 @ModulePrivate
-public class BeanValueSetter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransporter {
+public class RsToBeanTransporter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransporter {
 
   public static <U> U toBean(
-      ResultSet rs, Supplier<U> beanSupplier, BeanValueSetter<?, ?>[] setters) throws Throwable {
+      ResultSet rs, Supplier<U> beanSupplier, RsToBeanTransporter<?, ?>[] setters) throws Throwable {
     U bean = beanSupplier.get();
-    for (BeanValueSetter<?, ?> setter : setters) {
+    for (RsToBeanTransporter<?, ?> setter : setters) {
       setter.setValue(rs, bean);
     }
     return bean;
   }
 
-  public static BeanValueSetter<?, ?>[] createSetters(
+  public static RsToBeanTransporter<?, ?>[] createSetters(
       ResultSet rs, Class<?> beanClass, UnaryOperator<String> nameMapper) {
     Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(beanClass);
     ExtractorNegotiator negotiator = ExtractorNegotiator.getInstance();
     try {
       ResultSetMetaData rsmd = rs.getMetaData();
       int sz = rsmd.getColumnCount();
-      List<BeanValueSetter<?, ?>> transporters = new ArrayList<>(sz);
+      List<RsToBeanTransporter<?, ?>> transporters = new ArrayList<>(sz);
       for (int idx = 0; idx < sz; ++idx) {
         int jdbcIdx = idx + 1; // JDBC is one-based
         int sqlType = rsmd.getColumnType(jdbcIdx);
@@ -43,10 +43,10 @@ public class BeanValueSetter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransporte
         if (setter != null) {
           Class<?> javaType = setter.getParamType();
           RsExtractor<?, ?> extractor = negotiator.findExtractor(javaType, sqlType);
-          transporters.add(new BeanValueSetter<>(extractor, setter, jdbcIdx, sqlType));
+          transporters.add(new RsToBeanTransporter<>(extractor, setter, jdbcIdx, sqlType));
         }
       }
-      return transporters.toArray(new BeanValueSetter[transporters.size()]);
+      return transporters.toArray(new RsToBeanTransporter[transporters.size()]);
     } catch (SQLException e) {
       throw ExceptionMethods.uncheck(e);
     }
@@ -57,7 +57,7 @@ public class BeanValueSetter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransporte
   private final int jdbcIdx;
   private final int sqlType;
 
-  private BeanValueSetter(
+  private RsToBeanTransporter(
       RsExtractor<COLUMN_TYPE, FIELD_TYPE> extractor, Setter setter, int jdbcIdx, int sqlType) {
     this.extractor = extractor;
     this.setter = setter;

@@ -5,13 +5,15 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Arrays;
 import nl.naturalis.common.ExceptionMethods;
+import nl.naturalis.common.check.Check;
 
-public class ResultSetIdentifier {
+public class RsStrongIdentifier {
 
-  private String[] colNames;
-  private int[] colTypes;
+  private final String[] colNames;
+  private final int[] colTypes;
 
-  public ResultSetIdentifier(ResultSet rs) {
+  public RsStrongIdentifier(ResultSet rs) {
+    Check.notNull(rs);
     try {
       ResultSetMetaData rsmd = rs.getMetaData();
       int sz = rsmd.getColumnCount();
@@ -26,18 +28,29 @@ public class ResultSetIdentifier {
     }
   }
 
+  private int hash = 0;
+
   @Override
   public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + Arrays.hashCode(colNames);
-    result = prime * result + Arrays.hashCode(colTypes);
-    return result;
+    if (hash == 0) {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + Arrays.hashCode(colNames);
+      result = prime * result + Arrays.hashCode(colTypes);
+      hash = result;
+    }
+    return hash;
   }
 
   @Override
   public boolean equals(Object obj) {
-    ResultSetIdentifier other = (ResultSetIdentifier) obj;
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+    RsStrongIdentifier other = (RsStrongIdentifier) obj;
     if (colNames.length != other.colNames.length) {
       return false;
     }

@@ -10,14 +10,14 @@ import java.util.function.Supplier;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.yokete.db.rs.BeanValueSetter;
-import nl.naturalis.yokete.db.rs.MapEntryProducer;
+import nl.naturalis.yokete.db.rs.RsToBeanTransporter;
+import nl.naturalis.yokete.db.rs.RsToMapTransporter;
 import static java.sql.Statement.NO_GENERATED_KEYS;
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
 import static nl.naturalis.common.check.CommonChecks.illegalState;
 import static nl.naturalis.common.check.CommonChecks.in;
 import static nl.naturalis.common.check.CommonChecks.notNull;
-import static nl.naturalis.yokete.db.rs.MapEntryProducer.populateMap;
+import static nl.naturalis.yokete.db.rs.RsToMapTransporter.populateMap;
 
 public class SQLInsert extends SQLStatement<SQLInsert> {
 
@@ -80,15 +80,15 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
           }
           for (Tuple<Object, String> t : bindBackObjs) {
             if (t.getLeft() instanceof Map) {
-              MapEntryProducer<?>[] transporters =
-                  MapEntryProducer.createMapValueSetters(rs, s -> t.getRight());
+              RsToMapTransporter<?>[] transporters =
+                  RsToMapTransporter.createMapValueSetters(rs, s -> t.getRight());
               populateMap(rs, (Map<String, Object>) t.getLeft(), transporters);
             } else {
               Class<T> beanClass = (Class<T>) t.getLeft().getClass();
-              BeanValueSetter<?, ?>[] setters =
-                  BeanValueSetter.createSetters(rs, beanClass, s -> t.getRight());
+              RsToBeanTransporter<?, ?>[] setters =
+                  RsToBeanTransporter.createSetters(rs, beanClass, s -> t.getRight());
               Supplier<T> beanSupplier = () -> (T) t.getLeft();
-              BeanValueSetter.toBean(rs, beanSupplier, setters);
+              RsToBeanTransporter.toBean(rs, beanSupplier, setters);
             }
           }
         }
