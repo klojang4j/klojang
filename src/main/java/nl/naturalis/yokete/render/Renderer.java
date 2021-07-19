@@ -8,7 +8,7 @@ import java.util.stream.IntStream;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.*;
 import static java.util.Arrays.stream;
-import static nl.naturalis.common.ObjectMethods.ifNotNull;
+import static nl.naturalis.common.StringMethods.concat;
 
 class Renderer implements Renderable {
 
@@ -34,11 +34,10 @@ class Renderer implements Renderable {
   @Override
   public String toString() {
     Template t = state.getSessionFactory().getTemplate();
-    String s = ifNotNull(t.getPath(), Object::toString, t.getName());
-    return "Renderable for "
-        + s
-        + ". NB: better not pass List<Renderable> to "
-        + "RenderSession.set(String varName, List<?> values)";
+    if (t.getPath() == null) {
+      return concat(Renderable.class.getName(), "[template=", t.getName(), "]");
+    }
+    return concat(Renderable.class.getName(), "[source=", t.getPath(), "]");
   }
 
   private void render(RenderState state0, PrintStream ps) {

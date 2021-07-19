@@ -18,7 +18,7 @@ import static nl.naturalis.yokete.template.Regex.TMPL_START;
  */
 public class InlineTemplatePart extends NestedTemplatePart {
 
-  public InlineTemplatePart(Template template, int start) {
+  InlineTemplatePart(Template template, int start) {
     super(template, start);
   }
 

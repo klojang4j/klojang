@@ -1,6 +1,7 @@
 package nl.naturalis.yokete.template;
 
-import nl.naturalis.yokete.render.EscapeType;
+import java.util.Optional;
+import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.yokete.template.Regex.NAME_END;
 import static nl.naturalis.yokete.template.Regex.VAR_START;
 
@@ -12,12 +13,12 @@ import static nl.naturalis.yokete.template.Regex.VAR_START;
  */
 public class VariablePart extends AbstractPart implements NamedPart {
 
+  private final VarGroup group;
   private final String name;
-  private final EscapeType escapeType;
 
-  public VariablePart(EscapeType escapeType, String name, int start) {
+  VariablePart(String prefix, String name, int start) {
     super(start);
-    this.escapeType = escapeType;
+    this.group = ifNotNull(prefix, VarGroup::withName);
     this.name = name;
   }
 
@@ -26,8 +27,8 @@ public class VariablePart extends AbstractPart implements NamedPart {
    *
    * @return The inline escape type of the variable
    */
-  public EscapeType getEscapeType() {
-    return escapeType;
+  public Optional<VarGroup> getVarGroup() {
+    return Optional.ofNullable(group);
   }
 
   /**

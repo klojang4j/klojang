@@ -10,7 +10,7 @@ public class TextPart extends AbstractPart {
 
   private final String text;
 
-  public TextPart(String text, int start) {
+  TextPart(String text, int start) {
     super(start);
     this.text = text;
   }

@@ -1,6 +1,5 @@
 package nl.naturalis.yokete.render;
 
-import java.util.List;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.template.Template;
 import static nl.naturalis.yokete.render.StringifierFactory.BASIC_STRINGIFIER;
@@ -126,33 +125,5 @@ public final class Page {
   RenderSession newChildSession(Template nested, Accessor<?> acc) {
     Page factory = new Page(nested, (type, tmpl) -> acc, stringifiers);
     return factory.newRenderSession();
-  }
-
-  String[] stringify(String varName, List<?> values) throws RenderException {
-    String[] strs = new String[values.size()];
-    for (int i = 0; i < values.size(); ++i) {
-      Stringifier stringifier = stringifiers.getStringifier(template, varName, values.get(i));
-      try {
-        if (null == (strs[i] = stringifier.toString(values.get(i)))) {
-          throw BadStringifierException.stringifierReturnedNull(template, varName);
-        }
-      } catch (NullPointerException e) {
-        throw BadStringifierException.stringifierNotNullResistant(template, varName);
-      }
-    }
-    return strs;
-  }
-
-  String stringify(String varName, Object value) throws RenderException {
-    Stringifier stringifier = stringifiers.getStringifier(template, varName, value);
-    try {
-      String s = stringifier.toString(value);
-      if (s == null) {
-        throw BadStringifierException.stringifierReturnedNull(template, varName);
-      }
-      return s;
-    } catch (NullPointerException e) {
-      throw BadStringifierException.stringifierNotNullResistant(template, varName);
-    }
   }
 }

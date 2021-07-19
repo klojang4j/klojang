@@ -66,7 +66,7 @@ public class TemplateTest {
   @Test // getVarPartIndices
   public void test03() throws ParseException {
     Template t0 = Template.parseResource(getClass(), "TemplateTest.main.html");
-    TemplateUtils.getNestedTemplatesRecursive(t0)
+    TemplateUtils.getTemplateHierarchy(t0)
         .forEach(t -> System.out.println(TemplateUtils.getFQName(t, "test")));
   }
 

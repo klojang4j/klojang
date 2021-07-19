@@ -9,9 +9,9 @@ package nl.naturalis.yokete.template;
  */
 public abstract class NestedTemplatePart extends AbstractPart implements NamedPart {
 
-  protected final Template template;
+  final Template template;
 
-  public NestedTemplatePart(Template template, int start) {
+  NestedTemplatePart(Template template, int start) {
     super(start);
     this.template = template;
   }
@@ -28,5 +28,11 @@ public abstract class NestedTemplatePart extends AbstractPart implements NamedPa
   @Override
   public String toString() {
     return template.toString();
+  }
+
+  @Override
+  void setParentPart(NestedTemplatePart parent) {
+    super.setParentPart(parent);
+    template.parent = parent.template;
   }
 }

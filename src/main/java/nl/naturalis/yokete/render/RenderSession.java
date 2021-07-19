@@ -13,9 +13,9 @@ import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.io.UnsafeByteArrayOutputStream;
 import nl.naturalis.yokete.accessors.SelfAccessor;
 import nl.naturalis.yokete.accessors.TupleAccessor;
-import nl.naturalis.yokete.template.Part;
 import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.TemplateUtils;
+import nl.naturalis.yokete.template.VarGroup;
 import nl.naturalis.yokete.template.VariablePart;
 import static java.util.stream.Collectors.toList;
 import static nl.naturalis.common.ArrayMethods.EMPTY_STRING_ARRAY;
@@ -24,20 +24,20 @@ import static nl.naturalis.common.ObjectMethods.isEmpty;
 import static nl.naturalis.common.ObjectMethods.n2e;
 import static nl.naturalis.common.check.CommonChecks.*;
 import static nl.naturalis.yokete.render.Accessor.UNDEFINED;
-import static nl.naturalis.yokete.render.EscapeType.ESCAPE_NONE;
-import static nl.naturalis.yokete.render.EscapeType.NOT_SPECIFIED;
 import static nl.naturalis.yokete.render.RenderException.*;
+import static nl.naturalis.yokete.template.VarGroup.TEXT;
 
 /**
  * A {@code RenderSession} is responsible for populating a template and rendering it. Populating the
  * template can be done in multiple passes. By default template variables and nested templates are
- * not rendered. As soon as you render the template (by calling of the {@code render} methods), the
- * {@code RenderSession} effectively becomes immutable. You can render the template again, as often
- * as you like, but the values of its variables are fixed.
+ * not rendered. That is, unless you provide them with values, they will just disappear from the
+ * template upon rendering. As soon as you render the template (by calling of the {@code render}
+ * methods), the {@code RenderSession} effectively becomes immutable. You can render the template
+ * again, as often as you like, but the values of its variables are fixed.
  *
  * <p>A {@code RenderSession} is a throw-away object that should go out of scope as quickly as
  * possible. It is cheap to instantiate, but can gain a lot of state as the template gets populated.
- * Therefore, make sure it doesn't survive your request method. A possible exception could be
+ * Therefore, make sure it doesn't survive the request method. A possible exception could be
  * templates that render relatively static content, especially if the cost of populating them is
  * high.
  *
@@ -63,41 +63,41 @@ public class RenderSession {
   /* METHODS FOR SETTING A SINGLE TEMPLATE VARIABLE */
 
   /**
-   * Sets the specified variable to the specified value. Unless the variable was declared with an
-   * inline {@link EscapeType} (e.g. {@code ~%html:fullName%}) no escaping will be applied to the
-   * value.
+   * Sets the specified variable to the specified value. Unless the variable was declared with a
+   * group name prefix (e.g. {@code ~%html:fullName%}) no escaping will be applied to the value.
+   * (More precizely: the value will be stringified using the {@link VarGroup#TEXT TEXT}
+   * stringifier, which is a no-op stringifier.)
    *
    * @param varName The name of the variable to set
    * @param value The value of the variable
    * @throws RenderException
    */
   public RenderSession set(String varName, Object value) throws RenderException {
-    return set(varName, value, ESCAPE_NONE);
+    return set(varName, value, VarGroup.TEXT);
   }
 
   /**
-   * Sets the specified variable to the specified value using the specified escape type. If the
-   * variable was declared with an inline escape type that differs from the specified escape type,
-   * the inline escape type will prevail. This allows you to declare variables inside HTML tags
-   * (most likely the overwhelming majority) without an inline escape type, while only specifying an
-   * inline escape type for variables inside <code>&lt;script&gt;</code> tags (namely "js"). This
-   * makes your template easier to read and write.
+   * Sets the specified variable to the specified value using the {@link Stringifier stringifier}
+   * associated with the specified variable group. If the variable was declared with an inline
+   * {@link VarGroup variable group} (e.g. {@code ~%js:fullName%}), the group specified through the
+   * prefix will prevail.
    *
+   * @see StringifierFactory.Builder#addGroupStringifier(Stringifier, String...)
    * @param varName The name of the variable to set
    * @param value The value of the variable
-   * @param escapeType The escape type to use if the variable has no inline escape type
+   * @param defaultGroup The variable group to assign the variable to if the variable has no group
+   *     name prefix
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession set(String varName, Object value, EscapeType escapeType)
+  public RenderSession set(String varName, Object value, VarGroup defaultGroup)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Check.notNull(varName, "varName");
-    Check.notNull(escapeType, "escapeType")
-        .isNot(sameAs(), NOT_SPECIFIED, "Invalid escape type: NOT_SPECIFIED");
-    Template t = page.getTemplate();
-    Check.on(noSuchVariable(t, varName), t.getVariables()).is(containing(), varName);
-    Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
+    Check.notNull(defaultGroup, "defaultGroup");
+    Template template = page.getTemplate();
+    Check.on(noSuchVariable(template, varName), template.getVariables()).is(containing(), varName);
+    Check.on(alreadySet(template, varName), state.isSet(varName)).is(no());
     if (value == UNDEFINED) {
       // Unless the user is manually going through, and accessing the properties of some source data
       // object, specifying UNDEFINED misses the point of that constant, but since we can't know
@@ -105,18 +105,14 @@ public class RenderSession {
       // (namely: not).
       return this;
     }
-    String stringified = page.stringify(varName, value);
     IntList indices = page.getTemplate().getVarPartIndices().get(varName);
-    List<Part> parts = page.getTemplate().getParts();
+    StringifierFactory sf = page.getStringifierFactory();
     for (int i = 0; i < indices.size(); ++i) {
-      int idx = indices.get(i);
-      VariablePart part = (VariablePart) parts.get(idx);
-      EscapeType myEscType = part.getEscapeType();
-      if (myEscType == NOT_SPECIFIED) {
-        myEscType = escapeType;
-      }
-      String escaped = myEscType.apply(stringified);
-      state.setVar(idx, new String[] {escaped});
+      int partIndex = indices.get(i);
+      VariablePart part = template.getPart(partIndex);
+      Stringifier stringifier = sf.getStringifier(part, defaultGroup, value);
+      String stringified = stringify(stringifier, varName, value);
+      state.setVar(partIndex, new String[] {stringified});
     }
     state.done(varName);
     return this;
@@ -135,7 +131,7 @@ public class RenderSession {
    * @throws RenderException
    */
   public RenderSession set(String varName, List<?> values) throws RenderException {
-    return set(varName, values, ESCAPE_NONE);
+    return set(varName, values, TEXT);
   }
 
   /**
@@ -146,13 +142,14 @@ public class RenderSession {
    *
    * @param varName The name of the variable to set
    * @param values The string values to concatenate
-   * @param escapeType The escape type to use if the variable did not declare an inline escape type
+   * @param defaultGroup The variable group to assign the variable to if the variable has no group
+   *     name prefix
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession set(String varName, List<?> values, EscapeType escapeType)
+  public RenderSession set(String varName, List<?> values, VarGroup defaultGroup)
       throws RenderException {
-    return set(varName, values, escapeType, null, null, null);
+    return set(varName, values, defaultGroup, null, null, null);
   }
 
   /**
@@ -165,7 +162,8 @@ public class RenderSession {
    *
    * @param varName The name of the variable to set
    * @param values The string values to concatenate
-   * @param escapeType The escape type to use if the variable did not declare an inline escape type
+   * @param defaultGroup The variable group to assign the variable to if the variable has no group
+   *     name prefix
    * @param prefix The prefix to use for each string
    * @param separator The suffix to use for each string
    * @param suffix The separator to use between the stringd
@@ -175,16 +173,15 @@ public class RenderSession {
   public RenderSession set(
       String varName,
       List<?> values,
-      EscapeType escapeType,
+      VarGroup defaultGroup,
       String prefix,
       String separator,
       String suffix)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    Check.on(illegalValue("varName", varName), varName).is(notNull());
-    Check.on(illegalValue("values", values), values).is(notNull());
-    Check.on(illegalValue("escapeType", escapeType), escapeType).is(notNull());
-    Check.on(badEscapeType(), escapeType).isNot(sameAs(), NOT_SPECIFIED);
+    Check.notNull(varName, "varName");
+    Check.notNull(values, "values");
+    Check.notNull(defaultGroup, "defaultGroup");
     Template t = page.getTemplate();
     Check.on(noSuchVariable(t, varName), t.getVariables()).is(containing(), varName);
     Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
@@ -192,7 +189,7 @@ public class RenderSession {
     if (values.isEmpty()) {
       indices.forEach(i -> state.setVar(i, EMPTY_STRING_ARRAY));
     } else {
-      indices.forEachThrowing(i -> setVar(i, values, escapeType, prefix, separator, suffix));
+      indices.forEachThrowing(i -> setVar(i, values, defaultGroup, prefix, separator, suffix));
     }
     state.done(varName);
     return this;
@@ -201,44 +198,33 @@ public class RenderSession {
   private void setVar(
       int partIndex,
       List<?> values,
-      EscapeType escapeType,
+      VarGroup defGroup,
       String prefix,
       String separator,
       String suffix)
       throws RenderException {
-    List<Part> parts = page.getTemplate().getParts();
-    VariablePart part = (VariablePart) parts.get(partIndex);
-    EscapeType myEscType = part.getEscapeType();
-    if (myEscType == NOT_SPECIFIED) {
-      myEscType = escapeType;
-    }
+    VariablePart part = page.getTemplate().getPart(partIndex);
+    VarGroup varGroup = part.getVarGroup().orElse(defGroup);
     prefix = n2e(prefix);
     separator = n2e(separator);
     suffix = n2e(suffix);
-    boolean escape = myEscType != ESCAPE_NONE;
     boolean enrich = !prefix.isEmpty() || !separator.isEmpty() || !suffix.isEmpty();
-    String[] stringified = page.stringify(part.getName(), values);
-    for (int i = 0; i < stringified.length; ++i) {
-      String s = stringified[i];
-      if (escape) {
-        if (enrich) {
-          if (i == 0) {
-            s = prefix + myEscType.apply(s) + suffix;
-          } else {
-            s = separator + prefix + myEscType.apply(s) + suffix;
-          }
-        } else {
-          s = myEscType.apply(s);
-        }
-        stringified[i] = s;
-      } else if (enrich) {
+    StringifierFactory sf = page.getStringifierFactory();
+    // Find first non-null value to increase the chance that we find a suitable
+    // stringifier:
+    Object nn = values.stream().filter(notNull()).findFirst().orElse(null);
+    Stringifier stringifier = sf.getStringifier(part, varGroup, nn);
+    String[] stringified = new String[values.size()];
+    for (int i = 0; i < values.size(); ++i) {
+      String s = stringify(stringifier, part.getName(), values.get(i));
+      if (enrich) {
         if (i == 0) {
           s = prefix + s + suffix;
         } else {
           s = separator + prefix + s + suffix;
         }
-        stringified[i] = s;
       }
+      stringified[i] = s;
     }
     state.setVar(partIndex, stringified);
   }
@@ -282,7 +268,7 @@ public class RenderSession {
    */
   public RenderSession populate(String nestedTemplateName, Object sourceData, String... names)
       throws RenderException {
-    return populate(nestedTemplateName, sourceData, ESCAPE_NONE, names);
+    return populate(nestedTemplateName, sourceData, TEXT, names);
   }
 
   /**
@@ -312,32 +298,32 @@ public class RenderSession {
    * @param nestedTemplateName The name of the nested template
    * @param sourceData An object that provides data for all or some of the nested template's
    *     variables and nested templates
-   * @param escapeType The escape to use for the variables within the nested template
+   * @param defaultGroup The variable group to assign the variables to if they have no group name
+   *     prefix
    * @param names The names of the variables and doubly-nested templates that you want to be
    *     populated using the specified data object
    * @return This {@code RenderSession}
    * @throws RenderException
    */
   public RenderSession populate(
-      String nestedTemplateName, Object sourceData, EscapeType escapeType, String... names)
+      String nestedTemplateName, Object sourceData, VarGroup defaultGroup, String... names)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    Check.on(illegalValue("escapeType", escapeType), escapeType).is(notNull());
-    Check.on(badEscapeType(), escapeType).isNot(sameAs(), NOT_SPECIFIED);
+    Check.notNull(defaultGroup, "defaultGroup");
     Template t = getNestedTemplate(nestedTemplateName);
     List<?> data = asUnsafeList(sourceData);
     if (t.isTextOnly()) {
       return show(data.size(), t);
     }
     Check.on(missingSourceData(t), data).is(neverNull());
-    return repeat(t, data, escapeType, names);
+    return repeat(t, data, defaultGroup, names);
   }
 
-  private RenderSession repeat(Template t, List<?> data, EscapeType escapeType, String... names)
+  private RenderSession repeat(Template t, List<?> data, VarGroup defGroup, String... names)
       throws RenderException {
     RenderSession[] sessions = state.getOrCreateChildSessions(t, data.size());
     for (int i = 0; i < sessions.length; ++i) {
-      sessions[i].insert(data.get(i), escapeType, names);
+      sessions[i].insert(data.get(i), defGroup, names);
     }
     return this;
   }
@@ -472,7 +458,7 @@ public class RenderSession {
    */
   public RenderSession populateWithValue(String nestedTemplateName, Object value)
       throws RenderException {
-    return populateWithValue(nestedTemplateName, value, ESCAPE_NONE);
+    return populateWithValue(nestedTemplateName, value, TEXT);
   }
 
   /**
@@ -484,13 +470,13 @@ public class RenderSession {
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
    * @param value The value to set the template's one and only variable to
-   * @param escapeType The escape to use for the variable within the nested template. Will not
-   *     override variable's inline escape type, if defined.
+   * @param defaultGroup The variable group to assign the variable to if the variable has no group
+   *     name prefix
    * @return This {@code RenderSession}
    * @throws RenderException
    */
   public RenderSession populateWithValue(
-      String nestedTemplateName, Object value, EscapeType escapeType) throws RenderException {
+      String nestedTemplateName, Object value, VarGroup defaultGroup) throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Template t = getNestedTemplate(nestedTemplateName);
     Check.on(notMonoTemplate(t), t)
@@ -499,7 +485,7 @@ public class RenderSession {
     List<?> values = asUnsafeList(value);
     RenderSession[] sessions = state.getOrCreateChildSessions(t, new SelfAccessor(), values.size());
     for (int i = 0; i < sessions.length; ++i) {
-      sessions[i].insert(values.get(i), escapeType);
+      sessions[i].insert(values.get(i), defaultGroup);
     }
     return this;
   }
@@ -516,7 +502,7 @@ public class RenderSession {
    */
   public <T, U> RenderSession populateWithTuple(String nestedTemplateName, List<Tuple<T, U>> tuples)
       throws RenderException {
-    return populateWithTuple(nestedTemplateName, tuples, ESCAPE_NONE);
+    return populateWithTuple(nestedTemplateName, tuples, TEXT);
   }
 
   /**
@@ -527,13 +513,13 @@ public class RenderSession {
    *
    * @param nestedTemplateName The name of the nested template
    * @param tuples A list of value pairs
-   * @param escapeType The escape to use for the variables within the nested template. Will not
-   *     override the variables' inline escape types, if defined
+   * @param defaultGroup The variable group to assign the variables to if they have no group name
+   *     prefix
    * @return This {@code RenderSession}
    * @throws RenderException
    */
   public <T, U> RenderSession populateWithTuple(
-      String nestedTemplateName, List<Tuple<T, U>> tuples, EscapeType escapeType)
+      String nestedTemplateName, List<Tuple<T, U>> tuples, VarGroup defaultGroup)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Check.on(illegalValue("tuples", tuples), tuples).is(neverNull());
@@ -552,7 +538,7 @@ public class RenderSession {
     RenderSession[] sessions =
         state.getOrCreateChildSessions(t, new MapAccessorInternal(), data.size());
     for (int i = 0; i < sessions.length; ++i) {
-      sessions[i].insert(data.get(i), escapeType);
+      sessions[i].insert(data.get(i), defaultGroup);
     }
     return this;
   }
@@ -574,7 +560,7 @@ public class RenderSession {
    * @throws RenderException
    */
   public RenderSession insert(Object sourceData, String... names) throws RenderException {
-    return insert(sourceData, ESCAPE_NONE, names);
+    return insert(sourceData, TEXT, names);
   }
 
   /**
@@ -590,14 +576,15 @@ public class RenderSession {
    *
    * @param sourceData An object that provides data for all or some of the template variables and
    *     nested templates
-   * @param escapeType The escape type to use
+   * @param defaultGroup The variable group to assign the variables to if they have no group name
+   *     prefix
    * @param names The names of the variables nested templates names that must be populated. Not
    *     specifying any name (or {@code null}) indicates that you want all variables and nested
    *     templates to be populated.
    * @return This {@code RenderSession}
    * @throws RenderException
    */
-  public RenderSession insert(Object sourceData, EscapeType escapeType, String... names)
+  public RenderSession insert(Object sourceData, VarGroup defaultGroup, String... names)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     if (sourceData == null) {
@@ -608,14 +595,13 @@ public class RenderSession {
       // but no reason not to support it.
       return this;
     }
-    processVars(sourceData, escapeType, names);
-    processTmpls(sourceData, escapeType, names);
+    processVars(sourceData, defaultGroup, names);
+    processTmpls(sourceData, defaultGroup, names);
     return this;
   }
 
   @SuppressWarnings("unchecked")
-  private <T> void processVars(T data, EscapeType escapeType, String[] names)
-      throws RenderException {
+  private <T> void processVars(T data, VarGroup defGroup, String[] names) throws RenderException {
     Set<String> varNames;
     if (isEmpty(names)) {
       varNames = page.getTemplate().getVariables();
@@ -627,13 +613,13 @@ public class RenderSession {
     for (String varName : varNames) {
       Object value = acc.access(data, varName);
       if (value != UNDEFINED) {
-        set(varName, value, escapeType);
+        set(varName, value, defGroup);
       }
     }
   }
 
   @SuppressWarnings("unchecked")
-  private <T> void processTmpls(T data, EscapeType escapeType, String[] names)
+  private <T> void processTmpls(T data, VarGroup defaultGroup, String[] names)
       throws RenderException {
     Set<String> tmplNames;
     if (isEmpty(names)) {
@@ -646,7 +632,7 @@ public class RenderSession {
     for (String name : tmplNames) {
       Object nestedData = acc.access(data, name);
       if (nestedData != UNDEFINED) {
-        populate(name, nestedData, escapeType, names);
+        populate(name, nestedData, defaultGroup, names);
       }
     }
   }
@@ -655,8 +641,8 @@ public class RenderSession {
 
   /**
    * Returns a {@code RenderSession} for the specified nested template. The {@code RenderSession}
-   * inherits the {@link AccessorFactory accessors} and {@link StringifierFactory stringifiers}
-   * from the parent session (i.e. <i>this</i> {@code RenderSession}).
+   * inherits the {@link AccessorFactory accessors} and {@link StringifierFactory stringifiers} from
+   * the parent session (i.e. <i>this</i> {@code RenderSession}).
    *
    * @param nestedTemplateName The nested template for which to create the child session
    * @return A child session that you can (and should) populate yourself
@@ -758,5 +744,18 @@ public class RenderSession {
 
   private Predicate<String> validTemplateName() {
     return s -> page.getTemplate().getNestedTemplateNames().contains(s);
+  }
+
+  private String stringify(Stringifier stringifier, String varName, Object value)
+      throws RenderException {
+    try {
+      String s = stringifier.toString(value);
+      if (s == null) {
+        throw BadStringifierException.stringifierReturnedNull(page.getTemplate(), varName);
+      }
+      return s;
+    } catch (NullPointerException e) {
+      throw BadStringifierException.stringifierNotNullResistant(page.getTemplate(), varName);
+    }
   }
 }

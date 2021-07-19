@@ -6,7 +6,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.function.ThrowingBiFunction;
-import nl.naturalis.yokete.render.EscapeType;
 import static nl.naturalis.common.check.CommonChecks.*;
 import static nl.naturalis.yokete.template.ParseException.*;
 import static nl.naturalis.yokete.template.Regex.*;
@@ -148,7 +147,9 @@ class Parser {
       names.add(name);
       Parser parser = new Parser(name, id, mySrc);
       Template nested = parser.parse();
-      parts.add(new InlineTemplatePart(nested, offset + m.start()));
+      NestedTemplatePart ntp = new InlineTemplatePart(nested, offset + m.start());
+      parts.add(ntp);
+      nested.getParts().forEach(p -> ((AbstractPart) p).setParentPart(ntp));
       end = m.end();
     } while (m.find());
     if (end < unparsed.text().length()) {
@@ -179,7 +180,6 @@ class Parser {
       Check.on(duplicateTemplateName(src, offset + m.start(2), name), name)
           .isNot(in(), names)
           .isNot(equalTo(), Template.ROOT_TEMPLATE_NAME);
-
       TemplateId newId;
       if (id.clazz() != null) { // Load as resource
         if (id.clazz().getResource(path) == null) {
@@ -220,16 +220,11 @@ class Parser {
       if (m.start() > end) {
         parts.add(todo(unparsed, end, m.start()));
       }
-      EscapeType escType;
-      try {
-        escType = EscapeType.parse(m.group(2));
-      } catch (IllegalArgumentException e) {
-        throw badEscapeType(src, offset + m.start(2), m.group(2));
-      }
+      String prefix = m.group(2);
       String name = m.group(3);
       Check.on(emptyVarName(src, offset + m.start(3)), name).isNot(blank());
       Check.on(duplicateVarName(src, offset + m.start(3), name), name).isNot(in(), names);
-      parts.add(new VariablePart(escType, name, offset + m.start()));
+      parts.add(new VariablePart(prefix, name, offset + m.start()));
       end = m.end();
     } while (m.find());
     if (end < unparsed.text().length()) {

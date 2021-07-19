@@ -2,7 +2,6 @@ package nl.naturalis.yokete.template;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import nl.naturalis.yokete.render.EscapeType;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -19,7 +18,7 @@ public class TemplateParserTest {
     assertEquals("<tr><td>", ((TextPart) parts.get(0)).getText());
     assertTrue(parts.get(1) instanceof VariablePart);
     VariablePart vp = (VariablePart) parts.get(1);
-    assertEquals(EscapeType.NOT_SPECIFIED, vp.getEscapeType());
+    assertTrue(vp.getVarGroup().isEmpty());
     assertEquals("foo", vp.getName());
     assertTrue(parts.get(2) instanceof TextPart);
     assertEquals("</td></tr>", ((TextPart) parts.get(2)).getText());
@@ -36,7 +35,7 @@ public class TemplateParserTest {
     assertEquals("<tr><td>", ((TextPart) parts.get(0)).getText());
     assertTrue(parts.get(1) instanceof VariablePart);
     VariablePart vp = (VariablePart) parts.get(1);
-    assertEquals(EscapeType.NOT_SPECIFIED, vp.getEscapeType());
+    assertTrue(vp.getVarGroup().isEmpty());
     assertEquals("foo", vp.getName());
     assertTrue(parts.get(2) instanceof TextPart);
     assertEquals("</td></tr>", ((TextPart) parts.get(2)).getText());
@@ -53,13 +52,13 @@ public class TemplateParserTest {
     assertEquals("<tr>\n<td>", ((TextPart) parts.get(0)).getText());
     assertTrue(parts.get(1) instanceof VariablePart);
     VariablePart vp = (VariablePart) parts.get(1);
-    assertEquals(EscapeType.ESCAPE_HTML, vp.getEscapeType());
+    assertEquals(VarGroup.HTML, vp.getVarGroup().get());
     assertEquals("foo", vp.getName());
     assertTrue(parts.get(2) instanceof TextPart);
     assertEquals("</td>\n<!-- some comment -->\n<td>", ((TextPart) parts.get(2)).getText());
     assertTrue(parts.get(3) instanceof VariablePart);
     vp = (VariablePart) parts.get(3);
-    assertEquals(EscapeType.ESCAPE_NONE, vp.getEscapeType());
+    assertEquals(VarGroup.TEXT, vp.getVarGroup().get());
     assertEquals("bar", vp.getName());
     assertTrue(parts.get(4) instanceof TextPart);
     assertEquals("</td>\n</tr>", ((TextPart) parts.get(4)).getText());

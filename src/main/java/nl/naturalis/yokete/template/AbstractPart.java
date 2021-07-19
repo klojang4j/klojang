@@ -4,13 +4,23 @@ abstract class AbstractPart implements Part {
 
   private final int start;
 
+  private NestedTemplatePart parent;
+
   public AbstractPart(int start) {
     this.start = start;
   }
 
-  /** The start position (string index) of the part. */
   @Override
   public int start() {
     return start;
+  }
+
+  @Override
+  public NestedTemplatePart getParentPart() {
+    return parent;
+  }
+
+  void setParentPart(NestedTemplatePart parent) {
+    this.parent = parent;
   }
 }

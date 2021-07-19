@@ -13,4 +13,6 @@ public interface Part {
    * @return The start index of this part within the template.
    */
   int start();
+
+  NestedTemplatePart getParentPart();
 }

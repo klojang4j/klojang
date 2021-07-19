@@ -17,7 +17,7 @@ public class IncludedTemplatePart extends NestedTemplatePart {
     return substrTo(substrAfter(path, "/", true), '.');
   }
 
-  public IncludedTemplatePart(Template template, int start) {
+  IncludedTemplatePart(Template template, int start) {
     super(template, start);
   }
 

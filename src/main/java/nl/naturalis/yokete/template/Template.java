@@ -8,6 +8,7 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import static java.util.stream.Collectors.toUnmodifiableList;
+import static nl.naturalis.common.check.CommonChecks.indexOf;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 import static nl.naturalis.yokete.template.TemplateSourceType.*;
 
@@ -102,9 +103,10 @@ public class Template {
   private final Map<String, IntList> varIndices;
   private final IntList textIndices;
   private final Map<String, Integer> tmplIndices;
-  private final List<String> names; // names of all vars and nested templates
+  /** All variable names and nested template together */
+  private final List<String> names;
 
-  private Template parent;
+  Template parent;
 
   Template(String name, TemplateId id, List<Part> parts) {
     this.name = name;
@@ -114,13 +116,6 @@ public class Template {
     this.tmplIndices = getTmplIndices(parts);
     this.names = getNames(parts);
     this.textIndices = getTextIndices(parts);
-    this.tmplIndices
-        .values()
-        .stream()
-        .map(parts::get)
-        .map(NestedTemplatePart.class::cast)
-        .map(NestedTemplatePart::getTemplate)
-        .forEach(t -> t.parent = this);
   }
 
   /**
@@ -151,8 +146,8 @@ public class Template {
    *
    * @return The file location (if any) of the source code for this {@code Template}
    */
-  public TemplateId getPath() {
-    return id;
+  public String getPath() {
+    return id.path();
   }
 
   /**
@@ -170,6 +165,18 @@ public class Template {
    */
   public List<Part> getParts() {
     return parts;
+  }
+
+  /**
+   * Returns the template part at the specified index.
+   *
+   * @param <T> The type of the {@code Part}
+   * @param index The {@code List} index of the {@code Part}
+   * @return The template part at the specified index
+   */
+  @SuppressWarnings("unchecked")
+  public <T extends Part> T getPart(int index) {
+    return (T) Check.that(index).is(indexOf(), parts).ok(parts::get);
   }
 
   /**
