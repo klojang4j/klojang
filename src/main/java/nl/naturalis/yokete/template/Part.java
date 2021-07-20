@@ -14,5 +14,5 @@ public interface Part {
    */
   int start();
 
-  NestedTemplatePart getParentPart();
+  Template getParentTemplate();
 }

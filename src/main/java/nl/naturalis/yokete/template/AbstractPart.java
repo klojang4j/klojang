@@ -4,7 +4,7 @@ abstract class AbstractPart implements Part {
 
   private final int start;
 
-  private NestedTemplatePart parent;
+  private Template parent;
 
   public AbstractPart(int start) {
     this.start = start;
@@ -16,11 +16,11 @@ abstract class AbstractPart implements Part {
   }
 
   @Override
-  public NestedTemplatePart getParentPart() {
+  public Template getParentTemplate() {
     return parent;
   }
 
-  void setParentPart(NestedTemplatePart parent) {
+  void setParentTemplate(Template parent) {
     this.parent = parent;
   }
 }

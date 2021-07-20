@@ -3,6 +3,7 @@ package nl.naturalis.yokete.template;
 import java.util.HashMap;
 import nl.naturalis.common.check.Check;
 
+/** @author Ayco Holleman */
 public class VarGroup {
 
   public static final VarGroup TEXT = new VarGroup("text");

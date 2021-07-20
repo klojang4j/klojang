@@ -311,22 +311,24 @@ public final class StringifierFactory {
     this.defStringifier = defStringifier;
   }
 
-  /**
-   * Returns the stringifier to be used for the specified template variable.
-   *
-   * @param template The template containing the variable
-   * @param varName The variable
-   * @return The stringifier
-   */
-  Stringifier getStringifier(VariablePart part, VarGroup adhocGroup, Object value) {
+  Stringifier getStringifier(VariablePart part, VarGroup defaultGroup, Object value)
+      throws RenderException {
     StringifierId id;
     Stringifier sf;
-    VarGroup vg = part.getVarGroup().orElse(adhocGroup);
-    id = new StringifierId(vg);
-    if (null != (sf = stringifiers.get(id))) {
-      return sf;
+    if (part.getVarGroup().isPresent()) {
+      VarGroup vg = part.getVarGroup().get();
+      id = new StringifierId(vg);
+      if (null != (sf = stringifiers.get(id))) {
+        return sf;
+      }
+    } else if (defaultGroup != null) {
+      id = new StringifierId(defaultGroup);
+      if (null != (sf = stringifiers.get(id))) {
+        return sf;
+      }
+      throw RenderException.noStringifierForGroup(defaultGroup);
     }
-    Template tmpl = part.getParentPart().getTemplate();
+    Template tmpl = part.getParentTemplate();
     String var = part.getName();
     id = new StringifierId(tmpl, var);
     if (null != (sf = stringifiers.get(id))) {

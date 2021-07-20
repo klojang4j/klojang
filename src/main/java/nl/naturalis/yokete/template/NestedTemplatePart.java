@@ -31,8 +31,8 @@ public abstract class NestedTemplatePart extends AbstractPart implements NamedPa
   }
 
   @Override
-  void setParentPart(NestedTemplatePart parent) {
-    super.setParentPart(parent);
-    template.parent = parent.template;
+  void setParentTemplate(Template parent) {
+    super.setParentTemplate(parent);
+    template.parent = parent;
   }
 }

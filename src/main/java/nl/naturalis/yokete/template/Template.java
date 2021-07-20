@@ -109,6 +109,7 @@ public class Template {
   Template parent;
 
   Template(String name, TemplateId id, List<Part> parts) {
+    parts.forEach(p -> ((AbstractPart) p).setParentTemplate(this));
     this.name = name;
     this.id = id.sourceType() == STRING ? null : id;
     this.parts = parts;

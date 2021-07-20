@@ -146,10 +146,7 @@ class Parser {
           .isNot(equalTo(), Template.ROOT_TEMPLATE_NAME);
       names.add(name);
       Parser parser = new Parser(name, id, mySrc);
-      Template nested = parser.parse();
-      NestedTemplatePart ntp = new InlineTemplatePart(nested, offset + m.start());
-      parts.add(ntp);
-      nested.getParts().forEach(p -> ((AbstractPart) p).setParentPart(ntp));
+      parts.add(new InlineTemplatePart(parser.parse(), offset + m.start()));
       end = m.end();
     } while (m.find());
     if (end < unparsed.text().length()) {
