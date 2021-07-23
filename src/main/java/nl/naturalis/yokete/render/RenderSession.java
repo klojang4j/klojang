@@ -16,6 +16,7 @@ import nl.naturalis.yokete.accessors.TupleAccessor;
 import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.VarGroup;
 import nl.naturalis.yokete.template.VariablePart;
+import nl.naturalis.yokete.x.template.XVarGroup;
 import static java.util.stream.Collectors.toList;
 import static nl.naturalis.common.ArrayMethods.EMPTY_STRING_ARRAY;
 import static nl.naturalis.common.CollectionMethods.asUnsafeList;
@@ -65,7 +66,7 @@ public class RenderSession {
 
   /**
    * Sets the specified variable to the specified value. Equivalent to {@link #set(String, Object,
-   * VarGroup) set(varName, value, null)}.
+   * XVarGroup) set(varName, value, null)}.
    *
    * @param varName The name of the variable to set
    * @param value The value of the variable
@@ -77,7 +78,7 @@ public class RenderSession {
 
   /**
    * Sets the specified variable to the specified value using the {@link Stringifier stringifier}
-   * associated with the specified {@link VarGroup variable group}. If the variable already has a
+   * associated with the specified {@link XVarGroup variable group}. If the variable already has a
    * group name prefix (e.g. ~%<b>html</b>:fullName%), the group specified through the prefix will
    * prevail. The {@code defaultGroup} argument is allowed to be {@code null}. Then, if the variable
    * neither has a group name prefix, the {@link StringifierFactory} for this {@code RenderSession}

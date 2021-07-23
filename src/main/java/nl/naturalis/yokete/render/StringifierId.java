@@ -6,9 +6,9 @@ import nl.naturalis.yokete.template.VarGroup;
 
 class StringifierId {
 
-  final VarGroup varGroup;
-  final Template template;
-  final String varName;
+  private final VarGroup varGroup;
+  private final Template template;
+  private final String varName;
 
   private final int hash;
 
@@ -29,7 +29,6 @@ class StringifierId {
     this.template = template;
     this.varName = varName;
     this.hash = Objects.hash(template, varGroup, varName);
-    ;
   }
 
   @Override

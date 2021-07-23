@@ -5,12 +5,12 @@ import java.util.function.Supplier;
 import nl.naturalis.common.Bool;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.yokete.db.Row;
-import static nl.naturalis.common.ObjectMethods.n2e;
+import nl.naturalis.yokete.render.RenderException;
 import static nl.naturalis.common.StringMethods.EMPTY;
 import static nl.naturalis.common.StringMethods.append;
 import static nl.naturalis.common.check.CommonChecks.yes;
-import static nl.naturalis.yokete.render.EscapeType.ESCAPE_ATTR;
-import static nl.naturalis.yokete.render.EscapeType.ESCAPE_HTML;
+import static nl.naturalis.yokete.x.render.StandardStringifiers.ESCAPE_ATTR;
+import static nl.naturalis.yokete.x.render.StandardStringifiers.ESCAPE_HTML;
 
 public class ListBoxOptions {
 
@@ -52,14 +52,14 @@ public class ListBoxOptions {
     return this;
   }
 
-  public String getHTML() {
+  public String getHTML() throws RenderException {
     StringBuilder sb = new StringBuilder(512);
     if (initOptText != null) {
-      append(sb, "<option value=\"", ESCAPE_ATTR.apply(n2e(initOptVal)), '"');
+      append(sb, "<option value=\"", ESCAPE_ATTR.toString(initOptVal), '"');
       if (initOptAttrs != null) {
         append(sb, ' ', initOptAttrs);
       }
-      append(sb, '>', ESCAPE_HTML.apply(n2e(initOptText)), "</option>");
+      append(sb, '>', ESCAPE_HTML.toString(initOptText), "</option>");
     }
     List<Row> rows;
     if (options != null && (rows = options.get()) != null) {
@@ -70,16 +70,16 @@ public class ListBoxOptions {
           if (colName.equals("text")) {
             continue;
           }
-          String value = n2e(row.getValue(colName));
+          String value = row.getString(colName);
           if ("selected".equalsIgnoreCase(colName)) {
             if ("selected".equalsIgnoreCase(value) || Bool.from(value)) {
               sb.append(" selected=\"selected\"");
             }
           } else {
-            append(sb, ' ', colName, "=\"", ESCAPE_ATTR.apply(value), "\"");
+            append(sb, ' ', colName, "=\"", ESCAPE_ATTR.toString(value), "\"");
           }
         }
-        append(sb, '>', ESCAPE_HTML.apply(n2e(row.getString("text"))), "</option>");
+        append(sb, '>', ESCAPE_HTML.toString(row.getValue("text")), "</option>");
       }
     }
     sb.append("</select>");
@@ -87,6 +87,10 @@ public class ListBoxOptions {
   }
 
   public String toString() {
-    return getHTML();
+    try {
+      return getHTML();
+    } catch (RenderException e) {
+      return e.toString();
+    }
   }
 }

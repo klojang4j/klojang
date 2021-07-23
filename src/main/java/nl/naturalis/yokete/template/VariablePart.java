@@ -1,6 +1,7 @@
 package nl.naturalis.yokete.template;
 
 import java.util.Optional;
+import nl.naturalis.yokete.x.template.XVarGroup;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.yokete.template.Regex.NAME_END;
 import static nl.naturalis.yokete.template.Regex.VAR_START;
@@ -18,7 +19,7 @@ public class VariablePart extends AbstractPart implements NamedPart {
 
   VariablePart(String prefix, String name, int start) {
     super(start);
-    this.group = ifNotNull(prefix, VarGroup::withName);
+    this.group = ifNotNull(prefix, XVarGroup::withName);
     this.name = name;
   }
 

@@ -37,4 +37,15 @@ public interface Stringifier {
    * @throws RenderException
    */
   String toString(Object value) throws RenderException;
+
+  /**
+   * Uses the output of this stringifier as input for the {@code next} stringifier.
+   *
+   * @param next The stringifier to apply after this stringifier
+   * @return A new stringifier that first applies this stringifier and then the {@code next}
+   *     stringifier
+   */
+  default Stringifier andThen(Stringifier next) {
+    return x -> next.toString(toString(x));
+  }
 }

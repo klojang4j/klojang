@@ -1,14 +1,13 @@
 package nl.naturalis.yokete.accessors;
 
 import nl.naturalis.yokete.render.Accessor;
-import nl.naturalis.yokete.render.EscapeType;
 import nl.naturalis.yokete.render.RenderException;
 import nl.naturalis.yokete.render.RenderSession;
 
 /**
- * An {@code Accessor} implementation that returns any value passed to it as-is. Used by the render
- * session's {@link RenderSession#populateWithValue(String, Object, EscapeType) populateWithValue}
- * method.
+ * A non-implementation of {@link Accessor} that returns the provided source data as-is, without
+ * actually accessing it in whatever way. Used by {@link RenderSession#populateWithValue(String,
+ * Object, nl.naturalis.yokete.template.VarGroup)}.
  *
  * @author Ayco Holleman
  */

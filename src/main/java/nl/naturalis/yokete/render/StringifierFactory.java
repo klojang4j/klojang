@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
+import org.apache.commons.text.StringEscapeUtils;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.TypeMap;
@@ -11,8 +13,7 @@ import nl.naturalis.yokete.template.Template;
 import nl.naturalis.yokete.template.TemplateUtils;
 import nl.naturalis.yokete.template.VarGroup;
 import nl.naturalis.yokete.template.VariablePart;
-import static org.apache.commons.text.StringEscapeUtils.escapeEcmaScript;
-import static org.apache.commons.text.StringEscapeUtils.escapeHtml4;
+import nl.naturalis.yokete.x.template.XVarGroup;
 import static nl.naturalis.common.StringMethods.EMPTY;
 import static nl.naturalis.common.StringMethods.ltrim;
 import static nl.naturalis.common.StringMethods.rtrim;
@@ -51,7 +52,7 @@ import static nl.naturalis.yokete.template.VarGroup.TEXT;
  * <p>
  *
  * <ol>
- *   <li>If a stringifier has been defined for a {@link VarGroup variable group} and the variable
+ *   <li>If a stringifier has been defined for a {@link XVarGroup variable group} and the variable
  *       belongs to that group, then that is the stringifier that is going to be used.
  *   <li>If a stringifier has been defined for that particular variable in that particular template,
  *       then that is the stringifier that is going to be used.
@@ -117,9 +118,12 @@ public final class StringifierFactory {
 
     private Builder() {
       stringifiers.put(new StringifierId(TEXT), Stringifier.DEFAULT);
-      stringifiers.put(new StringifierId(HTML), x -> x == null ? EMPTY : escapeHtml4(x.toString()));
-      stringifiers.put(
-          new StringifierId(JS), x -> x == null ? EMPTY : escapeEcmaScript(x.toString()));
+      stringifiers.put(new StringifierId(HTML), wrap(StringEscapeUtils::escapeHtml4));
+      stringifiers.put(new StringifierId(JS), wrap(StringEscapeUtils::escapeEcmaScript));
+    }
+
+    private static Stringifier wrap(UnaryOperator<String> stringifier) {
+      return x -> x == null ? EMPTY : stringifier.apply(x.toString());
     }
 
     /**
@@ -162,11 +166,11 @@ public final class StringifierFactory {
     }
 
     /**
-     * Assigns the specified stringifier to the specified {@link VarGroup variable groups}. The
+     * Assigns the specified stringifier to the specified {@link XVarGroup variable groups}. The
      * group that a variable belongs to can be specified as a prefix within the variable
      * declaration. For example in {@code ~%format2:salary%} the {@code salary} variable is assigned
      * to variable group "format2". A variable group can also be assigned via the {@link
-     * RenderSession} class. See {@link RenderSession#set(String, Object, VarGroup)}. Note that
+     * RenderSession} class. See {@link RenderSession#set(String, Object, XVarGroup)}. Note that
      * different instances of the same variable within the same template can be assigned to
      * different variable groups (for example: {@code ~%html:fullName%} and {@code ~%js:fullName%}).
      *
@@ -178,7 +182,7 @@ public final class StringifierFactory {
       Check.notNull(stringifier, "stringifier");
       Check.that(groupNames, "groupNames").is(deepNotEmpty());
       for (String name : groupNames) {
-        VarGroup vg = VarGroup.withName(name);
+        VarGroup vg = XVarGroup.withName(name);
         StringifierId id = new StringifierId(vg);
         Check.that(id)
             .isNot(keyIn(), stringifiers, ERR_GROUP_ASSIGNED)
