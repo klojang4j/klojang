@@ -1,0 +1,49 @@
+package org.klojang.accessors;
+
+import java.util.Map;
+import org.klojang.render.Accessor;
+import org.klojang.render.NameMapper;
+import org.klojang.render.RenderException;
+import org.klojang.template.Template;
+import nl.naturalis.common.check.Check;
+
+/**
+ * Simple map-based {@code Accessor} implementation.
+ *
+ * @author Ayco Holleman
+ */
+public class MapAccessor implements Accessor<Map<String, Object>> {
+
+  private final Template template;
+  private final NameMapper mapper;
+
+  /**
+   * Creates a {@code KeyValueAccessor} that assumes a one-to-once correspondence between template
+   * variable names and map keys.
+   */
+  public MapAccessor() {
+    this.template = null;
+    this.mapper = null;
+  }
+
+  /**
+   * Creates a {@code KeyValueAccessor} that translates template variable names using the specified
+   * operator.
+   *
+   * @param nameMapper
+   */
+  public MapAccessor(Template template, NameMapper nameMapper) {
+    this.template = Check.notNull(template).ok();
+    this.mapper = Check.notNull(nameMapper).ok();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Object access(Map<String, Object> from, String name) throws RenderException {
+    String key = Check.notNull(name, "name").ok();
+    if (mapper != null) {
+      key = mapper.map(template, key);
+    }
+    return Check.notNull(from, "from").ok().getOrDefault(key, UNDEFINED);
+  }
+}
