@@ -81,12 +81,12 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
           for (Tuple<Object, String> t : bindBackObjs) {
             if (t.getLeft() instanceof Map) {
               RsToMapTransporter<?>[] transporters =
-                  RsToMapTransporter.createMapValueSetters(rs, s -> t.getRight());
+                  RsToMapTransporter.createValueTransporters(rs, s -> t.getRight());
               populateMap(rs, (Map<String, Object>) t.getLeft(), transporters);
             } else {
               Class<T> beanClass = (Class<T>) t.getLeft().getClass();
               RsToBeanTransporter<?, ?>[] setters =
-                  RsToBeanTransporter.createSetters(rs, beanClass, s -> t.getRight());
+                  RsToBeanTransporter.createValueTransporters(rs, beanClass, s -> t.getRight());
               Supplier<T> beanSupplier = () -> (T) t.getLeft();
               RsToBeanTransporter.toBean(rs, beanSupplier, setters);
             }

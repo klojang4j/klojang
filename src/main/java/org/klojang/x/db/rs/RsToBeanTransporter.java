@@ -9,16 +9,15 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.invoke.Setter;
 import nl.naturalis.common.invoke.SetterFactory;
 
 /* Transports a single value from a ResultSet to a bean */
-@ModulePrivate
 public class RsToBeanTransporter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransporter {
 
   public static <U> U toBean(
-      ResultSet rs, Supplier<U> beanSupplier, RsToBeanTransporter<?, ?>[] setters) throws Throwable {
+      ResultSet rs, Supplier<U> beanSupplier, RsToBeanTransporter<?, ?>[] setters)
+      throws Throwable {
     U bean = beanSupplier.get();
     for (RsToBeanTransporter<?, ?> setter : setters) {
       setter.setValue(rs, bean);
@@ -26,14 +25,14 @@ public class RsToBeanTransporter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransp
     return bean;
   }
 
-  public static RsToBeanTransporter<?, ?>[] createSetters(
+  public static RsToBeanTransporter<?, ?>[] createValueTransporters(
       ResultSet rs, Class<?> beanClass, UnaryOperator<String> nameMapper) {
     Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(beanClass);
     ExtractorNegotiator negotiator = ExtractorNegotiator.getInstance();
     try {
       ResultSetMetaData rsmd = rs.getMetaData();
       int sz = rsmd.getColumnCount();
-      List<RsToBeanTransporter<?, ?>> transporters = new ArrayList<>(sz);
+      RsToBeanTransporter<?, ?>[] transporters = new RsToBeanTransporter[sz];
       for (int idx = 0; idx < sz; ++idx) {
         int jdbcIdx = idx + 1; // JDBC is one-based
         int sqlType = rsmd.getColumnType(jdbcIdx);
@@ -43,10 +42,10 @@ public class RsToBeanTransporter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransp
         if (setter != null) {
           Class<?> javaType = setter.getParamType();
           RsExtractor<?, ?> extractor = negotiator.findExtractor(javaType, sqlType);
-          transporters.add(new RsToBeanTransporter<>(extractor, setter, jdbcIdx, sqlType));
+          transporters[idx] = new RsToBeanTransporter<>(extractor, setter, jdbcIdx, sqlType);
         }
       }
-      return transporters.toArray(new RsToBeanTransporter[transporters.size()]);
+      return transporters;
     } catch (SQLException e) {
       throw ExceptionMethods.uncheck(e);
     }

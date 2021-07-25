@@ -10,20 +10,20 @@ import static java.sql.Types.*;
 import static org.klojang.x.db.rs.RsMethod.*;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
-class RsMethodInventory {
+class RsMethods {
 
-  private static RsMethodInventory INSTANCE;
+  private static RsMethods INSTANCE;
 
-  static RsMethodInventory getInstance() {
+  static RsMethods getInstance() {
     if (INSTANCE == null) {
-      INSTANCE = new RsMethodInventory();
+      INSTANCE = new RsMethods();
     }
     return INSTANCE;
   }
 
   private final Map<Integer, RsMethod<?>> cache;
 
-  private RsMethodInventory() {
+  private RsMethods() {
     cache = createCache();
   }
 

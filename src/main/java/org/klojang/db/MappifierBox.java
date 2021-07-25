@@ -6,10 +6,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
 import org.klojang.x.db.rs.RsToMapTransporter;
+import org.klojang.x.db.rs.ValueTransporterCache;
 import nl.naturalis.common.check.Check;
-import static org.klojang.x.db.rs.RsToMapTransporter.createMapValueSetters;
-import static org.klojang.x.db.rs.ValueTransporter.getMatchErrors;
-import static org.klojang.x.db.rs.ValueTransporter.isCompatible;
+import static org.klojang.x.db.rs.RsToMapTransporter.createValueTransporters;
 import static nl.naturalis.common.StringMethods.implode;
 
 public class MappifierBox {
@@ -36,17 +35,17 @@ public class MappifierBox {
     if (!rs.next()) {
       return EmptyMappifier.INSTANCE;
     }
-    RsToMapTransporter<?>[] setters;
-    if ((setters = ref.getPlain()) == null) {
+    RsToMapTransporter<?>[] transporters;
+    if ((transporters = ref.getPlain()) == null) {
       synchronized (this) {
         if (ref.get() == null) {
-          setters = createMapValueSetters(rs, mapper);
+          transporters = createValueTransporters(rs, mapper);
         }
       }
-    } else if (verify && !isCompatible(rs, setters)) {
-      List<String> errors = getMatchErrors(rs, setters);
+    } else if (verify && !ValueTransporterCache.isCompatible(rs, transporters)) {
+      List<String> errors = ValueTransporterCache.getMatchErrors(rs, transporters);
       throw new ResultSetMismatchException(implode(errors, ". "));
     }
-    return new DefaultMappifier(rs, setters);
+    return new DefaultMappifier(rs, transporters);
   }
 }

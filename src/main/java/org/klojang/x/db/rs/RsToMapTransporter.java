@@ -8,17 +8,9 @@ import java.util.Map;
 import java.util.function.UnaryOperator;
 import org.klojang.db.Row;
 import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.Tuple;
 
-/**
- * Transports a single column-value pair from the {@code ResultSet} to a <code>
- * Map&lt;String,Object&gt;</code>.
- *
- * @author Ayco Holleman
- * @param <COLUMN_TYPE>
- */
-@ModulePrivate
+/* Transports a single value from a ResultSet to a Map<String,Object> */
 public class RsToMapTransporter<COLUMN_TYPE> implements ValueTransporter {
 
   @SuppressWarnings("unchecked")
@@ -37,30 +29,30 @@ public class RsToMapTransporter<COLUMN_TYPE> implements ValueTransporter {
     return map;
   }
 
-  public static void populateMap(ResultSet rs, Map<String, Object> map, RsToMapTransporter<?>[] setters)
-      throws Throwable {
+  public static void populateMap(
+      ResultSet rs, Map<String, Object> map, RsToMapTransporter<?>[] setters) throws Throwable {
     for (int i = 0; i < setters.length; ++i) {
       Tuple<String, Object> tuple = setters[i].getEntry(rs);
       tuple.insertInto(map);
     }
   }
 
-  public static RsToMapTransporter<?>[] createMapValueSetters(
+  public static RsToMapTransporter<?>[] createValueTransporters(
       ResultSet rs, UnaryOperator<String> mapper) {
-    RsMethodInventory methods = RsMethodInventory.getInstance();
+    RsMethods methods = RsMethods.getInstance();
     try {
       ResultSetMetaData rsmd = rs.getMetaData();
       int sz = rsmd.getColumnCount();
-      RsToMapTransporter<?>[] setters = new RsToMapTransporter[sz];
+      RsToMapTransporter<?>[] transporters = new RsToMapTransporter[sz];
       for (int idx = 0; idx < sz; ++idx) {
         int jdbcIdx = idx + 1; // JDBC is one-based
         int sqlType = rsmd.getColumnType(jdbcIdx);
         RsMethod<?> method = methods.getMethod(sqlType);
         String label = rsmd.getColumnLabel(jdbcIdx);
         String key = mapper.apply(label);
-        setters[idx] = new RsToMapTransporter<>(method, jdbcIdx, sqlType, key);
+        transporters[idx] = new RsToMapTransporter<>(method, jdbcIdx, sqlType, key);
       }
-      return setters;
+      return transporters;
     } catch (SQLException e) {
       throw ExceptionMethods.uncheck(e);
     }

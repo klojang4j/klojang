@@ -7,10 +7,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import org.klojang.x.db.rs.RsToBeanTransporter;
+import org.klojang.x.db.rs.ValueTransporterCache;
 import nl.naturalis.common.check.Check;
-import static org.klojang.x.db.rs.RsToBeanTransporter.createSetters;
-import static org.klojang.x.db.rs.ValueTransporter.getMatchErrors;
-import static org.klojang.x.db.rs.ValueTransporter.isCompatible;
+import static org.klojang.x.db.rs.RsToBeanTransporter.createValueTransporters;
 import static nl.naturalis.common.StringMethods.implode;
 
 /**
@@ -59,12 +58,12 @@ public class BeanifierBox<T> {
           // Ask again. Since we're now the only one in here, if pwref.get()
           // did *not* return null, another thread had slipped in just after
           // our first null check. That's fine. We are done.
-          setters = createSetters(rs, beanClass, mapper);
+          setters = createValueTransporters(rs, beanClass, mapper);
           ref.set(setters);
         }
       }
-    } else if (verify && !isCompatible(rs, setters)) {
-      List<String> errors = getMatchErrors(rs, setters);
+    } else if (verify && !ValueTransporterCache.isCompatible(rs, setters)) {
+      List<String> errors = ValueTransporterCache.getMatchErrors(rs, setters);
       throw new ResultSetMismatchException(implode(errors, ". "));
     }
     return new DefaultBeanifier<>(rs, setters, beanSupplier);

@@ -6,10 +6,6 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.klojang.accessors.MapAccessor;
-import org.klojang.render.Page;
-import org.klojang.render.RenderException;
-import org.klojang.render.RenderSession;
-import org.klojang.render.StringifierFactory;
 import org.klojang.template.ParseException;
 import org.klojang.template.Template;
 
