@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
-import org.klojang.db.ps.BeanBinder;
+import org.klojang.x.db.ps.BeanBinder;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
 import static java.util.stream.Collectors.toList;

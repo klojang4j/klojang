@@ -5,11 +5,11 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
-import org.klojang.db.rs.RsToMapTransporter;
+import org.klojang.x.db.rs.RsToMapTransporter;
 import nl.naturalis.common.check.Check;
-import static org.klojang.db.rs.RsToMapTransporter.createMapValueSetters;
-import static org.klojang.db.rs.ValueTransporter.getMatchErrors;
-import static org.klojang.db.rs.ValueTransporter.isCompatible;
+import static org.klojang.x.db.rs.RsToMapTransporter.createMapValueSetters;
+import static org.klojang.x.db.rs.ValueTransporter.getMatchErrors;
+import static org.klojang.x.db.rs.ValueTransporter.isCompatible;
 import static nl.naturalis.common.StringMethods.implode;
 
 public class MappifierBox {

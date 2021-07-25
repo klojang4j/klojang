@@ -7,10 +7,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
-import org.klojang.db.rs.RsToBeanTransporter;
+import org.klojang.x.db.rs.RsToBeanTransporter;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
-import static org.klojang.db.rs.RsToBeanTransporter.toBean;
+import static org.klojang.x.db.rs.RsToBeanTransporter.toBean;
 import static nl.naturalis.common.check.CommonChecks.gt;
 
 class DefaultBeanifier<T> implements ResultSetBeanifier<T> {
