@@ -3,10 +3,8 @@ package org.klojang.db;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.klojang.db.NamedParameter;
-import org.klojang.db.SQL;
 import nl.naturalis.common.collection.IntList;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class NamedParameterTest {
 

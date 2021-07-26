@@ -74,9 +74,9 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
         exec(true);
         try (ResultSet rs = ps.getGeneratedKeys()) {
           if (!rs.next()) {
-            throw new KSQLException("No keys were generated during INSERT");
+            throw new KJSQLException("No keys were generated during INSERT");
           } else if (rs.getMetaData().getColumnCount() != 1) {
-            throw new KSQLException("Multiple auto-increment keys not supported");
+            throw new KJSQLException("Multiple auto-increment keys not supported");
           }
           for (Tuple<Object, String> t : bindBackObjs) {
             if (t.getLeft() instanceof Map) {
@@ -103,9 +103,9 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
       exec(true);
       try (ResultSet rs = ps.getGeneratedKeys()) {
         if (!rs.next()) {
-          throw new KSQLException("No keys were generated");
+          throw new KJSQLException("No keys were generated");
         } else if (rs.getMetaData().getColumnCount() != 1) {
-          throw new KSQLException("Multiple auto-increment keys not supported");
+          throw new KJSQLException("Multiple auto-increment keys not supported");
         }
         return rs.getLong(1);
       }

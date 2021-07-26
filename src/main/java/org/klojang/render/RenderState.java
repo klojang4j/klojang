@@ -52,28 +52,6 @@ class RenderState {
     return children;
   }
 
-  RenderSession[] getOrCreateChildSessions(Template t, Accessor<?> acc, int repeats)
-      throws RenderException {
-    if (t.isTextOnly()) {
-      return getOrCreateTextOnlyChildSessions(t, repeats);
-    }
-    RenderSession[] children = sessions.get(t);
-    if (children == null) {
-      if (repeats == 0) {
-        children = ZERO_SESSIONS;
-      } else {
-        children = new RenderSession[repeats];
-        for (int i = 0; i < repeats; ++i) {
-          children[i] = page.newChildSession(t, acc);
-        }
-      }
-      sessions.put(t, children);
-    } else if (children.length != repeats) {
-      throw repetitionMismatch(page.getTemplate(), children, repeats);
-    }
-    return children;
-  }
-
   RenderSession[] getOrCreateTextOnlyChildSessions(Template t, int repeats) throws RenderException {
     // The RenderSession[] array will never contain any actual RenderSession
     // instances for a text-only template. Only its length matters to the

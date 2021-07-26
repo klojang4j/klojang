@@ -44,7 +44,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     try {
       ResultSet rs = resultSet();
       if (!rs.next()) {
-        throw new KSQLException("Query returned zero rows");
+        throw new KJSQLException("Query returned zero rows");
       }
       return rs;
     } catch (Throwable t) {
@@ -54,7 +54,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
 
   /**
    * Returns the value of the first column of the first row, converted to the specified type. Throws
-   * a {@link KSQLException} if the query returned zero rows.
+   * a {@link KJSQLException} if the query returned zero rows.
    *
    * @param <T>
    * @param clazz
@@ -73,12 +73,12 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
 
   /**
    * Returns the value of the first column of the first row as an integer. Throws a {@link
-   * KSQLException} if the query returned zero rows.
+   * KJSQLException} if the query returned zero rows.
    *
    * @return The value of the first column of the first row as an integer
-   * @throws KSQLException If the query returned zero rows
+   * @throws KJSQLException If the query returned zero rows
    */
-  public int getInt() throws KSQLException {
+  public int getInt() throws KJSQLException {
     try {
       return executeAndNext().getInt(1);
     } catch (SQLException e) {
@@ -86,7 +86,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     }
   }
 
-  public String getString() throws KSQLException {
+  public String getString() throws KJSQLException {
     try {
       return executeAndNext().getString(1);
     } catch (SQLException e) {
@@ -178,7 +178,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     try {
       return ifNull(rs, rs = preparedStatement().executeQuery());
     } catch (SQLException e) {
-      throw new KSQLException(sql, e);
+      throw new KJSQLException(sql, e);
     }
   }
 }

@@ -77,21 +77,7 @@ public final class StringifierFactory {
    * Stringifier#DEFAULT default stringifier}, whatever the template and whatever the variable.
    * Unlikely to be satisfactory in the end, but handy in the early stages of development.
    */
-  public static final StringifierFactory BASIC_STRINGIFIER =
-      StringifierFactory.configure().freeze();
-
-  /**
-   * Returns {@link #BASIC_STRINGIFIER}. Can be used as a starting point for building a {@code
-   * StringifierFactory} using the {@code withXXX} methods of {@code StringifierFactory} in stead of
-   * using a {@link Builder} instance. Note, however, that the {@code withXXX} methods do a lot of
-   * back-and-forth copying of internal data structures so are less efficient than using a {@code
-   * Builder} instance.
-   *
-   * @return {@link #BASIC_STRINGIFIER}
-   */
-  public static StringifierFactory basic() {
-    return BASIC_STRINGIFIER;
-  }
+  public static final StringifierFactory BASIC_STRINGIFIERS = configure().freeze();
 
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
 
@@ -193,10 +179,10 @@ public final class StringifierFactory {
 
     /**
      * Assigns the specified stringifier to all variables with the specified name, irrespective of
-     * the template they belong to. The provided variable names be simple names (rather than
+     * which template they belong to. The provided variable names must be simple names (rather than
      * fully-qualified names). They may, however, start and/or end with a '*' sign. For example to
-     * assign a number formatter to all variables whose name ends with "Price", specify "*Price" as
-     * the variable name.
+     * assign a number formatter to all variables whose name ends with "Price", specify {@code
+     * *Price} as the variable name.
      *
      * @param stringifier The stringifier
      * @param varNames The variable names to associate the stringifier with.

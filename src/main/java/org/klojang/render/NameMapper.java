@@ -1,7 +1,6 @@
 package org.klojang.render;
 
 import org.klojang.db.Row;
-import org.klojang.template.Template;
 
 /**
  * Maps template variable names and nested template names to the name that must be used to access
@@ -15,7 +14,7 @@ import org.klojang.template.Template;
 public interface NameMapper {
 
   /** The no-op mapper. Maps the variable or nested template name to itself. */
-  public static NameMapper NOOP = (x, y) -> y;
+  public static NameMapper NOOP = x -> x;
 
   /**
    * Maps the specified name to a name that can be used to access its value.
@@ -24,5 +23,5 @@ public interface NameMapper {
    * @param varOrNestedTemplateName The name of the variable or nested template
    * @return A (new) name that can be used to access the value
    */
-  String map(Template template, String varOrNestedTemplateName);
+  String map(String varOrNestedTemplateName);
 }

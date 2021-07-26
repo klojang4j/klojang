@@ -75,10 +75,10 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
     }
   }
 
-  private KSQLException notExecutable() {
+  private KJSQLException notExecutable() {
     Set<NamedParameter> params = new HashSet<>(sql.getParameters());
     params.removeAll(bound);
     List<String> unbound = params.stream().map(NamedParameter::getName).collect(toList());
-    return new KSQLException("Some query parameters have not been bound yet: %s", implode(unbound));
+    return new KJSQLException("Some query parameters have not been bound yet: %s", implode(unbound));
   }
 }

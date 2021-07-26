@@ -5,17 +5,17 @@ package org.klojang;
  *
  * @author Ayco Holleman
  */
-public class YoketeException extends Exception {
+public class KlojangException extends Exception {
 
-  public YoketeException(String message) {
+  public KlojangException(String message) {
     super(message);
   }
 
-  public YoketeException(Throwable cause) {
+  public KlojangException(Throwable cause) {
     super(cause);
   }
 
-  public YoketeException(String message, Throwable cause) {
+  public KlojangException(String message, Throwable cause) {
     super(message, cause);
   }
 }

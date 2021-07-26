@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import org.klojang.accessors.MapAccessor;
 import org.klojang.template.ParseException;
 import org.klojang.template.Template;
 
@@ -14,8 +13,7 @@ public class RenderSessionTest {
   public void test00() throws ParseException, RenderException {
 
     Template tmpl = Template.parseResource(getClass(), "RenderSessionTest.main.html");
-    StringifierFactory sf = StringifierFactory.BASIC_STRINGIFIER;
-    Page factory = Page.configure(tmpl, (t, u) -> new MapAccessor(), sf);
+    Page factory = Page.configure(tmpl);
 
     Map<String, Object> data = new HashMap<>();
     Map<String, Object> company = new HashMap<>();

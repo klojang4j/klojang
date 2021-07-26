@@ -2,7 +2,6 @@ package org.klojang.template;
 
 import java.util.regex.Matcher;
 import org.junit.jupiter.api.Test;
-import org.klojang.template.Regex;
 import nl.naturalis.common.IOMethods;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;

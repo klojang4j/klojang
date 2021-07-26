@@ -2,13 +2,8 @@ package org.klojang.render;
 
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
-import org.klojang.accessors.SelfAccessor;
-import org.klojang.accessors.TupleAccessor;
 import org.klojang.template.Template;
 import org.klojang.template.VarGroup;
 import org.klojang.template.VariablePart;
@@ -17,6 +12,7 @@ import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.io.UnsafeByteArrayOutputStream;
+import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toList;
 import static org.klojang.render.Accessor.UNDEFINED;
 import static org.klojang.render.RenderException.*;
@@ -452,7 +448,8 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly one variable and zero
-   * nested templates. See {@link #populateWithValue(String, Object, EscapeType)}.
+   * (doubly) nested templates. If the specified value is an array or a {@code Collection}, the
+   * template is going to be repeated for each value <i>within</i> the array or {@code Collection}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
@@ -466,9 +463,9 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly one variable and zero
-   * nested templates. The variable may still occur multiple times within the template though. This
-   * method ignores the session's {@link AccessorFactory} (if any) and uses a {@link SelfAccessor}
-   * instead.
+   * (doubly) nested templates. The variable may still occur multiple times within the template. If
+   * the specified value is an array or a {@code Collection}, the template is going to be repeated
+   * for each value <i>within</i> the array or {@code Collection}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
@@ -485,8 +482,9 @@ public class RenderSession {
     Check.on(notMonoTemplate(t), t)
         .has(tmpl -> tmpl.getVariables().size(), eq(), 1)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
-    List<?> values = asUnsafeList(value);
-    RenderSession[] sessions = state.getOrCreateChildSessions(t, new SelfAccessor(), values.size());
+    String var = t.getVariables().iterator().next();
+    List<?> values = Arrays.asList(value).stream().map(v -> singletonMap(var, v)).collect(toList());
+    RenderSession[] sessions = state.getOrCreateChildSessions(t, values.size());
     for (int i = 0; i < sessions.length; ++i) {
       sessions[i].insert(values.get(i), defaultGroup);
     }
@@ -495,10 +493,9 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly two variables and
-   * zero nested templates. See {@link #populateWithTuple(String, List, EscapeType)}.
+   * zero (doubly) nested templates.
    *
-   * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly two
-   *     variables
+   * @param nestedTemplateName The name of the nested template.
    * @param tuples A list of value pairs
    * @return This {@code RenderSession}
    * @throws RenderException
@@ -510,9 +507,9 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly two variables and
-   * zero nested templates. The variables may occur multiple times within the template. This method
-   * ignores the session's {@link AccessorFactory} (if any) and uses a {@link TupleAccessor}
-   * instead. instead.
+   * zero (doubly) nested templates. The variables may still occur multiple times within the
+   * template. The size of the list of tuples determines how often the template is going to be
+   * repeated.
    *
    * @param nestedTemplateName The name of the nested template
    * @param tuples A list of value pairs
@@ -531,15 +528,12 @@ public class RenderSession {
         .has(tmpl -> tmpl.getVariables().size(), eq(), 2)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
     String[] vars = t.getVariables().toArray(new String[2]);
-    // Convert each tuple to a map with two entries and then use a regular map
-    // accessor to read the data
     List<Map<String, Object>> data =
         tuples
             .stream()
             .map(tuple -> Map.of(vars[0], tuple.getLeft(), vars[1], tuple.getRight()))
             .collect(toList());
-    RenderSession[] sessions =
-        state.getOrCreateChildSessions(t, new MapAccessorInternal(), data.size());
+    RenderSession[] sessions = state.getOrCreateChildSessions(t, data.size());
     for (int i = 0; i < sessions.length; ++i) {
       sessions[i].insert(data.get(i), defaultGroup);
     }
@@ -550,8 +544,7 @@ public class RenderSession {
 
   /**
    * Populates the <i>current</i> template (the template for which this {@code RenderSession} was
-   * created). No escaping will be applied to the values extracted from the source data. See {@link
-   * #add(Object, EscapeType, String...)}.
+   * created). No escaping will be applied to the values extracted from the source data.
    *
    * @param sourceData An object that provides data for all or some of the template variables and
    *     nested templates

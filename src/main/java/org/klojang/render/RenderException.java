@@ -1,7 +1,7 @@
 package org.klojang.render;
 
 import java.util.function.Function;
-import org.klojang.YoketeException;
+import org.klojang.KlojangException;
 import org.klojang.template.Template;
 import org.klojang.template.TemplateUtils;
 import org.klojang.template.VarGroup;
@@ -14,7 +14,7 @@ import static org.klojang.x.Messages.ERR_NO_SUCH_VARIABLE;
  *
  * @author Ayco Holleman
  */
-public class RenderException extends YoketeException {
+public class RenderException extends KlojangException {
 
   /** Thrown when specifying a non-existent variable name. */
   static Function<String, RenderException> noSuchVariable(Template t, String var) {

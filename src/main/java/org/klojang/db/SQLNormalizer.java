@@ -58,7 +58,7 @@ class SQLNormalizer {
           if (c == '\'') {
             inString = true;
           } else if (c == ':') {
-            throw new KSQLException(ERR_ADJACENT_PARAMS, pStartPos, i);
+            throw new KJSQLException(ERR_ADJACENT_PARAMS, pStartPos, i);
           }
         }
       } else if (c == ':') {
@@ -100,7 +100,7 @@ class SQLNormalizer {
   private static void addParam(
       Map<String, IntList> paramMap, StringBuilder param, MutableInt pCount, int startPos) {
     if (param.length() == 0) {
-      throw new KSQLException(ERR_EMPTY_NAME, startPos);
+      throw new KJSQLException(ERR_EMPTY_NAME, startPos);
     }
     paramMap.computeIfAbsent(param.toString(), k -> new IntArrayList()).add(pCount.ppi());
   }

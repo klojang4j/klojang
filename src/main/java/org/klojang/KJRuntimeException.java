@@ -7,17 +7,17 @@ import static nl.naturalis.common.ObjectMethods.isEmpty;
  *
  * @author Ayco Holleman
  */
-public class YoketeRuntimeException extends RuntimeException {
+public class KJRuntimeException extends RuntimeException {
 
-  public YoketeRuntimeException(String message, Object... msgArgs) {
+  public KJRuntimeException(String message, Object... msgArgs) {
     super(isEmpty(msgArgs) ? message : String.format(message, msgArgs));
   }
 
-  public YoketeRuntimeException(Throwable cause) {
+  public KJRuntimeException(Throwable cause) {
     super(cause);
   }
 
-  public YoketeRuntimeException(String message, Throwable cause) {
+  public KJRuntimeException(String message, Throwable cause) {
     super(message, cause);
   }
 }

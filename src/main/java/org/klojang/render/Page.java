@@ -2,7 +2,8 @@ package org.klojang.render;
 
 import org.klojang.template.Template;
 import nl.naturalis.common.check.Check;
-import static org.klojang.render.StringifierFactory.BASIC_STRINGIFIER;
+import static org.klojang.render.StringifierFactory.BASIC_STRINGIFIERS;
+import static org.klojang.render.AccessorFactory.*;
 
 /**
  * A {@code Page} is a factory for {@link RenderSession render sessions}. Its main component is the
@@ -20,66 +21,62 @@ import static org.klojang.render.StringifierFactory.BASIC_STRINGIFIER;
 public final class Page {
 
   /**
-   * Returns a {@code Page} that will produce {@link RenderSession} instances that lack an {@link
-   * Accessor}, and that use the {@link Stringifier#DEFAULT default stringifier} to stringify
-   * values.
+   * Returns a {@code Page} that will produce {@link RenderSession render sessions} that only use
+   * {@link AccessorFactory#BASIC_ACCESSORS predefined accessors} and {@link StringifierFactory
+   * predefined stringifiers} to extract resp. stringify values from source data objects.
    *
    * @param template The template to be populated
-   * @return A {@code Page} that will produce {@link RenderSession} instances for the specified
-   *     template
+   * @return A new {@code Page}
    */
   public static Page configure(Template template) {
-    return configure(template, BASIC_STRINGIFIER);
+    return configure(template, BASIC_ACCESSORS, BASIC_STRINGIFIERS);
   }
 
   /**
-   * Returns a {@code Page} that will produce {@link RenderSession} instances lacking an {@link
-   * AccessorFactory}. That means you <i>cannot</i> call the {@link RenderSession#populate(String,
-   * Object, String...) populate} and {@link RenderSession#insert(Object, EscapeType, String...)
-   * insert} methods to populate the template. If you do, a {@link RenderException} is thrown. You
-   * can still use the {@link RenderSession#set(String, Object) set} methods.
+   * Returns a {@code Page} that will produce {@link RenderSession render sessions} that only use
+   * {@link AccessorFactory#BASIC_ACCESSORS predefined accessors} to extract values from source data
+   * objects and {@link StringifierFactory#BASIC_STRINGIFIERS predefined stringifiers}, and that
+   * will use the specified {@code StringifierFactory} to get hold of stringifiers for those values.
    *
-   * @param template
-   * @param stringifiers
-   * @return
+   * @param template The template to be populated
+   * @param The {@code StringifierFactory}
+   * @return A new {@code Page}
    */
   public static Page configure(Template template, StringifierFactory stringifiers) {
-    Accessor<?> acc = (x, y) -> Check.fail(RenderException::noAccessorProvided);
-    AccessorFactory af = (x, y) -> acc;
-    return configure(template, af, stringifiers);
+    return configure(template, BASIC_ACCESSORS, stringifiers);
   }
 
   /**
    * Creates a {@code Page} that will produce {@link RenderSession render sessions} for the
-   * specified template, using the specified {@code specified AccessorFactory} to produce {@link
-   * Accessor accessors} for source data for the template, and using the {@link
-   * StringifierFactory#BASIC_STRINGIFIER default stringifier} to stringify the source data.
+   * specified template, using the specified {@code AccessorFactory} to produce {@link Accessor
+   * accessors} for source data for the template, and using the {@link
+   * StringifierFactory#BASIC_STRINGIFIERS default stringifier} to stringify the source data.
    *
-   * @param template
-   * @return
+   * @param template The template to be populated
+   * @param accessors The {@code AccessorFactory}
+   * @return A new {@code Page}
    */
-  public static Page configure(Template template, AccessorFactory accessor) {
-    return configure(template, accessor, BASIC_STRINGIFIER);
+  public static Page configure(Template template, AccessorFactory accessors) {
+    return configure(template, accessors, BASIC_STRINGIFIERS);
   }
 
   /**
-   * Creates a {@code Page} that will produce {@link RenderSession render sessions} for the
-   * specified template, using the specified {@code specified AccessorFactory} to produce {@link
-   * Accessor accessors} for the source data for the template, and using the specified {@code
-   * StringifierFactory} to obtain stringifiers to stringify the values retrieved by the accessors.
+   * Returns a {@code Page} that will produce {@link RenderSession render sessions} that use the
+   * specified {@code AccessorFactory} to get hold of accessors for source data objects, and that
+   * will use the specified {@code StringifierFactory} to get hold of stringifiers for those values.
    *
    * @param template The template for which the {@code Page} will create render sessions
-   * @param accessor The {@code Accessor} implementation to use for extracting values from source
+   * @param accessors The {@code Accessor} implementation to use for extracting values from source
    *     data
    * @param stringifiers The {@code StringifierFactory} instance to use for stringifying values.
    * @return A {@code Page} instance
    */
   public static Page configure(
-      Template template, AccessorFactory accessor, StringifierFactory stringifiers) {
+      Template template, AccessorFactory accessors, StringifierFactory stringifiers) {
     Check.notNull(template);
-    Check.notNull(accessor);
+    Check.notNull(accessors);
     Check.notNull(stringifiers);
-    return new Page(template, accessor, stringifiers);
+    return new Page(template, accessors, stringifiers);
   }
 
   private final Template template;
@@ -119,11 +116,6 @@ public final class Page {
 
   RenderSession newChildSession(Template nested) {
     Page factory = new Page(nested, accFactory, stringifiers);
-    return factory.newRenderSession();
-  }
-
-  RenderSession newChildSession(Template nested, Accessor<?> acc) {
-    Page factory = new Page(nested, (type, tmpl) -> acc, stringifiers);
     return factory.newRenderSession();
   }
 }

@@ -1,7 +1,7 @@
 package org.klojang.template;
 
 import java.util.function.Function;
-import org.klojang.YoketeException;
+import org.klojang.KlojangException;
 import nl.naturalis.common.StringMethods;
 import static nl.naturalis.common.ArrayMethods.prefix;
 
@@ -10,7 +10,7 @@ import static nl.naturalis.common.ArrayMethods.prefix;
  *
  * @author Ayco Holleman
  */
-public class ParseException extends YoketeException {
+public class ParseException extends KlojangException {
 
   private static final String ERR_BASE = "Error at line %d, char %d: ";
 

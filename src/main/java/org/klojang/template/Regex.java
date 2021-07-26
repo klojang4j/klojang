@@ -2,7 +2,7 @@ package org.klojang.template;
 
 import java.util.Set;
 import java.util.regex.Pattern;
-import org.klojang.YoketeRuntimeException;
+import org.klojang.KJRuntimeException;
 import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.*;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
@@ -133,9 +133,9 @@ class Regex {
     return ifNotNull(System.getProperty(SYSPROP_TS), Pattern::quote, "%");
   }
 
-  private static YoketeRuntimeException badSysProp(String name, String val) {
+  private static KJRuntimeException badSysProp(String name, String val) {
     String fmt = "Illegal value for %s: \"%s\"";
-    return new YoketeRuntimeException(String.format(fmt, name, val));
+    return new KJRuntimeException(String.format(fmt, name, val));
   }
 
   private static String forbiddenChars() {

@@ -1,8 +1,8 @@
 package org.klojang.db;
 
-import org.klojang.YoketeRuntimeException;
+import org.klojang.KJRuntimeException;
 
-public class ResultSetMismatchException extends YoketeRuntimeException {
+public class ResultSetMismatchException extends KJRuntimeException {
 
   public ResultSetMismatchException(String message) {
     super(message);
