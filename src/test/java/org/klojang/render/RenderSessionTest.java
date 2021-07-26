@@ -12,8 +12,7 @@ public class RenderSessionTest {
   @Test
   public void test00() throws ParseException, RenderException {
 
-    Template tmpl = Template.parseResource(getClass(), "RenderSessionTest.main.html");
-    Page factory = Page.configure(tmpl);
+    Template template = Template.fromResource(getClass(), "RenderSessionTest.main.html");
 
     Map<String, Object> data = new HashMap<>();
     Map<String, Object> company = new HashMap<>();
@@ -68,7 +67,7 @@ public class RenderSessionTest {
     emp.put("birthDate", "1942-08-02");
     emps1.add(emp);
 
-    RenderSession session = factory.newRenderSession();
+    RenderSession session = template.newRenderSession();
     session.insert(data);
   }
 }

@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.klojang.render.Accessor;
-import org.klojang.render.Page;
 import org.klojang.render.RenderException;
 import org.klojang.render.RenderSession;
 import nl.naturalis.common.collection.IntList;
@@ -17,7 +16,7 @@ public class TemplateTest {
 
   @Test
   public void test00() throws ParseException {
-    Template t0 = Template.parseResource(getClass(), "TemplateTest.main.html");
+    Template t0 = Template.fromResource(getClass(), "TemplateTest.main.html");
     assertEquals(0, t0.countVariables());
     assertEquals(1, t0.countNestedTemplates());
     assertEquals("company", t0.getNestedTemplates().iterator().next().getName());
@@ -42,7 +41,7 @@ public class TemplateTest {
 
   @Test // getVariableNamesPerTemplate
   public void test01() throws ParseException {
-    Template t0 = Template.parseResource(getClass(), "TemplateTest.main.html");
+    Template t0 = Template.fromResource(getClass(), "TemplateTest.main.html");
     String expected =
         "company:name;company:poBox;company:established;company:director;"
             + "departments:name;departments:managerName;"
@@ -56,7 +55,7 @@ public class TemplateTest {
 
   @Test // getVarPartIndices
   public void test02() throws ParseException {
-    Template t0 = Template.parseResource(getClass(), "TemplateTest.main.html");
+    Template t0 = Template.fromResource(getClass(), "TemplateTest.main.html");
     IntList indices = t0.getNestedTemplate("company").getVarPartIndices().get("name");
     assertEquals(2, indices.size());
     indices = t0.getNestedTemplate("company").getVarPartIndices().get("poBox");
@@ -65,14 +64,14 @@ public class TemplateTest {
 
   @Test // getVarPartIndices
   public void test03() throws ParseException {
-    Template t0 = Template.parseResource(getClass(), "TemplateTest.main.html");
+    Template t0 = Template.fromResource(getClass(), "TemplateTest.main.html");
     TemplateUtils.getTemplateHierarchy(t0)
         .forEach(t -> System.out.println(TemplateUtils.getFQName(t, "test")));
   }
 
   @Test // getNestedTemplates
   public void test04() throws ParseException {
-    Template t0 = Template.parseResource(getClass(), "TemplateTest.main.html");
+    Template t0 = Template.fromResource(getClass(), "TemplateTest.main.html");
     t0.getNestedTemplates().forEach(t -> System.out.println(t.getName()));
     t0 = t0.getNestedTemplate("company");
     t0.getNestedTemplates().forEach(t -> System.out.println(t.getName()));
@@ -84,7 +83,7 @@ public class TemplateTest {
 
   @Test
   public void testEncounterOrder() throws ParseException {
-    Template t0 = Template.parseResource(getClass(), "TemplateTest.testEncounterOrder.html");
+    Template t0 = Template.fromResource(getClass(), "TemplateTest.testEncounterOrder.html");
     String varStr =
         "topdeskId, id, department, instituteCode, collectionCode, firstNumber, lastNumber, amount, issueDate";
     String[] varNames = varStr.split(",");
@@ -96,9 +95,9 @@ public class TemplateTest {
   @Test
   public void testAdjacentVars01() throws ParseException, RenderException {
     String s = "~%var1%~%var2%";
-    Template t0 = Template.parseString(s);
+    Template t0 = Template.fromString(s);
     assertEquals(2, t0.getParts().size());
-    RenderSession rs = Page.configure(t0).newRenderSession();
+    RenderSession rs = t0.newRenderSession();
     rs.set("var2", "Bar");
     rs.set("var1", "Foo");
     assertEquals("FooBar", rs.render());
@@ -107,9 +106,9 @@ public class TemplateTest {
   @Test
   public void testAdjacentVars02() throws ParseException, RenderException {
     String s = " ~%var1%~%var2% ";
-    Template t0 = Template.parseString(s);
+    Template t0 = Template.fromString(s);
     assertEquals(4, t0.getParts().size());
-    RenderSession rs = Page.configure(t0).newRenderSession();
+    RenderSession rs = t0.newRenderSession();
     rs.set("var2", "Bar");
     rs.set("var1", "Foo");
     assertEquals(" FooBar ", rs.render());
@@ -118,9 +117,9 @@ public class TemplateTest {
   @Test
   public void testAdjacentVars03() throws ParseException, RenderException {
     String s = "~%var1%%~%var2%";
-    Template t0 = Template.parseString(s);
+    Template t0 = Template.fromString(s);
     assertEquals(3, t0.getParts().size());
-    RenderSession rs = Page.configure(t0).newRenderSession();
+    RenderSession rs = t0.newRenderSession();
     rs.set("var2", "Bar");
     rs.set("var1", "Foo");
     assertEquals("Foo%Bar", rs.render());
@@ -129,9 +128,9 @@ public class TemplateTest {
   @Test
   public void testAdjacentVars04() throws ParseException, RenderException {
     String s = "~%var1%~~%var2%";
-    Template t0 = Template.parseString(s);
+    Template t0 = Template.fromString(s);
     assertEquals(3, t0.getParts().size());
-    RenderSession rs = Page.configure(t0).newRenderSession();
+    RenderSession rs = t0.newRenderSession();
     rs.set("var2", "Bar");
     rs.set("var1", "Foo");
     assertEquals("Foo~Bar", rs.render());

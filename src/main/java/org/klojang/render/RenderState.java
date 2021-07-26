@@ -11,23 +11,23 @@ class RenderState {
   private static final RenderSession[] ZERO_SESSIONS = new RenderSession[0];
   private static final RenderSession[] ONE_SESSION = new RenderSession[1];
 
-  private final Page page;
+  private final SessionConfig config;
   private final Set<String> todo; // variables that have not been set yet
   private final Map<Template, RenderSession[]> sessions;
   private final Map<Integer, Object> varValues;
 
   private boolean frozen;
 
-  RenderState(Page page) {
-    this.page = page;
-    int sz = page.getTemplate().countNestedTemplates();
+  RenderState(SessionConfig config) {
+    this.config = config;
+    int sz = config.getTemplate().countNestedTemplates();
     this.sessions = new IdentityHashMap<>(sz);
     this.varValues = new HashMap<>(sz);
-    this.todo = new HashSet<>(page.getTemplate().getVariables());
+    this.todo = new HashSet<>(config.getTemplate().getVariables());
   }
 
-  Page getSessionFactory() {
-    return page;
+  SessionConfig getSessionFactory() {
+    return config;
   }
 
   RenderSession getOrCreateChildSession(Template t) throws RenderException {
@@ -42,12 +42,12 @@ class RenderState {
       } else {
         children = new RenderSession[repeats];
         for (int i = 0; i < repeats; ++i) {
-          children[i] = page.newChildSession(t);
+          children[i] = config.newChildSession(t);
         }
       }
       sessions.put(t, children);
     } else if (children.length != repeats) {
-      throw repetitionMismatch(page.getTemplate(), children, repeats);
+      throw repetitionMismatch(config.getTemplate(), children, repeats);
     }
     return children;
   }
@@ -120,7 +120,7 @@ class RenderState {
   }
 
   private static void collectUnsetVars(RenderState state0, ArrayList<String> names) {
-    Template t = state0.page.getTemplate();
+    Template t = state0.config.getTemplate();
     state0.todo.stream().map(var -> getFQName(t, var)).forEach(names::add);
     state0
         .sessions

@@ -67,7 +67,7 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
  *   <li>Otherwise the {@link Stringifier#DEFAULT default stringifier} is going to be used.
  * </ol>
  *
- * @see Page
+ * @see SessionConfig
  * @author Ayco Holleman
  */
 public final class StringifierFactory {
@@ -77,7 +77,7 @@ public final class StringifierFactory {
    * Stringifier#DEFAULT default stringifier}, whatever the template and whatever the variable.
    * Unlikely to be satisfactory in the end, but handy in the early stages of development.
    */
-  public static final StringifierFactory BASIC_STRINGIFIERS = configure().freeze();
+  public static final StringifierFactory STANDARD_STRINGIFIERS = configure().freeze();
 
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
 

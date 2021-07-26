@@ -9,7 +9,6 @@ class StringifierId {
   private final VarGroup varGroup;
   private final Template template;
   private final String varName;
-
   private final int hash;
 
   public StringifierId(VarGroup varGroup) {

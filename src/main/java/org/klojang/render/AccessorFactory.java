@@ -11,7 +11,7 @@ import static nl.naturalis.common.ClassMethods.isA;
 
 public class AccessorFactory {
 
-  public static final AccessorFactory BASIC_ACCESSORS = configure().freeze();
+  public static final AccessorFactory STANDARD_ACCESSORS = configure().freeze();
 
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
 

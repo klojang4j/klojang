@@ -13,8 +13,7 @@ public class RenderSession1Test {
   @Test
   public void test00() throws ParseException, RenderException {
 
-    Template tmpl = Template.parseResource(getClass(), "RenderSession1Test.html");
-    Page page = Page.configure(tmpl);
+    Template template = Template.fromResource(getClass(), "RenderSession1Test.html");
 
     Map<String, Object> data = new HashMap<>();
 
@@ -43,7 +42,7 @@ public class RenderSession1Test {
     dept.put("manager", "Robert de Niro");
     depts.add(dept);
 
-    RenderSession session = page.newRenderSession();
+    RenderSession session = template.newRenderSession();
     session.insert(data);
 
     session.render(System.out);

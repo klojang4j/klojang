@@ -9,7 +9,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
-import org.klojang.render.Page;
 import org.klojang.render.RenderSession;
 import org.klojang.template.Template;
 import org.klojang.x.db.ps.BeanBinder;
@@ -61,7 +60,7 @@ public class SQL {
   private final SQLNormalizer normalizer;
   private final BindInfo bindInfo;
 
-  private Page page;
+  private Template template;
   private List<Tuple<String, Object>> vars;
   private String jdbcSQL;
 
@@ -160,10 +159,10 @@ public class SQL {
     try {
       if (vars != null) {
         LOG.debug("Processing SQL template variables");
-        if (page == null) {
-          page = Page.configure(Template.parseString(getNormalizedSQL()));
+        if (template == null) {
+          template = Template.fromString(getNormalizedSQL());
         }
-        RenderSession session = page.newRenderSession();
+        RenderSession session = template.newRenderSession();
         for (Tuple<String, Object> var : vars) {
           LOG.debug("** Variable \"{}\": {}", var.getLeft(), var.getRight());
           session.set(var.getLeft(), var.getRight());

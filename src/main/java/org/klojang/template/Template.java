@@ -1,6 +1,7 @@
 package org.klojang.template;
 
 import java.util.*;
+import org.klojang.render.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import nl.naturalis.common.StringMethods;
@@ -8,19 +9,20 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import static java.util.stream.Collectors.toUnmodifiableList;
-import static org.klojang.template.TemplateSourceType.*;
+import static org.klojang.template.TemplateSourceType.STRING;
 import static nl.naturalis.common.check.CommonChecks.indexOf;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 /**
- * A {@code Template} captures the result of parsing a template file.
- *
- * <p>{@code Template} instances are unmodifiable, expensive-to-create and heavy-weight objects.
+ * A {@code Template} captures the result of parsing a template file. The {@code Template} class and
+ * the {@link RenderSession} class are the two central classes of the Klojang library. {@code
+ * Template} instances are unmodifiable, expensive-to-create and heavy-weight objects.
  *
  * @author Ayco Holleman
  */
 public class Template {
 
+  @SuppressWarnings("unused")
   private static final Logger LOG = LoggerFactory.getLogger(Template.class);
 
   /**
@@ -32,9 +34,10 @@ public class Template {
   public static final String ROOT_TEMPLATE_NAME = "{root}";
 
   /**
-   * Parses the specified source code into a {@code Template} instance. The specified class will be
-   * used to include other template files by calling {@link Class#getResourceAsStream(String)
-   * getResourceAsStream("/path/to/other/source/file")} on it.
+   * Parses the specified string into a {@code Template} instance. If the string contains any {@code
+   * include} declarations (e.g. {@code ~%%include:/path/to/template%}) the path will be interpreted
+   * as a file system resource. Templates created from a string are never cached and are never equal
+   * to one another, even if they are created from the same string.
    *
    * @param clazz Any {@code Class} object that provides access to the included tempate files by
    *     calling {@code getResourceAsStream} on it
@@ -42,57 +45,57 @@ public class Template {
    * @return a new {@code Template} instance
    * @throws ParseException
    */
-  public static Template parseString(String source) throws ParseException {
+  public static Template fromString(String source) throws ParseException {
     Check.notNull(source, "source");
     return new Parser(ROOT_TEMPLATE_NAME, new TemplateId(), source).parse();
   }
 
   /**
-   * Parses the specified source code into a {@code Template} instance. The specified class will be
-   * used to include other template files by calling {@link Class#getResourceAsStream(String)
-   * getResourceAsStream("/path/to/other/source/file")} on it.
+   * Parses the specified string into a {@code Template} instance. The specified class will be used
+   * to include other templates using {@code clazz.getResourceAsStream("/path/to/template")}.
+   * Templates created from a string are never cached.
    *
    * @param clazz Any {@code Class} object that provides access to the included tempate files by
    *     calling {@code getResourceAsStream} on it
    * @param source The source code for the {@code Template}
-   * @return a new {@code Template} instance
+   * @return a {@code Template} instance
    * @throws ParseException
    */
-  public static Template parseString(Class<?> clazz, String source) throws ParseException {
+  public static Template fromString(Class<?> clazz, String source) throws ParseException {
     Check.notNull(clazz, "clazz");
     Check.notNull(source, "source");
     return new Parser(ROOT_TEMPLATE_NAME, new TemplateId(clazz), source).parse();
   }
 
   /**
-   * Returns the {@code Template} corresponding to the resource. The resource is read using {@code
-   * clazz.getResourceAsStream(path)}. Since templates created from a resource are cached, calling
-   * this method multiple times with the same arguments will always returns the same {@code
-   * Template} instance. (Actually it is the package containing the class, rather than the class
-   * itself, that is used to identify the template - along with the specified path.)
+   * Parses the specified resource into a {@code Template} instance. The resource is read using
+   * {@code clazz.getResourceAsStream(path)}. Any included templates will be loaded this way as
+   * well. Templates created from a classpath resource are always cached. Thus, calling this method
+   * multiple times with the same {@code clazz} and {@code path} arguments will always returns the
+   * same {@code Template} instance.
    *
    * @param clazz Any {@code Class} object that provides access to the tempate file by calling
    *     {@code getResourceAsStream} on it
    * @param path The location of the template file
-   * @return a new {@code Template} instance
+   * @return a {@code Template} instance
    * @throws ParseException
    */
-  public static Template parseResource(Class<?> clazz, String path) throws ParseException {
+  public static Template fromResource(Class<?> clazz, String path) throws ParseException {
     Check.notNull(clazz, "clazz");
     Check.notNull(path, "path");
     return TemplateCache.INSTANCE.get(ROOT_TEMPLATE_NAME, new TemplateId(clazz, path));
   }
 
   /**
-   * Returns the {@code Template} corresponding to the specified path. Since templates created from
-   * a file are cached, calling this method multiple times with the same {@code path} argument will
-   * always returns the same {@code Template} instance.
+   * Parses the specified file into a {@code Template} instance. Templates created from file are
+   * always cached. Thus, calling this method multiple times with the same {@code path} argument
+   * will always returns the same {@code Template} instance.
    *
    * @param path The path of the file to be parsed
-   * @return The
+   * @return a {@code Template} instance
    * @throws ParseException
    */
-  public static Template parseFile(String path) throws ParseException {
+  public static Template fromFile(String path) throws ParseException {
     Check.notNull(path, "path");
     return TemplateCache.INSTANCE.get(ROOT_TEMPLATE_NAME, new TemplateId(path));
   }
@@ -140,10 +143,11 @@ public class Template {
   }
 
   /**
-   * If the template was created from a file, this method returns its path, else null. In other
-   * words, for {@code included} templates this method (by definition) returns a non-null value. For
-   * nested templates this method (by definition) returns null. For <i>this</i> {@code Template} the
-   * return value depends on which {@code parse} method was used to instantiate the template.
+   * If the template was created from a file or classpath resource, this method returns its path,
+   * else null. In other words, for {@code included} templates this method (by definition) returns a
+   * non-null value. For inline templates this method (by definition) returns null. For <i>this</i>
+   * {@code Template} the return value depends on which of the static factory methods was used to
+   * instantiate the template.
    *
    * @return The file location (if any) of the source code for this {@code Template}
    */
@@ -331,15 +335,69 @@ public class Template {
     return names.isEmpty();
   }
 
+  /**
+   * Returns a {@code RenderSession} that will only use the {@link
+   * AccessorFactory#STANDARD_ACCESSORS predefined accessors} to extract values from source data
+   * objects, and only the {@link StringifierFactory predefined stringifiers} to stringify those
+   * values.
+   *
+   * @return A new {@code RenderSession}
+   */
+  public RenderSession newRenderSession() {
+    return new SessionConfig(this).newRenderSession();
+  }
+
+  /**
+   * Returns a {@code RenderSession} that will use the {@link AccessorFactory#STANDARD_ACCESSORS
+   * predefined accessors} to extract values from source data objects, and the specified {@code
+   * StringifierFactory} to get hold of stringifiers for those values.
+   *
+   * @param stringifiers The {@code StringifierFactory} used to supply the {@code RenderSession}
+   *     with {@link Stringifier stringifiers}
+   * @return A new {@code RenderSession}
+   */
+  public RenderSession newRenderSession(StringifierFactory stringifiers) {
+    Check.notNull(stringifiers, "stringifiers");
+    return new SessionConfig(this, stringifiers).newRenderSession();
+  }
+
+  /**
+   * Returns a {@code RenderSession} that will only use the specified {@code AccessorFactory} to
+   * extract values from source data, and the {@link StringifierFactory predefined stringifiers} to
+   * stringify those values.
+   *
+   * @param accessors The {@code AccessorFactory} used to supply the {@code RenderSession} with
+   *     {@link Accessor accessors}
+   * @return A new {@code RenderSession}
+   */
+  public RenderSession newRenderSession(AccessorFactory accessors) {
+    Check.notNull(accessors, "accessors");
+    return new SessionConfig(this, accessors).newRenderSession();
+  }
+
+  /**
+   * Returns a {@code RenderSession} that will only use the specified {@code AccessorFactory} to
+   * extract values from source data, and the specified {@code StringifierFactory} to get hold of
+   * stringifiers for those values.
+   *
+   * @param accessors The {@code AccessorFactory} used to supply the {@code RenderSession} with
+   *     {@link Accessor accessors}
+   * @param stringifiers The {@code StringifierFactory} used to supply the {@code RenderSession}
+   *     with {@link Stringifier stringifiers}
+   * @return A new {@code RenderSession}
+   */
+  public RenderSession newRenderSession(
+      AccessorFactory accessors, StringifierFactory stringifiers) {
+    Check.notNull(accessors, "accessors");
+    Check.notNull(stringifiers, "stringifiers");
+    return new SessionConfig(this, accessors, stringifiers).newRenderSession();
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
-    } else if (obj == null || getClass() != obj.getClass()) {
-      return false;
-    }
-    if (id == null) {
-      LOG.warn("Unreliable equals call on template created from anonymous string");
+    } else if (id == null || obj == null || getClass() != obj.getClass()) {
       return false;
     }
     return id.equals(((Template) obj).id);
@@ -347,7 +405,7 @@ public class Template {
 
   @Override
   public int hashCode() {
-    return id == null ? 0 : id.hashCode();
+    return id == null ? System.identityHashCode(this) : id.hashCode();
   }
 
   /**

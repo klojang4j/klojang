@@ -50,12 +50,12 @@ import static nl.naturalis.common.check.CommonChecks.*;
  */
 public class RenderSession {
 
-  private final Page page;
+  private final SessionConfig config;
   private final RenderState state;
 
-  RenderSession(Page page) {
-    this.page = page;
-    this.state = new RenderState(page);
+  RenderSession(SessionConfig config) {
+    this.config = config;
+    this.state = new RenderState(config);
   }
 
   /* METHODS FOR SETTING A SINGLE TEMPLATE VARIABLE */
@@ -95,7 +95,7 @@ public class RenderSession {
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Check.notNull(varName, "varName");
-    Template template = page.getTemplate();
+    Template template = config.getTemplate();
     Check.on(noSuchVariable(template, varName), template.getVariables()).is(containing(), varName);
     Check.on(alreadySet(template, varName), state.isSet(varName)).is(no());
     if (value == UNDEFINED) {
@@ -105,8 +105,8 @@ public class RenderSession {
       // (namely: not).
       return this;
     }
-    IntList indices = page.getTemplate().getVarPartIndices().get(varName);
-    StringifierFactory sf = page.getStringifierFactory();
+    IntList indices = config.getTemplate().getVarPartIndices().get(varName);
+    StringifierFactory sf = config.getStringifierFactory();
     for (int i = 0; i < indices.size(); ++i) {
       int partIndex = indices.get(i);
       VariablePart part = template.getPart(partIndex);
@@ -181,10 +181,10 @@ public class RenderSession {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Check.notNull(varName, "varName");
     Check.notNull(values, "values");
-    Template t = page.getTemplate();
+    Template t = config.getTemplate();
     Check.on(noSuchVariable(t, varName), t.getVariables()).is(containing(), varName);
     Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
-    IntList indices = page.getTemplate().getVarPartIndices().get(varName);
+    IntList indices = config.getTemplate().getVarPartIndices().get(varName);
     if (values.isEmpty()) {
       indices.forEach(i -> state.setVar(i, EMPTY_STRING_ARRAY));
     } else {
@@ -202,13 +202,13 @@ public class RenderSession {
       String separator,
       String suffix)
       throws RenderException {
-    VariablePart part = page.getTemplate().getPart(partIndex);
+    VariablePart part = config.getTemplate().getPart(partIndex);
     VarGroup varGroup = part.getVarGroup().orElse(defGroup);
     prefix = n2e(prefix);
     separator = n2e(separator);
     suffix = n2e(suffix);
     boolean enrich = !prefix.isEmpty() || !separator.isEmpty() || !suffix.isEmpty();
-    StringifierFactory sf = page.getStringifierFactory();
+    StringifierFactory sf = config.getStringifierFactory();
     // Find first non-null value to increase the chance that we find a suitable
     // stringifier:
     Object nn = values.stream().filter(notNull()).findFirst().orElse(null);
@@ -243,10 +243,10 @@ public class RenderSession {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Check.on(illegalValue("varName", varName), varName).is(notNull());
     Check.on(illegalValue("renderable", renderable), renderable).is(notNull());
-    Template t = page.getTemplate();
+    Template t = config.getTemplate();
     Check.on(noSuchVariable(t, varName), t.getVariables()).is(containing(), varName);
     Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
-    IntList indices = page.getTemplate().getVarPartIndices().get(varName);
+    IntList indices = config.getTemplate().getVarPartIndices().get(varName);
     indices.forEach(i -> state.setVar(i, renderable));
     return this;
   }
@@ -378,7 +378,7 @@ public class RenderSession {
     Check.that(repeats, "repeats").is(gte(), 0);
     Check.notNull(nestedTemplateNames, "nestedTemplateNames");
     if (nestedTemplateNames.length == 0) {
-      for (Template t : page.getTemplate().getNestedTemplates()) {
+      for (Template t : config.getTemplate().getNestedTemplates()) {
         if (t.isTextOnly() && state.getChildSessions(t) == null) {
           show(repeats, t);
         }
@@ -411,7 +411,7 @@ public class RenderSession {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Check.notNull(nestedTemplateNames, "nestedTemplateNames");
     if (nestedTemplateNames.length == 0) {
-      for (Template t : page.getTemplate().getNestedTemplates()) {
+      for (Template t : config.getTemplate().getNestedTemplates()) {
         if (t.countVariables() == 0 && state.getChildSessions(t) == null) {
           /*
            * NB Only at this level do we skip templates that cannot possibly be recursively
@@ -581,7 +581,7 @@ public class RenderSession {
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     if (sourceData == null) {
-      Template t = page.getTemplate();
+      Template t = config.getTemplate();
       Check.on(notTextOnly(t), t.isTextOnly()).is(yes());
       // If we get past this check, the entire template is in fact
       // static HTML. Pretty expensive way to render static HTML,
@@ -597,12 +597,12 @@ public class RenderSession {
   private <T> void processVars(T data, VarGroup defGroup, String[] names) throws RenderException {
     Set<String> varNames;
     if (isEmpty(names)) {
-      varNames = page.getTemplate().getVariables();
+      varNames = config.getTemplate().getVariables();
     } else {
-      varNames = new HashSet<>(page.getTemplate().getVariables());
+      varNames = new HashSet<>(config.getTemplate().getVariables());
       varNames.retainAll(Set.of(names));
     }
-    Accessor<T> acc = (Accessor<T>) page.getAccessor(data);
+    Accessor<T> acc = (Accessor<T>) config.getAccessor(data);
     for (String varName : varNames) {
       Object value = acc.access(data, varName);
       if (value != UNDEFINED) {
@@ -616,12 +616,12 @@ public class RenderSession {
       throws RenderException {
     Set<String> tmplNames;
     if (isEmpty(names)) {
-      tmplNames = page.getTemplate().getNestedTemplateNames();
+      tmplNames = config.getTemplate().getNestedTemplateNames();
     } else {
-      tmplNames = new HashSet<>(page.getTemplate().getNestedTemplateNames());
+      tmplNames = new HashSet<>(config.getTemplate().getNestedTemplateNames());
       tmplNames.retainAll(Set.of(names));
     }
-    Accessor<T> acc = (Accessor<T>) page.getAccessor(data);
+    Accessor<T> acc = (Accessor<T>) config.getAccessor(data);
     for (String name : tmplNames) {
       Object nestedData = acc.access(data, name);
       if (nestedData != UNDEFINED) {
@@ -729,9 +729,9 @@ public class RenderSession {
         " ",
         System.identityHashCode(this),
         " for template ",
-        getFQName(page.getTemplate()),
+        getFQName(config.getTemplate()),
         " (",
-        ifNull(page.getTemplate().getPath(), "inline"),
+        ifNull(config.getTemplate().getPath(), "inline"),
         ")");
   }
 
@@ -741,12 +741,12 @@ public class RenderSession {
 
   private Template getNestedTemplate(String name) throws RenderException {
     Check.notNull(name, "nestedTemplateName");
-    Check.on(noSuchTemplate(page.getTemplate(), name), name).is(validTemplateName());
-    return page.getTemplate().getNestedTemplate(name);
+    Check.on(noSuchTemplate(config.getTemplate(), name), name).is(validTemplateName());
+    return config.getTemplate().getNestedTemplate(name);
   }
 
   private Predicate<String> validTemplateName() {
-    return s -> page.getTemplate().getNestedTemplateNames().contains(s);
+    return s -> config.getTemplate().getNestedTemplateNames().contains(s);
   }
 
   private String stringify(Stringifier stringifier, String varName, Object value)
@@ -754,11 +754,11 @@ public class RenderSession {
     try {
       String s = stringifier.toString(value);
       if (s == null) {
-        throw BadStringifierException.stringifierReturnedNull(page.getTemplate(), varName);
+        throw BadStringifierException.stringifierReturnedNull(config.getTemplate(), varName);
       }
       return s;
     } catch (NullPointerException e) {
-      throw BadStringifierException.stringifierNotNullResistant(page.getTemplate(), varName);
+      throw BadStringifierException.stringifierNotNullResistant(config.getTemplate(), varName);
     }
   }
 }

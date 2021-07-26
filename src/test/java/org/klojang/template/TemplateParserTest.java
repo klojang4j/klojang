@@ -10,7 +10,7 @@ public class TemplateParserTest {
   @Test
   public void parseVariables00() throws ParseException {
     String src = "<tr><td>~%foo%</td></tr>";
-    Template template = Template.parseString(src);
+    Template template = Template.fromString(src);
     // System.out.println(template);
     List<Part> parts = template.getParts();
     assertEquals(3, parts.size());
@@ -27,7 +27,7 @@ public class TemplateParserTest {
   @Test
   public void parseVariables01() throws ParseException {
     String src = "<tr><td><!-- ~%foo% --></td></tr>";
-    Template template = Template.parseString(src);
+    Template template = Template.fromString(src);
     // System.out.println(template);
     List<Part> parts = template.getParts();
     assertEquals(3, parts.size());
@@ -44,7 +44,7 @@ public class TemplateParserTest {
   @Test
   public void parseVariables02() throws ParseException {
     String src = "<tr>\n<td>~%html:foo%</td>\n<!-- some comment -->\n<td>~%text:bar%</td>\n</tr>";
-    Template template = Template.parseString(src);
+    Template template = Template.fromString(src);
     // System.out.println(template);
     List<Part> parts = template.getParts();
     assertEquals(5, parts.size());
@@ -67,7 +67,7 @@ public class TemplateParserTest {
   @Test
   public void parseNestedTemplates00() throws ParseException {
     String path = "TemplateParserTest.parseNestedTemplates00.html";
-    Template template = Template.parseResource(getClass(), path);
+    Template template = Template.fromResource(getClass(), path);
     // System.out.println(template);
     List<Part> parts = template.getParts();
     assertTrue(parts.get(1) instanceof NestedTemplatePart);
@@ -85,7 +85,7 @@ public class TemplateParserTest {
   @Test
   public void parseNestedTemplates01() throws ParseException {
     String path = "TemplateParserTest.parseNestedTemplates01.html";
-    Template template = Template.parseResource(getClass(), path);
+    Template template = Template.fromResource(getClass(), path);
     // System.out.println(template);
     List<Part> parts = template.getParts();
     assertTrue(parts.get(1) instanceof NestedTemplatePart);
@@ -103,7 +103,7 @@ public class TemplateParserTest {
   @Test
   public void parseIncludedTemplates00() throws ParseException {
     String path = "TemplateParserTest.parseIncludedTemplates00.html";
-    Template template = Template.parseResource(getClass(), path);
+    Template template = Template.fromResource(getClass(), path);
     // System.out.println(template);
     List<Part> parts = template.getParts();
     assertTrue(parts.get(1) instanceof NestedTemplatePart);
@@ -125,7 +125,7 @@ public class TemplateParserTest {
   @Test
   public void parseIncludedTemplates01() throws ParseException {
     String path = "TemplateParserTest.parseIncludedTemplates01.html";
-    Template template = Template.parseResource(getClass(), path);
+    Template template = Template.fromResource(getClass(), path);
     // System.out.println(template);
     List<Part> parts = template.getParts();
     assertTrue(parts.get(1) instanceof NestedTemplatePart);
@@ -149,7 +149,7 @@ public class TemplateParserTest {
   @Test
   public void allTogetherNow00() throws ParseException {
     String path = "TemplateParserTest.allTogetherNow00.html";
-    Template template = Template.parseResource(getClass(), path);
+    Template template = Template.fromResource(getClass(), path);
     TemplateUtils.printParts(template, System.out);
   }
 }
