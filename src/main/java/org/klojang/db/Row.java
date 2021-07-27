@@ -19,9 +19,9 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
  * A thin wrapper around a {@code Map&lt;String,Object&gt;} instance that mimicks some of the
  * behaviours of {@link ResultSet}. {@code Row} objects are produced by a {@link ResultSetMappifier}
  * and can be quickly pushed up into the higher layers of your application without them actually
- * acquiring an awkward dependency on {@code java.sql}. {@code Row} objects can be inserted directly
- * into templates, without having to register a separate {@link Accessor} for them. (Under the hood
- * an automatically registered {@code RowAccessor} is used.)
+ * acquiring an awkward dependency on {@code java.sql}. Up there they can be inserted directly into
+ * templates, without having to register a separate {@link Accessor} for them. (Under the hood an
+ * automatically registered {@code RowAccessor} is used.)
  *
  * <p>Note that an important difference between a {@code Row} and a {@code ResultSet} is that a
  * {@code Row} is writable, too. Also, contrary to JDBC, column numbers need to be specified in a
@@ -56,12 +56,17 @@ public class Row {
     map.putAll(data);
   }
 
+  /**
+   * Returns the number of columns in the {@code Row}.
+   *
+   * @return The number of columns in the {@code Row}
+   */
   public int size() {
     return map.size();
   }
 
   /**
-   * Returns the name of the column with the specified index.
+   * Returns the name of the column at the specified index.
    *
    * @param colNum The column index (zero-based)
    * @return The column name
@@ -83,9 +88,9 @@ public class Row {
   }
 
   /**
-   * Returns an unmodifiable {@code List} of the column names.
+   * Returns an unmodifiable {@code List} containing the column names.
    *
-   * @return An unmodifiable {@code List} of the column names
+   * @return An unmodifiable {@code List} containing the column names
    */
   public List<String> getColumnNames() {
     return List.copyOf(map.keySet());
@@ -112,7 +117,7 @@ public class Row {
   }
 
   /**
-   * Returns the value of the column with the specified name
+   * Returns the value of the column with the specified name.
    *
    * @param colName The column name
    * @return The value
@@ -122,9 +127,9 @@ public class Row {
   }
 
   /**
-   * Returns the value of the column with the specified index.
+   * Returns the value of the column at the specified index.
    *
-   * @param colNum The column number (zero-based)
+   * @param colNum The column number
    * @return The value
    */
   public Object getValue(int colNum) {
@@ -144,10 +149,10 @@ public class Row {
   }
 
   /**
-   * Returns the value of the column with the specified index, casting it to the specified type.
+   * Returns the value of the column at the specified index, casting it to the specified type.
    *
    * @param <T> The type to cast the value to
-   * @param colNum The column number (zero-based)
+   * @param colNum The column number
    * @return The value
    */
   @SuppressWarnings("unchecked")
@@ -158,8 +163,8 @@ public class Row {
   /**
    * Returns the value of the specified column as a {@code String}.
    *
-   * @param colName
-   * @return
+   * @param colName The column name
+   * @return A {@code String} representation of the value
    */
   public String getString(String colName) {
     return ifNotNull(getValue(colName), Object::toString);
@@ -168,167 +173,610 @@ public class Row {
   /**
    * Returns the value of the specified column as a {@code String}.
    *
-   * @param colNum
-   * @return
+   * @param colNum The column index
+   * @return A {@code String} representation of the value
    */
   public String getString(int colNum) {
     return ifNotNull(getValue(colNum), Object::toString);
   }
 
+  /**
+   * Returns the value of the specified column as a {@code String}, or 0 (zero) if the value was
+   * {@code null}.
+   *
+   * @param colName The column name
+   * @return An {@code int} representation of the value
+   */
   public int getInt(String colName) {
     return getInt(colName, 0);
   }
 
+  /**
+   * Returns the value of the specified column as an {@code int}, or 0 (zero) if the value was
+   * {@code null}.
+   *
+   * @param colName The column index
+   * @return An {@code int} representation of the value
+   */
   public int getInt(int colNum) {
     return getInt(colNum, 0);
   }
 
+  /**
+   * Returns the value of the specified column as an {@code int}, or {@code nullValue} if the value
+   * was {@code null}.
+   *
+   * @param colName The column name
+   * @return An {@code int} representation of the value
+   */
   public int getInt(String colName, int nullValue) {
     Object v = getValue(colName);
     return v == null ? nullValue : getNumber(colName, v, Integer.class);
   }
 
+  /**
+   * Returns the value of the specified column as an {@code int}, or {@code nullValue} if the value
+   * was {@code null}.
+   *
+   * @param colName The column int
+   * @return An {@code int} representation of the value
+   */
   public int getInt(int colNum, int nullValue) {
     Object v = getValue(colNum);
     return v == null ? nullValue : getNumber(colNum, v, Integer.class);
   }
 
+  /**
+   * Returns the value of the specified column as a {@code double}, or 0 (zero) if the value was
+   * {@code null}.
+   *
+   * @param colName The column name
+   * @return An {@code int} representation of the value
+   */
   public double getDouble(String colName) {
     return getDouble(colName, 0);
   }
 
+  /**
+   * Returns the value of the specified column as a {@code double}, or 0 (zero) if the value was
+   * {@code null}.
+   *
+   * @param colNum The column index
+   * @return An {@code int} representation of the value
+   */
+  public double getDouble(int colNum) {
+    return getDouble(colNum, 0);
+  }
+
+  /**
+   * Returns the value of the specified column as a {@code double}, or {@code nullValue} if the
+   * value was {@code null}.
+   *
+   * @param colName The column name
+   * @return A {@code double} representation of the value
+   */
   public double getDouble(String colName, double nullValue) {
     Object v = getValue(colName);
     return v == null ? nullValue : getNumber(colName, v, Double.class);
   }
 
+  /**
+   * Returns the value of the specified column as a {@code double}, or {@code nullValue} if the
+   * value was {@code null}.
+   *
+   * @param colNum The column index
+   * @return A {@code double} representation of the value
+   */
+  public double getDouble(int colNum, double nullValue) {
+    Object v = getValue(colNum);
+    return v == null ? nullValue : getNumber(colNum, v, Double.class);
+  }
+
+  /**
+   * Returns the value of the specified column as a {@code float}, or 0 (zero) if the value was
+   * {@code null}.
+   *
+   * @param colName The column name
+   * @return A {@code float} representation of the value
+   */
   public float getFloat(String colName) {
     return getFloat(colName, 0F);
   }
 
+  /**
+   * Returns the value of the specified column as a {@code float}, or 0 (zero) if the value was
+   * {@code null}.
+   *
+   * @param colNum The column index
+   * @return A {@code float} representation of the value
+   */
+  public float getFloat(int colNum) {
+    return getFloat(colNum, 0F);
+  }
+
+  /**
+   * Returns the value of the specified column as a {@code float}, or {@code nullValue} if the value
+   * was {@code null}.
+   *
+   * @param colName The column name
+   * @return A {@code float} representation of the value
+   */
   public float getFloat(String colName, float nullValue) {
     Object v = getValue(colName);
     return v == null ? nullValue : getNumber(colName, v, Float.class);
   }
 
+  /**
+   * Returns the value of the specified column as a {@code float}, or {@code nullValue} if the value
+   * was {@code null}.
+   *
+   * @param colNum The column index
+   * @return A {@code float} representation of the value
+   */
+  public float getFloat(int colNum, float nullValue) {
+    Object v = getValue(colNum);
+    return v == null ? nullValue : getNumber(colNum, v, Float.class);
+  }
+
+  /**
+   * Returns the value of the specified column as a {@code long}, or 0 (zero) if the value was
+   * {@code null}.
+   *
+   * @param colName The column name
+   * @return A {@code long} representation of the value
+   */
   public long getLong(String colName) {
     return getLong(colName, 0L);
   }
 
+  /**
+   * Returns the value of the specified column as a {@code long}, or 0 (zero) if the value was
+   * {@code null}.
+   *
+   * @param colNum The column index
+   * @return A {@code long} representation of the value
+   */
+  public long getLong(int colNum) {
+    return getLong(colNum, 0L);
+  }
+
+  /**
+   * Returns the value of the specified column as a {@code long}, or {@code nullValue} if the value
+   * was {@code null}.
+   *
+   * @param colName The column name
+   * @return A {@code long} representation of the value
+   */
   public long getLong(String colName, long nullValue) {
     Object v = getValue(colName);
     return v == null ? nullValue : getNumber(colName, v, Long.class);
   }
 
+  /**
+   * Returns the value of the specified column as a {@code long}, or {@code nullValue} if the value
+   * was {@code null}.
+   *
+   * @param colNum The column index
+   * @return A {@code long} representation of the value
+   */
+  public long getLong(int colNum, long nullValue) {
+    Object v = getValue(colNum);
+    return v == null ? nullValue : getNumber(colNum, v, Long.class);
+  }
+
+  /**
+   * Returns the value of the specified column as a {@code short}, or 0 (zero) if the value was
+   * {@code null}.
+   *
+   * @param colName The column name
+   * @return A {@code short} representation of the value
+   */
   public short getShort(String colName) {
     return getShort(colName, (short) 0);
   }
 
+  /**
+   * Returns the value of the specified column as a {@code short}, or 0 (zero) if the value was
+   * {@code null}.
+   *
+   * @param colNum The column index
+   * @return A {@code short} representation of the value
+   */
+  public short getShort(int colNum) {
+    return getShort(colNum, (short) 0);
+  }
+
+  /**
+   * Returns the value of the specified column as a {@code short}, or {@code nullValue} if the value
+   * was {@code null}.
+   *
+   * @param colName The column name
+   * @return A {@code short} representation of the value
+   */
   public short getShort(String colName, short nullValue) {
     Object v = getValue(colName);
     return v == null ? nullValue : getNumber(colName, v, Short.class);
   }
 
+  /**
+   * Returns the value of the specified column as a {@code short}, or {@code nullValue} if the value
+   * was {@code null}.
+   *
+   * @param colName The column name
+   * @return A {@code short} representation of the value
+   */
+  public short getShort(int colNum, short nullValue) {
+    Object v = getValue(colNum);
+    return v == null ? nullValue : getNumber(colNum, v, Short.class);
+  }
+
+  /**
+   * Returns the value of the specified column as a {@code byte}, or 0 (zero) if the value was
+   * {@code null}.
+   *
+   * @param colName The column name
+   * @return A {@code byte} representation of the value
+   */
   public byte getByte(String colName) {
     return getByte(colName, (byte) 0);
   }
 
+  /**
+   * Returns the value of the specified column as a {@code byte}, or 0 (zero) if the value was
+   * {@code null}.
+   *
+   * @param colName The column name
+   * @return A {@code byte} representation of the value
+   */
+  public byte getByte(int colNum) {
+    return getByte(colNum, (byte) 0);
+  }
+
+  /**
+   * Returns the value of the specified column as a {@code byte}, or {@code nullValue} if the value
+   * was {@code null}.
+   *
+   * @param colName The column name
+   * @return A {@code byte} representation of the value
+   */
   public byte getByte(String colName, byte nullValue) {
     Object v = getValue(colName);
     return v == null ? nullValue : getNumber(colName, v, Byte.class);
   }
 
+  /**
+   * Returns the value of the specified column as a {@code byte}, or {@code nullValue} if the value
+   * was {@code null}.
+   *
+   * @param colNum The column index
+   * @return A {@code byte} representation of the value
+   */
+  public byte getByte(int colNum, byte nullValue) {
+    Object v = getValue(colNum);
+    return v == null ? nullValue : getNumber(colNum, v, Byte.class);
+  }
+
+  /**
+   * Returns the value of the specified column as a {@code boolean}, or {@code false} if the value
+   * was {@code null}.
+   *
+   * @param colName The column name
+   * @return An {@code int} representation of the value
+   */
   public boolean getBoolean(String colName) {
     return getBoolean(colName, false);
   }
 
+  /**
+   * Returns the value of the specified column as a {@code boolean}, or {@code false} if the value
+   * was {@code null}.
+   *
+   * @param colNum The column index
+   * @return An {@code int} representation of the value
+   */
+  public boolean getBoolean(int colNum) {
+    return getBoolean(colNum, false);
+  }
+
+  /**
+   * Returns the value of the specified column as a {@code boolean}, or {@code nullValue} if the
+   * value was {@code null}.
+   *
+   * @param colName The column name
+   * @return A {@code boolean} representation of the value
+   */
   public boolean getBoolean(String colName, boolean nullValue) {
     return ifNotNull(getValue(colName), Bool::from, nullValue);
   }
 
+  /**
+   * Returns the value of the specified column as a {@code boolean}, or {@code nullValue} if the
+   * value was {@code null}.
+   *
+   * @param colNum The column index
+   * @return A {@code boolean} representation of the value
+   */
+  public boolean getBoolean(int colNum, boolean nullValue) {
+    return ifNotNull(getValue(colNum), Bool::from, nullValue);
+  }
+
+  /**
+   * Return the value of the specified column as an {@code Integer}.
+   *
+   * @param colName The column name
+   * @return An {@code Integer} representation of the value
+   */
   public Integer getInteger(String colName) {
     return getNullableNumber(colName, Integer.class);
   }
 
+  /**
+   * Return the value of the specified column as an {@code Integer}.
+   *
+   * @param colNum The column index
+   * @return An {@code Integer} representation of the value
+   */
   public Integer getInteger(int colNum) {
     return getNullableNumber(colNum, Integer.class);
   }
 
+  /**
+   * Return the value of the specified column as a {@code Double}.
+   *
+   * @param colName The column name
+   * @return A {@code Double} representation of the value
+   */
   public Double getDoubleObj(String colName) {
     return getNullableNumber(colName, Double.class);
   }
 
+  /**
+   * Return the value of the specified column as a {@code Double}.
+   *
+   * @param colNum The column index
+   * @return A {@code Double} representation of the value
+   */
   public Double getDoubleObj(int colNum) {
     return getNullableNumber(colNum, Double.class);
   }
 
+  /**
+   * Return the value of the specified column as a {@code Float}.
+   *
+   * @param colName The column name
+   * @return A {@code Float} representation of the value
+   */
   public Float getFloatObj(String colName) {
     return getNullableNumber(colName, Float.class);
   }
 
+  /**
+   * Return the value of the specified column as a {@code Float}.
+   *
+   * @param colNum The column index
+   * @return A {@code Float} representation of the value
+   */
   public Float getFloatObj(int colNum) {
     return getNullableNumber(colNum, Float.class);
   }
 
+  /**
+   * Return the value of the specified column as a {@code Long}.
+   *
+   * @param colName The column name
+   * @return A {@code Long} representation of the value
+   */
   public Long getLongObj(String colName) {
     return getNullableNumber(colName, Long.class);
   }
 
+  /**
+   * Return the value of the specified column as a {@code Long}.
+   *
+   * @param colNum The column index
+   * @return A {@code Long} representation of the value
+   */
   public Long getLongObj(int colNum) {
     return getNullableNumber(colNum, Long.class);
   }
 
+  /**
+   * Return the value of the specified column as a {@code Short}.
+   *
+   * @param colName The column name
+   * @return A {@code Short} representation of the value
+   */
   public Short getShortObj(String colName) {
     return getNullableNumber(colName, Short.class);
   }
 
+  /**
+   * Return the value of the specified column as a {@code Short}.
+   *
+   * @param colNum The column index
+   * @return A {@code Short} representation of the value
+   */
   public Short getShortObj(int colNum) {
     return getNullableNumber(colNum, Short.class);
   }
 
+  /**
+   * Return the value of the specified column as a {@code Byte}.
+   *
+   * @param colName The column name
+   * @return A {@code Byte} representation of the value
+   */
   public Byte getByteObj(String colName) {
     return getNullableNumber(colName, Byte.class);
   }
 
+  /**
+   * Return the value of the specified column as a {@code Byte}.
+   *
+   * @param colNum The column index
+   * @return A {@code Byte} representation of the value
+   */
   public Byte getByteObj(int colNum) {
     return getNullableNumber(colNum, Byte.class);
   }
 
+  /**
+   * Returns the value of the specified column as a {@code Boolean}.
+   *
+   * @param colName The column name
+   * @return A {@code boolean} representation of the value
+   */
+  public Boolean getBooleanObj(String colName) {
+    return ifNotNull(getValue(colName), Bool::from);
+  }
+
+  /**
+   * Returns the value of the specified column as a {@code Boolean}.
+   *
+   * @param colNum The column index
+   * @return A {@code Boolean} representation of the value
+   */
+  public Boolean getBooleanObj(int colNum) {
+    return ifNotNull(getValue(colNum), Bool::from);
+  }
+
+  /**
+   * Returns the value of the specified column as an {@code enum} of the specified type.
+   *
+   * @param <T> The type of the {@code enum} class
+   * @param colName The column name
+   * @return A {@code Boolean} representation of the value
+   */
   public <T extends Enum<T>> T getEnum(String colName, Class<T> enumClass) {
     return getEnum(colName, enumClass, null);
   }
 
+  /**
+   * Returns the value of the specified column as an {@code enum} of the specified type.
+   *
+   * @param <T> The type of the {@code enum} class
+   * @param colNum The column index
+   * @return A {@code Boolean} representation of the value
+   */
+  public <T extends Enum<T>> T getEnum(int colNum, Class<T> enumClass) {
+    return getEnum(colNum, enumClass, null);
+  }
+
+  /**
+   * Returns the value of the specified column as an {@code enum} of the specified type, or {@code
+   * nullValue} if the value was {@code null}.
+   *
+   * @param <T> The type of the {@code enum} class
+   * @param colName The column name
+   * @return A {@code Boolean} representation of the value
+   */
   @SuppressWarnings("unchecked")
   public <T extends Enum<T>> T getEnum(String colName, Class<T> enumClass, Enum<T> nullValue) {
     return (T) ifNotNull(getValue(colName), enumClass::cast, nullValue);
   }
 
+  /**
+   * Returns the value of the specified column as an {@code enum} of the specified type, or {@code
+   * nullValue} if the value was {@code null}.
+   *
+   * @param <T> The type of the {@code enum} class
+   * @param colNum The column index
+   * @return A {@code Boolean} representation of the value
+   */
+  @SuppressWarnings("unchecked")
+  public <T extends Enum<T>> T getEnum(int colNum, Class<T> enumClass, Enum<T> nullValue) {
+    return (T) ifNotNull(getValue(colNum), enumClass::cast, nullValue);
+  }
+
+  /**
+   * Returns the value of the specified column as an {@code enum} using the specified function to
+   * parse the value into an {@code enum} constant.
+   *
+   * @param <T> The type of the {@code enum} class
+   * @param colName The column name
+   * @return A {@code Boolean} representation of the value
+   */
   public <T extends Enum<T>> T getEnum(String colName, Function<Object, T> parser) {
     return getEnum(colName, parser, null);
   }
 
+  /**
+   * Returns the value of the specified column as an {@code enum} using the specified function to
+   * parse the value into an {@code enum} constant.
+   *
+   * @param <T> The type of the {@code enum} class
+   * @param colNum The column index
+   * @return A {@code Boolean} representation of the value
+   */
+  public <T extends Enum<T>> T getEnum(int colNum, Function<Object, T> parser) {
+    return getEnum(colNum, parser, null);
+  }
+
+  /**
+   * Returns the value of the specified column as an {@code enum} using the specified function to
+   * parse the value into an {@code enum} constant, or {@code nullValue} if the value was {@code
+   * null}.
+   *
+   * @param colNum The column index
+   * @return A {@code Boolean} representation of the value
+   */
   @SuppressWarnings("unchecked")
   public <T extends Enum<T>> T getEnum(
       String colName, Function<Object, T> parser, Enum<T> nullValue) {
     return (T) ifNotNull(getValue(colName), parser::apply, nullValue);
   }
 
-  // TODO: more of the above
+  /**
+   * Returns the value of the specified column as an {@code enum} using the specified function to
+   * parse the value into an {@code enum} constant, or {@code nullValue} if the value was {@code
+   * null}.
+   *
+   * @param colNum The column index
+   * @return A {@code Boolean} representation of the value
+   */
+  @SuppressWarnings("unchecked")
+  public <T extends Enum<T>> T getEnum(int colNum, Function<Object, T> parser, Enum<T> nullValue) {
+    return (T) ifNotNull(getValue(colNum), parser::apply, nullValue);
+  }
 
+  /**
+   * Updates the value of the column with the specified name.
+   *
+   * @param colName The column name
+   * @param value The new value
+   */
   public void setColumn(String colName, Object value) {
     Check.notNull(colName, "colName").is(keyIn(), map, ERR0, colName);
     map.put(colName, value);
   }
 
+  /**
+   * Updates the value of the column at the specified index.
+   *
+   * @param colName The column name
+   * @param value The new value
+   */
   public void setColumn(int colNum, Object value) {
     map.put(getColumnName(colNum), value);
   }
 
+  /**
+   * Appends a new column to the row.
+   *
+   * @param colName The name of the new column
+   * @param value The value of the new column
+   */
   public void addColumn(String colName, Object value) {
     Check.notNull(colName, "colName").isNot(keyIn(), map, ERR3, colName);
     map.put(colName, value);
   }
 
+  /**
+   * Updates or appends a column, depending on whether the column with the specified name exists.
+   *
+   * @param colName The name of the column to update or append
+   * @param value The new value
+   */
   public void setOrAddColumn(String colName, Object value) {
     Check.notNull(colName, "colName");
     map.put(colName, value);
