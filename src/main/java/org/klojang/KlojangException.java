@@ -1,7 +1,7 @@
 package org.klojang;
 
 /**
- * Base class for checked exceptions emanating from the Yokete package.
+ * Base class for checked exceptions emanating from the Klojang.
  *
  * @author Ayco Holleman
  */

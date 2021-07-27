@@ -34,7 +34,7 @@ import org.klojang.template.Template;
  * reflection or dynamic invocation. Taken together, these advantages give a strong sense of control
  * to tailor-made {@code Accessor} implementations.
  *
- * <p>Nevertheless, if you are not too bothered about these considerations, Yokete does provide some
+ * <p>Nevertheless, if you are not too bothered about these considerations, Klojang does provide some
  * {@code Accessor} implementations that you can use as a matter of convenience.
  *
  * @author Ayco Holleman

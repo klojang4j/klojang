@@ -1,8 +1,8 @@
 package org.klojang.db;
 
-import org.klojang.KJRuntimeException;
+import org.klojang.KlojangRTException;
 
-public class ResultSetReadException extends KJRuntimeException {
+public class ResultSetReadException extends KlojangRTException {
 
   public ResultSetReadException(String message) {
     super(message);
