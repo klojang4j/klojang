@@ -7,8 +7,67 @@ import org.klojang.template.Template;
 import org.klojang.x.accessors.*;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
+import nl.naturalis.common.invoke.BeanReader;
 import static nl.naturalis.common.ClassMethods.isA;
 
+/**
+ * Provides {@link Accessor accessors} objects functioning as source data for a {@link Template}.
+ * For example, if you want to populate a template with a {@code Person} object, the {@link
+ * RenderSession} needs to know how to read the properties corresponding to the template variables.
+ * In most cases the {@code AccessorFactory} defined by the {@link #STANDARD_ACCESSORS} variable is
+ * all you need - without you actually having the code {@code Accessor} implementations. It contains
+ * predefined accessors for {@code Map<String,Object>} objects, {@link Row} objects and JavaBeans.
+ * With one caveat though. The accessor used for JavaBeans makes use of the {@link BeanReader}
+ * class. This class does not use reflection to read the values of bean properties, but it does use
+ * reflection to figure out what the properties are in the first place. Thus, if you use this
+ * accessor from within a Java module, you will have to "open" the module to the naturalis-common
+ * module, which contains the {@code BeanReader} class. If you are not comfortable with this, you
+ * can, as an alternative, use the {@link SaveBeanAccessor} class:
+ *
+ * <blockquote>
+ *
+ * <pre>{@code
+ * SaveBeanReader<Person> personReader = SaveBeanReader
+ *   .configure()
+ *   .with("id", int.class)
+ *   .with("firstName", String.class)
+ *   .with("lastName", String.class)
+ *   .with("birthDate", LocalDate.class)
+ *   .freeze();
+ * AccessorFactory af = AccessorFactory
+ *   .configure()
+ *   .addAccessor(Person.class, new SaveBeanAccesor<>(personReader))
+ *   .freeze();
+ * }</pre>
+ *
+ * </blockquote>
+ *
+ * <p>The predefined accessors for the {@code Map} and {@coder Row} objects will still be present in
+ * this {@code AccessorFactory}. Or you can roll your own {@code Accessor} after all:
+ *
+ * <blockquote>
+ *
+ * <pre>{@code
+ * Accessor<Person> personAccessor =
+ *   (person, property) -> {
+ *     switch(property) {
+ *       case "id" : return person.getId();
+ *       case "firstName" : return person.getFirstName();
+ *       case "lastName" : return person.getLastName();
+ *       case "birthDate" : return person.getBirthDate();
+ *       default : return UNDEFINED;
+ *     }
+ *   };
+ * AccessorFactory af = AccessorFactory
+ *   .configure()
+ *   .addAccessor(Person.class, new PersonAccessor())
+ *   .freeze();
+ * }</pre>
+ *
+ * </blockquote>
+ *
+ * @author Ayco Holleman
+ */
 public class AccessorFactory {
 
   public static final AccessorFactory STANDARD_ACCESSORS = configure().freeze();
@@ -17,7 +76,7 @@ public class AccessorFactory {
 
   public static class Builder {
 
-    private NameMapper defMapper = NameMapper.NOOP;
+    private NameMapper defMapper;
     private final Map<Tuple<Class<?>, Template>, Accessor<?>> accs = new HashMap<>();
     private final Map<Template, NameMapper> mappers = new HashMap<>();
 
