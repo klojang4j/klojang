@@ -4,14 +4,13 @@ import org.klojang.db.Row;
 import org.klojang.render.Accessor;
 import org.klojang.render.NameMapper;
 import org.klojang.render.RenderException;
-import nl.naturalis.common.check.Check;
 
 public class RowAccessor implements Accessor<Row> {
 
   private final NameMapper nm;
 
   public RowAccessor(NameMapper nameMapper) {
-    this.nm = Check.notNull(nameMapper).ok();
+    this.nm = nameMapper;
   }
 
   @Override
