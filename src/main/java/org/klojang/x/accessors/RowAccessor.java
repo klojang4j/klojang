@@ -8,18 +8,15 @@ import nl.naturalis.common.check.Check;
 
 public class RowAccessor implements Accessor<Row> {
 
-  private final NameMapper mapper;
+  private final NameMapper nm;
 
   public RowAccessor(NameMapper nameMapper) {
-    this.mapper = Check.notNull(nameMapper).ok();
+    this.nm = Check.notNull(nameMapper).ok();
   }
 
   @Override
   public Object access(Row row, String name) throws RenderException {
-    String colName = mapper.map(name);
-    if (!row.hasColumn(colName)) {
-      return UNDEFINED;
-    }
-    return row.get(colName);
+    String colName = nm == null ? name : nm.map(name);
+    return row.hasColumn(colName) ? row.getValue(colName) : UNDEFINED;
   }
 }

@@ -15,6 +15,7 @@ public class MapAccessor implements Accessor<Map<String, Object>> {
 
   @Override
   public Object access(Map<String, Object> data, String name) throws RenderException {
-    return data.getOrDefault(nm.map(name), UNDEFINED);
+    String key = nm == null ? name : nm.map(name);
+    return data.getOrDefault(key, UNDEFINED);
   }
 }
