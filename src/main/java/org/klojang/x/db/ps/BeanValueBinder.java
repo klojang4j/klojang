@@ -69,8 +69,9 @@ class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
     this.param = param;
   }
 
+  @SuppressWarnings("unchecked")
   private <T> void bindValue(PreparedStatement ps, T bean) throws Throwable {
-    FIELD_TYPE beanValue = (FIELD_TYPE) getter.getMethod().invoke(bean);
+    FIELD_TYPE beanValue = (FIELD_TYPE) getter.read(bean);
     PARAM_TYPE paramValue = receiver.getParamValue(beanValue);
     if (beanValue == paramValue) { // No adapter defined
       LOG.debug("-> Parameter \"{}\": {}", getter.getProperty(), paramValue);

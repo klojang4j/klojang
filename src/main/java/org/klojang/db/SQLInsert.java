@@ -3,92 +3,97 @@ package org.klojang.db;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Supplier;
-import org.klojang.x.db.rs.RsToBeanTransporter;
-import org.klojang.x.db.rs.RsToMapTransporter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
+import nl.naturalis.common.invoke.Setter;
+import nl.naturalis.common.invoke.SetterFactory;
 import static java.sql.Statement.NO_GENERATED_KEYS;
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
-import static org.klojang.x.db.rs.RsToMapTransporter.populateMap;
-import static nl.naturalis.common.check.CommonChecks.illegalState;
-import static nl.naturalis.common.check.CommonChecks.in;
+import static nl.naturalis.common.NumberMethods.convert;
+import static nl.naturalis.common.check.CommonChecks.keyIn;
 import static nl.naturalis.common.check.CommonChecks.notNull;
+import static nl.naturalis.common.check.CommonChecks.number;
+import static nl.naturalis.common.invoke.NoSuchPropertyException.noSuchProperty;
 
 public class SQLInsert extends SQLStatement<SQLInsert> {
 
-  private final Set<Tuple<Object, String>> bindBackObjs = new HashSet<>(4);
+  @SuppressWarnings("unused")
+  private static final Logger LOG = LoggerFactory.getLogger(SQLInsert.class);
+
+  // This will track bindables field in SQLStatement. It will contain the names of the bean
+  // properties and/or map keys corresponding to auto-increment columns.
+  private final List<String> keys;
 
   private PreparedStatement ps;
 
-  private Object mruObject;
-
   public SQLInsert(Connection conn, SQL sql) {
     super(conn, sql);
+    this.keys = new ArrayList<>(5);
   }
 
-  /**
-   * Binds the values in the specified JavaBean or <code>Map&lt;String,Object&gt;</code> into the
-   * {@link PreparedStatement} created to execute the INSERT statement. All properties whose name
-   * correspond to one of the named parameters in the {@code SQL} instance passed in through the
-   * constructor will be used to populate the {@code PreparedStatement}. Any other properties will
-   * be silently ignored. The effect of passing any other than a proper JavaBean or <code>
-   * Map&lt;String,Object&gt;</code> (e.g. a {@code Collection}) is undefined.
-   *
-   * @param beanOrMap The bean or {@code Map} whose values to bind into the {@code
-   *     PreparedStatement}
-   * @return This {@code SQLInsert} instance
-   */
   public SQLInsert bind(Object beanOrMap) {
-    return super.bind(mruObject = beanOrMap);
-  }
-
-  /**
-   * Causes the auto-incremented value of the primary key column to be bound back into the bean or
-   * {@code Map} specified through the {@code bind} method.
-   *
-   * @param keyOrProperty The map key or bean property to which to bind the auto-incremented value
-   * @return This {@code SQLInsert} instance
-   */
-  public SQLInsert bindBack(String keyOrProperty) {
-    Check.on(illegalState(), mruObject)
-        .is(notNull(), "No bean or map to bind back to specified yet");
-    Check.notNull(keyOrProperty);
-    Tuple<Object, String> tuple = Tuple.of(mruObject, keyOrProperty);
-    Check.that(tuple)
-        .isNot(in(), bindBackObjs, "No new bean or map to bind back to specified yet")
-        .then(bindBackObjs::add);
+    super.bind(beanOrMap);
+    keys.add(null);
     return this;
   }
 
-  @SuppressWarnings("unchecked")
-  public <T> void execute() {
+  /**
+   * Binds the values in the specified JavaBean or {@code Map<String,Object>} to the named
+   * parameters within the SQL statement. Bean properties or map keys that do noy correspond to
+   * named parameters will be ignored. The effect of passing anything other than a proper JavaBean
+   * or a {@code Map<String,Object>} (e.g. a {@code Collection}) is undefined. The {@code
+   * idPropertyOrKey} argument must be the name of a bean property or map key corresponding to an
+   * auto-increment column. The generated value for that column will be bound back into the bean or
+   * {@code Map}. Of course, the bean or {@code Map} needs to be modifiable in that case. If you
+   * don't want the auto-increment column to be bound back into the bean or {@code Map}, just call
+   * {@link #bind(Object)}.
+   *
+   * <p>Klojang does not support INSERT statements that generate multiple keys.
+   *
+   * @param beanOrMap The bean or {@code Map} whose values to bind to the named parameters within
+   *     the SQL statement
+   * @return This {@code SQLInsert} instance
+   */
+  public SQLInsert bind(Object beanOrMap, String idPropertyOrKey) {
+    super.bind(beanOrMap);
+    keys.add(idPropertyOrKey);
+    return this;
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  public void execute() {
+    boolean mustBindBack = keys.stream().anyMatch(notNull());
     try {
-      if (bindBackObjs.isEmpty()) {
+      if (!mustBindBack) {
         exec(false);
       } else {
         exec(true);
         try (ResultSet rs = ps.getGeneratedKeys()) {
           if (!rs.next()) {
-            throw new KJSQLException("No keys were generated during INSERT");
+            throw new KJSQLException("No keys were generated");
           } else if (rs.getMetaData().getColumnCount() != 1) {
             throw new KJSQLException("Multiple auto-increment keys not supported");
           }
-          for (Tuple<Object, String> t : bindBackObjs) {
-            if (t.getLeft() instanceof Map) {
-              RsToMapTransporter<?>[] transporters =
-                  RsToMapTransporter.createValueTransporters(rs, s -> t.getRight());
-              populateMap(rs, (Map<String, Object>) t.getLeft(), transporters);
-            } else {
-              Class<T> beanClass = (Class<T>) t.getLeft().getClass();
-              RsToBeanTransporter<?, ?>[] setters =
-                  RsToBeanTransporter.createValueTransporters(rs, beanClass, s -> t.getRight());
-              Supplier<T> beanSupplier = () -> (T) t.getLeft();
-              RsToBeanTransporter.toBean(rs, beanSupplier, setters);
+          long id = rs.getLong(1);
+          for (int i = 0; i < keys.size(); ++i) {
+            String key = keys.get(i);
+            if (key != null) {
+              Object obj = bindables.get(i);
+              if (obj instanceof Map) {
+                ((Map) obj).put(key, id);
+              } else {
+                Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(obj.getClass());
+                Check.on(s -> noSuchProperty(obj, key), key).is(keyIn(), setters);
+                Setter setter = setters.get(key);
+                Check.that(setter.getParamType()).is(number());
+                Number n = convert(id, (Class<? extends Number>) setter.getParamType());
+                setter.write(obj, n);
+              }
             }
           }
         }
@@ -114,7 +119,6 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
     }
   }
 
-  /** Closes the {@link PreparedStatement} created for the INSERT statement. */
   @Override
   public void close() {
     close(ps);

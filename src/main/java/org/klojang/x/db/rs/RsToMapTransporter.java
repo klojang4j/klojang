@@ -3,38 +3,19 @@ package org.klojang.x.db.rs;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.UnaryOperator;
 import org.klojang.db.Row;
 import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.Tuple;
 
 /* Transports a single value from a ResultSet to a Map<String,Object> */
 public class RsToMapTransporter<COLUMN_TYPE> implements ValueTransporter {
 
-  @SuppressWarnings("unchecked")
   public static Row toRow(ResultSet rs, RsToMapTransporter<?>[] setters) throws Throwable {
-    Tuple<String, Object>[] entries = new Tuple[setters.length];
+    Column[] entries = new Column[setters.length];
     for (int i = 0; i < setters.length; ++i) {
       entries[i] = setters[i].getEntry(rs);
     }
     return Row.withColumns(entries);
-  }
-
-  public static Map<String, Object> toMap(ResultSet rs, RsToMapTransporter<?>[] setters)
-      throws Throwable {
-    Map<String, Object> map = new HashMap<>(setters.length);
-    populateMap(rs, map, setters);
-    return map;
-  }
-
-  public static void populateMap(
-      ResultSet rs, Map<String, Object> map, RsToMapTransporter<?>[] setters) throws Throwable {
-    for (int i = 0; i < setters.length; ++i) {
-      Tuple<String, Object> tuple = setters[i].getEntry(rs);
-      tuple.insertInto(map);
-    }
   }
 
   public static RsToMapTransporter<?>[] createValueTransporters(
@@ -75,7 +56,7 @@ public class RsToMapTransporter<COLUMN_TYPE> implements ValueTransporter {
     return sqlType;
   }
 
-  private Tuple<String, Object> getEntry(ResultSet rs) throws Throwable {
-    return Tuple.of(key, method.call(rs, jdbcIdx));
+  private Column getEntry(ResultSet rs) throws Throwable {
+    return new Column(key, method.call(rs, jdbcIdx));
   }
 }

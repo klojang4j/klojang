@@ -6,7 +6,7 @@ import java.util.Map;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.TypeMap;
 import static org.klojang.db.SQLTypeNames.getTypeName;
-import static nl.naturalis.common.ClassMethods.prettyClassName;
+import static nl.naturalis.common.ClassMethods.getPrettyClassName;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 class ReceiverNegotiator {
@@ -32,7 +32,7 @@ class ReceiverNegotiator {
 
   @SuppressWarnings("unchecked")
   <T, U> Receiver<T, U> findReceiver(Class<T> fieldType, Integer sqlType) {
-    Check.that(fieldType).is(keyIn(), all, "Type not supported: %s", prettyClassName(fieldType));
+    Check.that(fieldType).is(keyIn(), all, "Type not supported: %s", getPrettyClassName(fieldType));
     if (sqlType == null) {
       return (Receiver<T, U>) all.get(fieldType).getDefaultReceiver();
     }
@@ -41,7 +41,7 @@ class ReceiverNegotiator {
     String sqlTypeName = getTypeName(sqlType);
     Receiver<T, U> receiver = (Receiver<T, U>) all.get(fieldType).get(sqlType);
     if (receiver == null) {
-      return Check.fail("Cannot convert %s to %s", sqlTypeName, prettyClassName(fieldType));
+      return Check.fail("Cannot convert %s to %s", sqlTypeName, getPrettyClassName(fieldType));
     }
     return receiver;
   }

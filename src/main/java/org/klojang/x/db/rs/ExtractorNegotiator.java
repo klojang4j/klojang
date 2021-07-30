@@ -7,7 +7,7 @@ import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.TypeMap;
 import static org.klojang.db.SQLTypeNames.getTypeName;
-import static nl.naturalis.common.ClassMethods.prettyClassName;
+import static nl.naturalis.common.ClassMethods.getPrettyClassName;
 
 /**
  * Finds the most suitable of the {@code ResultSet.getXXX} methods for a given Java type. If no
@@ -44,7 +44,7 @@ public class ExtractorNegotiator {
   @SuppressWarnings("unchecked")
   public <T, U> RsExtractor<T, U> findExtractor(Class<U> fieldType, int sqlType) {
     if (!extractorsByType.containsKey(fieldType)) {
-      return Check.fail("Type not supported: %s", prettyClassName(fieldType));
+      return Check.fail("Type not supported: %s", getPrettyClassName(fieldType));
     }
     // This implicitly checks that the specified int is one of the
     // static final int constants in the java.sql.Types class
@@ -54,7 +54,7 @@ public class ExtractorNegotiator {
       if (extractors.containsKey(DEFAULT)) {
         return (RsExtractor<T, U>) extractors.get(DEFAULT);
       }
-      return Check.fail("Cannot convert %s to %s", sqlTypeName, prettyClassName(fieldType));
+      return Check.fail("Cannot convert %s to %s", sqlTypeName, getPrettyClassName(fieldType));
     }
     return (RsExtractor<T, U>) extractors.get(sqlType);
   }

@@ -22,7 +22,7 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
   SQLStatement(Connection con, SQL sql) {
     this.con = con;
     this.sql = sql;
-    this.bindables = new ArrayList<>(4);
+    this.bindables = new ArrayList<>(5);
     this.bound = new HashSet<>(sql.getParameters().size(), 1.0F);
   }
 
@@ -79,6 +79,7 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
     Set<NamedParameter> params = new HashSet<>(sql.getParameters());
     params.removeAll(bound);
     List<String> unbound = params.stream().map(NamedParameter::getName).collect(toList());
-    return new KJSQLException("Some query parameters have not been bound yet: %s", implode(unbound));
+    return new KJSQLException(
+        "Some query parameters have not been bound yet: %s", implode(unbound));
   }
 }

@@ -115,7 +115,7 @@ public class SQLInsertTest {
     Map<String, Object> data = new HashMap<>(Collections.singletonMap("name", "John"));
     SQL sql = SQL.create(s);
     try (SQLInsert insert = sql.prepareInsert(MY_CON.get())) {
-      insert.bind(data).bindBack("id");
+      insert.bind(data, "id");
       insert.execute();
       assertTrue(data.containsKey("id"));
     }
@@ -128,7 +128,7 @@ public class SQLInsertTest {
     person.setId(Integer.MIN_VALUE);
     SQL sql = SQL.create(s);
     try (SQLInsert insert = sql.prepareInsert(MY_CON.get())) {
-      insert.bind(person).bindBack("id");
+      insert.bind(person, "id");
       insert.execute();
       assertTrue(person.getId() != Integer.MIN_VALUE);
     }

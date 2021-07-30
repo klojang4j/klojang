@@ -1,14 +1,15 @@
 package org.klojang.db;
 
 import java.sql.ResultSet;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import org.klojang.render.Accessor;
+import org.klojang.x.db.rs.Column;
 import nl.naturalis.common.Bool;
 import nl.naturalis.common.NumberMethods;
-import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
@@ -36,19 +37,16 @@ public class Row {
   private static final String ERR2 = "Invalid column number: %d";
   private static final String ERR3 = "Columns already exists: %d";
 
-  public static Row withColumns(Tuple<String, Object>[] columns) {
+  public static Row withColumns(Column[] columns) {
     return new Row(columns);
-  }
-
-  public static Row fromMap(Map<String, Object> data) {
-    return new Row(data);
   }
 
   private final Map<String, Object> map;
 
-  private Row(Tuple<String, Object>[] columns) {
-    // Reserve some extra space for potentital additions
-    map = Tuple.toMap(columns, () -> new LinkedHashMap<>(columns.length + 4));
+  private Row(Column[] columns) {
+    // Reserve some extra space for potential additions
+    map = new LinkedHashMap<>(columns.length * 2 + 4, .5F);
+    Arrays.stream(columns).forEach(c -> map.put(c.getName(), c.getValue()));
   }
 
   private Row(Map<String, Object> data) {

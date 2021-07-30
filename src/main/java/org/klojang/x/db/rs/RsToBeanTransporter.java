@@ -70,6 +70,6 @@ public class RsToBeanTransporter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransp
   @SuppressWarnings("unchecked")
   private <U> void setValue(ResultSet rs, U bean) throws Throwable {
     FIELD_TYPE val = extractor.getValue(rs, jdbcIdx, (Class<FIELD_TYPE>) setter.getParamType());
-    setter.getMethod().invoke(bean, val);
+    setter.write(bean, val);
   }
 }
