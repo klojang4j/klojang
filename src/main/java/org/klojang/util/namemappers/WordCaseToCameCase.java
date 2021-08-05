@@ -1,4 +1,4 @@
-package org.klojang.util;
+package org.klojang.util.namemappers;
 
 import org.klojang.render.NameMapper;
 import nl.naturalis.common.check.Check;

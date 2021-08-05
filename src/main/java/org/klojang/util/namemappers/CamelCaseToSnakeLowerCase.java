@@ -1,4 +1,4 @@
-package org.klojang.util;
+package org.klojang.util.namemappers;
 
 import org.klojang.render.NameMapper;
 import static java.lang.Character.isLowerCase;
@@ -16,24 +16,24 @@ public class CamelCaseToSnakeLowerCase implements NameMapper {
   @Override
   public String map(String s) {
     int maxLen = (int) Math.ceil(s.length() * 1.5F);
-    char[] colName = new char[maxLen];
-    colName[0] = isUpperCase(s.charAt(0)) ? toLowerCase(s.charAt(0)) : s.charAt(0);
+    char[] out = new char[maxLen];
+    out[0] = isUpperCase(s.charAt(0)) ? toLowerCase(s.charAt(0)) : s.charAt(0);
     int j = 1;
     for (int i = 1; i < s.length(); ++i) {
       if (isUpperCase(s.charAt(i))) {
         if ((i != (s.length() - 1)) && isLowerCase(s.charAt(i + 1))) {
-          colName[j++] = '_';
-          colName[j++] = toLowerCase(s.charAt(i));
+          out[j++] = '_';
+          out[j++] = toLowerCase(s.charAt(i));
         } else if (isLowerCase(s.charAt(i - 1))) {
-          colName[j++] = '_';
-          colName[j++] = toLowerCase(s.charAt(i));
+          out[j++] = '_';
+          out[j++] = toLowerCase(s.charAt(i));
         } else {
-          colName[j++] = toLowerCase(s.charAt(i));
+          out[j++] = toLowerCase(s.charAt(i));
         }
       } else {
-        colName[j++] = s.charAt(i);
+        out[j++] = s.charAt(i);
       }
     }
-    return new String(colName, 0, j);
+    return new String(out, 0, j);
   }
 }
