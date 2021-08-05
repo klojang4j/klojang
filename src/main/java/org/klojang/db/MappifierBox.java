@@ -4,7 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.UnaryOperator;
+import org.klojang.render.NameMapper;
 import org.klojang.x.db.rs.RsToMapTransporter;
 import org.klojang.x.db.rs.ValueTransporterCache;
 import nl.naturalis.common.check.Check;
@@ -15,18 +15,18 @@ public class MappifierBox {
 
   private final AtomicReference<RsToMapTransporter<?>[]> ref = new AtomicReference<>();
 
-  private final UnaryOperator<String> mapper;
+  private final NameMapper mapper;
   private final boolean verify;
 
   public MappifierBox() {
-    this(UnaryOperator.identity());
+    this(NameMapper.NOOP);
   }
 
-  public MappifierBox(UnaryOperator<String> columnToKeyMapper) {
+  public MappifierBox(NameMapper columnToKeyMapper) {
     this(columnToKeyMapper, false);
   }
 
-  public MappifierBox(UnaryOperator<String> columnToKeyMapper, boolean verify) {
+  public MappifierBox(NameMapper columnToKeyMapper, boolean verify) {
     this.mapper = Check.notNull(columnToKeyMapper).ok();
     this.verify = verify;
   }

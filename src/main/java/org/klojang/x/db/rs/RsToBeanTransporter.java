@@ -5,7 +5,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
+import org.klojang.render.NameMapper;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.invoke.Setter;
 import nl.naturalis.common.invoke.SetterFactory;
@@ -24,7 +24,7 @@ public class RsToBeanTransporter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransp
   }
 
   public static RsToBeanTransporter<?, ?>[] createValueTransporters(
-      ResultSet rs, Class<?> beanClass, UnaryOperator<String> nameMapper) {
+      ResultSet rs, Class<?> beanClass, NameMapper nameMapper) {
     Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(beanClass);
     ExtractorNegotiator negotiator = ExtractorNegotiator.getInstance();
     try {
@@ -35,7 +35,7 @@ public class RsToBeanTransporter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransp
         int jdbcIdx = idx + 1; // JDBC is one-based
         int sqlType = rsmd.getColumnType(jdbcIdx);
         String label = rsmd.getColumnLabel(jdbcIdx);
-        String property = nameMapper.apply(label);
+        String property = nameMapper.map(label);
         Setter setter = setters.get(property);
         if (setter != null) {
           Class<?> javaType = setter.getParamType();

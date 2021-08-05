@@ -3,8 +3,8 @@ package org.klojang.x.db.rs;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.function.UnaryOperator;
 import org.klojang.db.Row;
+import org.klojang.render.NameMapper;
 import nl.naturalis.common.ExceptionMethods;
 
 /* Transports a single value from a ResultSet to a Map<String,Object> */
@@ -18,8 +18,7 @@ public class RsToMapTransporter<COLUMN_TYPE> implements ValueTransporter {
     return Row.withColumns(entries);
   }
 
-  public static RsToMapTransporter<?>[] createValueTransporters(
-      ResultSet rs, UnaryOperator<String> mapper) {
+  public static RsToMapTransporter<?>[] createValueTransporters(ResultSet rs, NameMapper mapper) {
     RsMethods methods = RsMethods.getInstance();
     try {
       ResultSetMetaData rsmd = rs.getMetaData();
@@ -30,7 +29,7 @@ public class RsToMapTransporter<COLUMN_TYPE> implements ValueTransporter {
         int sqlType = rsmd.getColumnType(jdbcIdx);
         RsMethod<?> method = methods.getMethod(sqlType);
         String label = rsmd.getColumnLabel(jdbcIdx);
-        String key = mapper.apply(label);
+        String key = mapper.map(label);
         transporters[idx] = new RsToMapTransporter<>(method, jdbcIdx, sqlType, key);
       }
       return transporters;

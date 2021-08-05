@@ -3,14 +3,16 @@ package org.klojang.render;
 import org.klojang.db.Row;
 
 /**
- * Maps template variable names and nested template names to the name that must be used to access
- * their value in the source data (e&#46;g&#46; a JavaBean, {@code Map} or {@link Row}). When
- * implementing a name mapper for a template, make sure it is capable of mapping names for
- * <i>all</i> templates descending from it as well. You can optionally provide various {@link
- * Accessor accessors} in the {@code accessor} package with a {@code NameMapper} implementation.
+ * Generic name mapping interface. Name mappers are used to map template variable names to model
+ * object properties. See {@link AccessorFactory.Builder#setDefaultNameMapper(NameMapper)}. They are
+ * also used to map column names to model object properties. See {@link
+ * SQLQuery#withNameMapper(NameMapper)}. Note that the term "property" is in fact rather misleading
+ * because, as for Klojang, your model objects might just as well be {@code Map<String,Object>}
+ * objects or {@link Row rows}, in which case your template's variables would map to map keys.
  *
  * @author Ayco Holleman
  */
+@FunctionalInterface
 public interface NameMapper {
 
   /** The no-op mapper. Maps the variable or nested template name to itself. */
@@ -20,8 +22,8 @@ public interface NameMapper {
    * Maps the specified name to a name that can be used to access its value.
    *
    * @param template The template containing the variable or nested template
-   * @param varOrNestedTemplateName The name of the variable or nested template
+   * @param name The name of the variable or nested template
    * @return A (new) name that can be used to access the value
    */
-  String map(String varOrNestedTemplateName);
+  String map(String name);
 }

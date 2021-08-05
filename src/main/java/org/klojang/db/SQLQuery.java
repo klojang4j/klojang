@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
+import org.klojang.render.NameMapper;
 import org.klojang.x.db.rs.ExtractorNegotiator;
 import org.klojang.x.db.rs.RsExtractor;
 import nl.naturalis.common.ExceptionMethods;
@@ -18,7 +18,7 @@ import static nl.naturalis.common.ObjectMethods.ifNull;
 
 public class SQLQuery extends SQLStatement<SQLQuery> {
 
-  private UnaryOperator<String> nameMapper = UnaryOperator.identity();
+  private NameMapper nameMapper = NameMapper.NOOP;
 
   private PreparedStatement ps;
   private ResultSet rs;
@@ -27,7 +27,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     super(con, sql);
   }
 
-  public SQLQuery withNameMapper(UnaryOperator<String> columnToKeyOrPropertyMapper) {
+  public SQLQuery withNameMapper(NameMapper columnToKeyOrPropertyMapper) {
     this.nameMapper = Check.notNull(columnToKeyOrPropertyMapper).ok();
     return this;
   }

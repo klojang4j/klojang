@@ -6,8 +6,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.function.UnaryOperator;
 import org.klojang.db.SQLTypeNames;
+import org.klojang.render.NameMapper;
 
 public class ValueTransporterCache {
 
@@ -66,12 +66,13 @@ public class ValueTransporterCache {
   private ValueTransporterCache() {}
 
   public RsToBeanTransporter<?, ?>[] getBeanValueSetters(
-      ResultSet rs, Class<?> clazz, UnaryOperator<String> mapper) {
+      ResultSet rs, Class<?> clazz, NameMapper mapper) {
     RsStrongIdentifier id = new RsStrongIdentifier(rs);
-    return bvt.computeIfAbsent(id, k -> RsToBeanTransporter.createValueTransporters(rs, clazz, mapper));
+    return bvt.computeIfAbsent(
+        id, k -> RsToBeanTransporter.createValueTransporters(rs, clazz, mapper));
   }
 
-  public RsToMapTransporter<?>[] getMapValueSetters(ResultSet rs, UnaryOperator<String> mapper) {
+  public RsToMapTransporter<?>[] getMapValueSetters(ResultSet rs, NameMapper mapper) {
     RsStrongIdentifier id = new RsStrongIdentifier(rs);
     return mvt.computeIfAbsent(id, k -> RsToMapTransporter.createValueTransporters(rs, mapper));
   }

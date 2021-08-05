@@ -11,18 +11,20 @@ import nl.naturalis.common.invoke.BeanReader;
 import static nl.naturalis.common.ClassMethods.isA;
 
 /**
- * Provides {@link Accessor accessors} objects functioning as source data for a {@link Template}.
- * For example, if you want to populate a template with a {@code Person} object, the {@link
- * RenderSession} needs to know how to read the properties corresponding to the template variables.
- * In most cases the {@code AccessorFactory} defined by the {@link #STANDARD_ACCESSORS} variable is
- * all you need - without you actually having the code {@code Accessor} implementations. It contains
- * predefined accessors for {@code Map<String,Object>} objects, {@link Row} objects and JavaBeans.
- * With one caveat though. The accessor used for JavaBeans makes use of the {@link BeanReader}
- * class. This class does not use reflection to read the values of bean properties, but it does use
- * reflection to figure out what the properties are in the first place. Thus, if you use this
- * accessor from within a Java module, you will have to "open" the module to the naturalis-common
- * module, which contains the {@code BeanReader} class. If you are not comfortable with this, you
- * can, as an alternative, use the {@link SaveBeanAccessor} class:
+ * Provides {@link Accessor accessors} capable of extracting values from the model objects. For
+ * example, if you want to populate a template with a {@code Person} object, the {@link
+ * RenderSession} needs to know how to read the {@code Person} properties that correspond to
+ * template variables. In most cases the {@code AccessorFactory} defined by the {@link
+ * #STANDARD_ACCESSORS} variable is probably all you need, without you actually having to code any
+ * {@code Accessor} implementations. It contains predefined accessors for {@code Map<String,Object>}
+ * objects, {@link Row} objects and JavaBeans.
+ *
+ * <p>There is one caveat though. The accessor used to access JavaBeans makes use of the {@link
+ * BeanReader} class. This class does not use reflection to read the values of bean properties, but
+ * it does use reflection to figure out what the properties are in the first place. Thus, if you use
+ * this accessor from within a Java module, you will have to open up the module to the
+ * naturalis-common module, which contains the {@code BeanReader} class. If you are not comfortable
+ * with this, you can, as an alternative, use the {@link SaveBeanAccessor} class:
  *
  * <blockquote>
  *
@@ -42,8 +44,8 @@ import static nl.naturalis.common.ClassMethods.isA;
  *
  * </blockquote>
  *
- * <p>The predefined accessors for the {@code Map} and {@coder Row} objects will still be present in
- * this {@code AccessorFactory}. Or you can roll your own {@code Accessor} after all:
+ * <p>Although this is only slightly less verbose than writing your your own {@code Accessor} after
+ * all:
  *
  * <blockquote>
  *
@@ -55,7 +57,7 @@ import static nl.naturalis.common.ClassMethods.isA;
  *       case "firstName" : return person.getFirstName();
  *       case "lastName" : return person.getLastName();
  *       case "birthDate" : return person.getBirthDate();
- *       default : return UNDEFINED;
+ *       default : return Accessor.UNDEFINED;
  *     }
  *   };
  * AccessorFactory af = AccessorFactory
@@ -66,11 +68,30 @@ import static nl.naturalis.common.ClassMethods.isA;
  *
  * </blockquote>
  *
+ * <p>Note that in either case the accessors for {@code Map} and {@code Row} objects are still
+ * present in the {@code AccessorFactory}.
+ *
  * @author Ayco Holleman
  */
 public class AccessorFactory {
 
+  /**
+   * An {@code AccessorFactory} the should sufficent for most use cases given a one-to-one mapping
+   * between template variable names and model object property names.
+   */
   public static final AccessorFactory STANDARD_ACCESSORS = configure().freeze();
+
+  /**
+   * Returns an {@code AccessorFactory} the should sufficent for most use cases while allowing you
+   * to specify a global {@link NameMapper} for mapping template variable names to model object
+   * properties.
+   *
+   * @param nameMapper The {@code NameMapper} to use when accessing model objects
+   * @return An {@code AccessorFactory} the should sufficent for most use cases
+   */
+  public static AccessorFactory standard(NameMapper nameMapper) {
+    return configure().setDefaultNameMapper(nameMapper).freeze();
+  }
 
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
 
@@ -82,6 +103,14 @@ public class AccessorFactory {
 
     private Builder() {}
 
+    /**
+     * Sets the default {@code NameMapper} to use in order to map template variable names and nested
+     * template names to properties within the model objects. If no {@code NameMapper} is specified,
+     * a one-to-one relationship is assumed.
+     *
+     * @param nameMapper
+     * @return
+     */
     public Builder setDefaultNameMapper(NameMapper nameMapper) {
       defMapper = Check.notNull(nameMapper).ok();
       return this;

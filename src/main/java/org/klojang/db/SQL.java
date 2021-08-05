@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
+import org.klojang.render.NameMapper;
 import org.klojang.render.RenderSession;
 import org.klojang.template.Template;
 import org.klojang.x.db.ps.BeanBinder;
@@ -146,7 +146,7 @@ public class SQL {
 
   @SuppressWarnings("unchecked")
   <T> BeanifierBox<T> getBeanifierBox(
-      Class<T> beanClass, Supplier<T> beanSupplier, UnaryOperator<String> columnToPropertyMapper) {
+      Class<T> beanClass, Supplier<T> beanSupplier, NameMapper columnToPropertyMapper) {
     return (BeanifierBox<T>)
         beanifierBoxes.computeIfAbsent(
             beanClass, k -> new BeanifierBox<>(beanClass, beanSupplier, columnToPropertyMapper));

@@ -5,7 +5,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
+import org.klojang.render.NameMapper;
 import org.klojang.x.db.rs.RsToBeanTransporter;
 import org.klojang.x.db.rs.ValueTransporterCache;
 import nl.naturalis.common.check.Check;
@@ -22,24 +22,24 @@ public class BeanifierBox<T> {
 
   private final Class<T> beanClass;
   private final Supplier<T> beanSupplier;
-  private final UnaryOperator<String> mapper;
+  private final NameMapper mapper;
   private final boolean verify;
 
   private AtomicReference<RsToBeanTransporter<?, ?>[]> ref = new AtomicReference<>();
 
   public BeanifierBox(Class<T> beanClass, Supplier<T> beanSupplier) {
-    this(beanClass, beanSupplier, UnaryOperator.identity());
+    this(beanClass, beanSupplier, NameMapper.NOOP);
   }
 
   public BeanifierBox(
-      Class<T> beanClass, Supplier<T> beanSupplier, UnaryOperator<String> columnToPropertyMapper) {
+      Class<T> beanClass, Supplier<T> beanSupplier, NameMapper columnToPropertyMapper) {
     this(beanClass, beanSupplier, columnToPropertyMapper, false);
   }
 
   public BeanifierBox(
       Class<T> beanClass,
       Supplier<T> beanSupplier,
-      UnaryOperator<String> columnToPropertyMapper,
+      NameMapper columnToPropertyMapper,
       boolean verify) {
     this.beanClass = Check.notNull(beanClass, "beanClass").ok();
     this.beanSupplier = Check.notNull(beanSupplier, "beanSupplier").ok();

@@ -31,10 +31,10 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
  * unlikely you will define many variable-specific stringifiers. If a variable's value can be
  * stringified by calling {@code toString()} on it (or to an empty string if null), you don't need
  * to specify a stringifier for it because this is default behaviour. In addition, all variables
- * with the same data type will usually also have to be stringified in the same way. (For example
- * you may want to format all integers according to your country's locale.) These generic,
- * type-based stringifiers can be configured using {@link Builder#addTypeBasedStringifier(String...,
- * Class) Builder.setTypeStringifier}. Only if a template variable has very specific stringification
+ * with the same data type will usually have to be stringified in the same way. (For example you may
+ * want to format all integers according to your country's locale.) These generic, type-based
+ * stringifiers can be configured using {@link Builder#addTypeBasedStringifier(String..., Class)
+ * Builder.setTypeStringifier}. Only if a template variable has very specific stringification
  * requirements would you register the stringifier using {@link Builder#add(Stringifier, String...)
  * Builder.setStringifier}.
  *
