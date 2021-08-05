@@ -1,7 +1,6 @@
 package org.klojang.render;
 
 import nl.naturalis.common.StringMethods;
-import static nl.naturalis.common.ObjectMethods.ifNotNull;
 
 /**
  * Stringifies the values coming back from the data access layer.
@@ -16,8 +15,7 @@ public interface Stringifier {
    * on it. It is the {@code Stringifier} that is used by default for any template variable for
    * which no alternative {@code Stringifier} is {@link StringifierFactory.Builder configured}.
    */
-  public static final Stringifier DEFAULT =
-      (x) -> ifNotNull(x, Object::toString, StringMethods.EMPTY);
+  public static final Stringifier DEFAULT = x -> x == null ? StringMethods.EMPTY : x.toString();
 
   /**
    * Stringifies the specified value. Stringifier implementations <i>must</i> be able to handle null
