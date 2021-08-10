@@ -86,6 +86,13 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     }
   }
 
+  /**
+   * Returns the value of the first column of the first row as a {@code String}. Throws a {@link
+   * KJSQLException} if the query returned zero rows.
+   *
+   * @return The value of the first column of the first row as aa {@code String}
+   * @throws KJSQLException If the query returned zero rows
+   */
   public String getString() throws KJSQLException {
     try {
       return executeAndNext().getString(1);
@@ -94,10 +101,26 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     }
   }
 
+  /**
+   * Returns a {@code List} of the values of the first column in the rows selected by the query.
+   * Equivalent to {@code getList(clazz, 10)}.
+   *
+   * @param <T> The desired type of the values
+   * @param clazz The desired class of the values
+   * @return A {@code List} of the values of the first column in the rows selected by the query
+   */
   public <T> List<T> getList(Class<T> clazz) {
     return getList(clazz, 10);
   }
 
+  /**
+   * Returns a {@code List} of the values of the first column in the rows selected by the query.
+   *
+   * @param <T> The desired type of the values
+   * @param clazz The desired class of the values
+   * @param expectedSize The expected number of rows
+   * @return A {@code List} of the values of the first column in the rows selected by the query
+   */
   public <T> List<T> getList(Class<T> clazz, int expectedSize) {
     try {
       ResultSet rs = resultSet();
@@ -156,6 +179,15 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     try {
       BeanifierBox<T> bb = sql.getBeanifierBox(beanClass, beanSupplier, nameMapper);
       return bb.get(resultSet()).beanify();
+    } catch (Throwable t) {
+      throw ExceptionMethods.uncheck(t);
+    }
+  }
+
+  public <T> List<T> beanifyAll(Class<T> beanClass, Supplier<T> beanSupplier) {
+    try {
+      BeanifierBox<T> bb = sql.getBeanifierBox(beanClass, beanSupplier, nameMapper);
+      return bb.get(resultSet()).beanifyAll();
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
     }

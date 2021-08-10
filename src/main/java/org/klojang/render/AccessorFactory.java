@@ -2,29 +2,58 @@ package org.klojang.render;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.klojang.db.Row;
 import org.klojang.template.Template;
-import org.klojang.x.accessors.*;
-import nl.naturalis.common.Tuple;
+import org.klojang.x.accessors.BeanAccessor;
+import org.klojang.x.accessors.MapAccessor;
+import org.klojang.x.accessors.NullAccessor;
+import org.klojang.x.accessors.RowAccessor;
 import nl.naturalis.common.check.Check;
+import nl.naturalis.common.collection.TypeMap;
 import nl.naturalis.common.invoke.BeanReader;
 import static nl.naturalis.common.ClassMethods.isA;
 
 /**
- * Provides {@link Accessor accessors} capable of extracting values from the model objects. For
- * example, if you want to populate a template with a {@code Person} object, the {@link
- * RenderSession} needs to know how to read the {@code Person} properties that correspond to
- * template variables. In most cases the {@code AccessorFactory} defined by the {@link
- * #STANDARD_ACCESSORS} variable is probably all you need, without you actually having to code any
- * {@code Accessor} implementations. It contains predefined accessors for {@code Map<String,Object>}
- * objects, {@link Row} objects and JavaBeans.
+ * Provides {@link Accessor accessors} capable of extracting values from model objects. For example,
+ * if you want to populate a template with a {@code Person} object, the {@link RenderSession} needs
+ * to know how to read the {@code Person} properties that correspond to template variables. In most
+ * cases the {@code AccessorFactory} defined by the {@link #STANDARD_ACCESSORS} variable is probably
+ * all you need, without you actually having to implement any {@code Accessor} yourself.
  *
- * <p>There is one caveat though. The accessor used to access JavaBeans makes use of the {@link
- * BeanReader} class. This class does not use reflection to read the values of bean properties, but
- * it does use reflection to figure out what the properties are in the first place. Thus, if you use
- * this accessor from within a Java module, you will have to open up the module to the
- * naturalis-common module, which contains the {@code BeanReader} class. If you are not comfortable
- * with this, you can, as an alternative, use the {@link SaveBeanAccessor} class:
+ * <p>Any {@code AccessorFactory}, including the ones you build yourself and including the {@code
+ * STANDARD_ACCESSORS} {@code AccessorFactory} comes with a set of predefined accessors (not exposed
+ * via the API) that it hands out to the {@code RenderSession} based on the type of object the
+ * {@code RenderSession} wants to access. This happens in the following manner:
+ *
+ * <p>
+ *
+ * <ol>
+ *   <li>If you have {@link AccessorFactory.Builder#addAccessor(Class, Accessor) registered} your
+ *       own {@code Accessor} for that particular type of object, then that is the {@code Accessor}
+ *       that is going to be used.
+ *   <li>If the object is an {@link Optional}, then, if the {@code Optional} is empty, an internally
+ *       defined {@code NullAccessor}. This accessor simply always returns {@link
+ *       Accessor#UNDEFINED} for any template variable you throw at it. Otherwise another accessor
+ *       is going to be used, based on the type of the object within the {@code Optional}. Optionals
+ *       are objects you typically get back nowadays from, for example, the ubiquitous {@code
+ *       dao.findById(id)} method and, as for Klojang, it is perfectly legitimate to {@link
+ *       RenderSession#insert(Object, String...) insert} them into your template.
+ *   <li>If the object is a {@code Map}, an internally defined {@code MapAccessor} is going to be
+ *       used. (You could easily create an enhanced version, tailored to your particular needs,
+ *       yourself. Check the source code.)
+ *   <li>If the object is a {@link Row}, an internally defined {@code RowAccessor} is going to be
+ *       used.
+ *   <li>In any other case the object is taken to be a JavaBean and an internally defined {@code
+ *       BeanAccessor} is going to be used.
+ * </ol>
+ *
+ * <p>TPlease note that the accessor used to access JavaBeans makes use of a {@link BeanReader}.
+ * This class does not use reflection to read bean properties, but it does use reflection to figure
+ * out what the properties are in the first place. Thus, if you use this accessor from within a Java
+ * module, you will have to open up the module to the naturalis-common module, which contains the
+ * {@code BeanReader} class. If you are not comfortable with this, you can, as an alternative, use
+ * the {@link SaveBeanAccessor} class:
  *
  * <blockquote>
  *
@@ -44,8 +73,7 @@ import static nl.naturalis.common.ClassMethods.isA;
  *
  * </blockquote>
  *
- * <p>Although this is only slightly less verbose than writing your your own {@code Accessor} after
- * all:
+ * <p>Or you could just write your own {@code Accessor} after all:
  *
  * <blockquote>
  *
@@ -67,9 +95,6 @@ import static nl.naturalis.common.ClassMethods.isA;
  * }</pre>
  *
  * </blockquote>
- *
- * <p>Note that in either case the accessors for {@code Map} and {@code Row} objects are still
- * present in the {@code AccessorFactory}.
  *
  * @author Ayco Holleman
  */
@@ -98,7 +123,7 @@ public class AccessorFactory {
   public static class Builder {
 
     private NameMapper defMapper;
-    private final Map<Tuple<Class<?>, Template>, Accessor<?>> accs = new HashMap<>();
+    private final Map<Class<?>, Map<Template, Accessor<?>>> accs = new HashMap<>();
     private final Map<Template, NameMapper> mappers = new HashMap<>();
 
     private Builder() {}
@@ -124,13 +149,13 @@ public class AccessorFactory {
     }
 
     public <T> Builder addAccessor(Class<T> forType, Accessor<? extends T> accessor) {
-      accs.put(Tuple.of(forType, null), accessor);
+      accs.computeIfAbsent(forType, k -> new HashMap<>()).put(null, accessor);
       return this;
     }
 
     public <T> Builder addAccessor(
         Class<T> forType, Template template, Accessor<? super T> accessor) {
-      accs.put(Tuple.of(forType, template), accessor);
+      accs.computeIfAbsent(forType, k -> new HashMap<>()).put(template, accessor);
       return this;
     }
 
@@ -145,32 +170,40 @@ public class AccessorFactory {
     return new Builder();
   }
 
-  private final Map<Tuple<Class<?>, Template>, Accessor<?>> accs;
+  private final Map<Class<?>, Map<Template, Accessor<?>>> accs;
   private final NameMapper defMapper;
   private final Map<Template, NameMapper> mappers;
 
   private AccessorFactory(
-      Map<Tuple<Class<?>, Template>, Accessor<?>> accs,
+      Map<Class<?>, Map<Template, Accessor<?>>> accs,
       NameMapper defMapper,
       Map<Template, NameMapper> mappers) {
-    this.accs = Map.copyOf(accs);
+    this.accs = new TypeMap<>(accs);
     this.defMapper = defMapper;
     this.mappers = Map.copyOf(mappers);
   }
 
-  Accessor<?> getAccessor(Class<?> type, Template template) {
-    Accessor<?> acc = accs.get(Tuple.of(type, template));
+  Accessor<?> getAccessor(Object obj, Template template) {
+    Class<?> type = obj.getClass();
+    Map<Template, Accessor<?>> m = accs.get(type);
+    Accessor<?> acc = null;
+    if (m != null) {
+      acc = m.get(template);
+      if (acc == null) {
+        acc = m.get(null);
+      }
+    }
     if (acc == null) {
       NameMapper nm = mappers.getOrDefault(template, defMapper);
-      acc = accs.get(Tuple.of(type, null));
-      if (acc == null) {
-        if (isA(type, Map.class)) {
-          acc = new MapAccessor(nm);
-        } else if (isA(type, Row.class)) {
-          acc = new RowAccessor(nm);
-        } else {
-          acc = new BeanAccessor<>(type, nm);
-        }
+      if (type == Optional.class) {
+        Optional<?> opt = (Optional<?>) obj;
+        return opt.isEmpty() ? new NullAccessor() : getAccessor(opt.get(), template);
+      } else if (isA(type, Map.class)) {
+        acc = new MapAccessor(nm);
+      } else if (isA(type, Row.class)) {
+        acc = new RowAccessor(nm);
+      } else {
+        acc = new BeanAccessor<>(type, nm);
       }
     }
     return acc;

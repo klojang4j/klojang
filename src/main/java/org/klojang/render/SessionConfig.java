@@ -48,7 +48,7 @@ public final class SessionConfig {
   }
 
   Accessor<?> getAccessor(Object sourceData) {
-    return accessors.getAccessor(sourceData.getClass(), template);
+    return accessors.getAccessor(sourceData, template);
   }
 
   RenderSession newChildSession(Template nested) {

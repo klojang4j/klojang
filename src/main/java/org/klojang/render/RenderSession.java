@@ -604,9 +604,11 @@ public class RenderSession {
     }
     Accessor<T> acc = (Accessor<T>) config.getAccessor(data);
     for (String varName : varNames) {
-      Object value = acc.access(data, varName);
-      if (value != UNDEFINED) {
-        set(varName, value, defGroup);
+      if (!state.isSet(varName)) {
+        Object value = acc.access(data, varName);
+        if (value != UNDEFINED) {
+          set(varName, value, defGroup);
+        }
       }
     }
   }
@@ -635,7 +637,17 @@ public class RenderSession {
   /**
    * Returns a {@code RenderSession} for the specified nested template. The {@code RenderSession}
    * inherits the {@link AccessorFactory accessors} and {@link StringifierFactory stringifiers} from
-   * the parent session (i.e. <i>this</i> {@code RenderSession}).
+   * the parent session (i.e. <i>this</i> {@code RenderSession}). If this is the first time the
+   * nested template is processed, a single child session will be created for it. This can be used
+   * as illustrated in the following example (assuming a nested template named {@code
+   * employeeDetails}:
+   *
+   * <p><code>{@code
+   * session.in("employeeDetails").set("firstName", "john").set("lastName", "Smith");
+   * }</code>
+   *
+   * <p>Note that just calling the {@code in} method already has the effect of the template becoming
+   * visible.
    *
    * @param nestedTemplateName The nested template for which to create the child session
    * @return A child session that you can (and should) populate yourself
@@ -668,9 +680,9 @@ public class RenderSession {
 
   /**
    * Returns whether or not the template is fully populated. That is, all variables have been set
-   * and all nested templates (however deeply nested) have been populated. Note that you may not
-   * <i>want</i> the template to be fully populated. Nested templates whose rendering depended on a
-   * condition that turned out to evaluate to {@code false} will not be populated.
+   * and all nested templates have been populated. Note that you may not <i>want</i> the template to
+   * be fully populated. Nested templates whose rendering depended on a condition that turned out to
+   * evaluate to {@code false} will not be populated.
    *
    * @return Whether or not the template is fully populated
    */
@@ -679,8 +691,8 @@ public class RenderSession {
   }
 
   /**
-   * Returns a {@code Renderable} instance that allows you to render the current template. See
-   * {@link #paste(String, Renderable)}.
+   * Returns a {@code Renderable} instance that allows you to render the current template over and
+   * over again. See {@link #paste(String, Renderable)}.
    *
    * @return A {@code Renderable} instance allows you to render the current template
    */
