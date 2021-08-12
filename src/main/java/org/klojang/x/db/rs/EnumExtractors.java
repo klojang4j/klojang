@@ -1,12 +1,11 @@
 package org.klojang.x.db.rs;
 
-import java.util.HashMap;
 import org.klojang.db.ResultSetReadException;
 import nl.naturalis.common.NumberMethods;
 import static java.sql.Types.*;
 import static org.klojang.x.db.rs.RsMethod.*;
 
-class EnumExtractors extends HashMap<Integer, RsExtractor<?, ?>> {
+class EnumExtractors extends ExtractorLookup<Enum<?>> {
 
   private static class NumberAdapter<T extends Number> implements Adapter<T, Enum<?>> {
 
@@ -31,39 +30,37 @@ class EnumExtractors extends HashMap<Integer, RsExtractor<?, ?>> {
   }
 
   EnumExtractors() {
-    put(BIGINT, new RsExtractor<>(GET_LONG, new NumberAdapter<Long>()));
-    put(INTEGER, new RsExtractor<>(GET_INT, new NumberAdapter<Integer>()));
-    put(SMALLINT, new RsExtractor<>(GET_SHORT, new NumberAdapter<Short>()));
-    put(TINYINT, new RsExtractor<>(GET_BYTE, new NumberAdapter<Byte>()));
-    RsExtractor<String, Enum<?>> vp0 = new RsExtractor<>(GET_STRING, new StringAdapter());
-    put(VARCHAR, vp0);
-    put(CHAR, vp0);
+    add(BIGINT, new RsExtractor<>(GET_LONG, new NumberAdapter<Long>()));
+    add(INTEGER, new RsExtractor<>(GET_INT, new NumberAdapter<Integer>()));
+    add(SMALLINT, new RsExtractor<>(GET_SHORT, new NumberAdapter<Short>()));
+    add(TINYINT, new RsExtractor<>(GET_BYTE, new NumberAdapter<Byte>()));
+    addMultiple(new RsExtractor<>(GET_STRING, new StringAdapter()), CHAR, VARCHAR);
   }
 
-  private static <T extends Number> Enum<?> asOrdinal(T number, Class<Enum<?>> t) {
+  private static <T extends Number> Enum<?> asOrdinal(T number, Class<Enum<?>> enumClass) {
     if (number == null) {
       return null;
     }
     int i = number.intValue();
-    if (i < 0 || i >= t.getEnumConstants().length) {
+    if (i < 0 || i >= enumClass.getEnumConstants().length) {
       String fmt = "Invalid ordinal number for enum type %s: %d";
-      String msg = String.format(fmt, t.getSimpleName(), i);
+      String msg = String.format(fmt, enumClass.getSimpleName(), i);
       throw new ResultSetReadException(msg);
     }
-    return t.getEnumConstants()[i];
+    return enumClass.getEnumConstants()[i];
   }
 
-  private static Enum<?> asName(String s, Class<Enum<?>> t) {
+  private static Enum<?> asName(String s, Class<Enum<?>> enumClass) {
     if (s == null) {
       return null;
     }
-    for (Enum<?> c : t.getEnumConstants()) {
+    for (Enum<?> c : enumClass.getEnumConstants()) {
       if (s.equals(c.name()) || s.equals(c.toString())) {
         return c;
       }
     }
     String fmt = "Unable to parse \"%s\" into %s";
-    String msg = String.format(fmt, s, t.getSimpleName());
+    String msg = String.format(fmt, s, enumClass.getSimpleName());
     throw new ResultSetReadException(msg);
   }
 }

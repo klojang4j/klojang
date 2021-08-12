@@ -1,23 +1,19 @@
 package org.klojang.x.db.rs;
 
-import java.math.BigDecimal;
-import java.util.HashMap;
 import nl.naturalis.common.NumberMethods;
 import static java.sql.Types.*;
 import static org.klojang.x.db.rs.RsMethod.*;
 
-class LongExtractors extends HashMap<Integer, RsExtractor<?, ?>> {
+class LongExtractors extends ExtractorLookup<Long> {
 
   LongExtractors() {
-    put(BIGINT, new RsExtractor<>(GET_LONG));
-    put(INTEGER, new RsExtractor<>(GET_INT));
-    put(SMALLINT, new RsExtractor<>(GET_SHORT));
-    put(TINYINT, new RsExtractor<>(GET_BYTE));
-    put(REAL, new RsExtractor<Float, Long>(GET_FLOAT, NumberMethods::convert));
-    RsMethod<BigDecimal> cr = GET_BIG_DECIMAL;
-    RsExtractor<BigDecimal, Long> vp0 = new RsExtractor<>(cr, NumberMethods::convert);
-    put(DECIMAL, vp0);
-    put(NUMERIC, vp0);
-    put(VARCHAR, new RsExtractor<String, Long>(GET_STRING, NumberMethods::parse));
+    add(BIGINT, new RsExtractor<>(GET_LONG));
+    add(INTEGER, new RsExtractor<>(GET_INT));
+    add(SMALLINT, new RsExtractor<>(GET_SHORT));
+    add(TINYINT, new RsExtractor<>(GET_BYTE));
+    add(REAL, new RsExtractor<Float, Long>(GET_FLOAT, NumberMethods::convert));
+    addMultiple(new RsExtractor<>(GET_DOUBLE, NumberMethods::convert), FLOAT, DOUBLE);
+    addMultiple(new RsExtractor<>(GET_BIG_DECIMAL, NumberMethods::convert), NUMERIC, DECIMAL);
+    addMultiple(new RsExtractor<>(GET_STRING, NumberMethods::parse), VARCHAR, CHAR);
   }
 }

@@ -13,8 +13,8 @@ class IntExtractors extends ExtractorLookup<Integer> {
     add(BOOLEAN, new RsExtractor<>(GET_BOOLEAN, x -> x ? 1 : 0));
     add(REAL, new RsExtractor<>(GET_FLOAT, NumberMethods::convert));
     add(BIGINT, new RsExtractor<>(GET_LONG, NumberMethods::convert));
-    addMore(new RsExtractor<>(GET_DOUBLE, NumberMethods::convert), FLOAT, DOUBLE);
-    addMore(new RsExtractor<>(GET_BIG_DECIMAL, NumberMethods::convert), NUMERIC, DECIMAL);
+    addMultiple(new RsExtractor<>(GET_DOUBLE, NumberMethods::convert), FLOAT, DOUBLE);
+    addMultiple(new RsExtractor<>(GET_BIG_DECIMAL, NumberMethods::convert), NUMERIC, DECIMAL);
     add(VARCHAR, new RsExtractor<String, Integer>(GET_STRING, NumberMethods::parse));
   }
 }

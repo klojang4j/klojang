@@ -59,6 +59,9 @@ class ReceiverNegotiator {
     receivers = new DoubleReceivers();
     map.put(Double.class, receivers);
     map.put(double.class, receivers);
+    receivers = new FloatReceivers();
+    map.put(Float.class, receivers);
+    map.put(float.class, receivers);
     receivers = new ByteReceivers();
     map.put(Byte.class, receivers);
     map.put(byte.class, receivers);

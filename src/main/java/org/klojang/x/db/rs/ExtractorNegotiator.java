@@ -35,7 +35,7 @@ public class ExtractorNegotiator {
    */
   static final Integer DEFAULT = Integer.MIN_VALUE;
 
-  private final Map<Class<?>, Map<Integer, RsExtractor<?, ?>>> extractorsByType;
+  private final TypeMap<ExtractorLookup<?>> extractorsByType;
 
   private ExtractorNegotiator() {
     extractorsByType = configure();
@@ -59,29 +59,46 @@ public class ExtractorNegotiator {
     return (RsExtractor<T, U>) extractors.get(sqlType);
   }
 
-  private static Map<Class<?>, Map<Integer, RsExtractor<?, ?>>> configure() {
-    TypeMap<Map<Integer, RsExtractor<?, ?>>> map = new TypeMap<>();
-    Map<Integer, RsExtractor<?, ?>> extractors;
-    map.put(String.class, my(new StringExtractors()));
+  private static TypeMap<ExtractorLookup<?>> configure() {
+    TypeMap<ExtractorLookup<?>> map = new TypeMap<>();
+    ExtractorLookup<?> extractors;
+
     extractors = my(new IntExtractors());
     map.put(Integer.class, extractors);
     map.put(int.class, extractors);
+
     extractors = my(new LongExtractors());
     map.put(Long.class, extractors);
     map.put(long.class, extractors);
+
+    extractors = my(new DoubleExtractors());
+    map.put(Double.class, extractors);
+    map.put(double.class, extractors);
+
+    extractors = my(new FloatExtractors());
+    map.put(Float.class, extractors);
+    map.put(float.class, extractors);
+
+    extractors = my(new ShortExtractors());
+    map.put(Short.class, extractors);
+    map.put(short.class, extractors);
+
     extractors = my(new ByteExtractors());
     map.put(Byte.class, extractors);
     map.put(byte.class, extractors);
+
     extractors = my(new BooleanExtractors());
     map.put(Boolean.class, extractors);
     map.put(boolean.class, extractors);
+
+    map.put(String.class, my(new StringExtractors()));
     map.put(LocalDate.class, my(new LocalDateExtractors()));
     map.put(LocalDateTime.class, my(new LocalDateTimeExtractors()));
     map.put(Enum.class, my(new EnumExtractors()));
     return map;
   }
 
-  private static Map<Integer, RsExtractor<?, ?>> my(Map<Integer, RsExtractor<?, ?>> src) {
-    return Map.copyOf(src);
+  private static ExtractorLookup<?> my(ExtractorLookup<?> src) {
+    return src.copy();
   }
 }

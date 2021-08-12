@@ -1,15 +1,15 @@
 package org.klojang.x.db.rs;
 
-import java.util.HashMap;
+import java.time.LocalDateTime;
 import static java.sql.Types.DATE;
 import static java.sql.Types.TIMESTAMP;
 import static org.klojang.x.db.rs.RsMethod.GET_DATE;
 import static org.klojang.x.db.rs.RsMethod.GET_TIMESTAMP;
 
-class LocalDateTimeExtractors extends HashMap<Integer, RsExtractor<?, ?>> {
+class LocalDateTimeExtractors extends ExtractorLookup<LocalDateTime> {
 
   LocalDateTimeExtractors() {
-    put(DATE, new RsExtractor<>(GET_DATE, d -> d == null ? null : d.toLocalDate().atStartOfDay()));
-    put(TIMESTAMP, new RsExtractor<>(GET_TIMESTAMP, d -> d == null ? null : d.toLocalDateTime()));
+    add(DATE, new RsExtractor<>(GET_DATE, d -> d == null ? null : d.toLocalDate().atStartOfDay()));
+    add(TIMESTAMP, new RsExtractor<>(GET_TIMESTAMP, d -> d == null ? null : d.toLocalDateTime()));
   }
 }

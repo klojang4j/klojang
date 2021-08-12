@@ -17,18 +17,18 @@ import static nl.naturalis.common.ObjectMethods.ifNotNull;
 public class RsExtractor<COLUMN_TYPE, FIELD_TYPE> {
 
   private final RsMethod<COLUMN_TYPE> reader;
-  private final Adapter<COLUMN_TYPE, FIELD_TYPE> adapter;
+  private final Adapter<? super COLUMN_TYPE, FIELD_TYPE> adapter;
 
   RsExtractor(RsMethod<COLUMN_TYPE> reader) {
     this.reader = reader;
     this.adapter = null;
   }
 
-  RsExtractor(RsMethod<COLUMN_TYPE> reader, Function<COLUMN_TYPE, FIELD_TYPE> adapter) {
+  RsExtractor(RsMethod<COLUMN_TYPE> reader, Function<? super COLUMN_TYPE, FIELD_TYPE> adapter) {
     this(reader, (x, y) -> ifNotNull(x, adapter::apply));
   }
 
-  RsExtractor(RsMethod<COLUMN_TYPE> reader, Adapter<COLUMN_TYPE, FIELD_TYPE> adapter) {
+  RsExtractor(RsMethod<COLUMN_TYPE> reader, Adapter<? super COLUMN_TYPE, FIELD_TYPE> adapter) {
     this.reader = reader;
     this.adapter = adapter;
   }
