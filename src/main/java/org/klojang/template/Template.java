@@ -10,8 +10,11 @@ import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.klojang.template.TemplateSourceType.STRING;
+import static org.klojang.template.TemplateUtils.getFQName;
+import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.common.check.CommonChecks.indexOf;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
+import static nl.naturalis.common.check.CommonChecks.notNull;
 
 /**
  * A {@code Template} captures the result of parsing a template file. The {@code Template} class and
@@ -36,8 +39,7 @@ public class Template {
   /**
    * Parses the specified string into a {@code Template} instance. If the string contains any {@code
    * include} declarations (e.g. {@code ~%%include:/path/to/template%}) the path will be interpreted
-   * as a file system resource. Templates created from a string are never cached and are never equal
-   * to one another, even if they are created from the same string.
+   * as a file system resource. Templates created from a string are never cached.
    *
    * @param clazz Any {@code Class} object that provides access to the included tempate files by
    *     calling {@code getResourceAsStream} on it
@@ -71,8 +73,9 @@ public class Template {
    * Parses the specified resource into a {@code Template} instance. The resource is read using
    * {@code clazz.getResourceAsStream(path)}. Any included templates will be loaded this way as
    * well. Templates created from a classpath resource are always cached. Thus, calling this method
-   * multiple times with the same {@code clazz} and {@code path} arguments will always returns the
-   * same {@code Template} instance.
+   * multiple times with the same {@code clazz} and {@code path} arguments will always return the
+   * same {@code Template} instance. (More precizely: the cache key is the combination of {@code
+   * clazz.getPackage()} and {@code path}.)
    *
    * @param clazz Any {@code Class} object that provides access to the tempate file by calling
    *     {@code getResourceAsStream} on it
@@ -82,14 +85,14 @@ public class Template {
    */
   public static Template fromResource(Class<?> clazz, String path) throws ParseException {
     Check.notNull(clazz, "clazz");
-    Check.notNull(path, "path");
+    Check.notNull(path, "path").has(clazz::getResource, notNull(), "Resource not found: %s", path);
     return TemplateCache.INSTANCE.get(ROOT_TEMPLATE_NAME, new TemplateId(clazz, path));
   }
 
   /**
    * Parses the specified file into a {@code Template} instance. Templates created from file are
    * always cached. Thus, calling this method multiple times with the same {@code path} argument
-   * will always returns the same {@code Template} instance.
+   * will always return the same {@code Template} instance.
    *
    * @param path The path of the file to be parsed
    * @return a {@code Template} instance
@@ -142,6 +145,17 @@ public class Template {
     return parent;
   }
 
+  public Template getRootTemplate() {
+    if (parent == null) {
+      return this;
+    }
+    Template t = parent;
+    while (t.getParent() != null) {
+      t = t.getParent();
+    }
+    return t;
+  }
+
   /**
    * If the template was created from a file or classpath resource, this method returns its path,
    * else null. In other words, for {@code included} templates this method (by definition) returns a
@@ -152,7 +166,7 @@ public class Template {
    * @return The file location (if any) of the source code for this {@code Template}
    */
   public String getPath() {
-    return id.path();
+    return ifNotNull(id, TemplateId::path);
   }
 
   /**
@@ -397,15 +411,26 @@ public class Template {
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
-    } else if (id == null || obj == null || getClass() != obj.getClass()) {
+    } else if (obj == null || getClass() != obj.getClass()) {
       return false;
     }
-    return id.equals(((Template) obj).id);
+    Template other = (Template) obj;
+    if (id != null) {
+      return id.equals(other.id);
+    }
+    if (parent != null) {
+      Template r0 = getRootTemplate();
+      return r0.id != null
+          && other.parent != null
+          && r0.id.equals(other.getRootTemplate().id)
+          && getFQName(this).equals(getFQName(other));
+    }
+    return false;
   }
 
   @Override
   public int hashCode() {
-    return id == null ? System.identityHashCode(this) : id.hashCode();
+    return id == null ? 0 : id.hashCode();
   }
 
   /**

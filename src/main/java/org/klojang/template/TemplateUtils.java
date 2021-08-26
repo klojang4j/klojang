@@ -130,8 +130,9 @@ public class TemplateUtils {
   /**
    * Returns the nested template corresponding to the specified fully-qualified name. Contrary to
    * {@link Template#getNestedTemplate(String) Template.getNestedTemplate} this method lets you
-   * retrieve deeply nested templates. The fully-qualified name must be relative to the specified
-   * template and must not start with the specified template's name itself.
+   * retrieve nested templates at any depth (nesting level). The fully-qualified name must be
+   * relative to the specified template and must not start with the specified template's name
+   * itself.
    *
    * @param template The template containing the (deeply) nested template
    * @param fqName The fully qualified name of the nested template

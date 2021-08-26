@@ -1,4 +1,4 @@
-package org.klojang.x.accessors;
+package org.klojang.accessors;
 
 import java.util.Map;
 import org.klojang.render.Accessor;

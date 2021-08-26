@@ -1,4 +1,4 @@
-package org.klojang.x.accessors;
+package org.klojang.accessors;
 
 import org.klojang.db.Row;
 import org.klojang.render.Accessor;

@@ -1,14 +1,12 @@
 package org.klojang.render;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import org.klojang.accessors.*;
 import org.klojang.db.Row;
 import org.klojang.template.Template;
-import org.klojang.x.accessors.BeanAccessor;
-import org.klojang.x.accessors.MapAccessor;
-import org.klojang.x.accessors.NullAccessor;
-import org.klojang.x.accessors.RowAccessor;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.TypeMap;
 import nl.naturalis.common.invoke.BeanReader;
@@ -32,28 +30,27 @@ import static nl.naturalis.common.ClassMethods.isA;
  *   <li>If you have {@link AccessorFactory.Builder#addAccessor(Class, Accessor) registered} your
  *       own {@code Accessor} for that particular type of object, then that is the {@code Accessor}
  *       that is going to be used.
- *   <li>If the object is an {@link Optional}, then, if the {@code Optional} is empty, an internally
- *       defined {@code NullAccessor}. This accessor simply always returns {@link
- *       Accessor#UNDEFINED} for any template variable you throw at it. Otherwise another accessor
- *       is going to be used, based on the type of the object within the {@code Optional}. Optionals
- *       are objects you typically get back nowadays from, for example, the ubiquitous {@code
- *       dao.findById(id)} method and, as for Klojang, it is perfectly legitimate to {@link
- *       RenderSession#insert(Object, String...) insert} them into your template.
- *   <li>If the object is a {@code Map}, an internally defined {@code MapAccessor} is going to be
- *       used. (You could easily create an enhanced version, tailored to your particular needs,
- *       yourself. Check the source code.)
- *   <li>If the object is a {@link Row}, an internally defined {@code RowAccessor} is going to be
- *       used.
- *   <li>In any other case the object is taken to be a JavaBean and an internally defined {@code
- *       BeanAccessor} is going to be used.
+ *   <li>If the object is an {@link Optional}, then, if the {@code Optional} is empty, a {@link
+ *       OptionalAccessor} is going to be used. This accessor returns {@link Accessor#UNDEFINED} if
+ *       the {@code Optional} is empty. Otherwise another accessor is going to be used, based on the
+ *       type of the object within the {@code Optional}. Optionals are typically returned from (for
+ *       example) the ubiquitous {@code dao.findById(id)} method and, as for Klojang, it is
+ *       perfectly legitimate to {@link RenderSession#insert(Object, String...) insert} them into a
+ *       template.
+ *   <li>If the object is a {@code Map}, a {@link MapAccessor} is going to be used. (You could
+ *       easily create an enhanced version, tailored to your particular needs, yourself. Check the
+ *       source code.)
+ *   <li>If the object is a {@link Row}, a {@link RowAccessor} is going to be used.
+ *   <li>In any other case the object is taken to be a JavaBean and a {@link BeanAccessor} is going
+ *       to be used.
  * </ol>
  *
- * <p>TPlease note that the accessor used to access JavaBeans makes use of a {@link BeanReader}.
- * This class does not use reflection to read bean properties, but it does use reflection to figure
- * out what the properties are in the first place. Thus, if you use this accessor from within a Java
- * module, you will have to open up the module to the naturalis-common module, which contains the
- * {@code BeanReader} class. If you are not comfortable with this, you can, as an alternative, use
- * the {@link SaveBeanAccessor} class:
+ * <p>Please note that the accessor used to read JavaBean properties makes use of a {@link
+ * BeanReader}. This class does not use reflection to read bean properties, but it does use
+ * reflection to figure out what the properties are in the first place. Thus, if you use this
+ * accessor from within a Java module, you will have to open up the module to the naturalis-common
+ * module, which contains the {@code BeanReader} class. If you are not comfortable with this, you
+ * can, as an alternative, use the {@link SaveBeanAccessor} class:
  *
  * <blockquote>
  *
@@ -178,12 +175,12 @@ public class AccessorFactory {
       Map<Class<?>, Map<Template, Accessor<?>>> accs,
       NameMapper defMapper,
       Map<Template, NameMapper> mappers) {
-    this.accs = new TypeMap<>(accs);
+    this.accs = accs.isEmpty() ? Collections.emptyMap() : new TypeMap<>(accs);
     this.defMapper = defMapper;
     this.mappers = Map.copyOf(mappers);
   }
 
-  Accessor<?> getAccessor(Object obj, Template template) {
+  public Accessor<?> getAccessor(Object obj, Template template) {
     Class<?> type = obj.getClass();
     Map<Template, Accessor<?>> m = accs.get(type);
     Accessor<?> acc = null;
@@ -196,12 +193,13 @@ public class AccessorFactory {
     if (acc == null) {
       NameMapper nm = mappers.getOrDefault(template, defMapper);
       if (type == Optional.class) {
-        Optional<?> opt = (Optional<?>) obj;
-        return opt.isEmpty() ? new NullAccessor() : getAccessor(opt.get(), template);
+        return new OptionalAccessor<>(this, template);
       } else if (isA(type, Map.class)) {
         acc = new MapAccessor(nm);
       } else if (isA(type, Row.class)) {
         acc = new RowAccessor(nm);
+      } else if (isA(type, Object[].class)) {
+        acc = ArrayAccessor.getInstance(template);
       } else {
         acc = new BeanAccessor<>(type, nm);
       }

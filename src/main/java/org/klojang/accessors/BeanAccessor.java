@@ -1,4 +1,4 @@
-package org.klojang.x.accessors;
+package org.klojang.accessors;
 
 import org.klojang.render.Accessor;
 import org.klojang.render.NameMapper;
