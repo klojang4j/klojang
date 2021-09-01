@@ -11,7 +11,7 @@ import org.klojang.x.template.XVarGroup;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
-import nl.naturalis.common.io.UnsafeByteArrayOutputStream;
+import nl.naturalis.common.unsafe.UnsafeByteArrayOutputStream;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toList;
 import static org.klojang.render.Accessor.UNDEFINED;
@@ -781,7 +781,7 @@ public class RenderSession {
   public String render() {
     UnsafeByteArrayOutputStream out = new UnsafeByteArrayOutputStream(1024);
     createRenderable().render(out);
-    return new String(out.toByteArray(), 0, out.byteCount(), StandardCharsets.UTF_8);
+    return new String(out.toByteArray(), 0, out.size(), StandardCharsets.UTF_8);
   }
 
   @Override

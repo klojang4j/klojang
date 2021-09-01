@@ -10,8 +10,8 @@ import org.klojang.render.Accessor;
 import org.klojang.x.db.rs.Column;
 import nl.naturalis.common.Bool;
 import nl.naturalis.common.NumberMethods;
+import nl.naturalis.common.Pair;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.common.collection.IntList;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.common.check.CommonChecks.between;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
@@ -70,7 +70,7 @@ public class Row {
    * @return The column name
    */
   public String getColumnName(int colNum) {
-    Check.that(colNum).is(between(), IntList.of(0, map.size()), ERR2, colNum);
+    Check.that(colNum).is(between(), Pair.of(0, map.size()), ERR2, colNum);
     return (String) map.keySet().toArray()[colNum];
   }
 
