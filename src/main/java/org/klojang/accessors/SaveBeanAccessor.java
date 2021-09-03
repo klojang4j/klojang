@@ -30,7 +30,7 @@ public class SaveBeanAccessor<T> implements Accessor<T> {
   @Override
   public Object access(T sourceData, String varOrNestedTemplateName) throws RenderException {
     String prop = nm == null ? varOrNestedTemplateName : nm.map(varOrNestedTemplateName);
-    if (br.getUsedProperties().contains(prop)) {
+    if (br.getIncludedProperties().contains(prop)) {
       return br.read(sourceData, prop);
     }
     return UNDEFINED;
