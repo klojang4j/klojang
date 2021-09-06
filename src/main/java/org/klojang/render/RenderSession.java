@@ -74,13 +74,12 @@ public class RenderSession {
 
   /**
    * Sets the specified variable to the specified value using the {@link Stringifier stringifier}
-   * associated with the specified {@link XVarGroup variable group}. If the variable already has a
+   * associated with the specified {@link VarGroup variable group}. If the variable has an inline
    * group name prefix (e.g. ~%<b>html</b>:fullName%), the group specified through the prefix will
-   * prevail. The {@code defaultGroup} argument is allowed to be {@code null}. Then, if the variable
-   * neither has a group name prefix, the {@link StringifierFactory} for this {@code RenderSession}
-   * will attempt to find a suitable stringifier by other means; for example, based on the {@link
-   * StringifierFactory.Builder#addTypeBasedStringifier(Stringifier, Class...) data type} or the
-   * {@link StringifierFactory.Builder#addNameBasedStringifier(Stringifier, String...) name} of the
+   * prevail. The {@code defaultGroup} argument is allowed to be {@code null}. In that case, if the
+   * variable neither has an inline group name prefix, the {@code RenderSession} will attempt to
+   * find a suitable stringifier by other means; for example, based on the {@link
+   * StringifierFactory.Builder#addTypeBasedStringifier(Stringifier, Class...) data type} of the
    * variable. Otherwise, stringifiers assoicated with a variable group will always prevail.
    *
    * @see StringifierFactory.Builder#addGroupStringifier(Stringifier, String...)
@@ -555,35 +554,14 @@ public class RenderSession {
    * @throws RenderException
    */
   public RenderSession insert(Object sourceData, String... names) throws RenderException {
-    return insert(sourceData, InclusionMode.ONLY, names);
+    return insert(sourceData, null, names);
   }
 
   /**
    * Populates the <i>current</i> template (the template for which this {@code RenderSession} was
-   * created). No escaping will be applied to the values extracted from the source data.
-   *
-   * @param sourceData An object that provides data for all or some of the template variables and
-   *     nested templates
-   * @param inclusionMode Whether to include or exclude the names in the {@code names} array.
-   * @param names The names of the variables nested templates names that must be populated. Not
-   *     specifying any name (or {@code null}) indicates that you want all variables and nested
-   *     templates to be populated.
-   * @return This {@code RenderSession}
-   * @throws RenderException
-   */
-  public RenderSession insert(Object sourceData, InclusionMode inclusionMode, String... names)
-      throws RenderException {
-    return insert(sourceData, null, inclusionMode, names);
-  }
-
-  /**
-   * Populates the <i>current</i> template (the template for which this {@code RenderSession} was
-   * created) using the provided source data object. The {@code RenderSession} will attempt to
-   * populate all variables and nested templates whose name is present in the {@code names} array.
-   * If the {@code names} array is empty, <i>all</i> variables and nested templates are checked to
-   * see if they map to a property in the source data object. The source data object is not required
-   * to populate the entire template in one shot. You can call this and similar methods multiple
-   * times until you are satisfied and ready to {@link #render(OutputStream) render} the template.
+   * created) using the provided source data object. The source data object is not required to
+   * populate the entire template in one shot. You can call this and similar methods multiple times
+   * until you are satisfied and ready to {@link #render(OutputStream) render} the template.
    *
    * @param sourceData An object that provides data for all or some of the template variables and
    *     nested templates
@@ -597,29 +575,6 @@ public class RenderSession {
    */
   public RenderSession insert(Object sourceData, VarGroup defaultGroup, String... names)
       throws RenderException {
-    return insert(sourceData, defaultGroup, InclusionMode.ONLY, names);
-  }
-
-  /**
-   * Populates the <i>current</i> template (the template for which this {@code RenderSession} was
-   * created) using the provided source data object. The source data object is not required to
-   * populate the entire template in one shot. You can call this and similar methods multiple times
-   * until you are satisfied and ready to {@link #render(OutputStream) render} the template.
-   *
-   * @param sourceData An object that provides data for all or some of the template variables and
-   *     nested templates
-   * @param defaultGroup The variable group to assign the variables to if they have no group name
-   *     prefix. May be {@code null}.
-   * @param inclusionMode Whether to include or exclude the names in the {@code names} array.
-   * @param names The names of the variables nested templates names that must be populated. Not
-   *     specifying any name (or {@code null}) indicates that you want all variables and nested
-   *     templates to be populated.
-   * @return This {@code RenderSession}
-   * @throws RenderException
-   */
-  public RenderSession insert(
-      Object sourceData, VarGroup defaultGroup, InclusionMode inclusionMode, String... names)
-      throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     if (sourceData == null) {
       Template t = config.getTemplate();
@@ -629,29 +584,29 @@ public class RenderSession {
       // but no reason not to support it.
       return this;
     }
-    processVars(sourceData, defaultGroup, inclusionMode, names);
-    processTmpls(sourceData, defaultGroup, inclusionMode, names);
+    processVars(sourceData, defaultGroup, names);
+    processTmpls(sourceData, defaultGroup, names);
     return this;
   }
 
   @SuppressWarnings("unchecked")
-  private <T> void processVars(T data, VarGroup defGroup, InclusionMode mode, String[] names)
-      throws RenderException {
+  private <T> void processVars(T data, VarGroup defGroup, String[] names) throws RenderException {
     Set<String> varNames;
     if (isEmpty(names)) {
       varNames = config.getTemplate().getVariables();
     } else {
       varNames = new HashSet<>(config.getTemplate().getVariables());
-      if (mode == InclusionMode.ONLY) {
-        varNames.retainAll(List.of(names));
-      } else {
-        varNames.removeAll(List.of(names));
-      }
+      varNames.retainAll(List.of(names));
     }
     Accessor<T> acc = (Accessor<T>) config.getAccessor(data);
     for (String varName : varNames) {
       if (!state.isSet(varName)) {
-        Object value = acc.access(data, varName);
+        Object value;
+        try {
+          value = acc.access(data, varName);
+        } catch (RuntimeException e) {
+          throw accessException(config.getTemplate(), varName, e, data, acc);
+        }
         if (value != UNDEFINED) {
           set(varName, value, defGroup);
         }
@@ -660,18 +615,14 @@ public class RenderSession {
   }
 
   @SuppressWarnings("unchecked")
-  private <T> void processTmpls(T data, VarGroup defaultGroup, InclusionMode mode, String[] names)
+  private <T> void processTmpls(T data, VarGroup defaultGroup, String[] names)
       throws RenderException {
     Set<String> tmplNames;
     if (isEmpty(names)) {
       tmplNames = config.getTemplate().getNestedTemplateNames();
     } else {
       tmplNames = new HashSet<>(config.getTemplate().getNestedTemplateNames());
-      if (mode == InclusionMode.ONLY) {
-        tmplNames.retainAll(List.of(names));
-      } else {
-        tmplNames.removeAll(List.of(names));
-      }
+      tmplNames.retainAll(List.of(names));
     }
     Accessor<T> acc = (Accessor<T>) config.getAccessor(data);
     for (String name : tmplNames) {

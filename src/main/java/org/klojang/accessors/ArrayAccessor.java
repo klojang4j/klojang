@@ -18,7 +18,7 @@ public class ArrayAccessor implements Accessor<Object[]> {
 
   @SuppressWarnings("unchecked")
   private ArrayAccessor(Template template) {
-    String[] vars = template.getVariables().toArray(new String[template.getVariables().size()]);
+    String[] vars = template.getVariables().toArray(String[]::new);
     Map.Entry<String, Integer>[] entries = new Map.Entry[vars.length];
     for (int i = 0; i < vars.length; ++i) {
       entries[i] = Map.entry(vars[i], i);

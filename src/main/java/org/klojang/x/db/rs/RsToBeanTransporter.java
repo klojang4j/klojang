@@ -3,15 +3,21 @@ package org.klojang.x.db.rs;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import org.klojang.render.NameMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.invoke.Setter;
 import nl.naturalis.common.invoke.SetterFactory;
 
 /* Transports a single value from a ResultSet to a bean */
 public class RsToBeanTransporter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransporter {
+
+  private static final Logger LOG = LoggerFactory.getLogger(RsToBeanTransporter.class);
 
   public static <U> U toBean(
       ResultSet rs, Supplier<U> beanSupplier, RsToBeanTransporter<?, ?>[] setters)
@@ -30,20 +36,25 @@ public class RsToBeanTransporter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransp
     try {
       ResultSetMetaData rsmd = rs.getMetaData();
       int sz = rsmd.getColumnCount();
-      RsToBeanTransporter<?, ?>[] transporters = new RsToBeanTransporter[sz];
+      List<RsToBeanTransporter<?, ?>> transporters = new ArrayList<>(sz);
       for (int idx = 0; idx < sz; ++idx) {
         int jdbcIdx = idx + 1; // JDBC is one-based
         int sqlType = rsmd.getColumnType(jdbcIdx);
         String label = rsmd.getColumnLabel(jdbcIdx);
         String property = nameMapper.map(label);
         Setter setter = setters.get(property);
-        if (setter != null) {
-          Class<?> javaType = setter.getParamType();
-          RsExtractor<?, ?> extractor = negotiator.findExtractor(javaType, sqlType);
-          transporters[idx] = new RsToBeanTransporter<>(extractor, setter, jdbcIdx, sqlType);
+        if (setter == null) {
+          LOG.warn(
+              "The ResultSet used to create a beanifier for {} contains a column cannot be mapped to a property: \"{}\"",
+              beanClass,
+              label);
+          continue;
         }
+        Class<?> javaType = setter.getParamType();
+        RsExtractor<?, ?> extractor = negotiator.findExtractor(javaType, sqlType);
+        transporters.add(new RsToBeanTransporter<>(extractor, setter, jdbcIdx, sqlType));
       }
-      return transporters;
+      return transporters.toArray(new RsToBeanTransporter[transporters.size()]);
     } catch (SQLException e) {
       throw ExceptionMethods.uncheck(e);
     }

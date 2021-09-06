@@ -5,9 +5,11 @@ import org.klojang.KlojangException;
 import org.klojang.template.Template;
 import org.klojang.template.TemplateUtils;
 import org.klojang.template.VarGroup;
+import nl.naturalis.common.ExceptionMethods;
 import static java.lang.String.format;
 import static org.klojang.x.Messages.ERR_NO_SUCH_TEMPLATE;
 import static org.klojang.x.Messages.ERR_NO_SUCH_VARIABLE;
+import static nl.naturalis.common.ArrayMethods.implode;
 
 /**
  * Thrown from a {@link RenderSession} under various circumstances.
@@ -110,13 +112,39 @@ public class RenderException extends KlojangException {
   }
 
   /**
-   * Thrown when the source data object for a template that contains one or more variables and or
-   * nested templates is null.
+   * Thrown when the source data object for a non-text-only template is null or, if the source data
+   * object is a list or array, contains one or more null elements.
    */
   public static Function<String, RenderException> missingSourceData(Template t) {
     String fqn = TemplateUtils.getFQName(t);
-    String fmt = "Source data must not be null for non-text-only template %s";
+    String fmt = "Source data must not be null for template %s";
     return s -> new RenderException(format(fmt, fqn));
+  }
+
+  /**
+   * Thrown when the source data object for a non-text-only template is null or, if the source data
+   * object is a list or array, contains one or more null elements.
+   */
+  public static RenderException accessException(
+      Template t, String var, RuntimeException exc, Object data, Accessor<?> acc) {
+    String fqn = TemplateUtils.getFQName(t, var);
+    String fmt0 = "An exception occured while retrieving value for %s from %s using %s: %s.";
+    String fmt1;
+    String excMsg;
+    if (!acc.getClass().getName().startsWith(KlojangException.class.getPackageName())) {
+      String pkg = implode(acc.getClass().getPackageName().split("\\."), ".", 2);
+      excMsg = ExceptionMethods.getDetailedMessage(exc, pkg);
+      fmt1 =
+          fmt0
+              + " Make sure the accessor returns Accessor.UNDEFINED and does **not** accidentally"
+              + " cause a RuntimeException to be thrown for variables for which it cannot provide"
+              + " a value.";
+    } else {
+      fmt1 = fmt0;
+      excMsg = exc.toString();
+    }
+    return new RenderException(
+        format(fmt1, fqn, data.getClass().getName(), acc.getClass().getName(), excMsg));
   }
 
   /**
