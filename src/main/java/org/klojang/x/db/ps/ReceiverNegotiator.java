@@ -2,11 +2,12 @@ package org.klojang.x.db.ps;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.TypeMap;
 import static org.klojang.db.SQLTypeNames.getTypeName;
-import static nl.naturalis.common.ClassMethods.getPrettyClassName;
+import static nl.naturalis.common.ClassMethods.className;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 class ReceiverNegotiator {
@@ -32,7 +33,7 @@ class ReceiverNegotiator {
 
   @SuppressWarnings("unchecked")
   <T, U> Receiver<T, U> findReceiver(Class<T> fieldType, Integer sqlType) {
-    Check.that(fieldType).is(keyIn(), all, "Type not supported: %s", getPrettyClassName(fieldType));
+    Check.that(fieldType).is(keyIn(), all, "Type not supported: %s", className(fieldType));
     if (sqlType == null) {
       return (Receiver<T, U>) all.get(fieldType).getDefaultReceiver();
     }
@@ -41,13 +42,13 @@ class ReceiverNegotiator {
     String sqlTypeName = getTypeName(sqlType);
     Receiver<T, U> receiver = (Receiver<T, U>) all.get(fieldType).get(sqlType);
     if (receiver == null) {
-      return Check.fail("Cannot convert %s to %s", sqlTypeName, getPrettyClassName(fieldType));
+      return Check.fail("Cannot convert %s to %s", sqlTypeName, className(fieldType));
     }
     return receiver;
   }
 
   private static Map<Class<?>, ReceiverLookup<?>> createReceivers() {
-    TypeMap<ReceiverLookup<?>> map = new TypeMap<>();
+    HashMap<Class<?>, ReceiverLookup<?>> map = new HashMap<>();
     ReceiverLookup<?> receivers;
     map.put(String.class, new StringReceivers());
     receivers = new IntReceivers();
@@ -71,6 +72,6 @@ class ReceiverNegotiator {
     map.put(LocalDate.class, new LocalDateReceivers());
     map.put(LocalDateTime.class, new LocalDateTimeReceivers());
     map.put(Enum.class, new EnumReceivers());
-    return map;
+    return TypeMap.withValues(map);
   }
 }

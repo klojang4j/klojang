@@ -10,8 +10,17 @@ package org.klojang.render;
 public interface Accessor<T> {
 
   /**
-   * The value that <i>must</i> be returned if the template variable (or nested template name) could
-   * not be mapped to
+   * The value that <i>must</i> be returned if a name used in a template does not identify a value
+   * in a source data object. The {@code Accessor} should not (accidentally) throw an exception and
+   * it should not return {@code null} in this case. {@code null} is considered to be a legitimate,
+   * "insertable" value. If a {@link RenderSession} requests the {@code Accessor} to provide a value
+   * for some template variable and it receives a {@code null} value, it will simply insert it (or
+   * rather its {@link StringifierFactory stringification}) into the template. The variable can no
+   * longer be set after that, since cannot overwrite variable values within one and the same {@code
+   * RenderSession}. If, on the other hand, the {@code RenderSession} receives {@code UNDEFINED}, it
+   * will skip setting that variable, leaving you the option to {@link RenderSession#insert(Object,
+   * String...) insert} another source data object into the template that <i>does</i> have a value
+   * for the variable.
    */
   public static final Object UNDEFINED = new Object();
 

@@ -295,7 +295,7 @@ public final class StringifierFactory {
       List<Tuple<String, Stringifier>> partials,
       Stringifier defStringifier) {
     this.stringifiers = Map.copyOf(stringifiers);
-    this.typeStringifiers = new TypeMap<>(typeStringifiers);
+    this.typeStringifiers = TypeMap.withValues(typeStringifiers);
     this.partialNames = List.copyOf(partials);
     this.typeLookup = Map.copyOf(typeLookup);
     this.defStringifier = defStringifier;

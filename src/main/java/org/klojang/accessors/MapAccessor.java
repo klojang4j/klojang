@@ -9,6 +9,10 @@ public class MapAccessor implements Accessor<Map<String, Object>> {
 
   private final NameMapper nm;
 
+  public MapAccessor() {
+    this(null);
+  }
+
   public MapAccessor(NameMapper nm) {
     this.nm = nm;
   }

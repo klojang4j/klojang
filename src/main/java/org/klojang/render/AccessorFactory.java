@@ -97,10 +97,7 @@ import static nl.naturalis.common.ClassMethods.isA;
  */
 public class AccessorFactory {
 
-  /**
-   * An {@code AccessorFactory} the should sufficent for most use cases given a one-to-one mapping
-   * between template variable names and model object property names.
-   */
+  /** An {@code AccessorFactory} the should be sufficent for most use cases. */
   public static final AccessorFactory STANDARD_ACCESSORS = configure().freeze();
 
   /**
@@ -126,18 +123,25 @@ public class AccessorFactory {
     private Builder() {}
 
     /**
-     * Sets the default {@code NameMapper} to use in order to map template variable names and nested
-     * template names to properties within the model objects. If no {@code NameMapper} is specified,
-     * a one-to-one relationship is assumed.
+     * Sets the default {@code NameMapper} used to map template variable names to JavaBean
+     * properties (or {@code Map} keys, or whatever identities a value within your source data). If
+     * no default {@code NameMapper} is specified, a one-to-one relationship is assumed.
      *
-     * @param nameMapper
-     * @return
+     * @param nameMapper The name mapper
+     * @return This {@code Builder} instance
      */
     public Builder setDefaultNameMapper(NameMapper nameMapper) {
       defMapper = Check.notNull(nameMapper).ok();
       return this;
     }
 
+    /**
+     * Sets the {@code NameMapper} to be used for the specified template.
+     *
+     * @param template The template for which to used the specified name mapper
+     * @param nameMapper The name mapper
+     * @return This {@code Builder} instance
+     */
     public Builder setNameMapper(Template template, NameMapper nameMapper) {
       Check.notNull(template, "template");
       Check.notNull(nameMapper, "nameMapper");
@@ -145,17 +149,40 @@ public class AccessorFactory {
       return this;
     }
 
+    /**
+     * Sets the {@code Accessor} to be used for objects of the specified type.
+     *
+     * @param <T> The type of the objects for which to use the {@code Accessor}
+     * @param forType The {@code Class} object corresponding to the type
+     * @param accessor The {@code Accessor}
+     * @return This {@code Builder} instance
+     */
     public <T> Builder addAccessor(Class<T> forType, Accessor<? extends T> accessor) {
       accs.computeIfAbsent(forType, k -> new HashMap<>()).put(null, accessor);
       return this;
     }
 
+    /**
+     * Sets the {@code Accessor} to be used for objects of the specified type, destined for the
+     * specified template.
+     *
+     * @param <T> The type of the objects for which to use the {@code Accessor}
+     * @param forType The {@code Class} object corresponding to the type
+     * @param template The template for which to use the {@code Accessor}
+     * @param accessor The {@code Accessor}
+     * @return This {@code Builder} instance
+     */
     public <T> Builder addAccessor(
         Class<T> forType, Template template, Accessor<? super T> accessor) {
       accs.computeIfAbsent(forType, k -> new HashMap<>()).put(template, accessor);
       return this;
     }
 
+    /**
+     * Returns a
+     *
+     * @return
+     */
     public AccessorFactory freeze() {
       return new AccessorFactory(accs, defMapper, mappers);
     }
@@ -175,7 +202,7 @@ public class AccessorFactory {
       Map<Class<?>, Map<Template, Accessor<?>>> accs,
       NameMapper defMapper,
       Map<Template, NameMapper> mappers) {
-    this.accs = accs.isEmpty() ? Collections.emptyMap() : new TypeMap<>(accs);
+    this.accs = accs.isEmpty() ? Collections.emptyMap() : TypeMap.withValues(accs, 32);
     this.defMapper = defMapper;
     this.mappers = Map.copyOf(mappers);
   }
