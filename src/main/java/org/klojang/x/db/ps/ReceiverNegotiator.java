@@ -2,10 +2,9 @@ package org.klojang.x.db.ps;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.Map;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.common.collection.TypeMap;
+import nl.naturalis.common.collection.TypeTreeMap;
 import static org.klojang.db.SQLTypeNames.getTypeName;
 import static nl.naturalis.common.ClassMethods.className;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
@@ -48,30 +47,18 @@ class ReceiverNegotiator {
   }
 
   private static Map<Class<?>, ReceiverLookup<?>> createReceivers() {
-    HashMap<Class<?>, ReceiverLookup<?>> map = new HashMap<>();
-    ReceiverLookup<?> receivers;
-    map.put(String.class, new StringReceivers());
-    receivers = new IntReceivers();
-    map.put(Integer.class, receivers);
-    map.put(int.class, receivers);
-    receivers = new LongReceivers();
-    map.put(Long.class, receivers);
-    map.put(long.class, receivers);
-    receivers = new DoubleReceivers();
-    map.put(Double.class, receivers);
-    map.put(double.class, receivers);
-    receivers = new FloatReceivers();
-    map.put(Float.class, receivers);
-    map.put(float.class, receivers);
-    receivers = new ByteReceivers();
-    map.put(Byte.class, receivers);
-    map.put(byte.class, receivers);
-    receivers = new BooleanReceivers();
-    map.put(Boolean.class, receivers);
-    map.put(boolean.class, receivers);
-    map.put(LocalDate.class, new LocalDateReceivers());
-    map.put(LocalDateTime.class, new LocalDateTimeReceivers());
-    map.put(Enum.class, new EnumReceivers());
-    return TypeMap.withValues(map);
+    return TypeTreeMap.build(ReceiverLookup.class)
+        .autobox()
+        .add(String.class, new StringReceivers())
+        .add(int.class, new IntReceivers())
+        .add(long.class, new LongReceivers())
+        .add(double.class, new DoubleReceivers())
+        .add(float.class, new FloatReceivers())
+        .add(byte.class, new ByteReceivers())
+        .add(boolean.class, new BooleanReceivers())
+        .add(LocalDate.class, new LocalDateReceivers())
+        .add(LocalDateTime.class, new LocalDateTimeReceivers())
+        .add(Enum.class, new EnumReceivers())
+        .freeze();
   }
 }
