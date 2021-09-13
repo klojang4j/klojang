@@ -63,7 +63,7 @@ public class ExtractorNegotiator {
     return TypeMap.build(Map.class)
         .autobox()
         .add(String.class, my(new StringExtractors()))
-        .add(int[].class, my(new IntExtractors()))
+        .add(int.class, my(new IntExtractors()))
         .add(double.class, my(new DoubleExtractors()))
         .add(long.class, my(new LongExtractors()))
         .add(float.class, my(new FloatExtractors()))
