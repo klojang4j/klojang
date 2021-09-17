@@ -4,6 +4,9 @@ import nl.naturalis.common.NumberMethods;
 import static java.sql.Types.*;
 import static org.klojang.x.db.rs.RsMethod.*;
 
+/*
+ * Extracts various types of column values from a ResultSet and converts them to double values.
+ */
 class DoubleExtractors extends ExtractorLookup<Double> {
 
   DoubleExtractors() {

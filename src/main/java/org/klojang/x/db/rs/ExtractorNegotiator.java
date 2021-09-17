@@ -5,9 +5,10 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.common.collection.TypeMap;
+import nl.naturalis.common.collection.TypeTreeMap;
 import static org.klojang.db.SQLTypeNames.getTypeName;
 import static nl.naturalis.common.ClassMethods.className;
+import static nl.naturalis.common.check.CommonChecks.notNull;
 
 /**
  * Finds the most suitable of the {@code ResultSet.getXXX} methods for a given Java type. If no
@@ -29,38 +30,27 @@ public class ExtractorNegotiator {
     return INSTANCE;
   }
 
-  /*
-   * The entry within the nested maps of the extractorsByType that points to the Emitter to use if the
-   * nested map does not contain a specific Emitter for the requested SQL type. Make sure DEFAULT
-   * does not correspond to any of the int constants in the java.sql.Types class.
-   */
-  static final Integer DEFAULT = Integer.MIN_VALUE;
-
-  private final TypeMap<Map<Integer, RsExtractor>> extractorsByType;
+  private final Map<Class<?>, Map<Integer, RsExtractor>> all;
 
   private ExtractorNegotiator() {
-    extractorsByType = configure();
+    all = configure();
   }
 
   public <T, U> RsExtractor<T, U> findExtractor(Class<U> fieldType, int sqlType) {
-    if (!extractorsByType.containsKey(fieldType)) {
-      return Check.fail("Type not supported: %s", className(fieldType));
-    }
     // This implicitly checks that the specified int is one of the
     // static final int constants in the java.sql.Types class
-    String sqlTypeName = sqlType == DEFAULT ? null : getTypeName(sqlType);
-    Map<Integer, RsExtractor> extractors = extractorsByType.get(fieldType);
-    if (!extractors.containsKey(sqlType)) {
-      if (extractors.containsKey(DEFAULT)) {
-        return extractors.get(DEFAULT);
-      }
-      return Check.fail("Cannot convert %s to %s", sqlTypeName, className(fieldType));
-    }
-    return extractors.get(sqlType);
+    String sqlTypeName = getTypeName(sqlType);
+    Map<Integer, RsExtractor> extractors =
+        Check.that(all.get(fieldType))
+            .is(notNull(), "Type not supported: %s", className(fieldType))
+            .ok();
+    return Check.that(extractors.get(sqlType))
+        .is(notNull(), "Cannot convert %s to %s", sqlTypeName, className(fieldType))
+        .ok();
   }
 
-  private static TypeMap<Map<Integer, RsExtractor>> configure() {
-    return TypeMap.build(Map.class)
+  private static Map<Class<?>, Map<Integer, RsExtractor>> configure() {
+    return TypeTreeMap.build(Map.class)
         .autobox()
         .add(String.class, my(new StringExtractors()))
         .add(int.class, my(new IntExtractors()))
@@ -73,6 +63,7 @@ public class ExtractorNegotiator {
         .add(LocalDate.class, my(new LocalDateExtractors()))
         .add(LocalDateTime.class, my(new LocalDateTimeExtractors()))
         .add(Enum.class, my(new EnumExtractors()))
+        .bump(String.class)
         .freeze();
   }
 
