@@ -174,7 +174,7 @@ public class SQL {
       return constructor.apply(con, this);
     } catch (Throwable t) {
       unlock();
-      throw new KJSQLException(t);
+      throw KJSQLException.wrap(t, this);
     }
   }
 }

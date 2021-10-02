@@ -43,7 +43,7 @@ public class MapBinder {
         param.getIndices().forEachThrowing(i -> ps.setString(i, null));
       } else {
         Receiver receiver;
-        if (Enum.class.isInstance(input) && bindInfo.bindEnumUsingToString(key)) {
+        if (input instanceof Enum && bindInfo.bindEnumUsingToString(key)) {
           receiver = EnumReceivers.ENUM_TO_STRING;
         } else {
           receiver = negotiator.getDefaultReceiver(input.getClass());

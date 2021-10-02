@@ -23,12 +23,18 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
     this.con = con;
     this.sql = sql;
     this.bindables = new ArrayList<>(5);
-    this.bound = new HashSet<>(sql.getParameters().size(), 1.0F);
+    this.bound = new HashSet<>(sql.getParameters().size());
   }
 
   @SuppressWarnings("unchecked")
-  public T bind(Object beanOrMap) {
-    Check.notNull(beanOrMap, "beanOrMap").then(bindables::add);
+  public T bind(Object bean) {
+    Check.notNull(bean, "bean").then(bindables::add);
+    return (T) this;
+  }
+
+  @SuppressWarnings("unchecked")
+  public T bind(Map<String, ?> map) {
+    Check.notNull(map, "map").then(bindables::add);
     return (T) this;
   }
 
@@ -44,11 +50,11 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
     return sql;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   <U> void applyBindings(PreparedStatement ps) throws Throwable {
     for (Object obj : bindables) {
       if (obj instanceof Map) {
-        Map<String, Object> map = (Map<String, Object>) obj;
+        Map map = (Map) obj;
         sql.getMapBinder().bindMap(ps, map, bound);
       } else {
         BeanBinder<U> binder = sql.getBeanBinder((Class<U>) obj.getClass());

@@ -438,10 +438,11 @@ public class RenderSession {
       s0.show(1, t0);
       return;
     }
-    Check.on(notTextOnly(t0), t0.countVariables()).is(zero());
-    RenderSession s = s0.state.getOrCreateChildSession(t0);
-    for (Template t : t0.getNestedTemplates()) {
-      showRecursive(s, t);
+    if (t0.countVariables() == 0) {
+      RenderSession s = s0.state.getOrCreateChildSession(t0);
+      for (Template t : t0.getNestedTemplates()) {
+        showRecursive(s, t);
+      }
     }
   }
 
