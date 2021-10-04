@@ -1,10 +1,7 @@
 package org.klojang.db;
 
 import java.sql.ResultSet;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import org.klojang.render.Accessor;
 import org.klojang.x.db.rs.Column;
@@ -15,11 +12,12 @@ import nl.naturalis.common.check.Check;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.common.check.CommonChecks.between;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
+import static nl.naturalis.common.check.CommonChecks.notNull;
 
 /**
- * A thin wrapper around a {@code Map&lt;String,Object&gt;} instance that mimicks some of the
- * behaviours of {@link ResultSet}. {@code Row} objects are produced by a {@link ResultSetMappifier}
- * and can be quickly pushed up into the higher layers of your application without them actually
+ * A thin wrapper around a {@code Map<String,Object>} instance that mimicks some of the behaviour of
+ * the {@link ResultSet} class. {@code Row} objects are produced by a {@link ResultSetMappifier} and
+ * can be quickly pushed up into the higher layers of your application without them actually
  * acquiring an awkward dependency on {@code java.sql}. Up there they can be inserted directly into
  * templates, without having to register a separate {@link Accessor} for them. (Under the hood an
  * automatically registered {@code RowAccessor} is used.)
@@ -45,13 +43,32 @@ public class Row {
 
   private Row(Column[] columns) {
     // Reserve some extra space for potential additions
-    map = new LinkedHashMap<>(columns.length * 2 + 4, .5F);
+    map = new LinkedHashMap<>(4 + (columns.length * 4 / 3));
     Arrays.stream(columns).forEach(c -> map.put(c.getName(), c.getValue()));
   }
 
-  private Row(Map<String, Object> data) {
-    map = new LinkedHashMap<>(data.size() + 4);
-    map.putAll(data);
+  /**
+   * Creates a new {@code Row} from the data in the specified map.
+   *
+   * @param data The data for the {@code Row}.
+   */
+  public Row(Map<String, Object> data) {
+    this(data, 4);
+  }
+
+  /**
+   * Creates a new {@code Row} from the data in the specified map. The specified extra capacity is
+   * reserved for the addition of new keys (a.k.a. "columns").
+   *
+   * @param data The data for the {@code Row}.
+   */
+  public Row(Map<String, Object> data, int extraCapacity) {
+    map = new LinkedHashMap<>(1 + ((data.size() + extraCapacity) * 4 / 3));
+    data.forEach(
+        (k, v) -> {
+          Check.that(k).is(notNull(), "Map must not contain null keys");
+          map.put(k, v);
+        });
   }
 
   /**
@@ -86,12 +103,12 @@ public class Row {
   }
 
   /**
-   * Returns an unmodifiable {@code List} containing the column names.
+   * Returns an unmodifiable {@code Set} containing the column names.
    *
-   * @return An unmodifiable {@code List} containing the column names
+   * @return An unmodifiable {@code Set} containing the column names
    */
-  public List<String> getColumnNames() {
-    return List.copyOf(map.keySet());
+  public Set<String> getColumnNames() {
+    return Collections.unmodifiableSet(map.keySet());
   }
 
   /**
@@ -105,8 +122,7 @@ public class Row {
   }
 
   /**
-   * Converts this row to an unmodifiable {@code Map} containing the column-name-to-column-value
-   * mappings.
+   * Returns an unmodifiable {@code Map} containing the column-name-to-column-value mappings.
    *
    * @return An unmodifiable {@code Map} containing the column-name-to-column-value mappings
    */

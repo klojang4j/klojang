@@ -12,7 +12,6 @@ import java.util.function.Supplier;
 import org.klojang.render.NameMapper;
 import org.klojang.x.db.rs.ExtractorNegotiator;
 import org.klojang.x.db.rs.RsExtractor;
-import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
 import static nl.naturalis.common.ObjectMethods.ifNull;
 
@@ -36,7 +35,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     try {
       return resultSet();
     } catch (Throwable t) {
-      throw ExceptionMethods.uncheck(t);
+      throw KJSQLException.wrap(t, sql);
     }
   }
 
@@ -48,7 +47,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
       }
       return rs;
     } catch (Throwable t) {
-      throw ExceptionMethods.uncheck(t);
+      throw KJSQLException.wrap(t, sql);
     }
   }
 
@@ -67,7 +66,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
       RsExtractor<?, T> emitter = ExtractorNegotiator.getInstance().findExtractor(clazz, sqlType);
       return emitter.getValue(rs, 1, clazz);
     } catch (Throwable t) {
-      throw ExceptionMethods.uncheck(t);
+      throw KJSQLException.wrap(t, sql);
     }
   }
 
@@ -82,7 +81,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     try {
       return executeAndNext().getInt(1);
     } catch (SQLException e) {
-      throw ExceptionMethods.uncheck(e);
+      throw KJSQLException.wrap(e, sql);
     }
   }
 
@@ -97,7 +96,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     try {
       return executeAndNext().getString(1);
     } catch (SQLException e) {
-      throw ExceptionMethods.uncheck(e);
+      throw KJSQLException.wrap(e, sql);
     }
   }
 
@@ -135,7 +134,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
       } while (rs.next());
       return list;
     } catch (Throwable t) {
-      throw ExceptionMethods.uncheck(t);
+      throw KJSQLException.wrap(t, sql);
     }
   }
 
@@ -144,7 +143,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
       MappifierBox mb = new MappifierBox(nameMapper);
       return mb.get(resultSet()).mappify();
     } catch (Throwable t) {
-      throw ExceptionMethods.uncheck(t);
+      throw KJSQLException.wrap(t, sql);
     }
   }
 
@@ -153,7 +152,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
       MappifierBox mb = new MappifierBox(nameMapper);
       return mb.get(resultSet()).mappifyAtMost(limit);
     } catch (Throwable t) {
-      throw ExceptionMethods.uncheck(t);
+      throw KJSQLException.wrap(t, sql);
     }
   }
 
@@ -162,7 +161,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
       MappifierBox mb = new MappifierBox(nameMapper);
       return mb.get(resultSet()).mappifyAll();
     } catch (Throwable t) {
-      throw ExceptionMethods.uncheck(t);
+      throw KJSQLException.wrap(t, sql);
     }
   }
 
@@ -171,7 +170,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
       MappifierBox mb = new MappifierBox(nameMapper);
       return mb.get(resultSet()).mappifyAll(sizeEstimate);
     } catch (Throwable t) {
-      throw ExceptionMethods.uncheck(t);
+      throw KJSQLException.wrap(t, sql);
     }
   }
 
@@ -180,7 +179,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
       BeanifierBox<T> bb = sql.getBeanifierBox(beanClass, beanSupplier, nameMapper);
       return bb.get(resultSet()).beanify();
     } catch (Throwable t) {
-      throw ExceptionMethods.uncheck(t);
+      throw KJSQLException.wrap(t, sql);
     }
   }
 
@@ -189,7 +188,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
       BeanifierBox<T> bb = sql.getBeanifierBox(beanClass, beanSupplier, nameMapper);
       return bb.get(resultSet()).beanifyAll();
     } catch (Throwable t) {
-      throw ExceptionMethods.uncheck(t);
+      throw KJSQLException.wrap(t, sql);
     }
   }
 
@@ -207,10 +206,6 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
   }
 
   private ResultSet resultSet() throws Throwable {
-    try {
-      return ifNull(rs, rs = preparedStatement().executeQuery());
-    } catch (SQLException e) {
-      throw new KJSQLException(sql, e);
-    }
+    return ifNull(rs, rs = preparedStatement().executeQuery());
   }
 }
