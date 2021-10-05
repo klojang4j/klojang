@@ -10,7 +10,7 @@ public class KJSQLException extends KlojangRTException {
     if (t instanceof KJSQLException) {
       return (KJSQLException) t;
     } else if (t instanceof SQLException) {
-      return new KJSQLException("%s ******** SQL: %s", t.getMessage(), sql);
+      return new KJSQLException("%s ******** %s", t.getMessage(), sql);
     }
     return ExceptionMethods.uncheck(t);
   }

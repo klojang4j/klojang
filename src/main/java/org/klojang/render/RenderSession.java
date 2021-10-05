@@ -7,7 +7,6 @@ import java.util.function.Predicate;
 import org.klojang.template.Template;
 import org.klojang.template.VarGroup;
 import org.klojang.template.VariablePart;
-import org.klojang.x.template.XVarGroup;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
@@ -62,25 +61,26 @@ public class RenderSession {
 
   /**
    * Sets the specified variable to the specified value. Equivalent to {@link #set(String, Object,
-   * XVarGroup) set(varName, value, null)}.
+   * VarGroup) set(varName, value, null)}.
    *
    * @param varName The name of the variable to set
    * @param value The value of the variable
    * @throws RenderException
    */
   public RenderSession set(String varName, Object value) throws RenderException {
-    return set(varName, value, null);
+    return set(varName, value, (VarGroup) null);
   }
 
   /**
-   * Sets the specified variable to the specified value using the {@link Stringifier stringifier}
-   * associated with the specified {@link VarGroup variable group}. If the variable has an inline
-   * group name prefix (e.g. ~%<b>html</b>:fullName%), the group specified through the prefix will
-   * prevail. The {@code defaultGroup} argument is allowed to be {@code null}. In that case, if the
-   * variable neither has an inline group name prefix, the {@code RenderSession} will attempt to
-   * find a suitable stringifier by other means; for example, based on the {@link
-   * StringifierFactory.Builder#addTypeBasedStringifier(Stringifier, Class...) data type} of the
-   * variable. Otherwise, stringifiers assoicated with a variable group will always prevail.
+   * Sets the specified variable to the specified value, using the {@link Stringifier stringifier}
+   * associated with the specified {@link VarGroup variable group} to stringify the value. If the
+   * variable has an inline group name prefix (e.g. ~%<b>html</b>:fullName%), the group specified
+   * through the prefix will prevail. The {@code defaultGroup} argument is allowed to be {@code
+   * null}. In that case, if the variable also doesn't have an inline group name prefix, the {@code
+   * RenderSession} will attempt to find a suitable stringifier by other means; for example, based
+   * on the {@link StringifierFactory.Builder#addTypeBasedStringifier(Stringifier, Class...) data
+   * type} of the variable. If that fails, the {@code RenderSession} will default to using the
+   * {@link Stringifier#DEFAULT default stringifier}.
    *
    * @see StringifierFactory.Builder#addGroupStringifier(Stringifier, String...)
    * @param varName The name of the variable to set
@@ -119,10 +119,11 @@ public class RenderSession {
 
   /**
    * Sets the specified variable to the concatenation of the values within the specified {@code
-   * List}. Unless the variable was declared with an inline {@link EscapeType} no escaping will be
-   * applied to the value. The values in the {@code List} are first stringified, then escaped, then
-   * concatenated. If the {@code List} is empty, the variable will not be rendered at all (that is,
-   * an empty string will be inserted at the location of the variable within the template).
+   * List}. Unless the variable was declared with an inline {@link EscapeType}, the values wil be
+   * stringified using the {@link Stringifier#DEFAULT default stringifier}. The values are first
+   * stringified, then escaped, then concatenated. If the {@code List} is empty, the variable will
+   * not be rendered at all (that is, an empty string will be inserted at the location of the
+   * variable within the template).
    *
    * @param varName The name of the variable to set
    * @param values The string values to concatenate
@@ -130,14 +131,14 @@ public class RenderSession {
    * @throws RenderException
    */
   public RenderSession set(String varName, List<?> values) throws RenderException {
-    return set(varName, values, null);
+    return set(varName, values, (VarGroup) null);
   }
 
   /**
    * Sets the specified variable to the concatenation of the values within the specified {@code
-   * List}. The values in the {@code List} are first stringified, then escaped, then concatenated.
-   * If the {@code List} is empty, the variable will not be rendered at all (that is, an empty
-   * string will be inserted at the location of the variable within the template).
+   * List}. The values in the {@code List} are first stringified and then concatenated. If the
+   * {@code List} is empty, the variable will not be rendered at all (that is, an empty string will
+   * be inserted at the location of the variable within the template).
    *
    * @param varName The name of the variable to set
    * @param values The string values to concatenate
@@ -148,16 +149,53 @@ public class RenderSession {
    */
   public RenderSession set(String varName, List<?> values, VarGroup defaultGroup)
       throws RenderException {
-    return set(varName, values, defaultGroup, null, null, null);
+    return set(varName, values, defaultGroup, (String) null, (String) null, (String) null);
+  }
+
+  /**
+   * Sets the specified variable to the concatenation of the values within the specified {@code
+   * List}, separating them using the specified separator string.
+   *
+   * @see #set(String, List, VarGroup, String, String, String)
+   * @param varName The name of the variable to set
+   * @param values The string values to concatenate
+   * @param separator The suffix to use for each string
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession set(String varName, List<?> values, String separator)
+      throws RenderException {
+    return set(varName, values, (VarGroup) null, (String) null, separator, (String) null);
+  }
+
+  /**
+   * Sets the specified variable to the concatenation of the values within the specified {@code
+   * List}, separating them using the specified separator string.
+   *
+   * @see #set(String, List, VarGroup, String, String, String)
+   * @param varName The name of the variable to set
+   * @param values The string values to concatenate
+   * @param defaultGroup The variable group to assign the variable to if the variable has no group
+   *     name prefix. May be {@code null}.
+   * @param separator The suffix to use for each string
+   * @return This {@code RenderSession}
+   * @throws RenderException
+   */
+  public RenderSession set(String varName, List<?> values, VarGroup defaultGroup, String separator)
+      throws RenderException {
+    return set(varName, values, defaultGroup, null, separator, null);
   }
 
   /**
    * Sets the specified variable to the concatenation of the values within the specified {@code
    * List}. Each value will be prefixed with the specified prefix, suffixed with the specified
    * suffix, and separated from the previous one by the specified separator. The values in the
-   * {@code List} are first stringified, then escaped, then enriched with prefix, suffix and
-   * separator, and then concatenated. If the {@code List} is empty, the variable will not be
-   * rendered at all.
+   * {@code List} are <i>first</i> stringified, <i>then</i> enriched with prefix, suffix and
+   * separator, and <i>then</i> concatenated. Thus, prefix, suffix and separator will <i>not</i> be
+   * put through the stringifier. This allows you, for example, to use "&lt;br&gt;" as a separator
+   * without worrying that it might get HTML-escaped into "&amp;lt;br;&amp;gt;".
+   *
+   * <p>If the {@code List} is empty, the variable will not be rendered at all.
    *
    * @param varName The name of the variable to set
    * @param values The string values to concatenate
@@ -210,8 +248,8 @@ public class RenderSession {
     StringifierFactory sf = config.getStringifierFactory();
     // Find first non-null value to increase the chance that we find a suitable
     // stringifier:
-    Object nn = values.stream().filter(notNull()).findFirst().orElse(null);
-    Stringifier stringifier = sf.getStringifier(part, varGroup, nn);
+    Object any = values.stream().filter(notNull()).findFirst().orElse(null);
+    Stringifier stringifier = sf.getStringifier(part, varGroup, any);
     String[] stringified = new String[values.size()];
     for (int i = 0; i < values.size(); ++i) {
       String s = stringify(stringifier, part.getName(), values.get(i));
