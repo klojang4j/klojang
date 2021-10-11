@@ -4,6 +4,7 @@ import java.util.*;
 import org.klojang.template.Template;
 import static org.klojang.render.RenderException.repetitionMismatch;
 import static org.klojang.template.TemplateUtils.getFQName;
+import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 
 class RenderState {
@@ -67,6 +68,18 @@ class RenderState {
 
   Map<Template, RenderSession[]> getChildSessions() {
     return sessions;
+  }
+
+  boolean isProcessed(Template template) {
+    return sessions.get(template) != null;
+  }
+
+  boolean isEnabled(Template template) {
+    return ifNotNull(sessions.get(template), x -> x.length > 0, false);
+  }
+
+  boolean isDisabled(Template template) {
+    return ifNotNull(sessions.get(template), x -> x.length == 0, false);
   }
 
   RenderSession[] getChildSessions(Template template) {

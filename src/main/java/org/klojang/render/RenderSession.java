@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Predicate;
 import org.klojang.template.Template;
+import org.klojang.template.TemplateUtils;
 import org.klojang.template.VarGroup;
 import org.klojang.template.VariablePart;
 import nl.naturalis.common.Tuple;
@@ -16,6 +17,7 @@ import static java.util.stream.Collectors.toList;
 import static org.klojang.render.Accessor.UNDEFINED;
 import static org.klojang.render.RenderException.*;
 import static org.klojang.template.TemplateUtils.getFQName;
+import static org.klojang.x.Messages.ERR_TEMPLATE_NAME_NULL;
 import static nl.naturalis.common.ArrayMethods.EMPTY_STRING_ARRAY;
 import static nl.naturalis.common.CollectionMethods.asUnsafeList;
 import static nl.naturalis.common.ObjectMethods.ifNull;
@@ -416,7 +418,7 @@ public class RenderSession {
     Check.notNull(nestedTemplateNames, "nestedTemplateNames");
     if (nestedTemplateNames.length == 0) {
       for (Template t : config.getTemplate().getNestedTemplates()) {
-        if (t.isTextOnly() && state.getChildSessions(t) == null) {
+        if (t.isTextOnly() && !state.isProcessed(t)) {
           show(repeats, t);
         }
       }
@@ -437,8 +439,9 @@ public class RenderSession {
   }
 
   /**
-   * Enables the rendering of the specified templates. The templates may themselves contain
-   * text-only templates, but they must not contain variables or templates containing variables.
+   * Enables all nested text-only templates that have not explicitly disabled. The nested templates
+   * may in fact contain nested templates themselves, but they must not contain variables at any
+   * nesting level beneath them. A {@code RenderException} if they do.
    *
    * @param nestedTemplateNames The names of the nested text-only templates you want to be rendered
    * @return This {@code RenderSession}
@@ -449,34 +452,27 @@ public class RenderSession {
     Check.notNull(nestedTemplateNames, "nestedTemplateNames");
     if (nestedTemplateNames.length == 0) {
       for (Template t : config.getTemplate().getNestedTemplates()) {
-        if (t.countVariables() == 0 && state.getChildSessions(t) == null) {
-          /*
-           * NB Only at this level do we skip templates that cannot possibly be recursively
-           * text-only (because the variables already spoil it). As soon as we recurse into deeper
-           * nesting levels there is no difference any longer between this branch of the main "if"
-           * branch and the other branch: at deeper levels templates must simply be either text-only
-           * templates themselves or only contain templates that themselves are (recursively)
-           * text-only.
-           */
-          showRecursive(this, t);
+        if (!state.isDisabled(t)) {
+          if (TemplateUtils.getVarsPerTemplate(t).isEmpty()) {
+            showRecursive(this, t);
+          }
         }
       }
     } else {
       for (String name : nestedTemplateNames) {
-        Check.that(name).is(notNull(), "Template name must not be null");
+        Check.that(name).is(notNull(), ERR_TEMPLATE_NAME_NULL);
         Template t = getNestedTemplate(name);
-        showRecursive(this, t);
+        if (TemplateUtils.getVarsPerTemplate(t).isEmpty()) {
+          showRecursive(this, t);
+        }
       }
     }
     return this;
   }
 
   private static void showRecursive(RenderSession s0, Template t0) throws RenderException {
-    if (t0.isTextOnly()) {
-      s0.show(1, t0);
-      return;
-    }
-    if (t0.countVariables() == 0) {
+    s0.show(1, t0);
+    if (!t0.getNestedTemplates().isEmpty()) {
       RenderSession s = s0.state.getOrCreateChildSession(t0);
       for (Template t : t0.getNestedTemplates()) {
         showRecursive(s, t);
