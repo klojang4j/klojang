@@ -4,13 +4,19 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.function.ThrowingBiFunction;
 import static org.klojang.template.ParseException.*;
 import static org.klojang.template.Regex.*;
+import static org.klojang.template.Template.ROOT_TEMPLATE_NAME;
+import static org.klojang.template.TemplateSourceType.STRING;
 import static nl.naturalis.common.check.CommonChecks.*;
 
 class Parser {
+
+  private static final Logger LOG = LoggerFactory.getLogger(Parser.class);
 
   private static interface PartialParser
       extends ThrowingBiFunction<UnparsedPart, Set<String>, List<Part>, ParseException> {}
@@ -32,6 +38,7 @@ class Parser {
   }
 
   Template parse() throws ParseException {
+    logParsing(tmplName, id);
     List<Part> parts = purgeDitchBlocks(src);
     parts = uncomment(parts, REGEX_NESTED_CMT);
     parts = uncomment(parts, REGEX_INCLUDE_CMT);
@@ -145,7 +152,7 @@ class Parser {
           .isNot(in(), names)
           .isNot(equalTo(), Template.ROOT_TEMPLATE_NAME);
       names.add(name);
-      Parser parser = new Parser(name, id, mySrc);
+      Parser parser = new Parser(name, new TemplateId(id), mySrc);
       parts.add(new InlineTemplatePart(parser.parse(), offset + m.start()));
       end = m.end();
     } while (m.find());
@@ -250,5 +257,17 @@ class Parser {
   private static UnparsedPart todo(UnparsedPart p, int from, int to) {
     String s = p.text().substring(from, to);
     return new UnparsedPart(s, from + p.start());
+  }
+
+  private static void logParsing(String name, TemplateId id) {
+    if (LOG.isTraceEnabled()) {
+      if (name == ROOT_TEMPLATE_NAME) {
+        LOG.trace("Parsing template {}", name);
+      } else if (id.sourceType() == STRING) {
+        LOG.trace("Parsing inline template \"{}\"", name);
+      } else {
+        LOG.trace("Parsing included template \"{}\"", name);
+      }
+    }
   }
 }

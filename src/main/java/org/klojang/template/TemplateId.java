@@ -22,6 +22,13 @@ public class TemplateId {
   private final Class<?> clazz;
   private final String path;
 
+  TemplateId(TemplateId parentId) {
+    this.tst = STRING;
+    this.pathResolver = parentId.pathResolver;
+    this.clazz = parentId.clazz;
+    this.path = null;
+  }
+
   TemplateId() {
     this.tst = STRING;
     this.pathResolver = null;

@@ -52,12 +52,14 @@ class TemplateCache {
     Check.notNull(name, "name");
     Check.notNull(id, "id");
     if (maxSize == 0 || id.path() == null) { // caching disabled
+      logTemplateRetrieval(name, id);
       return new Parser(name, id).parse();
     }
-    LOG.trace("Searching cache for template {}:{}", name, id.path());
+    logCacheSearch(name, id);
     Template t = cache.get(id.path());
     if (t == null) {
-      LOG.trace("Not found. Parse & cache {}", id.path());
+      LOG.trace("Not found");
+      logTemplateRetrieval(name, id);
       t = new Parser(name, id).parse();
       if (maxSize != -1 && entries.size() >= maxSize) {
         String eldest = entries.pop();
@@ -70,5 +72,31 @@ class TemplateCache {
       LOG.trace("Found!");
     }
     return t;
+  }
+
+  private static void logTemplateRetrieval(String name, TemplateId id) {
+    if (LOG.isTraceEnabled()) {
+      if (name == ROOT_TEMPLATE_NAME) {
+        if (id.path() == null) {
+          LOG.trace("Loading template {}", name);
+        } else {
+          LOG.trace("Loading template {} from {}", name, id.path());
+        }
+      } else if (id.path() == null) {
+        LOG.trace("Loading included template \"{}\"", name);
+      } else {
+        LOG.trace("Loading included template \"{}\" from {}", name, id.path());
+      }
+    }
+  }
+
+  private static void logCacheSearch(String name, TemplateId id) {
+    if (LOG.isTraceEnabled()) {
+      if (name == ROOT_TEMPLATE_NAME) {
+        LOG.trace("Searching cache for template {}@{})", name, id.path());
+      } else {
+        LOG.trace("Searching cache for included template {}@{}", name, id.path());
+      }
+    }
   }
 }
