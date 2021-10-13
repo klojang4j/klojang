@@ -6,7 +6,7 @@ import nl.naturalis.common.ExceptionMethods;
 
 public class KJSQLException extends KlojangRTException {
 
-  static RuntimeException wrap(Throwable t, SQL sql) {
+  public static RuntimeException wrap(Throwable t, SQL sql) {
     if (t instanceof KJSQLException) {
       return (KJSQLException) t;
     } else if (t instanceof SQLException) {
