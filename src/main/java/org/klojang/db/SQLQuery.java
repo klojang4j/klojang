@@ -12,10 +12,13 @@ import java.util.function.Supplier;
 import org.klojang.render.NameMapper;
 import org.klojang.x.db.rs.ExtractorNegotiator;
 import org.klojang.x.db.rs.RsExtractor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import nl.naturalis.common.check.Check;
-import static nl.naturalis.common.ObjectMethods.ifNull;
 
 public class SQLQuery extends SQLStatement<SQLQuery> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SQLQuery.class);
 
   private NameMapper nameMapper = NameMapper.NOOP;
 
@@ -168,7 +171,9 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
   public List<Row> mappifyAll(int sizeEstimate) {
     try {
       MappifierBox mb = new MappifierBox(nameMapper);
-      return mb.get(resultSet()).mappifyAll(sizeEstimate);
+      List<Row> rows = mb.get(resultSet()).mappifyAll(sizeEstimate);
+      LOG.trace("Query returned {} record(s)", rows.size());
+      return rows;
     } catch (Throwable t) {
       throw KJSQLException.wrap(t, sql);
     }
@@ -176,8 +181,8 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
 
   public <T> Optional<T> beanify(Class<T> beanClass, Supplier<T> beanSupplier) {
     try {
-      BeanifierBox<T> bb = sql.getBeanifierBox(beanClass, beanSupplier, nameMapper);
-      return bb.get(resultSet()).beanify();
+      BeanifierFactory<T> bb = sql.getBeanifierBox(beanClass, beanSupplier, nameMapper);
+      return bb.getBeanifier(resultSet()).beanify();
     } catch (Throwable t) {
       throw KJSQLException.wrap(t, sql);
     }
@@ -185,8 +190,10 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
 
   public <T> List<T> beanifyAll(Class<T> beanClass, Supplier<T> beanSupplier) {
     try {
-      BeanifierBox<T> bb = sql.getBeanifierBox(beanClass, beanSupplier, nameMapper);
-      return bb.get(resultSet()).beanifyAll();
+      BeanifierFactory<T> bb = sql.getBeanifierBox(beanClass, beanSupplier, nameMapper);
+      List<T> beans = bb.getBeanifier(resultSet()).beanifyAll();
+      LOG.trace("Query returned {} record(s)", beans.size());
+      return beans;
     } catch (Throwable t) {
       throw KJSQLException.wrap(t, sql);
     }
@@ -197,15 +204,19 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     close(ps);
   }
 
+  private ResultSet resultSet() throws Throwable {
+    if (rs == null) {
+      LOG.trace("Executing query");
+      rs = preparedStatement().executeQuery();
+    }
+    return rs;
+  }
+
   private PreparedStatement preparedStatement() throws Throwable {
     if (ps == null) {
       ps = con.prepareStatement(sql.getJdbcSQL());
       applyBindings(ps);
     }
     return ps;
-  }
-
-  private ResultSet resultSet() throws Throwable {
-    return ifNull(rs, rs = preparedStatement().executeQuery());
   }
 }

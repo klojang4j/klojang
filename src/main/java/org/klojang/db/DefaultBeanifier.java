@@ -8,12 +8,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import org.klojang.x.db.rs.RsToBeanTransporter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
 import static org.klojang.x.db.rs.RsToBeanTransporter.toBean;
 import static nl.naturalis.common.check.CommonChecks.gt;
 
 class DefaultBeanifier<T> implements ResultSetBeanifier<T> {
+
+  @SuppressWarnings("unused")
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultBeanifier.class);
 
   private final ResultSet rs;
   private final RsToBeanTransporter<?, ?>[] setters;
@@ -48,7 +53,9 @@ class DefaultBeanifier<T> implements ResultSetBeanifier<T> {
   public List<T> beanifyAtMost(int from, int limit) {
     Check.that(limit, "limit").is(gt(), 0);
     try {
-      for (int i = 0; i < from; ++i) {
+      // NB rs.next() will already have bean called once by the
+      // BeanifierFactory so start 1
+      for (int i = 1; i < from; ++i) {
         if (!rs.next()) {
           return Collections.emptyList();
         }
@@ -61,7 +68,7 @@ class DefaultBeanifier<T> implements ResultSetBeanifier<T> {
 
   @Override
   public List<T> beanifyAll() {
-    return beanifyAll(16);
+    return beanifyAll(20);
   }
 
   @Override
@@ -69,9 +76,9 @@ class DefaultBeanifier<T> implements ResultSetBeanifier<T> {
     Check.that(sizeEstimate, "sizeEstimate").is(gt(), 0);
     List<T> all = new ArrayList<>(sizeEstimate);
     try {
-      while (rs.next()) {
+      do {
         all.add(toBean(rs, beanSupplier, setters));
-      }
+      } while (rs.next());
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
     }

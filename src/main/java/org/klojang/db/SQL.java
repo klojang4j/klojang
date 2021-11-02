@@ -53,7 +53,7 @@ public class SQL {
 
   /* These maps are unlikely to grow beyond one, maybe two entries */
   private final Map<Class<?>, BeanBinder<?>> beanBinders = new HashMap<>(4);
-  private final Map<Class<?>, BeanifierBox<?>> beanifierBoxes = new HashMap<>(4);
+  private final Map<Class<?>, BeanifierFactory<?>> beanifiers = new HashMap<>(4);
 
   private final ReentrantLock lock = new ReentrantLock();
 
@@ -145,11 +145,11 @@ public class SQL {
   }
 
   @SuppressWarnings("unchecked")
-  <T> BeanifierBox<T> getBeanifierBox(
+  <T> BeanifierFactory<T> getBeanifierBox(
       Class<T> beanClass, Supplier<T> beanSupplier, NameMapper columnToPropertyMapper) {
-    return (BeanifierBox<T>)
-        beanifierBoxes.computeIfAbsent(
-            beanClass, k -> new BeanifierBox<>(beanClass, beanSupplier, columnToPropertyMapper));
+    return (BeanifierFactory<T>)
+        beanifiers.computeIfAbsent(
+            beanClass, k -> new BeanifierFactory<>(beanClass, beanSupplier, columnToPropertyMapper));
   }
 
   private <T extends SQLStatement<?>> T prepare(

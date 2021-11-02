@@ -5,11 +5,12 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * A {@code ResultSetBeanifier} converts JDBC {@link ResultSet result sets} to JavaBeans. One {@code
- * ResultSetBeanifier} instance caters for exactly one SQL query. You cannot instantiate a {@code
- * ResultSetBeanifier} directly. You obtain one from a {@link BeanifierBox}. When using a {@code
- * ResultSetBeanifier} to iterate over a {@code ResultSet} you should not call {@link
- * ResultSet#next()}) yourself. This is done by the {@code ResultSetBeanifier}.
+ * Converts JDBC {@link ResultSet result sets} to JavaBeans. Contrary to {@link SQLQuery} a {@code
+ * ResultSetBeanifier} is agnostic about how you obtained the {@code ResultSet} and does not help
+ * you with it. You cannot instantiate a {@code ResultSetBeanifier} directly. You obtain one from a
+ * {@link BeanifierFactory}. When using a {@code ResultSetBeanifier} to iterate over a {@code ResultSet}
+ * you should not call {@link ResultSet#next()}) yourself. This is done by the {@code
+ * ResultSetBeanifier}.
  *
  * @author Ayco Holleman
  * @param <T> The type of the JavaBean
@@ -73,6 +74,9 @@ public interface ResultSetBeanifier<T> extends AutoCloseable {
    */
   List<T> beanifyAll(int sizeEstimate);
 
-  @Override
+  /**
+   * Overrides {@link AutoCloseable}'s {@code close} method, making it <i>not</i> throw any checked
+   * exception.
+   */
   void close();
 }

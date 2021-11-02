@@ -8,35 +8,50 @@ import java.util.function.Supplier;
 import org.klojang.render.NameMapper;
 import org.klojang.x.db.rs.RsToBeanTransporter;
 import org.klojang.x.db.rs.ValueTransporterCache;
+import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
 import static org.klojang.x.db.rs.RsToBeanTransporter.createValueTransporters;
 import static nl.naturalis.common.StringMethods.implode;
 
 /**
- * Contains and supplies a {@link ResultSetBeanifier} for a single SQL query.
+ * A factory for {@link ResultSetBeanifier} instances. You should create a separate {@code
+ * BeanifierFactory} instance for each unique SELECT query in your application. You retrieve a
+ * {@code ResultSetBeanifier} by passing a {@link ResultSet} to the {@link #getBeanifier(ResultSet)
+ * getBeanifier} method. The first time you call this method on a {@code BeanifierFactory}, the
+ * result set's metadata is inspected in order to set up and cache the beanification logic.
+ * Subsequent calls directly apply this logic. Hence subsequent calls should be done with {@link
+ * ResultSet} instances resulting from the same SQL query. (More precisely: subsequent {@code
+ * ResultSet} instances passed to {@code getBeanifier} must be <i>compatible</i> with the first one.
+ * They must have the same number of columns and their data types must match those of the first
+ * {@code ResultSet}.) Since the set-up phase is somewhat expensive, you might want to cache the
+ * {@code BeanifierFactory} (e.g. in a private static field).
  *
  * @author Ayco Holleman
  * @param <T>
  */
-public class BeanifierBox<T> {
+public class BeanifierFactory<T> {
+
+  private final AtomicReference<RsToBeanTransporter<?, ?>[]> ref = new AtomicReference<>();
 
   private final Class<T> beanClass;
   private final Supplier<T> beanSupplier;
   private final NameMapper mapper;
   private final boolean verify;
 
-  private AtomicReference<RsToBeanTransporter<?, ?>[]> ref = new AtomicReference<>();
+  public BeanifierFactory(Class<T> beanClass) {
+    this(beanClass, () -> newInstance(beanClass), NameMapper.NOOP);
+  }
 
-  public BeanifierBox(Class<T> beanClass, Supplier<T> beanSupplier) {
+  public BeanifierFactory(Class<T> beanClass, Supplier<T> beanSupplier) {
     this(beanClass, beanSupplier, NameMapper.NOOP);
   }
 
-  public BeanifierBox(
+  public BeanifierFactory(
       Class<T> beanClass, Supplier<T> beanSupplier, NameMapper columnToPropertyMapper) {
     this(beanClass, beanSupplier, columnToPropertyMapper, false);
   }
 
-  public BeanifierBox(
+  public BeanifierFactory(
       Class<T> beanClass,
       Supplier<T> beanSupplier,
       NameMapper columnToPropertyMapper,
@@ -47,7 +62,7 @@ public class BeanifierBox<T> {
     this.verify = verify;
   }
 
-  public ResultSetBeanifier<T> get(ResultSet rs) throws SQLException {
+  public ResultSetBeanifier<T> getBeanifier(ResultSet rs) throws SQLException {
     if (!rs.next()) {
       return EmptyBeanifier.INSTANCE;
     }
@@ -67,5 +82,13 @@ public class BeanifierBox<T> {
       throw new ResultSetMismatchException(implode(errors, ". "));
     }
     return new DefaultBeanifier<>(rs, setters, beanSupplier);
+  }
+
+  private static <U> U newInstance(Class<U> beanClass) {
+    try {
+      return beanClass.getDeclaredConstructor().newInstance();
+    } catch (Exception e) {
+      throw ExceptionMethods.uncheck(e);
+    }
   }
 }

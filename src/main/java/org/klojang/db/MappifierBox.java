@@ -11,6 +11,11 @@ import nl.naturalis.common.check.Check;
 import static org.klojang.x.db.rs.RsToMapTransporter.createValueTransporters;
 import static nl.naturalis.common.StringMethods.implode;
 
+/**
+ * A Factory
+ *
+ * @author Ayco Holleman
+ */
 public class MappifierBox {
 
   private final AtomicReference<RsToMapTransporter<?>[]> ref = new AtomicReference<>();
