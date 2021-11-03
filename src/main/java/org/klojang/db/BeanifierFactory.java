@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import org.klojang.render.NameMapper;
-import org.klojang.x.db.rs.RsToBeanTransporter;
-import org.klojang.x.db.rs.ValueTransporterCache;
+import org.klojang.x.db.rs.BeanChannel;
+import org.klojang.x.db.rs.ChannelCache;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
-import static org.klojang.x.db.rs.RsToBeanTransporter.createValueTransporters;
+import static org.klojang.x.db.rs.BeanChannel.createValueTransporters;
 import static nl.naturalis.common.StringMethods.implode;
 
 /**
@@ -29,9 +29,10 @@ import static nl.naturalis.common.StringMethods.implode;
  * @author Ayco Holleman
  * @param <T>
  */
+@SuppressWarnings("rawtypes")
 public class BeanifierFactory<T> {
 
-  private final AtomicReference<RsToBeanTransporter<?, ?>[]> ref = new AtomicReference<>();
+  private final AtomicReference<BeanChannel[]> ref = new AtomicReference<>();
 
   private final Class<T> beanClass;
   private final Supplier<T> beanSupplier;
@@ -66,22 +67,22 @@ public class BeanifierFactory<T> {
     if (!rs.next()) {
       return EmptyBeanifier.INSTANCE;
     }
-    RsToBeanTransporter<?, ?>[] setters;
-    if ((setters = ref.getPlain()) == null) {
+    BeanChannel[] channels;
+    if ((channels = ref.getPlain()) == null) {
       synchronized (this) {
         if (ref.get() == null) {
           // Ask again. Since we're now the only one in here, if pwref.get()
           // did *not* return null, another thread had slipped in just after
           // our first null check. That's fine. We are done.
-          setters = createValueTransporters(rs, beanClass, mapper);
-          ref.set(setters);
+          channels = createValueTransporters(rs, beanClass, mapper);
+          ref.set(channels);
         }
       }
-    } else if (verify && !ValueTransporterCache.isCompatible(rs, setters)) {
-      List<String> errors = ValueTransporterCache.getMatchErrors(rs, setters);
+    } else if (verify && !ChannelCache.isCompatible(rs, channels)) {
+      List<String> errors = ChannelCache.getMatchErrors(rs, channels);
       throw new ResultSetMismatchException(implode(errors, ". "));
     }
-    return new DefaultBeanifier<>(rs, setters, beanSupplier);
+    return new DefaultBeanifier<>(rs, channels, beanSupplier);
   }
 
   private static <U> U newInstance(Class<U> beanClass) {

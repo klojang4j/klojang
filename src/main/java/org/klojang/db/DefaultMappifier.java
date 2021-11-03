@@ -4,7 +4,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.klojang.x.db.rs.RsToMapTransporter;
+import org.klojang.x.db.rs.RowChannel;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
 import static nl.naturalis.common.check.CommonChecks.gt;
@@ -12,9 +12,9 @@ import static nl.naturalis.common.check.CommonChecks.gt;
 class DefaultMappifier implements ResultSetMappifier {
 
   private final ResultSet rs;
-  private final RsToMapTransporter<?>[] transporters;
+  private final RowChannel<?>[] transporters;
 
-  DefaultMappifier(ResultSet rs, RsToMapTransporter<?>[] transporters) {
+  DefaultMappifier(ResultSet rs, RowChannel<?>[] transporters) {
     this.rs = rs;
     this.transporters = transporters;
   }
@@ -34,7 +34,7 @@ class DefaultMappifier implements ResultSetMappifier {
   public Optional<Row> mappify() {
     Check.notNull(rs);
     try {
-      return Optional.of(RsToMapTransporter.toRow(rs, transporters));
+      return Optional.of(RowChannel.toRow(rs, transporters));
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
     }
@@ -58,7 +58,7 @@ class DefaultMappifier implements ResultSetMappifier {
     int i = 0;
     try {
       do {
-        all.add(RsToMapTransporter.toRow(rs, transporters));
+        all.add(RowChannel.toRow(rs, transporters));
       } while (++i < limit && rs.next());
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);
@@ -98,7 +98,7 @@ class DefaultMappifier implements ResultSetMappifier {
     List<Row> all = new ArrayList<>(sizeEstimate);
     try {
       do {
-        all.add(RsToMapTransporter.toRow(rs, transporters));
+        all.add(RowChannel.toRow(rs, transporters));
       } while (rs.next());
     } catch (Throwable t) {
       throw ExceptionMethods.uncheck(t);

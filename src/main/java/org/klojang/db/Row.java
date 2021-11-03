@@ -4,7 +4,6 @@ import java.sql.ResultSet;
 import java.util.*;
 import java.util.function.Function;
 import org.klojang.render.Accessor;
-import org.klojang.x.db.rs.Column;
 import nl.naturalis.common.Bool;
 import nl.naturalis.common.NumberMethods;
 import nl.naturalis.common.Pair;
@@ -35,17 +34,7 @@ public class Row {
   private static final String ERR2 = "Invalid column number: %d";
   private static final String ERR3 = "Columns already exists: %d";
 
-  public static Row withColumns(Column[] columns) {
-    return new Row(columns);
-  }
-
   private final Map<String, Object> map;
-
-  private Row(Column[] columns) {
-    // Reserve some extra space for potential additions
-    map = new LinkedHashMap<>(4 + (columns.length * 4 / 3));
-    Arrays.stream(columns).forEach(c -> map.put(c.getName(), c.getValue()));
-  }
 
   /**
    * Creates a new {@code Row} from the data in the specified map.
@@ -53,12 +42,12 @@ public class Row {
    * @param data The data for the {@code Row}.
    */
   public Row(Map<String, Object> data) {
-    this(data, 4);
+    this(data, 0);
   }
 
   /**
    * Creates a new {@code Row} from the data in the specified map. The specified extra capacity is
-   * reserved for the addition of new keys (a.k.a. "columns").
+   * reserved for the addition of new "columns" (i.e. map keys).
    *
    * @param data The data for the {@code Row}.
    */
@@ -69,6 +58,10 @@ public class Row {
           Check.that(k).is(notNull(), "Map must not contain null keys");
           map.put(k, v);
         });
+  }
+
+  public Row(int columnCount) {
+    map = new LinkedHashMap<>(1 + (columnCount * 4 / 3));
   }
 
   /**

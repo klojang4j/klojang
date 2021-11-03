@@ -15,28 +15,29 @@ import nl.naturalis.common.invoke.Setter;
 import nl.naturalis.common.invoke.SetterFactory;
 
 /* Transports a single value from a ResultSet to a bean */
-public class RsToBeanTransporter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransporter {
+public class BeanChannel<COLUMN_TYPE, FIELD_TYPE> implements Channel<Object> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(RsToBeanTransporter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BeanChannel.class);
 
-  public static <U> U toBean(
-      ResultSet rs, Supplier<U> beanSupplier, RsToBeanTransporter<?, ?>[] setters)
+  @SuppressWarnings("rawtypes")
+  public static <U> U toBean(ResultSet rs, Supplier<U> beanSupplier, BeanChannel[] channels)
       throws Throwable {
     U bean = beanSupplier.get();
-    for (RsToBeanTransporter<?, ?> setter : setters) {
-      setter.setValue(rs, bean);
+    for (BeanChannel channel : channels) {
+      channel.send(rs, bean);
     }
     return bean;
   }
 
-  public static RsToBeanTransporter<?, ?>[] createValueTransporters(
+  @SuppressWarnings("rawtypes")
+  public static BeanChannel[] createValueTransporters(
       ResultSet rs, Class<?> beanClass, NameMapper nameMapper) {
     Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(beanClass);
     ExtractorNegotiator negotiator = ExtractorNegotiator.getInstance();
     try {
       ResultSetMetaData rsmd = rs.getMetaData();
       int sz = rsmd.getColumnCount();
-      List<RsToBeanTransporter<?, ?>> transporters = new ArrayList<>(sz);
+      List<BeanChannel<?, ?>> transporters = new ArrayList<>(sz);
       for (int idx = 0; idx < sz; ++idx) {
         int jdbcIdx = idx + 1; // JDBC is one-based
         int sqlType = rsmd.getColumnType(jdbcIdx);
@@ -45,16 +46,14 @@ public class RsToBeanTransporter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransp
         Setter setter = setters.get(property);
         if (setter == null) {
           LOG.warn(
-              "The ResultSet used to create a beanifier for {} contains a column cannot be mapped to a property: \"{}\"",
-              beanClass,
-              label);
+              "Column {} cannot be mapped to a property of {}", label, beanClass.getSimpleName());
           continue;
         }
         Class<?> javaType = setter.getParamType();
         RsExtractor<?, ?> extractor = negotiator.findExtractor(javaType, sqlType);
-        transporters.add(new RsToBeanTransporter<>(extractor, setter, jdbcIdx, sqlType));
+        transporters.add(new BeanChannel<>(extractor, setter, jdbcIdx, sqlType));
       }
-      return transporters.toArray(new RsToBeanTransporter[transporters.size()]);
+      return transporters.toArray(new BeanChannel[transporters.size()]);
     } catch (SQLException e) {
       throw ExceptionMethods.uncheck(e);
     }
@@ -65,7 +64,7 @@ public class RsToBeanTransporter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransp
   private final int jdbcIdx;
   private final int sqlType;
 
-  private RsToBeanTransporter(
+  private BeanChannel(
       RsExtractor<COLUMN_TYPE, FIELD_TYPE> extractor, Setter setter, int jdbcIdx, int sqlType) {
     this.extractor = extractor;
     this.setter = setter;
@@ -74,13 +73,14 @@ public class RsToBeanTransporter<COLUMN_TYPE, FIELD_TYPE> implements ValueTransp
   }
 
   @Override
-  public int getSqlType() {
-    return sqlType;
-  }
-
   @SuppressWarnings("unchecked")
-  private <U> void setValue(ResultSet rs, U bean) throws Throwable {
+  public void send(ResultSet rs, Object bean) throws Throwable {
     FIELD_TYPE val = extractor.getValue(rs, jdbcIdx, (Class<FIELD_TYPE>) setter.getParamType());
     setter.write(bean, val);
+  }
+
+  @Override
+  public int getSqlType() {
+    return sqlType;
   }
 }

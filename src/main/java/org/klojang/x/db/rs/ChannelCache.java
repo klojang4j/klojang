@@ -9,9 +9,10 @@ import java.util.List;
 import org.klojang.db.SQLTypeNames;
 import org.klojang.render.NameMapper;
 
-public class ValueTransporterCache {
+@SuppressWarnings("rawtypes")
+public class ChannelCache {
 
-  static final ValueTransporterCache INSTANCE = new ValueTransporterCache();
+  static final ChannelCache INSTANCE = new ChannelCache();
 
   /**
    * Verifies that the specified {@code Resultset} can be beanified/mappified by the specified
@@ -24,8 +25,7 @@ public class ValueTransporterCache {
    * @return
    * @throws SQLException
    */
-  public static boolean isCompatible(ResultSet rs, ValueTransporter[] transporters)
-      throws SQLException {
+  public static boolean isCompatible(ResultSet rs, Channel[] transporters) throws SQLException {
     ResultSetMetaData rsmd = rs.getMetaData();
     if (rsmd.getColumnCount() != transporters.length) {
       return false;
@@ -38,7 +38,7 @@ public class ValueTransporterCache {
     return true;
   }
 
-  public static List<String> getMatchErrors(ResultSet rs, ValueTransporter[] transporters)
+  public static List<String> getMatchErrors(ResultSet rs, Channel[] transporters)
       throws SQLException {
     ResultSetMetaData rsmd = rs.getMetaData();
     List<String> errors = new ArrayList<>();
@@ -60,20 +60,19 @@ public class ValueTransporterCache {
     return errors;
   }
 
-  private final HashMap<RsStrongIdentifier, RsToBeanTransporter<?, ?>[]> bvt = new HashMap<>();
-  private final HashMap<RsStrongIdentifier, RsToMapTransporter<?>[]> mvt = new HashMap<>();
+  private final HashMap<RsStrongIdentifier, BeanChannel[]> beanChannels = new HashMap<>();
+  private final HashMap<RsStrongIdentifier, RowChannel[]> rowChannels = new HashMap<>();
 
-  private ValueTransporterCache() {}
+  private ChannelCache() {}
 
-  public RsToBeanTransporter<?, ?>[] getBeanValueSetters(
-      ResultSet rs, Class<?> clazz, NameMapper mapper) {
+  public BeanChannel[] getBeanValueSetters(ResultSet rs, Class clazz, NameMapper mapper) {
     RsStrongIdentifier id = new RsStrongIdentifier(rs);
-    return bvt.computeIfAbsent(
-        id, k -> RsToBeanTransporter.createValueTransporters(rs, clazz, mapper));
+    return beanChannels.computeIfAbsent(
+        id, k -> BeanChannel.createValueTransporters(rs, clazz, mapper));
   }
 
-  public RsToMapTransporter<?>[] getMapValueSetters(ResultSet rs, NameMapper mapper) {
+  public RowChannel[] getMapValueSetters(ResultSet rs, NameMapper mapper) {
     RsStrongIdentifier id = new RsStrongIdentifier(rs);
-    return mvt.computeIfAbsent(id, k -> RsToMapTransporter.createValueTransporters(rs, mapper));
+    return rowChannels.computeIfAbsent(id, k -> RowChannel.createChannels(rs, mapper));
   }
 }

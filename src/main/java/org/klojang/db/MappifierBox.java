@@ -5,10 +5,10 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.klojang.render.NameMapper;
-import org.klojang.x.db.rs.RsToMapTransporter;
-import org.klojang.x.db.rs.ValueTransporterCache;
+import org.klojang.x.db.rs.RowChannel;
+import org.klojang.x.db.rs.ChannelCache;
 import nl.naturalis.common.check.Check;
-import static org.klojang.x.db.rs.RsToMapTransporter.createValueTransporters;
+import static org.klojang.x.db.rs.RowChannel.createChannels;
 import static nl.naturalis.common.StringMethods.implode;
 
 /**
@@ -18,7 +18,7 @@ import static nl.naturalis.common.StringMethods.implode;
  */
 public class MappifierBox {
 
-  private final AtomicReference<RsToMapTransporter<?>[]> ref = new AtomicReference<>();
+  private final AtomicReference<RowChannel<?>[]> ref = new AtomicReference<>();
 
   private final NameMapper mapper;
   private final boolean verify;
@@ -40,15 +40,15 @@ public class MappifierBox {
     if (!rs.next()) {
       return EmptyMappifier.INSTANCE;
     }
-    RsToMapTransporter<?>[] transporters;
+    RowChannel<?>[] transporters;
     if ((transporters = ref.getPlain()) == null) {
       synchronized (this) {
         if (ref.get() == null) {
-          transporters = createValueTransporters(rs, mapper);
+          transporters = createChannels(rs, mapper);
         }
       }
-    } else if (verify && !ValueTransporterCache.isCompatible(rs, transporters)) {
-      List<String> errors = ValueTransporterCache.getMatchErrors(rs, transporters);
+    } else if (verify && !ChannelCache.isCompatible(rs, transporters)) {
+      List<String> errors = ChannelCache.getMatchErrors(rs, transporters);
       throw new ResultSetMismatchException(implode(errors, ". "));
     }
     return new DefaultMappifier(rs, transporters);

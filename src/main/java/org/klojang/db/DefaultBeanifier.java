@@ -7,12 +7,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
-import org.klojang.x.db.rs.RsToBeanTransporter;
+import org.klojang.x.db.rs.BeanChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
-import static org.klojang.x.db.rs.RsToBeanTransporter.toBean;
+import static org.klojang.x.db.rs.BeanChannel.toBean;
 import static nl.naturalis.common.check.CommonChecks.gt;
 
 class DefaultBeanifier<T> implements ResultSetBeanifier<T> {
@@ -21,10 +21,10 @@ class DefaultBeanifier<T> implements ResultSetBeanifier<T> {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultBeanifier.class);
 
   private final ResultSet rs;
-  private final RsToBeanTransporter<?, ?>[] setters;
+  private final BeanChannel<?, ?>[] setters;
   private final Supplier<T> beanSupplier;
 
-  DefaultBeanifier(ResultSet rs, RsToBeanTransporter<?, ?>[] ss, Supplier<T> bs) {
+  DefaultBeanifier(ResultSet rs, BeanChannel<?, ?>[] ss, Supplier<T> bs) {
     this.rs = rs;
     this.setters = ss;
     this.beanSupplier = bs;
