@@ -152,7 +152,7 @@ public final class StringifierFactory {
     }
 
     /**
-     * Assigns the specified stringifier to the specified {@link XVarGroup variable groups}. The
+     * Assigns the specified stringifier to the specified {@link VarGroup variable groups}. The
      * group that a variable belongs to can be specified as a prefix within the variable
      * declaration. For example in {@code ~%format2:salary%} the {@code salary} variable is assigned
      * to variable group "format2". A variable group can also be assigned via the {@link
@@ -178,11 +178,11 @@ public final class StringifierFactory {
     }
 
     /**
-     * Assigns the specified stringifier to all variables with the specified name, irrespective of
-     * which template they belong to. The provided variable names must be simple names (rather than
-     * fully-qualified names). They may, however, start and/or end with a '*' sign. For example to
-     * assign a number formatter to all variables whose name ends with "Price", specify {@code
-     * *Price} as the variable name.
+     * Assigns the specified stringifier to all variables with the specified name(s). This works
+     * across all templates within the application, so be careful when registering a stringifier
+     * this way. You may specify a wildcard '*' character at the beginning or and of the variable
+     * name. For example to assign a number formatter to all variables whose name ends with "Price",
+     * specify {@code *Price} as the variable name.
      *
      * @param stringifier The stringifier
      * @param varNames The variable names to associate the stringifier with.

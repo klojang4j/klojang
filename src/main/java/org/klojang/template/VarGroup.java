@@ -13,13 +13,13 @@ import static nl.naturalis.common.check.CommonChecks.notNull;
 /**
  * A {@code VarGroup} lets you group template variables within a template or across templates in
  * order to provide them with a shared {@link Stringifier}. Variables can be assigned to a variable
- * group using a group name prefix. For example: <code>
- * ~%<b>html</b>:lastName%</code> or <code>~%<b>dateformat1</b>:birthDate%</code>. Variable groups
- * can also be assigned programmatically while rendering the template through a {@link
- * RenderSession} instance. No exception is thrown if a template file contains a group name prefix
- * that is not tied to a {@code Stringifier} via the {@link StringifierFactory}. However, when
- * specifying a variable group programmatically, the group <i>must</i> have been registered before
- * with the {@code StringifierFactory} or a {@link RenderException} will be thrown.
+ * group using a group name prefix. For example: <code>~%<b>html</b>:lastName%</code> or <code>
+ * ~%<b>dateFormat1</b>:birthDate%</code>. Variable groups can also be assigned programmatically
+ * (see, for example, {@link RenderSession#set(String, Object, VarGroup) RenderSession.set}. No
+ * exception is thrown if a template contains a group name prefix that is not associated with {@code
+ * Stringifier} (via a {@link StringifierFactory}). However, when specifying a variable group
+ * programmatically, the group <i>must</i> have been registered with the {@code StringifierFactory}
+ * or a {@link RenderException} will be thrown.
  *
  * @author Ayco Holleman
  */
