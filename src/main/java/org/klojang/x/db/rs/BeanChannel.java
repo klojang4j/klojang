@@ -3,9 +3,7 @@ package org.klojang.x.db.rs;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
 import org.klojang.render.NameMapper;
 import org.slf4j.Logger;
@@ -13,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.invoke.Setter;
 import nl.naturalis.common.invoke.SetterFactory;
+import nl.naturalis.common.unsafe.UnsafeList;
+import static nl.naturalis.common.StringMethods.implode;
 
 /* Transports a single value from a ResultSet to a bean */
 public class BeanChannel<COLUMN_TYPE, FIELD_TYPE> implements Channel<Object> {
@@ -30,9 +30,19 @@ public class BeanChannel<COLUMN_TYPE, FIELD_TYPE> implements Channel<Object> {
   }
 
   @SuppressWarnings("rawtypes")
-  public static BeanChannel[] createValueTransporters(
+  public static BeanChannel[] createChannels(
       ResultSet rs, Class<?> beanClass, NameMapper nameMapper) {
     Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(beanClass);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Mapping ResultSet to {}", beanClass.getSimpleName());
+      Comparator<String> cmp = Comparator.comparing(String::toLowerCase);
+      Set<String> cols = new TreeSet<>(cmp);
+      cols.addAll(new UnsafeList<>(new RsStrongIdentifier(rs).getColumnNames()));
+      Set<String> props = new TreeSet<>(cmp);
+      props.addAll(setters.keySet());
+      LOG.trace("Columns ......: {}", implode(cols));
+      LOG.trace("Properties ...: {}", implode(props));
+    }
     ExtractorNegotiator negotiator = ExtractorNegotiator.getInstance();
     try {
       ResultSetMetaData rsmd = rs.getMetaData();

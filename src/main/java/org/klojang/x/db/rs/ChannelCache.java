@@ -68,7 +68,7 @@ public class ChannelCache {
   public BeanChannel[] getBeanValueSetters(ResultSet rs, Class clazz, NameMapper mapper) {
     RsStrongIdentifier id = new RsStrongIdentifier(rs);
     return beanChannels.computeIfAbsent(
-        id, k -> BeanChannel.createValueTransporters(rs, clazz, mapper));
+        id, k -> BeanChannel.createChannels(rs, clazz, mapper));
   }
 
   public RowChannel[] getMapValueSetters(ResultSet rs, NameMapper mapper) {

@@ -6,7 +6,7 @@ import org.klojang.db.Row;
  * Generic name mapping interface. Name mappers are used to map template variable names to model
  * object properties. See {@link AccessorFactory.Builder#setDefaultNameMapper(NameMapper)}. They are
  * also used to map column names to model object properties. See {@link
- * SQLQuery#withNameMapper(NameMapper)}. Note that the term "property" is in fact rather misleading
+ * SQLQuery#withMapper(NameMapper)}. Note that the term "property" is in fact rather misleading
  * because, as for Klojang, your model objects might just as well be {@code Map<String,Object>}
  * objects or {@link Row rows}, in which case your template's variables would map to map keys.
  *
@@ -15,8 +15,8 @@ import org.klojang.db.Row;
 @FunctionalInterface
 public interface NameMapper {
 
-  /** The no-op mapper. Maps the variable or nested template name to itself. */
-  public static NameMapper NOOP = x -> x;
+  /** The no-op mapper. Returns the name as-is. */
+  public static NameMapper AS_IS = x -> x;
 
   /**
    * Maps the specified name to a name that can be used to access its value.

@@ -38,4 +38,9 @@ class EmptyBeanifier<T> implements ResultSetBeanifier<T> {
 
   @Override
   public void close() {}
+
+  @Override
+  public boolean isEmpty() {
+    return true;
+  }
 }

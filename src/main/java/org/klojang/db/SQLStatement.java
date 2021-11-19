@@ -26,6 +26,19 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
     this.bound = new HashSet<>(sql.getParameters().size());
   }
 
+  /**
+   * Binds the values in the specified JavaBean to the named parameters within the SQL statement.
+   * Bean properties that do not correspond to named parameters will be ignored. The effect of
+   * passing anything other than a proper JavaBean (e.g. scalars like {@code Integer} or
+   * multi-valued objects like {@code Employee[]} or {@code ArrayList}) is undefined. The {@code
+   * idProperty} argument must be the name of the property that corresponds to the auto-increment
+   * column. The generated value for that column will be bound back into the bean. Of course, the
+   * bean or {@code Map} needs to be modifiable in that case. If you don't want the auto-increment
+   * column to be bound back into the bean or {@code Map}, just call {@link #bind(Object)}.
+   *
+   * @param bean The bean whose values to bind to the named parameters within the SQL statement
+   * @return This {@code SQLInsert} instance
+   */
   @SuppressWarnings("unchecked")
   public T bind(Object bean) {
     Check.notNull(bean, "bean").then(bindables::add);

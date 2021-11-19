@@ -4,11 +4,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.util.MutableInt;
 import static nl.naturalis.common.CollectionMethods.convertAndFreeze;
 import static nl.naturalis.common.CollectionMethods.freezeIntoList;
+import static nl.naturalis.common.check.CommonChecks.blank;
 
 /**
  * Extracts named parameters from a SQL query string and replaces them with positional parameters
@@ -28,7 +30,7 @@ class SQLNormalizer {
   private final List<NamedParameter> params;
 
   SQLNormalizer(String sql) {
-    this.unparsed = sql;
+    this.unparsed = Check.that(sql).isNot(blank(), "Empty SQL string").ok();
     Map<String, IntList> tmp = new LinkedHashMap<>();
     StringBuilder out = new StringBuilder(sql.length());
     MutableInt pCount = new MutableInt(); // parameter counter

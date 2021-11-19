@@ -102,4 +102,9 @@ class DefaultBeanifier<T> implements ResultSetBeanifier<T> {
       throw ExceptionMethods.uncheck(e);
     }
   }
+
+  @Override
+  public boolean isEmpty() {
+    return false;
+  }
 }

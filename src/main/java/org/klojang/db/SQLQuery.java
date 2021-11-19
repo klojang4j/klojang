@@ -20,7 +20,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
 
   private static final Logger LOG = LoggerFactory.getLogger(SQLQuery.class);
 
-  private NameMapper nameMapper = NameMapper.NOOP;
+  private NameMapper nameMapper = NameMapper.AS_IS;
 
   private PreparedStatement ps;
   private ResultSet rs;
@@ -29,22 +29,46 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     super(con, sql);
   }
 
-  public SQLQuery withNameMapper(NameMapper columnToKeyOrPropertyMapper) {
-    this.nameMapper = Check.notNull(columnToKeyOrPropertyMapper).ok();
+  /**
+   * Sets the {@code NameMapper} to be used when mapping column names to be bean properties or map
+   * keys. Beware of the direction of the mappings: <i>from</i> column names <i>to</i> bean
+   * properties (or map keys).
+   *
+   * @param columnMapper The {@code NameMapper} to be used when mapping column names to be bean
+   *     properties or map keys.
+   * @return This {@code SQLQuery} instance
+   */
+  public SQLQuery withMapper(NameMapper columnMapper) {
+    this.nameMapper = Check.notNull(columnMapper).ok();
     return this;
   }
 
+  /**
+   * Executes the query and returns the {@link ResultSet} produced by the JDBC driver. Do <b>not</b>
+   * use this method in combination with the {@code mappify} and {@code beanify} methods as they
+   * will manage the {@code ResultSet} themselves.
+   *
+   * @return The {@code ResultSet} produced by the JDBC driver
+   */
   public ResultSet execute() {
     try {
-      return resultSet();
+      return rs();
     } catch (Throwable t) {
       throw KJSQLException.wrap(t, sql);
     }
   }
 
+  /**
+   * Executes the query and returns the {@link ResultSet} produced by the JDBC driver after having
+   * called {@link ResultSet#next() next()} on it. Do <b>not</b> use this method in combination with
+   * the {@code mappify} and {@code beanify} methods as they will manage the {@code ResultSet}
+   * themselves.
+   *
+   * @return
+   */
   public ResultSet executeAndNext() {
     try {
-      ResultSet rs = resultSet();
+      ResultSet rs = rs();
       if (!rs.next()) {
         throw new KJSQLException("Query returned zero rows");
       }
@@ -125,7 +149,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
    */
   public <T> List<T> getList(Class<T> clazz, int expectedSize) {
     try {
-      ResultSet rs = resultSet();
+      ResultSet rs = rs();
       if (!rs.next()) {
         return Collections.emptyList();
       }
@@ -144,7 +168,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
   public Optional<Row> mappify() {
     try {
       MappifierBox mb = new MappifierBox(nameMapper);
-      return mb.get(resultSet()).mappify();
+      return mb.get(rs()).mappify();
     } catch (Throwable t) {
       throw KJSQLException.wrap(t, sql);
     }
@@ -153,7 +177,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
   public List<Row> mappifyAtMost(int limit) {
     try {
       MappifierBox mb = new MappifierBox(nameMapper);
-      return mb.get(resultSet()).mappifyAtMost(limit);
+      return mb.get(rs()).mappifyAtMost(limit);
     } catch (Throwable t) {
       throw KJSQLException.wrap(t, sql);
     }
@@ -162,7 +186,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
   public List<Row> mappifyAll() {
     try {
       MappifierBox mb = new MappifierBox(nameMapper);
-      return mb.get(resultSet()).mappifyAll();
+      return mb.get(rs()).mappifyAll();
     } catch (Throwable t) {
       throw KJSQLException.wrap(t, sql);
     }
@@ -171,7 +195,7 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
   public List<Row> mappifyAll(int sizeEstimate) {
     try {
       MappifierBox mb = new MappifierBox(nameMapper);
-      List<Row> rows = mb.get(resultSet()).mappifyAll(sizeEstimate);
+      List<Row> rows = mb.get(rs()).mappifyAll(sizeEstimate);
       LOG.trace("Query returned {} record(s)", rows.size());
       return rows;
     } catch (Throwable t) {
@@ -179,10 +203,19 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     }
   }
 
+  public <T> Optional<T> beanify(Class<T> beanClass) {
+    try {
+      BeanifierFactory<T> bf = sql.getBeanifierFactory(beanClass, nameMapper);
+      return bf.getBeanifier(rs()).beanify();
+    } catch (Throwable t) {
+      throw KJSQLException.wrap(t, sql);
+    }
+  }
+
   public <T> Optional<T> beanify(Class<T> beanClass, Supplier<T> beanSupplier) {
     try {
-      BeanifierFactory<T> bb = sql.getBeanifierBox(beanClass, beanSupplier, nameMapper);
-      return bb.getBeanifier(resultSet()).beanify();
+      BeanifierFactory<T> bf = sql.getBeanifierFactory(beanClass, beanSupplier, nameMapper);
+      return bf.getBeanifier(rs()).beanify();
     } catch (Throwable t) {
       throw KJSQLException.wrap(t, sql);
     }
@@ -190,8 +223,8 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
 
   public <T> List<T> beanifyAll(Class<T> beanClass, Supplier<T> beanSupplier) {
     try {
-      BeanifierFactory<T> bb = sql.getBeanifierBox(beanClass, beanSupplier, nameMapper);
-      List<T> beans = bb.getBeanifier(resultSet()).beanifyAll();
+      BeanifierFactory<T> bb = sql.getBeanifierFactory(beanClass, beanSupplier, nameMapper);
+      List<T> beans = bb.getBeanifier(rs()).beanifyAll();
       LOG.trace("Query returned {} record(s)", beans.size());
       return beans;
     } catch (Throwable t) {
@@ -204,15 +237,15 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     close(ps);
   }
 
-  private ResultSet resultSet() throws Throwable {
+  private ResultSet rs() throws Throwable {
     if (rs == null) {
       LOG.trace("Executing query");
-      rs = preparedStatement().executeQuery();
+      rs = ps().executeQuery();
     }
     return rs;
   }
 
-  private PreparedStatement preparedStatement() throws Throwable {
+  private PreparedStatement ps() throws Throwable {
     if (ps == null) {
       ps = con.prepareStatement(sql.getJdbcSQL());
       applyBindings(ps);

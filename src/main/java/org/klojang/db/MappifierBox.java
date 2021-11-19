@@ -24,7 +24,7 @@ public class MappifierBox {
   private final boolean verify;
 
   public MappifierBox() {
-    this(NameMapper.NOOP);
+    this(NameMapper.AS_IS);
   }
 
   public MappifierBox(NameMapper columnToKeyMapper) {

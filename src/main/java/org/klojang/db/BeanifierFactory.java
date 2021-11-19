@@ -10,7 +10,7 @@ import org.klojang.x.db.rs.BeanChannel;
 import org.klojang.x.db.rs.ChannelCache;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
-import static org.klojang.x.db.rs.BeanChannel.createValueTransporters;
+import static org.klojang.x.db.rs.BeanChannel.createChannels;
 import static nl.naturalis.common.StringMethods.implode;
 
 /**
@@ -40,11 +40,15 @@ public class BeanifierFactory<T> {
   private final boolean verify;
 
   public BeanifierFactory(Class<T> beanClass) {
-    this(beanClass, () -> newInstance(beanClass), NameMapper.NOOP);
+    this(beanClass, () -> newInstance(beanClass), NameMapper.AS_IS);
   }
 
   public BeanifierFactory(Class<T> beanClass, Supplier<T> beanSupplier) {
-    this(beanClass, beanSupplier, NameMapper.NOOP);
+    this(beanClass, beanSupplier, NameMapper.AS_IS);
+  }
+
+  public BeanifierFactory(Class<T> beanClass, NameMapper columnToPropertyMapper) {
+    this(beanClass, () -> newInstance(beanClass), columnToPropertyMapper, false);
   }
 
   public BeanifierFactory(
@@ -71,10 +75,10 @@ public class BeanifierFactory<T> {
     if ((channels = ref.getPlain()) == null) {
       synchronized (this) {
         if (ref.get() == null) {
-          // Ask again. Since we're now the only one in here, if pwref.get()
+          // Ask again. Since we're now the only one in here, if ref.get()
           // did *not* return null, another thread had slipped in just after
           // our first null check. That's fine. We are done.
-          channels = createValueTransporters(rs, beanClass, mapper);
+          channels = createChannels(rs, beanClass, mapper);
           ref.set(channels);
         }
       }

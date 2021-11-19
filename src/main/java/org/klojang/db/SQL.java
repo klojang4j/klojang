@@ -51,6 +51,10 @@ public class SQL {
     return new SQL(new SQLNormalizer(sql), bindInfo);
   }
 
+  public static SQLInsertBuilder prepareInsert() {
+    return new SQLInsertBuilder();
+  }
+
   /* These maps are unlikely to grow beyond one, maybe two entries */
   private final Map<Class<?>, BeanBinder<?>> beanBinders = new HashMap<>(4);
   private final Map<Class<?>, BeanifierFactory<?>> beanifiers = new HashMap<>(4);
@@ -71,7 +75,7 @@ public class SQL {
 
   public SQL set(String varName, Object value) {
     Check.notNull(varName, "varName");
-    Check.notNull(value, "value");
+    Check.that(value).is(notNull(), "Template variable \"%s\" must not be null", varName);
     if (vars == null) {
       vars = new ArrayList<>();
     }
@@ -145,11 +149,24 @@ public class SQL {
   }
 
   @SuppressWarnings("unchecked")
-  <T> BeanifierFactory<T> getBeanifierBox(
-      Class<T> beanClass, Supplier<T> beanSupplier, NameMapper columnToPropertyMapper) {
-    return (BeanifierFactory<T>)
-        beanifiers.computeIfAbsent(
-            beanClass, k -> new BeanifierFactory<>(beanClass, beanSupplier, columnToPropertyMapper));
+  <T> BeanifierFactory<T> getBeanifierFactory(Class<T> clazz, NameMapper mapper) {
+    BeanifierFactory<?> bf = beanifiers.get(clazz);
+    if (bf == null) {
+      bf = new BeanifierFactory<>(clazz, mapper);
+      beanifiers.put(clazz, bf);
+    }
+    return (BeanifierFactory<T>) bf;
+  }
+
+  @SuppressWarnings("unchecked")
+  <T> BeanifierFactory<T> getBeanifierFactory(
+      Class<T> clazz, Supplier<T> supplier, NameMapper mapper) {
+    BeanifierFactory<?> bf = beanifiers.get(clazz);
+    if (bf == null) {
+      bf = new BeanifierFactory<>(clazz, supplier, mapper);
+      beanifiers.put(clazz, bf);
+    }
+    return (BeanifierFactory<T>) bf;
   }
 
   private <T extends SQLStatement<?>> T prepare(

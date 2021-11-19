@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -50,12 +51,12 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
   /**
    * Binds the values in the specified JavaBean to the named parameters within the SQL statement.
    * Bean properties that do not correspond to named parameters will be ignored. The effect of
-   * passing anything other than a proper JavaBean (e.g. an {@code InputStream} or a {@code
-   * Collection}) is undefined. The {@code idProperty} argument must be the name of the property
-   * that corresponds to the auto-increment column. The generated value for that column will be
-   * bound back into the bean. Of course, the bean or {@code Map} needs to be modifiable in that
-   * case. If you don't want the auto-increment column to be bound back into the bean or {@code
-   * Map}, just call {@link #bind(Object)}.
+   * passing anything other than a proper JavaBean (e.g. scalars like {@code Integer} or
+   * multi-valued objects like {@code Employee[]} or {@code ArrayList}) is undefined. The {@code
+   * idProperty} argument must be the name of the property that corresponds to the auto-increment
+   * column. The generated value for that column will be bound back into the bean. Of course, the
+   * bean or {@code Map} needs to be modifiable in that case. If you don't want the auto-increment
+   * column to be bound back into the bean or {@code Map}, just call {@link #bind(Object)}.
    *
    * <p>Klojang does not support INSERT statements that generate multiple keys or non-number keys.
    *
@@ -74,8 +75,8 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
    * Map keys that do not correspond to named parameters will be ignored. The {@code idKey} argument
    * must be the name of the map key that corresponds to the auto-increment column. The generated
    * value for that column will be bound back into the {@code Map} under that key. Therefore, make
-   * sure the {@code Map} needs to be modifiable. If you don't want the auto-increment column to be
-   * bound back into the {@code Map}, just call {@link #bind(Map)}.
+   * sure the {@code Map} needs to be modifiable. If you <i>don't</i> want the auto-increment column
+   * to be bound back into the {@code Map}, just call {@link #bind(Map)}.
    *
    * <p>Klojang does not support INSERT statements that generate multiple keys or non-number keys.
    *
@@ -89,7 +90,7 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
     return this;
   }
 
-  public <U> void insertAll(List<U> beans) {
+  public <U> void insertAll(Collection<U> beans) {
     Check.on(illegalState(), bindables).is(empty(), "insertAll not allowed on dirty instance");
     try {
       for (U bean : beans) {
@@ -146,7 +147,11 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
 
   public long executeAndGetId() {
     try {
-      exec(true);
+      try {
+        exec(true);
+      } catch (Throwable t) {
+        throw KJSQLException.wrap(t, getSQL());
+      }
       try (ResultSet rs = ps.getGeneratedKeys()) {
         if (!rs.next()) {
           throw new KJSQLException("No keys were generated");
@@ -155,8 +160,8 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
         }
         return rs.getLong(1);
       }
-    } catch (Throwable t) {
-      throw KJSQLException.wrap(t, getSQL());
+    } catch (SQLException e) {
+      throw new KJSQLException(getSQL(), e);
     } finally {
       reset();
     }

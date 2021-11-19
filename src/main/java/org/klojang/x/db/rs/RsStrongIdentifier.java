@@ -4,8 +4,11 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Arrays;
+import org.klojang.db.SQLTypeNames;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
+import static nl.naturalis.common.ArrayMethods.implode;
+import static nl.naturalis.common.StringMethods.append;
 
 public class RsStrongIdentifier {
 
@@ -26,6 +29,26 @@ public class RsStrongIdentifier {
     } catch (SQLException e) {
       throw ExceptionMethods.uncheck(e);
     }
+  }
+
+  public String[] getColumnNames() {
+    return colNames;
+  }
+
+  public String columnsToString() {
+    return implode(colNames);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder(colNames.length * 20);
+    for (int i = 0; i < colNames.length; ++i) {
+      if (i != 0) {
+        sb.append(", ");
+      }
+      append(sb, colNames[i], " ", SQLTypeNames.getTypeName(colTypes[i]));
+    }
+    return sb.toString();
   }
 
   private int hash = 0;

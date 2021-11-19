@@ -3,19 +3,20 @@ package org.klojang.db;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.Optional;
+import nl.naturalis.common.Emptyable;
 
 /**
  * Converts JDBC {@link ResultSet result sets} to JavaBeans. Contrary to {@link SQLQuery} a {@code
  * ResultSetBeanifier} is agnostic about how you obtained the {@code ResultSet} and does not help
  * you with it. You cannot instantiate a {@code ResultSetBeanifier} directly. You obtain one from a
- * {@link BeanifierFactory}. When using a {@code ResultSetBeanifier} to iterate over a {@code ResultSet}
- * you should not call {@link ResultSet#next()}) yourself. This is done by the {@code
+ * {@link BeanifierFactory}. When using a {@code ResultSetBeanifier} to iterate over a {@code
+ * ResultSet} you should not call {@link ResultSet#next()}) yourself. This is done by the {@code
  * ResultSetBeanifier}.
  *
  * @author Ayco Holleman
  * @param <T> The type of the JavaBean
  */
-public interface ResultSetBeanifier<T> extends AutoCloseable {
+public interface ResultSetBeanifier<T> extends AutoCloseable, Emptyable {
 
   /**
    * Converts the current row within the specified {@code ResultSet} into a JavaBean. If the {@code
