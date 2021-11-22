@@ -120,7 +120,7 @@ public class Row {
    * @return An unmodifiable {@code Map} containing the column-name-to-column-value mappings
    */
   public Map<String, Object> toMap() {
-    return Map.copyOf(map);
+    return Collections.unmodifiableMap(map);
   }
 
   /**
