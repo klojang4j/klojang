@@ -1,17 +1,15 @@
 package org.klojang.db;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import org.klojang.render.NameMapper;
 import org.klojang.render.RenderSession;
-import org.klojang.template.PathResolver;
 import org.klojang.template.Template;
 import org.klojang.x.db.ps.BeanBinder;
 import org.klojang.x.db.ps.MapBinder;
@@ -48,7 +46,7 @@ import static nl.naturalis.common.check.CommonChecks.notNull;
  *
  * @author Ayco Holleman
  */
-public class SQL implements PathResolver {
+public class SQL {
 
   private static final Logger LOG = LoggerFactory.getLogger(SQL.class);
 
@@ -80,6 +78,7 @@ public class SQL implements PathResolver {
   private final SQLNormalizer normalizer;
   private final BindInfo bindInfo;
 
+  private Template template;
   private List<Tuple<String, Object>> vars;
   private String jdbcSQL;
 
@@ -128,7 +127,7 @@ public class SQL implements PathResolver {
    *
    * @return The original, unparsed, user-provided SQL
    */
-  public String getOriginalSQL() {
+  public String getUnparsedSQL() {
     return normalizer.getUnparsedSQL();
   }
 
@@ -213,7 +212,9 @@ public class SQL implements PathResolver {
     try {
       if (vars != null) {
         LOG.debug("Processing SQL template variables");
-        Template template = Template.fromResolver(this, "sql://" + this.hashCode());
+        if (template == null) {
+          template = Template.fromString(getNormalizedSQL());
+        }
         RenderSession session = template.newRenderSession();
         for (Tuple<String, Object> var : vars) {
           LOG.debug("** Variable \"{}\": {}", var.getLeft(), var.getRight());
@@ -228,15 +229,5 @@ public class SQL implements PathResolver {
       unlock();
       throw KJSQLException.wrap(t, this);
     }
-  }
-
-  @Override
-  public Optional<Boolean> isValidPath(String path) {
-    return Optional.of(Boolean.TRUE);
-  }
-
-  @Override
-  public InputStream resolvePath(String path) throws IOException {
-    return new ByteArrayInputStream(getNormalizedSQL().getBytes(StandardCharsets.UTF_8));
   }
 }
