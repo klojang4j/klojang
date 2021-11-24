@@ -21,7 +21,7 @@ import static nl.naturalis.common.check.CommonChecks.blank;
 class SQLNormalizer {
 
   private static final String ERR_ADJACENT_PARAMS =
-      "Adjacent parameters cannot yield valid SQL (positions %d,%d)";
+      "Adjacent parameters cannot yield valid SQL (at positions %d,%d)";
   private static final String ERR_EMPTY_NAME = "Zero-length parameter name at position %d";
 
   private final String unparsed;

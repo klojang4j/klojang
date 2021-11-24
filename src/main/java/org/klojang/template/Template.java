@@ -103,6 +103,13 @@ public class Template {
     return TemplateCache.INSTANCE.get(ROOT_TEMPLATE_NAME, new TemplateId(path));
   }
 
+  public static Template fromResolver(PathResolver pathResolver, String path)
+      throws ParseException {
+    Check.notNull(pathResolver, "pathResolver");
+    Check.notNull(path, "path");
+    return TemplateCache.INSTANCE.get(ROOT_TEMPLATE_NAME, new TemplateId(pathResolver, path));
+  }
+
   private final String name;
   private final TemplateId id;
   private final List<Part> parts;

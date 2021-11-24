@@ -5,7 +5,7 @@ import java.util.Objects;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.IOMethods;
 import nl.naturalis.common.check.Check;
-import static org.klojang.template.TemplateSourceType.COMPUTED;
+import static org.klojang.template.TemplateSourceType.RESOLVER;
 import static org.klojang.template.TemplateSourceType.FILE_SYSTEM;
 import static org.klojang.template.TemplateSourceType.RESOURCE;
 import static org.klojang.template.TemplateSourceType.STRING;
@@ -15,7 +15,7 @@ import static nl.naturalis.common.check.CommonChecks.notNull;
 
 public class TemplateId {
 
-  private static final String ERR_NO_PATH = "Cannot load source for without knowing path (%s)";
+  private static final String ERR_NO_PATH = "Cannot load source for %s";
 
   private final TemplateSourceType tst;
   private final PathResolver pathResolver;
@@ -65,7 +65,7 @@ public class TemplateId {
   TemplateId(PathResolver pathResolver, String path) {
     this.pathResolver = Check.notNull(pathResolver, "pathResolver").ok();
     this.path = Check.notNull(path, "path").ok();
-    this.tst = COMPUTED;
+    this.tst = RESOLVER;
     this.clazz = null;
   }
 

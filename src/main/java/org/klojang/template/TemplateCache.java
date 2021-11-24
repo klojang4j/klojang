@@ -35,7 +35,7 @@ class TemplateCache {
       cache = new HashMap<>(32);
       entries = null;
     } else {
-      cache = new HashMap<>(maxSize * (int) Math.ceil(10 / 7) + 1, (float) 7 / 10);
+      cache = new HashMap<>((int) (maxSize / .75) + 1);
       entries = new LinkedList<>();
     }
   }
@@ -69,7 +69,7 @@ class TemplateCache {
       }
       cache.put(id.path(), t);
     } else {
-      LOG.trace("Found!");
+      LOG.trace("Found");
     }
     return t;
   }

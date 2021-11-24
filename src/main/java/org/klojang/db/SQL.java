@@ -1,15 +1,17 @@
 package org.klojang.db;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import org.klojang.render.NameMapper;
 import org.klojang.render.RenderSession;
+import org.klojang.template.PathResolver;
 import org.klojang.template.Template;
 import org.klojang.x.db.ps.BeanBinder;
 import org.klojang.x.db.ps.MapBinder;
@@ -33,10 +35,10 @@ import static nl.naturalis.common.check.CommonChecks.notNull;
  *   <li>Using common (but not JDBC-supported) named parameters for the values in WHERE, HAVING and
  *       LIMIT clauses. Named parameters start with a colon. E.g. {@code :firstName}. Named
  *       parameters are not bound in the {@code SQL} instance itself, but in the {@code SQLQuery},
- *       {@code SQLInsert} or {@link SQLUpdate} obtained from it.
+ *       {@code SQLInsert} or {@link SQLUpdate} instance obtained from it.
  *   <li>Using Klojang template variables for the other parts of a query. Although this basically
  *       lets you parametrize whatever suits you, it is especially meant to parametrize the sort
- *       column in the ORDER BY cluase - a common use case in web applications. The Klojang template
+ *       column in the ORDER BY cluase - a common use case in web applications. Klojang template
  *       variables must be set in the {@code SQL} instance itself.
  * </ol>
  *
@@ -46,7 +48,7 @@ import static nl.naturalis.common.check.CommonChecks.notNull;
  *
  * @author Ayco Holleman
  */
-public class SQL {
+public class SQL implements PathResolver {
 
   private static final Logger LOG = LoggerFactory.getLogger(SQL.class);
 
@@ -78,7 +80,6 @@ public class SQL {
   private final SQLNormalizer normalizer;
   private final BindInfo bindInfo;
 
-  private Template template;
   private List<Tuple<String, Object>> vars;
   private String jdbcSQL;
 
@@ -89,7 +90,7 @@ public class SQL {
 
   public SQL set(String varName, Object value) {
     Check.notNull(varName, "varName");
-    Check.that(value).is(notNull(), "Template variable \"%s\" must not be null", varName);
+    Check.that(value).is(notNull(), "Value of %s must not be null", varName);
     if (vars == null) {
       vars = new ArrayList<>();
     }
@@ -121,14 +122,32 @@ public class SQL {
     return prepare(con, SQLUpdate::new);
   }
 
+  /**
+   * Returns the original, unparsed, user-provided SQL, with all named parameters and Klojand
+   * template variables still in it.
+   *
+   * @return The original, unparsed, user-provided SQL
+   */
   public String getOriginalSQL() {
     return normalizer.getUnparsedSQL();
   }
 
+  /**
+   * Returns an SQL string in which all named parameters have been replaced with standard JDBC
+   * positional parameters ('?'), but with the Klojang template variables still in it.
+   *
+   * @return An SQL string in which all named parameters have been replaced with standard JDBC
+   *     positional parameters
+   */
   public String getNormalizedSQL() {
     return normalizer.getNormalizedSQL();
   }
 
+  /**
+   * Returns fully JDBC-compliant, executable SQL.
+   *
+   * @return Fully JDBC-compliant, executable SQL
+   */
   public String getJdbcSQL() {
     return Check.that(jdbcSQL).is(notNull(), ERR_NO_JDBC_SQL).ok();
   }
@@ -158,8 +177,12 @@ public class SQL {
 
   @SuppressWarnings("unchecked")
   <T> BeanBinder<T> getBeanBinder(Class<T> beanClass) {
-    return (BeanBinder<T>)
-        beanBinders.computeIfAbsent(beanClass, k -> new BeanBinder<>(k, getParameters(), bindInfo));
+    BeanBinder<T> bb = (BeanBinder<T>) beanBinders.get(beanClass);
+    if (bb == null) {
+      bb = new BeanBinder<>(beanClass, getParameters(), bindInfo);
+      beanBinders.put(beanClass, bb);
+    }
+    return bb;
   }
 
   @SuppressWarnings("unchecked")
@@ -190,9 +213,7 @@ public class SQL {
     try {
       if (vars != null) {
         LOG.debug("Processing SQL template variables");
-        if (template == null) {
-          template = Template.fromString(getNormalizedSQL());
-        }
+        Template template = Template.fromResolver(this, "sql://" + this.hashCode());
         RenderSession session = template.newRenderSession();
         for (Tuple<String, Object> var : vars) {
           LOG.debug("** Variable \"{}\": {}", var.getLeft(), var.getRight());
@@ -207,5 +228,15 @@ public class SQL {
       unlock();
       throw KJSQLException.wrap(t, this);
     }
+  }
+
+  @Override
+  public Optional<Boolean> isValidPath(String path) {
+    return Optional.of(Boolean.TRUE);
+  }
+
+  @Override
+  public InputStream resolvePath(String path) throws IOException {
+    return new ByteArrayInputStream(getNormalizedSQL().getBytes(StandardCharsets.UTF_8));
   }
 }
