@@ -24,11 +24,25 @@ import static nl.naturalis.common.check.CommonChecks.no;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 
 /**
- * A container for a single SQL query. The SQL query is assumed to be parametrized using named
- * parameters. This class functions as a factory for {@link SQLQuery}, {@link SQLInsert} and {@link
- * SQLUpdate} instances. If the query contains a lot of parameters and it is going to be executed
- * often, storing the {@code SQL} instance into a static final variable (e.g. in your DAO class) may
- * improve performance.
+ * A container for a single SQL query and a factory for {@link SQLQuery}, {@link SQLInsert} and
+ * {@link SQLUpdate} instances. The {@code SQL} class lets you parametrize SQL in two ways:
+ *
+ * <p>
+ *
+ * <ol>
+ *   <li>Using common (but not JDBC-supported) named parameters for the values in WHERE, HAVING and
+ *       LIMIT clauses. Named parameters start with a colon. E.g. {@code :firstName}. Named
+ *       parameters are not bound in the {@code SQL} instance itself, but in the {@code SQLQuery},
+ *       {@code SQLInsert} or {@link SQLUpdate} obtained from it.
+ *   <li>Using Klojang template variables for the other parts of a query. Although this basically
+ *       lets you parametrize whatever suits you, it is especially meant to parametrize the sort
+ *       column in the ORDER BY cluase - a common use case in web applications. The Klojang template
+ *       variables must be set in the {@code SQL} instance itself.
+ * </ol>
+ *
+ * <p>If the query contains many named parameters and Klojang template variables, and is going to be
+ * executed often, you might want to cache the {@code SQL} instance (e.g. as a static final variable
+ * in your DAO class).
  *
  * @author Ayco Holleman
  */

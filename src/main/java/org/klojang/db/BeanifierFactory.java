@@ -14,17 +14,16 @@ import static org.klojang.x.db.rs.BeanChannel.createChannels;
 import static nl.naturalis.common.StringMethods.implode;
 
 /**
- * A factory for {@link ResultSetBeanifier} instances. You should create a separate {@code
- * BeanifierFactory} instance for each unique SELECT query in your application. You retrieve a
- * {@code ResultSetBeanifier} by passing a {@link ResultSet} to the {@link #getBeanifier(ResultSet)
- * getBeanifier} method. The first time you call this method on a {@code BeanifierFactory}, the
- * result set's metadata is inspected in order to set up and cache the beanification logic.
- * Subsequent calls directly apply this logic. Hence subsequent calls should be done with {@link
- * ResultSet} instances resulting from the same SQL query. (More precisely: subsequent {@code
- * ResultSet} instances passed to {@code getBeanifier} must be <i>compatible</i> with the first one.
- * They must have the same number of columns and their data types must match those of the first
- * {@code ResultSet}.) Since the set-up phase is somewhat expensive, you might want to cache the
- * {@code BeanifierFactory} (e.g. in a private static field).
+ * A factory for {@link ResultSetBeanifier} instances. You should have one {@code BeanifierFactory}
+ * instance per SELECT query. You retrieve a {@code ResultSetBeanifier} from a {@code
+ * BeanifierFactory} by passing a {@link ResultSet} to its {@link #getBeanifier(ResultSet)
+ * getBeanifier} method. The first time you call this method on a {@code BeanifierFactory} instance,
+ * it inspects result set's metadata in order to set up and cache the beanification logic.
+ * Subsequent calls bypass the setup phase and directly apply the beanification logic. Hence
+ * subsequent calls should be done with result sets containing the same columns. That is, they must
+ * have the same number of columns and their data types must match those of the first {@code
+ * ResultSet}.) Since the set-up phase is somewhat expensive, you might want to cache the {@code
+ * BeanifierFactory} (e.g. in a private static field).
  *
  * @author Ayco Holleman
  * @param <T>

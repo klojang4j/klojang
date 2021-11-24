@@ -6,15 +6,17 @@ import java.util.Optional;
 import nl.naturalis.common.Emptyable;
 
 /**
- * Converts JDBC {@link ResultSet result sets} to JavaBeans. Contrary to {@link SQLQuery} a {@code
- * ResultSetBeanifier} is agnostic about how you obtained the {@code ResultSet} and does not help
- * you with it. You cannot instantiate a {@code ResultSetBeanifier} directly. You obtain one from a
- * {@link BeanifierFactory}. When using a {@code ResultSetBeanifier} to iterate over a {@code
- * ResultSet} you should not call {@link ResultSet#next()}) yourself. This is done by the {@code
- * ResultSetBeanifier}.
+ * Converts JDBC {@link ResultSet result sets} to JavaBeans. Compared to the {@link SQLQuery} class
+ * the {@code ResultSetBeanifier} interface and its implementations stay very close to the JDBC
+ * metal. A {@code ResultSetBeanifier} has no opinion about how you obtained the {@code ResultSet}.
+ * It just converts it to a predefined type of JavaBean. You cannot instantiate a {@code
+ * ResultSetBeanifier} directly. You obtain one from a {@link BeanifierFactory}. When using a {@code
+ * ResultSetBeanifier} to iterate over a {@code ResultSet}, do not call {@link ResultSet#next()})
+ * yourself. This is done by the {@code ResultSetBeanifier}. Just keep calling {@link #beanify()}
+ * unit an empty {@code Optional} is returned.
  *
  * @author Ayco Holleman
- * @param <T> The type of the JavaBean
+ * @param <T> The type of the JavaBean to which the {@code ResultSet} is converted.
  */
 public interface ResultSetBeanifier<T> extends AutoCloseable, Emptyable {
 
