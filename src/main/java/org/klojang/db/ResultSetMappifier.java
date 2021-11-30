@@ -4,6 +4,11 @@ import java.sql.ResultSet;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Converts JDBC {@link ResultSet result sets} to {@link Row} objects.
+ *
+ * @author Ayco Holleman
+ */
 public interface ResultSetMappifier {
 
   /**

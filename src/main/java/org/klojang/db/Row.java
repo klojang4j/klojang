@@ -11,19 +11,21 @@ import nl.naturalis.common.check.Check;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.common.check.CommonChecks.between;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
+import static nl.naturalis.common.check.CommonChecks.negative;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 
 /**
- * A thin wrapper around a {@code Map<String,Object>} instance that mimicks some of the behaviour of
- * the {@link ResultSet} class. {@code Row} objects are produced by a {@link ResultSetMappifier} and
- * can be quickly pushed up into the higher layers of your application without them actually
- * acquiring an awkward dependency on {@code java.sql}. Up there they can be inserted directly into
- * templates, without having to register a separate {@link Accessor} for them. (Under the hood an
- * automatically registered {@code RowAccessor} is used.)
+ * A thin wrapper around a {@code LinkedHashMap<String,Object>} instance that mimicks some of the
+ * behaviour of the {@link ResultSet} class. {@code Row} objects are produced by a {@link
+ * ResultSetMappifier} and can be quickly pushed up into the higher layers of your application
+ * without them actually acquiring an awkward dependency on {@code java.sql}. Up there they can be
+ * inserted directly into templates, without having to register a separate {@link Accessor} for
+ * them.
  *
  * <p>Note that an important difference between a {@code Row} and a {@code ResultSet} is that a
- * {@code Row} is writable, too. Also, contrary to JDBC, column numbers need to be specified in a
- * zero-based manner.
+ * {@code Row} is writable, too. As with a {@code ResultSet} you can access column values both by
+ * column name and by column number, but, unlike {@code ResultSet}, column numbers need to be
+ * specified in a zero-based manner.
  *
  * @author Ayco Holleman
  */
@@ -47,19 +49,29 @@ public class Row {
 
   /**
    * Creates a new {@code Row} from the data in the specified map. The specified extra capacity is
-   * reserved for the addition of new "columns" (i.e. map keys).
+   * reserved for the addition of new "columns" (i.e. map keys). Null keys are not allowed.
    *
-   * @param data The data for the {@code Row}.
+   * @param map The data for the {@code Row}.
    */
-  public Row(Map<String, Object> data, int extraCapacity) {
-    map = new LinkedHashMap<>(1 + ((data.size() + extraCapacity) * 4 / 3));
-    data.forEach(
+  public Row(Map<String, Object> map, int extraCapacity) {
+    Check.notNull(map, "data");
+    Check.that(extraCapacity, "extraCapacity").isNot(negative());
+    int cap = 1 + ((map.size() + extraCapacity) * 4 / 3);
+    LinkedHashMap<String, Object> m = new LinkedHashMap<>(cap);
+    map.forEach(
         (k, v) -> {
           Check.that(k).is(notNull(), "Map must not contain null keys");
-          map.put(k, v);
+          m.put(k, v);
         });
+    this.map = m;
   }
 
+  /**
+   * Creates a new {@code Row} with enough capacity to contain the specified number of "columns"
+   * (i&#46;e&#46; map keys).
+   *
+   * @param columnCount
+   */
   public Row(int columnCount) {
     map = new LinkedHashMap<>(1 + (columnCount * 4 / 3));
   }
@@ -85,7 +97,7 @@ public class Row {
   }
 
   /**
-   * Returns the index of the column with the specified name.
+   * Returns the (zero-based) index of the column with the specified name.
    *
    * @param colName The column name
    * @return The column index (zero-based)
