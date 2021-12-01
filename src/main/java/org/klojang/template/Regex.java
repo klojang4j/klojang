@@ -9,7 +9,7 @@ import static nl.naturalis.common.ObjectMethods.ifNotNull;
 
 class Regex {
 
-  private static final String SYSPROP_BASE = "org.klojang.";
+  private static final String SYSPROP_BASE = "org.klojang.template";
   private static final String SYSPROP_VS = SYSPROP_BASE + "varStart";
   private static final String SYSPROP_TS = SYSPROP_BASE + "tmplStart";
   private static final String SYSPROP_NE = SYSPROP_BASE + "nameEnd";
@@ -39,45 +39,23 @@ class Regex {
   // A name is any sequence of one or more characters, excluding colon and percentage sign
   private static final String NAME = "([^" + forbiddenChars() + "]+)";
 
-  /* private */
   static final String VARIABLE = VS + "(" + NAME + ":)?" + NAME + NE;
 
-  /* private */
   static final String VARIABLE_CMT = "<!--\\s*(" + VARIABLE + ")\\s*-->";
 
-  /* private */
   static final String NESTED = rgxTemplate(1);
 
-  /* private */
   static final String NESTED_CMT = "<!--\\s*(" + rgxTemplate(2) + ")\\s*-->";
 
-  /* private  - only used for error reporting (dangling end-of-template) */
   static final String TMPL_END = TS + "end:" + NAME + NE;
 
-  /* private */
   static final String INCLUDE = TS + "include:(" + NAME + ":)?" + NAME + NE;
 
-  /* private */
   static final String INCLUDE_CMT = "<!--\\s*(" + INCLUDE + ")\\s*-->";
 
-  /* private  - only used for error reporting (ditch block not terminated) */
   static final String DITCH_TOKEN = "<!--%%-->";
 
-  /* private */
-  /*
-   * m: multi-line ^ and $ match begin/end of line, not of entire string
-   * s: dot also matches newline chars
-   * U: un-greedy; used by ditch block to find next rather than last ditch token
-   *    following current ditch token
-   *
-   * Actually, however, the U modifier does not work, at least not as expected.
-   * The regex below __does__ the expected and desired thing on regex101.com,
-   * but not in Java's regex implementation. Therefore, for now, we'll just use
-   * the ditch token itself to programmatically plough through the source and
-   * find pairs of consecutive ditch tokens. Eveyrhing inside them (as well as
-   * the ditch tokens themselves) is going to be purged from the template.
-   */
-  static final String DITCH_BLOCK = "(?msU)" + DITCH_TOKEN + ".*" + DITCH_TOKEN;
+  static final String DITCH_BLOCK = "(?ms)" + DITCH_TOKEN + ".*?" + DITCH_TOKEN;
 
   // Equivalent to prefixing the regular expression with "(?ms)"
   private static final int MS_MODIFIERS = Pattern.MULTILINE | Pattern.DOTALL;
@@ -90,7 +68,6 @@ class Regex {
   static final Pattern REGEX_INCLUDE_CMT = compile(INCLUDE_CMT);
   static final Pattern REGEX_DITCH_BLOCK = compile(DITCH_BLOCK);
   static final Pattern REGEX_DITCH_TOKEN = compile(DITCH_TOKEN);
-  // ERROR REPORTING PURPOSES ONLY:
   static final Pattern REGEX_TMPL_END = compile(TMPL_END);
 
   static void printAll() {

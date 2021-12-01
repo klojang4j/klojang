@@ -58,6 +58,32 @@ class Parser {
    * created by the Parser.
    */
   private static List<Part> purgeDitchBlocks(String src) throws ParseException {
+    Matcher m = REGEX_DITCH_BLOCK.matcher(src);
+    if (!m.find()) {
+      return Collections.singletonList(new UnparsedPart(src, 0));
+    }
+    List<Part> parts = new ArrayList<>();
+    UnparsedPart last = null;
+    int end = 0;
+    do {
+      int start = m.start();
+      if (start > end) {
+        parts.add(last = new UnparsedPart(src.substring(end, start), end));
+      }
+      end = m.end();
+    } while (m.find());
+    if (end < src.length()) {
+      parts.add(last = new UnparsedPart(src.substring(end), end));
+    }
+    int i = last.text().indexOf(DITCH_TOKEN);
+    if (i != -1) {
+      throw ditchBlockNotTerminated(src, last.start() + i);
+    }
+    return parts;
+  }
+
+  @SuppressWarnings("unused")
+  private static List<Part> purgeDitchBlocks_old(String src) throws ParseException {
     Matcher m = REGEX_DITCH_TOKEN.matcher(src);
     if (!m.find()) {
       return Collections.singletonList(new UnparsedPart(src, 0));

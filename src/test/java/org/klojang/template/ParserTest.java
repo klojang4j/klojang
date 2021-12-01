@@ -2,10 +2,12 @@ package org.klojang.template;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.klojang.render.RenderException;
+import nl.naturalis.common.IOMethods;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class TemplateParserTest {
+public class ParserTest {
 
   @Test
   public void parseVariables00() throws ParseException {
@@ -66,7 +68,7 @@ public class TemplateParserTest {
 
   @Test
   public void parseNestedTemplates00() throws ParseException {
-    String path = "TemplateParserTest.parseNestedTemplates00.html";
+    String path = "ParserTest.parseNestedTemplates00.html";
     Template template = Template.fromResource(getClass(), path);
     // System.out.println(template);
     List<Part> parts = template.getParts();
@@ -84,7 +86,7 @@ public class TemplateParserTest {
 
   @Test
   public void parseNestedTemplates01() throws ParseException {
-    String path = "TemplateParserTest.parseNestedTemplates01.html";
+    String path = "ParserTest.parseNestedTemplates01.html";
     Template template = Template.fromResource(getClass(), path);
     // System.out.println(template);
     List<Part> parts = template.getParts();
@@ -102,7 +104,7 @@ public class TemplateParserTest {
 
   @Test
   public void parseIncludedTemplates00() throws ParseException {
-    String path = "TemplateParserTest.parseIncludedTemplates00.html";
+    String path = "ParserTest.parseIncludedTemplates00.html";
     Template template = Template.fromResource(getClass(), path);
     // System.out.println(template);
     List<Part> parts = template.getParts();
@@ -124,7 +126,7 @@ public class TemplateParserTest {
 
   @Test
   public void parseIncludedTemplates01() throws ParseException {
-    String path = "TemplateParserTest.parseIncludedTemplates01.html";
+    String path = "ParserTest.parseIncludedTemplates01.html";
     Template template = Template.fromResource(getClass(), path);
     // System.out.println(template);
     List<Part> parts = template.getParts();
@@ -144,11 +146,39 @@ public class TemplateParserTest {
     assertTrue(t.getNames().contains("age"));
   }
 
-  public void testDitchBlock00() {}
+  @Test
+  public void testDitchBlock00() throws ParseException {
+    String path = "ParserTest.parseDitchBlock00.html";
+    Template template = Template.fromResource(getClass(), path);
+    String expected = IOMethods.toString(getClass(), "ParserTest.parseDitchBlock00.expected.html");
+    String actual = template.newRenderSession().render();
+    assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testDitchBlock01() throws ParseException, RenderException {
+    String path = "ParserTest.parseDitchBlock01.html";
+    Template template = Template.fromResource(getClass(), path);
+    String expected = IOMethods.toString(getClass(), "ParserTest.parseDitchBlock01.expected.html");
+    String actual = template.newRenderSession().set("foo", "bar").render();
+    assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testDitchBlock02() {
+    String path = "ParserTest.parseDitchBlock02.html";
+    ParseException e =
+        assertThrows(
+            ParseException.class,
+            () -> {
+              Template.fromResource(getClass(), path);
+            });
+    assertTrue(e.getMessage().endsWith("ditch block not terminated"));
+  }
 
   @Test
   public void allTogetherNow00() throws ParseException {
-    String path = "TemplateParserTest.allTogetherNow00.html";
+    String path = "ParserTest.allTogetherNow00.html";
     Template template = Template.fromResource(getClass(), path);
     TemplateUtils.printParts(template, System.out);
   }

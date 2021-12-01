@@ -4,6 +4,7 @@ import java.util.regex.Matcher;
 import org.junit.jupiter.api.Test;
 import nl.naturalis.common.IOMethods;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.klojang.template.Regex.*;
@@ -129,6 +130,26 @@ public class RegexTest {
     Matcher m = REGEX_DITCH_TOKEN.matcher("Foo\n<!--%%-->Multi-line ditch block\n<!--%%-->BAR");
     assertTrue(m.find());
     assertTrue(m.find());
+  }
+
+  @Test
+  public void ditch03() {
+    String s = IOMethods.toString(getClass(), "RegexTest.ditch03.html");
+    Matcher m = REGEX_DITCH_BLOCK.matcher(s);
+    assertTrue(m.find());
+    assertTrue(m.find());
+    assertTrue(m.find());
+    assertFalse(m.find());
+  }
+
+  @Test
+  public void ditch04() {
+    String s = IOMethods.toString(getClass(), "RegexTest.ditch04.html");
+    Matcher m = REGEX_DITCH_BLOCK.matcher(s);
+    assertTrue(m.find());
+    assertTrue(m.find());
+    assertTrue(m.find());
+    assertFalse(m.find());
   }
 
   @Test
