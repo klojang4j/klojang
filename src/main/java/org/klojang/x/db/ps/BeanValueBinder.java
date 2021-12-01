@@ -13,7 +13,13 @@ import nl.naturalis.common.ClassMethods;
 import nl.naturalis.common.invoke.Getter;
 import nl.naturalis.common.invoke.GetterFactory;
 
-/* Binds a single value from a JavaBean into a PreparedStatement */
+/**
+ * Binds a single value from a JavaBean into a PreparedStatement.
+ *
+ * @author Ayco Holleman
+ * @param <FIELD_TYPE>
+ * @param <PARAM_TYPE>
+ */
 class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
 
   private static final Logger LOG = LoggerFactory.getLogger(BeanValueBinder.class);

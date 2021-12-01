@@ -24,23 +24,41 @@ import static nl.naturalis.common.check.CommonChecks.no;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 
 /**
- * A container for a single SQL query and a factory for {@link SQLQuery}, {@link SQLInsert} and
- * {@link SQLUpdate} instances. The {@code SQL} class lets you parametrize SQL in two ways:
+ * A factory for {@link SQLQuery}, {@link SQLInsert} and {@link SQLUpdate} instances. The {@code
+ * SQL} class lets you parametrize SQL in two ways:
  *
  * <p>
  *
  * <ol>
- *   <li>Using common (but not JDBC-supported) named parameters for the values in WHERE, HAVING and
- *       LIMIT clauses. Named parameters start with a colon. E.g. {@code :firstName}. Named
- *       parameters are not bound in the {@code SQL} instance itself, but in the {@code SQLQuery},
- *       {@code SQLInsert} or {@link SQLUpdate} instance obtained from it.
+ *   <li>Using named parameters for values in WHERE, HAVING and LIMIT clauses. Named parameters
+ *       start with a colon. For example: {@code :firstName}. Named parameters are not bound in the
+ *       {@code SQL} instance itself, but in the {@code SQLQuery}, {@code SQLInsert} or {@link
+ *       SQLUpdate} instance obtained from it.
  *   <li>Using Klojang template variables for the other parts of a query. Although this basically
- *       lets you parametrize whatever suits you, it is especially meant to parametrize the sort
- *       column in the ORDER BY cluase - a common use case in web applications. Klojang template
- *       variables must be set in the {@code SQL} instance itself.
+ *       lets you parametrize whatever makes you happy, it is especially meant to parametrize the
+ *       sort column in the ORDER BY cluase - a common use case in web applications. Klojang
+ *       template variables must be set in the {@code SQL} instance itself.
  * </ol>
  *
- * <p>If the query contains many named parameters and Klojang template variables, and is going to be
+ * <p>In other words, the SQL fed into an instance of this class might look like this:
+ *
+ * <blockquote>
+ *
+ * <pre>{@code
+ * SELECT *
+ *   FROM EMPLOYEE
+ *  WHERE FIRST_NAME = :firstName
+ *    AND LAST_NAME = :lastName
+ *  ORDER BY ~%sortColumn%
+ * }</pre>
+ *
+ * </blockquote>
+ *
+ * <p>You would then set the {@code age} and {@code salary} variables in the {@code SQL} instance,
+ * request a {@link SQLQuery} from it, and then bind the {@code firstName} and {@code lastName}
+ * parameters in the {@code SQLQuery} instance.
+ *
+ * <p>If the SQL contains many named parameters and Klojang template variables, and is going to be
  * executed often, you might want to cache the {@code SQL} instance (e.g. as a static final variable
  * in your DAO class).
  *
@@ -87,6 +105,13 @@ public class SQL {
     this.bindInfo = bindInfo;
   }
 
+  /**
+   * Sets the value of a Klojang template variable within the SQL.
+   *
+   * @param varName The name of the variable
+   * @param value The value to give it
+   * @return This {@code SQL} instance
+   */
   public SQL set(String varName, Object value) {
     Check.notNull(varName, "varName");
     Check.that(value).is(notNull(), "Value of %s must not be null", varName);
@@ -97,46 +122,120 @@ public class SQL {
     return this;
   }
 
+  /**
+   * If you decide to go along and parametrize the sort column using a variable named {@code
+   * ~%sortColumn%}, this method lets you set the value for that variable.
+   *
+   * @param sortColumn The column on which to sort
+   * @return This {@code SQL} instance
+   */
   public SQL setSortColumn(Object sortColumn) {
     return set("sortColumn", sortColumn);
   }
 
+  /**
+   * If you decide to go along and parametrize the sort order using a variable named {@code
+   * ~%sortOrder%}, this method lets you set the value for that variable. Calling {@code toString()}
+   * on the argument must yield "ASC", "DESC" or an empty string. The argument may also be a {@code
+   * Boolean} with {@code false} being translated into "ASC" and {@code true} into "DESC".
+   *
+   * @param sortOrder The sort order
+   * @return This {@code SQL} instance
+   */
   public SQL setSortOrder(Object sortOrder) {
-    return set("sortOrder", sortOrder);
+    return (sortOrder instanceof Boolean)
+        ? setDescending((Boolean) sortOrder)
+        : set("sortOrder", sortOrder);
   }
 
+  /**
+   * Sets the value of the {@code ~%sortOrder%} variable to "DESC" is the argument equals {@code
+   * true} and to "ASC" if the argument equals {@code false}. This presumes (and requires) that you
+   * that variable in your SQL template.
+   *
+   * @param isDescending Whether to sort in descending order
+   * @return This {@code SQL} instance
+   */
+  public SQL setDescending(boolean isDescending) {
+    return set("sortOrder", isDescending ? "DESC" : "ASC");
+  }
+
+  /**
+   * Sets the values of the values of the {@code ~%sortColumn%} and {@code ~%sortOrder%} variables.
+   * This presumes (and requires) that you those variables in your SQL template.
+   *
+   * @param sortColumn The column on which to sort
+   * @param sortOrder The sort order
+   * @return This {@code SQL} instance
+   */
   public SQL setOrderBy(Object sortColumn, Object sortOrder) {
     return setSortColumn(sortColumn).setSortOrder(sortOrder);
   }
 
+  /**
+   * Sets the values of the values of the {@code ~%sortColumn%} and {@code ~%sortOrder%} variables.
+   * This presumes (and requires) that you those variables in your SQL template.
+   *
+   * @param sortColumn
+   * @param isDescending
+   * @return This {@code SQL} instance
+   */
+  public SQL setOrderBy(Object sortColumn, boolean isDescending) {
+    return setSortColumn(sortColumn).setDescending(isDescending);
+  }
+
+  /**
+   * Produces a {@link SQLQuery} instance from the SQL passed in through one of the {@link
+   * #create(String) create} methods. Calling this method for SQL that is not a SELECT statement has
+   * undefined consequences.
+   *
+   * @param con The database connection to use when executing the statement
+   * @return
+   */
   public SQLQuery prepareQuery(Connection con) {
     return prepare(con, SQLQuery::new);
   }
 
+  /**
+   * Produces a {@link SQLInsert} instance from the SQL passed in through one of the {@link
+   * #create(String) create} methods. Calling this method for SQL that is not an INSERT statement
+   * has undefined consequences.
+   *
+   * @param con The database connection to use when executing the statement
+   * @return
+   */
   public SQLInsert prepareInsert(Connection con) {
     return prepare(con, SQLInsert::new);
   }
 
+  /**
+   * Produces a {@link SQLInsert} instance from the SQL passed in through one of the {@link
+   * #create(String) create} methods. Calling this method for SQL that is not an UPDATE OR DELETE
+   * statement has undefined consequences.
+   *
+   * @param con The database connection to use when executing the statement
+   * @return
+   */
   public SQLUpdate prepareUpdate(Connection con) {
     return prepare(con, SQLUpdate::new);
   }
 
   /**
-   * Returns the original, unparsed, user-provided SQL, with all named parameters and Klojand
-   * template variables still in it.
+   * Returns the original, unparsed SQL, with all named parameters and Klojang template variables
+   * still in it.
    *
-   * @return The original, unparsed, user-provided SQL
+   * @return The original, unparsed SQL
    */
   public String getUnparsedSQL() {
     return normalizer.getUnparsedSQL();
   }
 
   /**
-   * Returns an SQL string in which all named parameters have been replaced with standard JDBC
-   * positional parameters ('?'), but with the Klojang template variables still in it.
+   * Returns a SQL string in which all named parameters have been replaced with positional
+   * parameters (i&#46;e&#46; a question mark), but with the Klojang template variables still in it.
    *
-   * @return An SQL string in which all named parameters have been replaced with standard JDBC
-   *     positional parameters
+   * @return A SQL string in which all named parameters have been replaced with positional
+   *     parameters
    */
   public String getNormalizedSQL() {
     return normalizer.getNormalizedSQL();
@@ -151,10 +250,23 @@ public class SQL {
     return Check.that(jdbcSQL).is(notNull(), ERR_NO_JDBC_SQL).ok();
   }
 
+  /**
+   * Returns the named parameters that were extracted from the SQL passed in through the {@link
+   * #create(String) create} methods.
+   *
+   * @return The named parameters that were extracted from the SQL
+   */
   public List<NamedParameter> getParameters() {
     return normalizer.getNamedParameters();
   }
 
+  /**
+   * Returns a map that specifies for each named parameter at which positions it is found within the
+   * SQL.
+   *
+   * @return A map that specifies for each named parameter at which positions it is found within the
+   *     SQL
+   */
   public Map<String, IntList> getParameterMap() {
     return normalizer.getParameterMap();
   }
