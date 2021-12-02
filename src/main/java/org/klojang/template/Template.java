@@ -17,9 +17,11 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 
 /**
- * A {@code Template} captures the result of parsing a template file. The {@code Template} class and
- * the {@link RenderSession} class are the two central classes of the Klojang library. {@code
- * Template} instances are unmodifiable, expensive-to-create and heavy-weight objects.
+ * The {@code Template} class is responsible for loading and parsing templates and functions as a
+ * factory for {@link RenderSession} objects that let you render them. The {@code Template} class
+ * and the {@code RenderSession} class together constitute the heart of the Klojang library. {@code
+ * Template} instances are unmodifiable, expensive-to-create and heavy-weight objects. Generally
+ * though you should not cache them yourself as this is already done by Klojang.
  *
  * @author Ayco Holleman
  */

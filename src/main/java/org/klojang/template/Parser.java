@@ -25,16 +25,14 @@ class Parser {
   private final TemplateId id;
   private final String src;
 
+  Parser(String tmplName, TemplateId id) throws InvalidPathException {
+    this(tmplName, id, id.getSource());
+  }
+
   Parser(String tmplName, TemplateId id, String src) {
     this.tmplName = tmplName;
     this.id = id;
     this.src = src;
-  }
-
-  Parser(String tmplName, TemplateId id) throws InvalidPathException {
-    this.tmplName = tmplName;
-    this.id = id;
-    this.src = id.getSource();
   }
 
   Template parse() throws ParseException {
@@ -78,30 +76,6 @@ class Parser {
     int i = last.text().indexOf(DITCH_TOKEN);
     if (i != -1) {
       throw ditchBlockNotTerminated(src, last.start() + i);
-    }
-    return parts;
-  }
-
-  @SuppressWarnings("unused")
-  private static List<Part> purgeDitchBlocks_old(String src) throws ParseException {
-    Matcher m = REGEX_DITCH_TOKEN.matcher(src);
-    if (!m.find()) {
-      return Collections.singletonList(new UnparsedPart(src, 0));
-    }
-    List<Part> parts = new ArrayList<>();
-    int end = 0;
-    do {
-      int start = m.start();
-      if (start > end) {
-        parts.add(new UnparsedPart(src.substring(end, start), end));
-      }
-      if (!m.find()) {
-        throw ditchBlockNotTerminated(src, start);
-      }
-      end = m.end();
-    } while (m.find());
-    if (end < src.length()) {
-      parts.add(new UnparsedPart(src.substring(end), end));
     }
     return parts;
   }

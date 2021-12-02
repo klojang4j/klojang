@@ -17,20 +17,20 @@ public class TemplateId {
 
   private static final String ERR_NO_PATH = "Cannot load source for %s";
 
-  private final TemplateSourceType tst;
+  private final TemplateSourceType sourceType;
   private final PathResolver pathResolver;
   private final Class<?> clazz;
   private final String path;
 
   TemplateId(TemplateId parentId) {
-    this.tst = STRING;
+    this.sourceType = STRING;
     this.pathResolver = parentId.pathResolver;
     this.clazz = parentId.clazz;
     this.path = null;
   }
 
   TemplateId() {
-    this.tst = STRING;
+    this.sourceType = STRING;
     this.pathResolver = null;
     this.clazz = null;
     this.path = null;
@@ -42,14 +42,14 @@ public class TemplateId {
 
   TemplateId(File file) {
     this.path = Check.notNull(file, "file").ok().getAbsolutePath();
-    this.tst = FILE_SYSTEM;
+    this.sourceType = FILE_SYSTEM;
     this.pathResolver = null;
     this.clazz = null;
   }
 
   TemplateId(Class<?> clazz) {
     Check.notNull(clazz, "clazz");
-    this.tst = STRING;
+    this.sourceType = STRING;
     this.pathResolver = null;
     this.clazz = clazz;
     this.path = null;
@@ -58,27 +58,27 @@ public class TemplateId {
   TemplateId(Class<?> clazz, String path) {
     this.clazz = Check.notNull(clazz, "clazz").ok();
     this.path = Check.notNull(path, "path").ok();
-    this.tst = RESOURCE;
+    this.sourceType = RESOURCE;
     this.pathResolver = null;
   }
 
   TemplateId(PathResolver pathResolver, String path) {
     this.pathResolver = Check.notNull(pathResolver, "pathResolver").ok();
     this.path = Check.notNull(path, "path").ok();
-    this.tst = RESOLVER;
+    this.sourceType = RESOLVER;
     this.clazz = null;
   }
 
   String getSource() throws InvalidPathException {
     if (path == null) {
       return Check.fail(illegalState(), ERR_NO_PATH, this);
-    } else if (tst == FILE_SYSTEM) {
+    } else if (sourceType == FILE_SYSTEM) {
       try {
         return getSource(new FileInputStream(new File(path)));
       } catch (FileNotFoundException e) {
         throw new InvalidPathException(path);
       }
-    } else if (tst == RESOURCE) {
+    } else if (sourceType == RESOURCE) {
       try (InputStream in = clazz.getResourceAsStream(path)) {
         Check.on(InvalidPathException::new, in).is(notNull(), path);
         return IOMethods.toString(in);
@@ -103,7 +103,7 @@ public class TemplateId {
   }
 
   TemplateSourceType sourceType() {
-    return tst;
+    return sourceType;
   }
 
   PathResolver pathResolver() {
@@ -120,7 +120,7 @@ public class TemplateId {
 
   @Override
   public int hashCode() {
-    return Objects.hash(clazz, path, tst);
+    return Objects.hash(clazz, path, sourceType);
   }
 
   @Override
@@ -131,34 +131,34 @@ public class TemplateId {
       return false;
     }
     TemplateId other = (TemplateId) obj;
-    return tst == other.tst
-        && (tst != RESOURCE || clazz.getPackage() == other.clazz.getPackage())
+    return sourceType == other.sourceType
+        && (sourceType != RESOURCE || clazz.getPackage() == other.clazz.getPackage())
         && Objects.equals(path, other.path);
   }
 
   public String toString() {
-    if (tst == STRING) {
+    if (sourceType == STRING) {
       return concat(
           "TemplateId[sourceType=",
-          tst,
+          sourceType,
           ";package=",
           clazz.getPackage().getName(),
           ";resolver=",
           pathResolver,
           "]");
     }
-    if (tst == RESOURCE) {
+    if (sourceType == RESOURCE) {
       return concat(
           "TemplateId[sourceType=",
-          tst,
+          sourceType,
           ";path=",
           path,
           ";package=",
           clazz.getPackage().getName(),
           "]");
-    } else if (tst == FILE_SYSTEM) {
-      return concat("TemplateId[sourceType=", tst, ";path=", path, "]");
+    } else if (sourceType == FILE_SYSTEM) {
+      return concat("TemplateId[sourceType=", sourceType, ";path=", path, "]");
     }
-    return concat("TemplateId[sourceType=", tst, ";path=", path, ";resolver=", pathResolver, "]");
+    return concat("TemplateId[sourceType=", sourceType, ";path=", path, ";resolver=", pathResolver, "]");
   }
 }
