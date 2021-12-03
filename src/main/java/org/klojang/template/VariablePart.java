@@ -2,7 +2,7 @@ package org.klojang.template;
 
 import java.util.Optional;
 import org.klojang.x.template.XVarGroup;
-import static org.klojang.template.Regex.NAME_END;
+import static org.klojang.template.Regex.VAR_END;
 import static org.klojang.template.Regex.VAR_START;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
 
@@ -43,6 +43,6 @@ public class VariablePart extends AbstractPart implements NamedPart {
 
   @Override
   public String toString() {
-    return VAR_START + name + NAME_END;
+    return VAR_START + name + VAR_END;
   }
 }

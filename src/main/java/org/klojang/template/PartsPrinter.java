@@ -58,7 +58,7 @@ class PartsPrinter {
         Template t2 = ((NestedTemplatePart) p).getTemplate();
         String name = t2.getName();
         printCell(out, name, w2);
-        String s = Regex.TMPL_START + "begin:" + name + Regex.NAME_END;
+        String s = Regex.TMPL_START + "begin:" + name + Regex.VAR_END;
         out.println(s);
         printDivider(out);
         PartsPrinter printer = new PartsPrinter(t2, w0, w1, w2);
@@ -66,7 +66,7 @@ class PartsPrinter {
         printCell(out, t.getName(), w0);
         printCell(out, "TEMPLATE", w1);
         printCell(out, name, w2);
-        s = Regex.TMPL_START + "end:" + name + Regex.NAME_END;
+        s = Regex.TMPL_START + "end:" + name + Regex.VAR_END;
         out.println(s);
         printDivider(out);
       }

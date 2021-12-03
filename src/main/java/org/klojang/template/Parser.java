@@ -38,8 +38,8 @@ class Parser {
   Template parse() throws ParseException {
     logParsing(tmplName, id);
     List<Part> parts = purgeDitchBlocks(src);
-    parts = uncomment(parts, REGEX_NESTED_CMT);
-    parts = uncomment(parts, REGEX_INCLUDE_CMT);
+    parts = uncomment(parts, REGEX_INLINE_TMPL_CMT);
+    parts = uncomment(parts, REGEX_INCLUDED_TMPL_CMT);
     parts = uncomment(parts, REGEX_VARIABLE_CMT);
     // Accumulates template names for duplicate checks:
     Set<String> namesInUse = new HashSet<>();
@@ -135,7 +135,7 @@ class Parser {
 
   private List<Part> parseInlineTmpls(UnparsedPart unparsed, Set<String> names)
       throws ParseException {
-    Matcher m = match(REGEX_NESTED, unparsed);
+    Matcher m = match(REGEX_INLINE_TMPL, unparsed);
     if (!m.find()) {
       return Collections.singletonList(unparsed);
     }
@@ -164,7 +164,7 @@ class Parser {
 
   private List<Part> parseIncludedTmpls(UnparsedPart unparsed, Set<String> names)
       throws ParseException {
-    Matcher m = match(REGEX_INCLUDE, unparsed);
+    Matcher m = match(REGEX_INCLUDED_TMPL, unparsed);
     if (!m.find()) {
       return Collections.singletonList(unparsed);
     }
@@ -240,7 +240,7 @@ class Parser {
   private void checkGarbage(UnparsedPart unparsed) throws ParseException {
     String str = unparsed.text();
     int off = unparsed.start();
-    Matcher m1 = REGEX_TMPL_END.matcher(str);
+    Matcher m1 = REGEX_EOT.matcher(str);
     Check.on(s -> danglingEndOfTemplate(src, off + m1.start()), m1.find()).is(no());
     int idx = str.indexOf(TMPL_START + "begin:");
     Check.on(templateNotTerminated(src, off + idx), idx).is(eq(), -1);

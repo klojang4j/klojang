@@ -1,6 +1,6 @@
 package org.klojang.template;
 
-import static org.klojang.template.Regex.NAME_END;
+import static org.klojang.template.Regex.VAR_END;
 import static org.klojang.template.Regex.TMPL_START;
 import static nl.naturalis.common.StringMethods.substrAfter;
 import static nl.naturalis.common.StringMethods.substrTo;
@@ -28,6 +28,6 @@ public class IncludedTemplatePart extends NestedTemplatePart {
     if (!template.getName().equals(basename)) {
       sb.append(template.getName());
     }
-    return sb.append(template.getPath()).append(NAME_END).toString();
+    return sb.append(template.getPath()).append(VAR_END).toString();
   }
 }

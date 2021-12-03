@@ -52,47 +52,47 @@ public class RegexTest {
   @Test
   public void test04() {
     String s = IOMethods.toString(getClass(), "RegexTest.test04.html");
-    assertTrue(REGEX_NESTED.matcher(s).find());
+    assertTrue(REGEX_INLINE_TMPL.matcher(s).find());
   }
 
   @Test
   public void test05() {
     String s = IOMethods.toString(getClass(), "RegexTest.test05.html");
-    assertTrue(REGEX_NESTED_CMT.matcher(s).find());
+    assertTrue(REGEX_INLINE_TMPL_CMT.matcher(s).find());
   }
 
   @Test
   public void include01() {
     String s = IOMethods.toString(getClass(), "RegexTest.test06.html");
-    assertTrue(REGEX_NESTED_CMT.matcher(s).find());
+    assertTrue(REGEX_INLINE_TMPL_CMT.matcher(s).find());
   }
 
   @Test
   public void include02() {
-    assertTrue(REGEX_INCLUDE.matcher("~%%include:/views/rows.html%").find());
+    assertTrue(REGEX_INCLUDED_TMPL.matcher("~%%include:/views/rows.html%").find());
   }
 
   @Test
   public void include03() {
-    assertTrue(REGEX_INCLUDE.matcher("~%%include:foo:/views/rows.html%").find());
+    assertTrue(REGEX_INCLUDED_TMPL.matcher("~%%include:foo:/views/rows.html%").find());
   }
 
   @Test
   public void include04() {
-    assertTrue(REGEX_INCLUDE_CMT.matcher("FOO<!-- ~%%include:/views/rows.html% -->BAR").find());
+    assertTrue(REGEX_INCLUDED_TMPL_CMT.matcher("FOO<!-- ~%%include:/views/rows.html% -->BAR").find());
   }
 
   @Test
   public void include05() {
     assertTrue(
-        REGEX_INCLUDE_CMT
+        REGEX_INCLUDED_TMPL_CMT
             .matcher("FOO\n<!-- \t ~%%include:foo:/views/rows.html%\n\n--> BAR")
             .find());
   }
 
   @Test
   public void include06() {
-    Matcher m = REGEX_INCLUDE.matcher("FOO ******* ~%%include:foo:/views/rows.html% ******* BAR");
+    Matcher m = REGEX_INCLUDED_TMPL.matcher("FOO ******* ~%%include:foo:/views/rows.html% ******* BAR");
     m.find();
     assertEquals(3, m.groupCount()); // The match itself, group(0), does not count
     assertEquals("~%%include:foo:/views/rows.html%", m.group(0));
@@ -103,7 +103,7 @@ public class RegexTest {
 
   @Test
   public void include07() {
-    Matcher m = REGEX_INCLUDE.matcher("FOO ******* ~%%include:/views/rows.html% ******* BAR");
+    Matcher m = REGEX_INCLUDED_TMPL.matcher("FOO ******* ~%%include:/views/rows.html% ******* BAR");
     m.find();
     assertEquals(3, m.groupCount()); // Number of groups defined by regex, not by input
     assertEquals("~%%include:/views/rows.html%", m.group(0));
@@ -161,14 +161,14 @@ public class RegexTest {
 
   @Test
   public void hiddenTmpl01() {
-    Matcher m = REGEX_NESTED_CMT.matcher("<!-- ~%%begin:foo%\n\n ~%person% ~%%end:foo% -->");
+    Matcher m = REGEX_INLINE_TMPL_CMT.matcher("<!-- ~%%begin:foo%\n\n ~%person% ~%%end:foo% -->");
     assertTrue(m.find());
     assertEquals("~%%begin:foo%\n\n ~%person% ~%%end:foo%", m.group(1));
   }
 
   @Test
   public void hiddenInclude01() {
-    Matcher m = REGEX_INCLUDE_CMT.matcher("<!--~%%include:foo:/some/path/test.html%-->");
+    Matcher m = REGEX_INCLUDED_TMPL_CMT.matcher("<!--~%%include:foo:/some/path/test.html%-->");
     assertTrue(m.find());
     assertEquals("~%%include:foo:/some/path/test.html%", m.group(1));
   }
