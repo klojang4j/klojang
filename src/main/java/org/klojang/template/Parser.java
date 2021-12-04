@@ -38,14 +38,14 @@ class Parser {
   Template parse() throws ParseException {
     logParsing(tmplName, id);
     List<Part> parts = purgeDitchBlocks(src);
-    parts = uncomment(parts, REGEX_INLINE_TMPL_CMT);
-    parts = uncomment(parts, REGEX_INCLUDED_TMPL_CMT);
-    parts = uncomment(parts, REGEX_VARIABLE_CMT);
     // Accumulates template names for duplicate checks:
     Set<String> namesInUse = new HashSet<>();
-    parts = parse(parts, namesInUse, this::parseInlineTmpls);
-    parts = parse(parts, namesInUse, this::parseIncludedTmpls);
-    parts = parse(parts, namesInUse, this::parseVars);
+    parts = parse(parts, namesInUse, (x, y) -> parseInlineTmpls(x, y, true));
+    parts = parse(parts, namesInUse, (x, y) -> parseInlineTmpls(x, y, false));
+    parts = parse(parts, namesInUse, (x, y) -> parseIncludedTmpls(x, y, true));
+    parts = parse(parts, namesInUse, (x, y) -> parseIncludedTmpls(x, y, false));
+    parts = parse(parts, namesInUse, (x, y) -> parseVars(x, y, true));
+    parts = parse(parts, namesInUse, (x, y) -> parseVars(x, y, false));
     parts = collectTextParts(parts);
     return new Template(tmplName, id, List.copyOf(parts));
   }
@@ -80,30 +80,7 @@ class Parser {
     return parts;
   }
 
-  /*
-   * Turns "<!-- ~%firstName% -->" into an UnparsedPart containing "~%firstName%", which
-   * will then be picked up for further processing by parseVars().
-   */
-  private static List<Part> uncomment(List<Part> in, Pattern cmtPattern) {
-    List<Part> out = new ArrayList<>(in.size());
-    for (Part p : in) {
-      UnparsedPart unparsed = (UnparsedPart) p;
-      int end = 0;
-      for (Matcher m = match(cmtPattern, unparsed); m.find(); end = m.end()) {
-        if (m.start() > end) {
-          out.add(todo(unparsed, end, m.start()));
-        }
-        out.add(todo(unparsed, m.start(1), m.end(1)));
-      }
-      if (end < unparsed.text().length()) {
-        out.add(todo(unparsed, end, unparsed.text().length()));
-      }
-    }
-    return out;
-  }
-
-  @SuppressWarnings("static-method")
-  private List<Part> parse(List<Part> in, Set<String> names, PartialParser parser)
+  private static List<Part> parse(List<Part> in, Set<String> names, PartialParser parser)
       throws ParseException {
     List<Part> out = new ArrayList<>(in.size() + 10);
     for (Part p : in) {
@@ -133,9 +110,10 @@ class Parser {
     return out;
   }
 
-  private List<Part> parseInlineTmpls(UnparsedPart unparsed, Set<String> names)
+  private List<Part> parseInlineTmpls(UnparsedPart unparsed, Set<String> names, boolean hidden)
       throws ParseException {
-    Matcher m = match(REGEX_INLINE_TMPL, unparsed);
+    Pattern p = hidden ? REGEX_INLINE_TMPL_CMT : REGEX_INLINE_TMPL;
+    Matcher m = match(p, unparsed);
     if (!m.find()) {
       return Collections.singletonList(unparsed);
     }
@@ -162,9 +140,10 @@ class Parser {
     return parts;
   }
 
-  private List<Part> parseIncludedTmpls(UnparsedPart unparsed, Set<String> names)
+  private List<Part> parseIncludedTmpls(UnparsedPart unparsed, Set<String> names, boolean hidden)
       throws ParseException {
-    Matcher m = match(REGEX_INCLUDED_TMPL, unparsed);
+    Pattern p = hidden ? REGEX_INCLUDED_TMPL_CMT : REGEX_INCLUDED_TMPL;
+    Matcher m = match(p, unparsed);
     if (!m.find()) {
       return Collections.singletonList(unparsed);
     }
@@ -213,8 +192,10 @@ class Parser {
     return parts;
   }
 
-  private List<Part> parseVars(UnparsedPart unparsed, Set<String> names) throws ParseException {
-    Matcher m = match(REGEX_VARIABLE, unparsed);
+  private List<Part> parseVars(UnparsedPart unparsed, Set<String> names, boolean hidden)
+      throws ParseException {
+    Pattern p = hidden ? REGEX_VARIABLE_CMT : REGEX_VARIABLE;
+    Matcher m = match(p, unparsed);
     if (!m.find()) {
       return Collections.singletonList(unparsed);
     }

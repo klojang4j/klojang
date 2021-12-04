@@ -5,21 +5,21 @@ import java.util.regex.Pattern;
 import org.klojang.KlojangRTException;
 import nl.naturalis.common.check.Check;
 import static java.util.regex.Pattern.compile;
-import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toSet;
 import static nl.naturalis.common.check.CommonChecks.blank;
 import static nl.naturalis.common.check.CommonChecks.equalTo;
 
 class Regex {
 
-  private static final String SYSPROP_BASE = "org.klojang.template";
+  private static final String SYSPROP_BASE = "org.klojang.template.parser";
   private static final String SYSPROP_VS = SYSPROP_BASE + "varStart";
   private static final String SYSPROP_VE = SYSPROP_BASE + "varEnd";
   private static final String SYSPROP_TS = SYSPROP_BASE + "tmplStart";
   private static final String SYSPROP_TE = SYSPROP_BASE + "tmplEnd";
 
   private static final String ERR_ILLEGAL_VAL = "Illegal value for system property %s: \"%s\"";
-  private static final String ERR_IDENTICAL = "Values for %s and %s must not be identical";
+  private static final String ERR_IDENTICAL =
+      "Values of varStart and tmplStart must not be identical";
 
   static final String VAR_START = System.getProperty(SYSPROP_VS, "~%");
   static final String VAR_END = System.getProperty(SYSPROP_VE, "%");
@@ -31,29 +31,29 @@ class Regex {
     checkThat(VAR_END).isNot(blank(), ERR_ILLEGAL_VAL, VAR_END);
     checkThat(TMPL_START)
         .isNot(blank(), ERR_ILLEGAL_VAL, TMPL_START)
-        .isNot(equalTo(), VAR_START, ERR_IDENTICAL, SYSPROP_VS, SYSPROP_TS);
+        .isNot(equalTo(), VAR_START, ERR_IDENTICAL);
     checkThat(TMPL_END).isNot(blank(), ERR_ILLEGAL_VAL, TMPL_END);
   }
 
-  private static final String SPECIAL_CHARS = "\\^$.|?*+()[]{}";
+  private static final String VS = quote(VAR_START);
+  private static final String VE = quote(VAR_END);
+  private static final String TS = quote(TMPL_START);
+  private static final String TE = quote(TMPL_END);
 
-  private static final String VS = Pattern.quote(VAR_START);
-  private static final String VE = Pattern.quote(VAR_END);
-  private static final String TS = Pattern.quote(TMPL_START);
-  private static final String TE = Pattern.quote(TMPL_END);
-
-  // Used for variable group names and template names
+  // Used for group names and template names, *not* for variable names
   private static final String NAME = "([a-zA-Z_]\\w*)";
 
   static final String VARIABLE = VS + "(" + NAME + ":)?(.+?)" + VE;
 
-  static final String VARIABLE_CMT = "<!--\\s*(" + VARIABLE + ")\\s*-->";
+  static final String VARIABLE_CMT = "<!--\\s*" + VARIABLE + "\\s*-->";
 
-  static final String INLINE_TMPL = rgxInlineTmpl(1);
+  static final String INLINE_TMPL = TS + "begin:" + NAME + TE + "(.*?)" + TS + "end:\\1" + TE;
 
-  static final String INLINE_TMPL_CMT = "<!--\\s*(" + rgxInlineTmpl(2) + ")\\s*-->";
+  static final String INLINE_TMPL_CMT = "<!--\\s*" + INLINE_TMPL + "\\s*-->";
 
   static final String INCLUDED_TMPL = TS + "include:(" + NAME + ":)?(.+?)" + TE;
+
+  static final String INCLUDED_TMPL_CMT = "<!--\\s*" + INCLUDED_TMPL + "\\s*-->";
 
   /**
    * end-of-template sequence for inline templates. We don't use this regular expression for regular
@@ -61,11 +61,9 @@ class Regex {
    */
   static final String EOT = TS + "end:" + NAME + TE;
 
-  static final String INCLUDED_TMPL_CMT = "<!--\\s*(" + INCLUDED_TMPL + ")\\s*-->";
-
   /**
-   * By itself we don't use this regular expression for regular parsing, but we o use it for error
-   * reporting ("ditch block not terminated").
+   * By itself not used for regular parsing, but we do use it for error reporting ("ditch block not
+   * terminated").
    */
   static final String DITCH_TOKEN = "<!--%%-->";
 
@@ -92,31 +90,18 @@ class Regex {
     System.out.println("INCLUDE ........: " + REGEX_INCLUDED_TMPL);
     System.out.println("INCLUDE_CMT ....: " + REGEX_INCLUDED_TMPL_CMT);
     System.out.println("DITCH_BLOCK: ...: " + REGEX_DITCH_BLOCK);
-    System.out.println("TMPL_END .......: " + REGEX_EOT);
+    System.out.println("EOT ............: " + REGEX_EOT);
     System.out.println("DITCH_TOKEN: ...: " + REGEX_DITCH_TOKEN);
-  }
-
-  private static final String rgxInlineTmpl(int groupRef) {
-    return TS + "begin:" + NAME + TE + "(.*?)" + TS + "end:\\" + groupRef + TE;
   }
 
   private static Check<String, KlojangRTException> checkThat(String sysprop) {
     return Check.on(KlojangRTException::new, sysprop);
   }
 
-  /**
-   * This more severely limits which characters are allowed in a variable name, namely anything as
-   * long as it does not contain _any_ of the characters in _any_ of the tokens.
-   */
-  @SuppressWarnings("unused")
-  private static String forbiddenChars() {
-    Set<Integer> special = SPECIAL_CHARS.codePoints().mapToObj(Integer::valueOf).collect(toSet());
-    return (":" + VAR_START + VAR_END + TMPL_START + TMPL_END)
-        .codePoints()
-        .mapToObj(Integer::valueOf)
-        .collect(toSet())
-        .stream()
-        .map(i -> special.contains(i) ? "\\" + Character.toString(i) : Character.toString(i))
-        .collect(joining());
+  private static String quote(String token) {
+    String special = "\\^$.|?*+()[]{}";
+    Set<Integer> specialChars = special.codePoints().mapToObj(Integer::valueOf).collect(toSet());
+    Set<Integer> tokenChars = token.codePoints().mapToObj(Integer::valueOf).collect(toSet());
+    return tokenChars.stream().anyMatch(specialChars::contains) ? Pattern.quote(token) : token;
   }
 }

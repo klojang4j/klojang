@@ -45,8 +45,8 @@ public class RegexTest {
     assertTrue(REGEX_VARIABLE_CMT.matcher("<!--~%person%-->").find());
     assertTrue(REGEX_VARIABLE_CMT.matcher("<!-- ~%person% -->").find());
     assertTrue(REGEX_VARIABLE_CMT.matcher("<!--\t~%person%\t-->").find());
-    assertTrue(REGEX_VARIABLE_CMT.matcher("foo\n<!--~%person%-->bar").find());
-    assertTrue(REGEX_VARIABLE_CMT.matcher("<!--      \n~%person%\n\n   -->").find());
+    assertTrue(REGEX_VARIABLE_CMT.matcher("FOO\t<!--~%person%-->BAR").find());
+    assertTrue(REGEX_VARIABLE_CMT.matcher("\n<!--      \t~%person%\t\t   -->\n").find());
   }
 
   @Test
@@ -79,20 +79,22 @@ public class RegexTest {
 
   @Test
   public void include04() {
-    assertTrue(REGEX_INCLUDED_TMPL_CMT.matcher("FOO<!-- ~%%include:/views/rows.html% -->BAR").find());
+    assertTrue(
+        REGEX_INCLUDED_TMPL_CMT.matcher("FOO<!-- ~%%include:/views/rows.html% -->BAR").find());
   }
 
   @Test
   public void include05() {
     assertTrue(
         REGEX_INCLUDED_TMPL_CMT
-            .matcher("FOO\n<!-- \t ~%%include:foo:/views/rows.html%\n\n--> BAR")
+            .matcher("FOO\n<!-- \t ~%%include:foo:/views/rows.html%\t--> BAR")
             .find());
   }
 
   @Test
   public void include06() {
-    Matcher m = REGEX_INCLUDED_TMPL.matcher("FOO ******* ~%%include:foo:/views/rows.html% ******* BAR");
+    Matcher m =
+        REGEX_INCLUDED_TMPL.matcher("FOO ******* ~%%include:foo:/views/rows.html% ******* BAR");
     m.find();
     assertEquals(3, m.groupCount()); // The match itself, group(0), does not count
     assertEquals("~%%include:foo:/views/rows.html%", m.group(0));
@@ -107,6 +109,45 @@ public class RegexTest {
     m.find();
     assertEquals(3, m.groupCount()); // Number of groups defined by regex, not by input
     assertEquals("~%%include:/views/rows.html%", m.group(0));
+    assertNull(m.group(1));
+    assertNull(m.group(2));
+    assertEquals("/views/rows.html", m.group(3));
+  }
+
+  @Test
+  public void hiddenInclude01() {
+    Matcher m =
+        REGEX_INCLUDED_TMPL_CMT.matcher(
+            "FOO ******* <!--~%%include:/views/rows.html%--> ******* BAR");
+    m.find();
+    assertEquals(3, m.groupCount()); // Number of groups defined by regex, not by input
+    assertEquals("<!--~%%include:/views/rows.html%-->", m.group(0));
+    assertNull(m.group(1));
+    assertNull(m.group(2));
+    assertEquals("/views/rows.html", m.group(3));
+  }
+
+  @Test
+  public void hiddenInclude02() {
+    Matcher m =
+        REGEX_INCLUDED_TMPL_CMT.matcher(
+            "FOO ******* <!--\n\t~%%include:/views/rows.html% \t\n  --> ******* BAR");
+    m.find();
+    assertEquals(3, m.groupCount()); // Number of groups defined by regex, not by input
+    assertEquals("<!--\n\t~%%include:/views/rows.html% \t\n  -->", m.group(0));
+    assertNull(m.group(1));
+    assertNull(m.group(2));
+    assertEquals("/views/rows.html", m.group(3));
+  }
+
+  @Test
+  public void hiddenInclude03() {
+    Matcher m =
+        REGEX_INCLUDED_TMPL_CMT.matcher(
+            "\n\nFOO ******* <!--\n\t~%%include:/views/rows.html% \t\n  --> ******* \nBAR");
+    m.find();
+    assertEquals(3, m.groupCount()); // Number of groups defined by regex, not by input
+    assertEquals("<!--\n\t~%%include:/views/rows.html% \t\n  -->", m.group(0));
     assertNull(m.group(1));
     assertNull(m.group(2));
     assertEquals("/views/rows.html", m.group(3));
@@ -156,20 +197,6 @@ public class RegexTest {
   public void hiddenVar01() {
     Matcher m = REGEX_VARIABLE_CMT.matcher("<!-- ~%person% -->");
     assertTrue(m.find());
-    assertEquals("~%person%", m.group(1));
-  }
-
-  @Test
-  public void hiddenTmpl01() {
-    Matcher m = REGEX_INLINE_TMPL_CMT.matcher("<!-- ~%%begin:foo%\n\n ~%person% ~%%end:foo% -->");
-    assertTrue(m.find());
-    assertEquals("~%%begin:foo%\n\n ~%person% ~%%end:foo%", m.group(1));
-  }
-
-  @Test
-  public void hiddenInclude01() {
-    Matcher m = REGEX_INCLUDED_TMPL_CMT.matcher("<!--~%%include:foo:/some/path/test.html%-->");
-    assertTrue(m.find());
-    assertEquals("~%%include:foo:/some/path/test.html%", m.group(1));
+    assertEquals("person", m.group(3));
   }
 }
