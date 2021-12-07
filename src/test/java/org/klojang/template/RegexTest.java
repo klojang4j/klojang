@@ -7,94 +7,99 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.klojang.template.Regex.*;
 
 public class RegexTest {
 
   @Test
-  public void print() {
-    Regex.printAll();
+  public void print() throws ParseException {
+    Regex.of().printAll();
   }
 
   @Test
-  public void test00() {
-    assertTrue(REGEX_VARIABLE.matcher("~%person%").find());
-    assertTrue(REGEX_VARIABLE.matcher("foo~%person%").find());
-    assertTrue(REGEX_VARIABLE.matcher("foo ~%person%").find());
-    assertTrue(REGEX_VARIABLE.matcher("foo ~%person%bar").find());
-    assertTrue(REGEX_VARIABLE.matcher("foo ~%person% bar").find());
-    assertTrue(REGEX_VARIABLE.matcher("foo ~%person% bar").find());
-    assertTrue(REGEX_VARIABLE.matcher("foo\n~%person%\nbar").find());
+  public void test00() throws ParseException {
+    assertTrue(Regex.of().variable.matcher("~%person%").find());
+    assertTrue(Regex.of().variable.matcher("foo~%person%").find());
+    assertTrue(Regex.of().variable.matcher("foo ~%person%").find());
+    assertTrue(Regex.of().variable.matcher("foo ~%person%bar").find());
+    assertTrue(Regex.of().variable.matcher("foo ~%person% bar").find());
+    assertTrue(Regex.of().variable.matcher("foo ~%person% bar").find());
+    assertTrue(Regex.of().variable.matcher("foo\n~%person%\nbar").find());
   }
 
   @Test
-  public void test01() {
-    assertTrue(REGEX_VARIABLE.matcher("~%person.address%").find());
-    assertTrue(REGEX_VARIABLE.matcher("~%person.address.street%").find());
+  public void test01() throws ParseException {
+    assertTrue(Regex.of().variable.matcher("~%person.address%").find());
+    assertTrue(Regex.of().variable.matcher("~%person.address.street%").find());
   }
 
   @Test
-  public void test02() {
-    assertTrue(REGEX_VARIABLE.matcher("~%html:person.address%").find());
-    assertTrue(REGEX_VARIABLE.matcher("~%js:person.address%").find());
-    assertTrue(REGEX_VARIABLE.matcher("~%text:person.address%").find());
+  public void test02() throws ParseException {
+    assertTrue(Regex.of().variable.matcher("~%html:person.address%").find());
+    assertTrue(Regex.of().variable.matcher("~%js:person.address%").find());
+    assertTrue(Regex.of().variable.matcher("~%text:person.address%").find());
   }
 
   @Test
-  public void test03() {
-    assertTrue(REGEX_VARIABLE_CMT.matcher("<!--~%person%-->").find());
-    assertTrue(REGEX_VARIABLE_CMT.matcher("<!-- ~%person% -->").find());
-    assertTrue(REGEX_VARIABLE_CMT.matcher("<!--\t~%person%\t-->").find());
-    assertTrue(REGEX_VARIABLE_CMT.matcher("FOO\t<!--~%person%-->BAR").find());
-    assertTrue(REGEX_VARIABLE_CMT.matcher("\n<!--      \t~%person%\t\t   -->\n").find());
+  public void test03() throws ParseException {
+    assertTrue(Regex.of().cmtVariable.matcher("<!--~%person%-->").find());
+    assertTrue(Regex.of().cmtVariable.matcher("<!-- ~%person% -->").find());
+    assertTrue(Regex.of().cmtVariable.matcher("<!--\t~%person%\t-->").find());
+    assertTrue(Regex.of().cmtVariable.matcher("FOO\t<!--~%person%-->BAR").find());
+    assertTrue(Regex.of().cmtVariable.matcher("\n<!--      \t~%person%\t\t   -->\n").find());
   }
 
   @Test
-  public void test04() {
+  public void test04() throws ParseException {
     String s = IOMethods.toString(getClass(), "RegexTest.test04.html");
-    assertTrue(REGEX_INLINE_TMPL.matcher(s).find());
+    assertTrue(Regex.of().inlineTemplate.matcher(s).find());
   }
 
   @Test
-  public void test05() {
+  public void test05() throws ParseException {
     String s = IOMethods.toString(getClass(), "RegexTest.test05.html");
-    assertTrue(REGEX_INLINE_TMPL_CMT.matcher(s).find());
+    assertTrue(Regex.of().cmtInlineTemplate.matcher(s).find());
   }
 
   @Test
-  public void include01() {
+  public void include01() throws ParseException {
     String s = IOMethods.toString(getClass(), "RegexTest.test06.html");
-    assertTrue(REGEX_INLINE_TMPL_CMT.matcher(s).find());
+    assertTrue(Regex.of().cmtInlineTemplate.matcher(s).find());
   }
 
   @Test
-  public void include02() {
-    assertTrue(REGEX_INCLUDED_TMPL.matcher("~%%include:/views/rows.html%").find());
+  public void include02() throws ParseException {
+    assertTrue(Regex.of().includedTemplate.matcher("~%%include:/views/rows.html%").find());
   }
 
   @Test
-  public void include03() {
-    assertTrue(REGEX_INCLUDED_TMPL.matcher("~%%include:foo:/views/rows.html%").find());
+  public void include03() throws ParseException {
+    assertTrue(Regex.of().includedTemplate.matcher("~%%include:foo:/views/rows.html%").find());
   }
 
   @Test
-  public void include04() {
+  public void include04() throws ParseException {
     assertTrue(
-        REGEX_INCLUDED_TMPL_CMT.matcher("FOO<!-- ~%%include:/views/rows.html% -->BAR").find());
+        Regex.of()
+            .cmtIncludedTemplate
+            .matcher("FOO<!-- ~%%include:/views/rows.html% -->BAR")
+            .find());
   }
 
   @Test
-  public void include05() {
+  public void include05() throws ParseException {
     assertTrue(
-        REGEX_INCLUDED_TMPL_CMT
+        Regex.of()
+            .cmtIncludedTemplate
             .matcher("FOO\n<!-- \t ~%%include:foo:/views/rows.html%\t--> BAR")
             .find());
   }
 
   @Test
-  public void include06() {
+  public void include06() throws ParseException {
     Matcher m =
-        REGEX_INCLUDED_TMPL.matcher("FOO ******* ~%%include:foo:/views/rows.html% ******* BAR");
+        Regex.of()
+            .includedTemplate
+            .matcher("FOO ******* ~%%include:foo:/views/rows.html% ******* BAR");
     m.find();
     assertEquals(3, m.groupCount()); // The match itself, group(0), does not count
     assertEquals("~%%include:foo:/views/rows.html%", m.group(0));
@@ -104,8 +109,11 @@ public class RegexTest {
   }
 
   @Test
-  public void include07() {
-    Matcher m = REGEX_INCLUDED_TMPL.matcher("FOO ******* ~%%include:/views/rows.html% ******* BAR");
+  public void include07() throws ParseException {
+    Matcher m =
+        Regex.of()
+            .includedTemplate
+            .matcher("FOO ******* ~%%include:/views/rows.html% ******* BAR");
     m.find();
     assertEquals(3, m.groupCount()); // Number of groups defined by regex, not by input
     assertEquals("~%%include:/views/rows.html%", m.group(0));
@@ -115,10 +123,11 @@ public class RegexTest {
   }
 
   @Test
-  public void hiddenInclude01() {
+  public void hiddenInclude01() throws ParseException {
     Matcher m =
-        REGEX_INCLUDED_TMPL_CMT.matcher(
-            "FOO ******* <!--~%%include:/views/rows.html%--> ******* BAR");
+        Regex.of()
+            .cmtIncludedTemplate
+            .matcher("FOO ******* <!--~%%include:/views/rows.html%--> ******* BAR");
     m.find();
     assertEquals(3, m.groupCount()); // Number of groups defined by regex, not by input
     assertEquals("<!--~%%include:/views/rows.html%-->", m.group(0));
@@ -128,10 +137,11 @@ public class RegexTest {
   }
 
   @Test
-  public void hiddenInclude02() {
+  public void hiddenInclude02() throws ParseException {
     Matcher m =
-        REGEX_INCLUDED_TMPL_CMT.matcher(
-            "FOO ******* <!--\n\t~%%include:/views/rows.html% \t\n  --> ******* BAR");
+        Regex.of()
+            .cmtIncludedTemplate
+            .matcher("FOO ******* <!--\n\t~%%include:/views/rows.html% \t\n  --> ******* BAR");
     m.find();
     assertEquals(3, m.groupCount()); // Number of groups defined by regex, not by input
     assertEquals("<!--\n\t~%%include:/views/rows.html% \t\n  -->", m.group(0));
@@ -141,10 +151,12 @@ public class RegexTest {
   }
 
   @Test
-  public void hiddenInclude03() {
+  public void hiddenInclude03() throws ParseException {
     Matcher m =
-        REGEX_INCLUDED_TMPL_CMT.matcher(
-            "\n\nFOO ******* <!--\n\t~%%include:/views/rows.html% \t\n  --> ******* \nBAR");
+        Regex.of()
+            .cmtIncludedTemplate
+            .matcher(
+                "\n\nFOO ******* <!--\n\t~%%include:/views/rows.html% \t\n  --> ******* \nBAR");
     m.find();
     assertEquals(3, m.groupCount()); // Number of groups defined by regex, not by input
     assertEquals("<!--\n\t~%%include:/views/rows.html% \t\n  -->", m.group(0));
@@ -154,29 +166,31 @@ public class RegexTest {
   }
 
   @Test
-  public void ditch00() {
-    Matcher m = REGEX_DITCH_BLOCK.matcher("FOO <!--%%--><tr><td>Hi!</td></tr><!--%%-->");
+  public void ditch00() throws ParseException {
+    Matcher m = Regex.of().ditchBlock.matcher("FOO <!--%%--><tr><td>Hi!</td></tr><!--%%-->");
     assertTrue(m.find());
   }
 
   @Test
-  public void ditch01() {
-    Matcher m = REGEX_DITCH_TOKEN.matcher("<!--%%--><!-- Single-line ditch block --><!--%%-->");
-    assertTrue(m.find());
-    assertTrue(m.find());
-  }
-
-  @Test
-  public void ditch02() {
-    Matcher m = REGEX_DITCH_TOKEN.matcher("Foo\n<!--%%-->Multi-line ditch block\n<!--%%-->BAR");
+  public void ditch01() throws ParseException {
+    Matcher m =
+        Regex.of().ditchTag.matcher("<!--%%--><!-- Single-line ditch block --><!--%%-->");
     assertTrue(m.find());
     assertTrue(m.find());
   }
 
   @Test
-  public void ditch03() {
+  public void ditch02() throws ParseException {
+    Matcher m =
+        Regex.of().ditchTag.matcher("Foo\n<!--%%-->Multi-line ditch block\n<!--%%-->BAR");
+    assertTrue(m.find());
+    assertTrue(m.find());
+  }
+
+  @Test
+  public void ditch03() throws ParseException {
     String s = IOMethods.toString(getClass(), "RegexTest.ditch03.html");
-    Matcher m = REGEX_DITCH_BLOCK.matcher(s);
+    Matcher m = Regex.of().ditchBlock.matcher(s);
     assertTrue(m.find());
     assertTrue(m.find());
     assertTrue(m.find());
@@ -184,9 +198,9 @@ public class RegexTest {
   }
 
   @Test
-  public void ditch04() {
+  public void ditch04() throws ParseException {
     String s = IOMethods.toString(getClass(), "RegexTest.ditch04.html");
-    Matcher m = REGEX_DITCH_BLOCK.matcher(s);
+    Matcher m = Regex.of().ditchBlock.matcher(s);
     assertTrue(m.find());
     assertTrue(m.find());
     assertTrue(m.find());
@@ -194,8 +208,8 @@ public class RegexTest {
   }
 
   @Test
-  public void hiddenVar01() {
-    Matcher m = REGEX_VARIABLE_CMT.matcher("<!-- ~%person% -->");
+  public void hiddenVar01() throws ParseException {
+    Matcher m = Regex.of().cmtVariable.matcher("<!-- ~%person% -->");
     assertTrue(m.find());
     assertEquals("person", m.group(3));
   }

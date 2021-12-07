@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.function.ThrowingBiFunction;
 import static org.klojang.template.ParseException.*;
-import static org.klojang.template.Regex.*;
 import static org.klojang.template.Template.ROOT_TEMPLATE_NAME;
 import static org.klojang.template.TemplateSourceType.STRING;
 import static nl.naturalis.common.StringMethods.EMPTY;
@@ -68,7 +67,7 @@ class Parser {
     return out;
   }
 
-  private static List<Part> purgeDitchBlocks(List<Part> parts) {
+  private static List<Part> purgeDitchBlocks(List<Part> parts) throws ParseException {
     LOG.trace("--> Purging ditch blocks");
     List<Part> out = new ArrayList<>();
     for (Part p : parts) {
@@ -81,9 +80,9 @@ class Parser {
     return out;
   }
 
-  private static List<Part> purgeDitchBlocksInPart(UnparsedPart unparsed) {
+  private static List<Part> purgeDitchBlocksInPart(UnparsedPart unparsed) throws ParseException {
     String src = unparsed.text();
-    Matcher m = REGEX_DITCH_BLOCK.matcher(src);
+    Matcher m = Regex.of().ditchBlock.matcher(src);
     if (!m.find()) {
       return Collections.singletonList(unparsed);
     }
@@ -105,7 +104,7 @@ class Parser {
   private List<Part> parseInlineTmpls(UnparsedPart unparsed, Set<String> names, boolean hidden)
       throws ParseException {
     LOG.trace("--> Parsing inline templates");
-    Pattern p = hidden ? REGEX_INLINE_TMPL_CMT : REGEX_INLINE_TMPL;
+    Pattern p = hidden ? Regex.of().cmtInlineTemplate : Regex.of().inlineTemplate;
     Matcher m = match(p, unparsed);
     if (!m.find()) {
       return Collections.singletonList(unparsed);
@@ -135,7 +134,7 @@ class Parser {
 
   private List<Part> parseIncludedTmpls(UnparsedPart unparsed, Set<String> names, boolean hidden)
       throws ParseException {
-    Pattern p = hidden ? REGEX_INCLUDED_TMPL_CMT : REGEX_INCLUDED_TMPL;
+    Pattern p = hidden ? Regex.of().cmtIncludedTemplate : Regex.of().includedTemplate;
     Matcher m = match(p, unparsed);
     if (!m.find()) {
       return Collections.singletonList(unparsed);
@@ -187,7 +186,7 @@ class Parser {
 
   private List<Part> parseVars(UnparsedPart unparsed, Set<String> names, boolean hidden)
       throws ParseException {
-    Pattern p = hidden ? REGEX_VARIABLE_CMT : REGEX_VARIABLE;
+    Pattern p = hidden ? Regex.of().cmtVariable : Regex.of().variable;
     Matcher m = match(p, unparsed);
     if (!m.find()) {
       return Collections.singletonList(unparsed);
@@ -219,9 +218,9 @@ class Parser {
         UnparsedPart unparsed = (UnparsedPart) p;
         if (unparsed.text().length() != 0) {
           checkGarbage(unparsed);
-          String text = unparsed.text().replaceAll(PLACEHOLDER, EMPTY);
-          if (text.contains(PLACEHOLDER_TOKEN)) {
-            int idx = p.start() + unparsed.text().lastIndexOf(PLACEHOLDER_TOKEN);
+          String text = Regex.of().placeholder.matcher(unparsed.text()).replaceAll(EMPTY);
+          if (text.contains(Regex.PLACEHOLDER_TAG)) {
+            int idx = p.start() + unparsed.text().lastIndexOf(Regex.PLACEHOLDER_TAG);
             throw placeholderNotTerminated(src, idx);
           }
           out.add(new TextPart(text, p.start()));
@@ -236,21 +235,21 @@ class Parser {
   private void checkGarbage(UnparsedPart unparsed) throws ParseException {
     String str = unparsed.text();
     int off = unparsed.start();
-    int idx0 = str.indexOf(TMPL_START + "begin:");
+    int idx0 = str.indexOf(Regex.TMPL_START + "begin:");
     Check.on(beginTagNotTerminated(src, off + idx0), idx0).is(eq(), -1);
-    int idx1 = str.indexOf(TMPL_START + "end:");
+    int idx1 = str.indexOf(Regex.TMPL_START + "end:");
     Check.on(endTagNotTerminated(src, off + idx1), idx1).is(eq(), -1);
-    int idx2 = str.indexOf(TMPL_START + "include:");
+    int idx2 = str.indexOf(Regex.TMPL_START + "include:");
     Check.on(includeTagNotTerminated(src, off + idx2), idx2).is(eq(), -1);
-    Matcher m = REGEX_INLINE_BEGIN.matcher(str);
+    Matcher m = Regex.of().beginTag.matcher(str);
     if (m.find()) {
       throw missingEndTag(str, off + m.start(), m.group(1));
     }
-    m = REGEX_INLINE_END.matcher(str);
+    m = Regex.of().endTag.matcher(str);
     if (m.find()) {
       throw danglingEndTag(str, off + m.start(), m.group(1));
     }
-    m = REGEX_DITCH_TOKEN.matcher(str);
+    m = Regex.of().ditchTag.matcher(str);
     if (m.find()) {
       throw ditchBlockNotTerminated(src, off + m.start());
     }

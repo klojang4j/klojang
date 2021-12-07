@@ -2,7 +2,6 @@ package org.klojang.template;
 
 import java.util.Set;
 import java.util.regex.Pattern;
-import org.klojang.KlojangRTException;
 import nl.naturalis.common.check.Check;
 import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.toSet;
@@ -26,7 +25,94 @@ class Regex {
   static final String TMPL_START = System.getProperty(SYSPROP_TS, "~%%");
   static final String TMPL_END = System.getProperty(SYSPROP_TE, "%");
 
-  static {
+  private static Regex instance;
+
+  static Regex of() throws ParseException {
+    if (instance == null) {
+      return instance = new Regex();
+    }
+    return instance;
+  }
+
+  // By itself used only for error reporting
+  static final String PLACEHOLDER_TAG = "<!--%-->";
+
+  final Pattern variable;
+  final Pattern cmtVariable;
+  final Pattern beginTag; // error reporting only
+  final Pattern endTag; // error reporting only
+  final Pattern inlineTemplate;
+  final Pattern cmtInlineTemplate;
+  final Pattern includedTemplate;
+  final Pattern cmtIncludedTemplate;
+  final Pattern ditchTag; // error reporting only
+  final Pattern ditchBlock;
+  final Pattern placeholder;
+
+  private Regex() throws ParseException {
+
+    checkSysProps();
+
+    String vStart = quote(VAR_START);
+    String vEnd = quote(VAR_END);
+    String tStart = quote(TMPL_START);
+    String tEnd = quote(TMPL_END);
+
+    // Used for group name prefixes and template names, *not* for variable names
+    String name = "([a-zA-Z_]\\w*)";
+
+    String cmtStart = "<!--\\s*";
+
+    String cmtEnd = "\\s*-->";
+
+    String ptnVariable = vStart + "(" + name + ":)?(.+?)" + vEnd;
+
+    String ptnCmtVariable = cmtStart + ptnVariable + cmtEnd;
+
+    String ptnInlineBegin = tStart + "begin:" + name + tEnd;
+
+    String ptnInlineEnd = tStart + "end:" + name + tEnd;
+
+    String ptnInlineTmpl = ptnInlineBegin + "(.*?)" + tStart + "end:\\1" + tEnd;
+
+    String ptnCmtInlineTmpl =
+        cmtStart
+            + ptnInlineBegin
+            + cmtEnd
+            + "(.*?)"
+            + cmtStart
+            + tStart
+            + "end:\\1"
+            + tEnd
+            + cmtEnd;
+
+    String ptnIncludedTmpl = tStart + "include:(" + name + ":)?(.+?)" + tEnd;
+
+    String ptnCmtIncludedTmpl = cmtStart + ptnIncludedTmpl + cmtEnd;
+
+    String ptnDitchToken = "<!--%%.*?-->";
+
+    String ptnDitchBlock = ptnDitchToken + ".*?" + ptnDitchToken;
+
+    String ptnPlaceholder = PLACEHOLDER_TAG + ".*?" + PLACEHOLDER_TAG;
+
+    // Equivalent to prefixing the regular expression with "(?ms)"
+    int msModifiers = Pattern.MULTILINE | Pattern.DOTALL;
+
+    this.variable = compile(ptnVariable);
+    this.cmtVariable = compile(ptnCmtVariable);
+    this.beginTag = compile(ptnInlineBegin);
+    this.endTag = compile(ptnInlineEnd);
+    this.inlineTemplate = compile(ptnInlineTmpl, msModifiers);
+    this.cmtInlineTemplate = compile(ptnCmtInlineTmpl, msModifiers);
+    this.includedTemplate = compile(ptnIncludedTmpl);
+    this.cmtIncludedTemplate = compile(ptnCmtIncludedTmpl);
+    this.ditchTag = compile(ptnDitchToken);
+    this.ditchBlock = compile(ptnDitchBlock, msModifiers);
+    this.placeholder = compile(ptnPlaceholder, msModifiers);
+  }
+
+  private static void checkSysProps() throws ParseException {
     checkThat(VAR_START).isNot(blank(), ERR_ILLEGAL_VAL, VAR_START);
     checkThat(VAR_END).isNot(blank(), ERR_ILLEGAL_VAL, VAR_END);
     checkThat(TMPL_START)
@@ -35,71 +121,19 @@ class Regex {
     checkThat(TMPL_END).isNot(blank(), ERR_ILLEGAL_VAL, TMPL_END);
   }
 
-  private static final String VS = quote(VAR_START); // ~%
-  private static final String VE = quote(VAR_END); // %
-  private static final String TS = quote(TMPL_START); // ~%%
-  private static final String TE = quote(TMPL_END); // %
-
-  // Used for group name prefixes and template names, *not* for variable names
-  private static final String NAME = "([a-zA-Z_]\\w*)";
-
-  private static final String CMT_S = "<!--\\s*";
-
-  private static final String CMT_E = "\\s*-->";
-
-  static final String VARIABLE = VS + "(" + NAME + ":)?(.+?)" + VE;
-
-  static final String VARIABLE_CMT = CMT_S + VARIABLE + CMT_E;
-
-  static final String INLINE_BEGIN = TS + "begin:" + NAME + TE;
-
-  static final String INLINE_END = TS + "end:" + NAME + TE;
-
-  static final String INLINE_TMPL = INLINE_BEGIN + "(.*?)" + TS + "end:\\1" + TE;
-
-  static final String INLINE_TMPL_CMT =
-      CMT_S + INLINE_BEGIN + CMT_E + "(.*?)" + CMT_S + TS + "end:\\1" + TE + CMT_E;
-
-  static final String INCLUDED_TMPL = TS + "include:(" + NAME + ":)?(.+?)" + TE;
-
-  static final String INCLUDED_TMPL_CMT = CMT_S + INCLUDED_TMPL + CMT_E;
-
-  static final String DITCH_TOKEN = "<!--%%.*?-->";
-
-  static final String DITCH_BLOCK = "(?ms)" + DITCH_TOKEN + ".*?" + DITCH_TOKEN;
-
-  static final String PLACEHOLDER_TOKEN = "<!--%-->";
-
-  static final String PLACEHOLDER = "(?ms)" + PLACEHOLDER_TOKEN + ".*?" + PLACEHOLDER_TOKEN;
-
-  // Equivalent to prefixing the regular expression with "(?ms)"
-  private static final int MS_MODIFIERS = Pattern.MULTILINE | Pattern.DOTALL;
-
-  static final Pattern REGEX_VARIABLE = compile(VARIABLE);
-  static final Pattern REGEX_VARIABLE_CMT = compile(VARIABLE_CMT);
-  static final Pattern REGEX_INLINE_BEGIN = compile(INLINE_BEGIN);
-  static final Pattern REGEX_INLINE_END = compile(INLINE_END);
-  static final Pattern REGEX_INLINE_TMPL = compile(INLINE_TMPL, MS_MODIFIERS);
-  static final Pattern REGEX_INLINE_TMPL_CMT = compile(INLINE_TMPL_CMT, MS_MODIFIERS);
-  static final Pattern REGEX_INCLUDED_TMPL = compile(INCLUDED_TMPL);
-  static final Pattern REGEX_INCLUDED_TMPL_CMT = compile(INCLUDED_TMPL_CMT);
-  static final Pattern REGEX_DITCH_TOKEN = compile(DITCH_TOKEN);
-  static final Pattern REGEX_DITCH_BLOCK = compile(DITCH_BLOCK);
-  static final Pattern REGEX_PLACEHOLDER = compile(PLACEHOLDER);
-
-  static void printAll() {
-    System.out.println("VARIABLE .......: " + REGEX_VARIABLE);
-    System.out.println("VARIABLE_CMT ...: " + REGEX_VARIABLE_CMT);
-    System.out.println("NESTED .........: " + REGEX_INLINE_TMPL);
-    System.out.println("NESTED_CMT .....: " + REGEX_INLINE_TMPL_CMT);
-    System.out.println("INCLUDE ........: " + REGEX_INCLUDED_TMPL);
-    System.out.println("INCLUDE_CMT ....: " + REGEX_INCLUDED_TMPL_CMT);
-    System.out.println("DITCH_BLOCK: ...: " + REGEX_DITCH_BLOCK);
-    System.out.println("PLACEHOLDER: ...: " + REGEX_PLACEHOLDER);
+  void printAll() {
+    System.out.println("VARIABLE .......: " + variable);
+    System.out.println("VARIABLE_CMT ...: " + cmtVariable);
+    System.out.println("NESTED .........: " + inlineTemplate);
+    System.out.println("NESTED_CMT .....: " + cmtInlineTemplate);
+    System.out.println("INCLUDE ........: " + includedTemplate);
+    System.out.println("INCLUDE_CMT ....: " + cmtIncludedTemplate);
+    System.out.println("DITCH_BLOCK: ...: " + ditchBlock);
+    System.out.println("PLACEHOLDER: ...: " + placeholder);
   }
 
-  private static Check<String, KlojangRTException> checkThat(String sysprop) {
-    return Check.on(KlojangRTException::new, sysprop);
+  private static Check<String, ParseException> checkThat(String sysprop) {
+    return Check.on(ParseException::new, sysprop);
   }
 
   private static String quote(String token) {
