@@ -16,11 +16,9 @@ public class ParseException extends KlojangException {
 
   private static final String EMPTY_VARIABLE_NAME = ERR_BASE + "empty variable name";
 
-  private static final String INVALID_PATH = "Invalid path: \"%s\"";
+  private static final String INVALID_INCLUDE_PATH = ERR_BASE + "invalid include path: \"%s\"";
 
-  private static final String INVALID_INCLUDE_PATH = ERR_BASE + INVALID_PATH;
-
-  private static final String EMPTY_PATH = ERR_BASE + "Empty include path";
+  private static final String EMPTY_PATH = ERR_BASE + "empty include path";
 
   private static final String EMPTY_TEMPLATE_NAME = ERR_BASE + "empty template name";
 
@@ -34,13 +32,20 @@ public class ParseException extends KlojangException {
 
   private static final String BAD_ESCAPE_TYPE = ERR_BASE + "invalid escape type: \"%s\"";
 
+  private static final String BEGIN_TAG_NOT_TERMINATED = ERR_BASE + "begin tag not terminated";
+
+  private static final String END_TAG_NOT_TERMINATED = ERR_BASE + "end tag not terminated";
+
+  private static final String INCLUDE_TAG_NOT_TERMINATED = ERR_BASE + "include tag not terminated";
+
+  private static final String MISSING_END_TAG = ERR_BASE + "missing end tag for template \"%s\"";
+
+  private static final String DANGLING_END_TAG =
+      ERR_BASE + "dangling end tag with template name \"%s\"";
+
   private static final String DITCH_BLOCK_NOT_TERMINATED = ERR_BASE + "ditch block not terminated";
 
-  private static final String TEMPLATE_NOT_TERMINATED = ERR_BASE + "template not terminated";
-
-  private static final String DANGLING_END_OF_TMPL = ERR_BASE + "dangling end-of-template";
-
-  private static final String INCLUDE_NOT_TERMINATED = ERR_BASE + "include not terminated";
+  private static final String PLACEHOLDER_NOT_TERMINATED = ERR_BASE + "placeholder not terminated";
 
   static ParseException invalidIncludePath(String src, int pos, String path) {
     return exc0(INVALID_INCLUDE_PATH, src, pos, path);
@@ -75,20 +80,32 @@ public class ParseException extends KlojangException {
     return exc0(BAD_ESCAPE_TYPE, src, pos, name);
   }
 
-  static Function<String, ParseException> templateNotTerminated(String src, int pos) {
-    return exc1(TEMPLATE_NOT_TERMINATED, src, pos);
+  static Function<String, ParseException> beginTagNotTerminated(String src, int pos) {
+    return exc1(BEGIN_TAG_NOT_TERMINATED, src, pos);
   }
 
-  static Function<String, ParseException> includeNotTerminated(String src, int pos) {
-    return exc1(INCLUDE_NOT_TERMINATED, src, pos);
+  static Function<String, ParseException> endTagNotTerminated(String src, int pos) {
+    return exc1(END_TAG_NOT_TERMINATED, src, pos);
+  }
+
+  static Function<String, ParseException> includeTagNotTerminated(String src, int pos) {
+    return exc1(INCLUDE_TAG_NOT_TERMINATED, src, pos);
+  }
+
+  static ParseException missingEndTag(String src, int pos, String tmplName) {
+    return exc0(MISSING_END_TAG, src, pos, tmplName);
+  }
+
+  static ParseException danglingEndTag(String src, int pos, String tmplName) {
+    return exc0(DANGLING_END_TAG, src, pos, tmplName);
   }
 
   static ParseException ditchBlockNotTerminated(String src, int pos) {
     return exc0(DITCH_BLOCK_NOT_TERMINATED, src, pos);
   }
 
-  static ParseException danglingEndOfTemplate(String src, int pos) {
-    return exc0(DANGLING_END_OF_TMPL, src, pos);
+  static ParseException placeholderNotTerminated(String src, int pos) {
+    return exc0(PLACEHOLDER_NOT_TERMINATED, src, pos);
   }
 
   ParseException(String message) {

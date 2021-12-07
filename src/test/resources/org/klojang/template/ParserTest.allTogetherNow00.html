@@ -11,16 +11,18 @@ var selectedId= ~%selectedId%;
 			<tr><th onclick="showSelect('~%selectedName%')">Name</th><th>Age</th>
 		</thead>
 		<tbody>
-			<!--%% example row: -->
 			<tr><td>John</td><td>38</td></tr>
-			<!--%%-->
 			<!-- ~%%include:tableRow.html% -->
 		</tbody>
 	</table>
 	~%%begin:pageButtons%
-		<button type="button">~%pageNo%</button>
+		<button type="button">
+			<!-- ~%pageNo% -->
+			<!--%-->2<!--%-->
+		</button>
 	~%%end:pageButtons%
-	<!--%% don't include for now -->
+	<br>
+	<!--%%-->
 		~%%include:super-duper-widget.html%
 	<!--%%-->
 </body>

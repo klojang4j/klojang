@@ -35,52 +35,57 @@ class Regex {
     checkThat(TMPL_END).isNot(blank(), ERR_ILLEGAL_VAL, TMPL_END);
   }
 
-  private static final String VS = quote(VAR_START);
-  private static final String VE = quote(VAR_END);
-  private static final String TS = quote(TMPL_START);
-  private static final String TE = quote(TMPL_END);
+  private static final String VS = quote(VAR_START); // ~%
+  private static final String VE = quote(VAR_END); // %
+  private static final String TS = quote(TMPL_START); // ~%%
+  private static final String TE = quote(TMPL_END); // %
 
-  // Used for group names and template names, *not* for variable names
+  // Used for group name prefixes and template names, *not* for variable names
   private static final String NAME = "([a-zA-Z_]\\w*)";
+
+  private static final String CMT_S = "<!--\\s*";
+
+  private static final String CMT_E = "\\s*-->";
 
   static final String VARIABLE = VS + "(" + NAME + ":)?(.+?)" + VE;
 
-  static final String VARIABLE_CMT = "<!--\\s*" + VARIABLE + "\\s*-->";
+  static final String VARIABLE_CMT = CMT_S + VARIABLE + CMT_E;
 
-  static final String INLINE_TMPL = TS + "begin:" + NAME + TE + "(.*?)" + TS + "end:\\1" + TE;
+  static final String INLINE_BEGIN = TS + "begin:" + NAME + TE;
 
-  static final String INLINE_TMPL_CMT = "<!--\\s*" + INLINE_TMPL + "\\s*-->";
+  static final String INLINE_END = TS + "end:" + NAME + TE;
+
+  static final String INLINE_TMPL = INLINE_BEGIN + "(.*?)" + TS + "end:\\1" + TE;
+
+  static final String INLINE_TMPL_CMT =
+      CMT_S + INLINE_BEGIN + CMT_E + "(.*?)" + CMT_S + TS + "end:\\1" + TE + CMT_E;
 
   static final String INCLUDED_TMPL = TS + "include:(" + NAME + ":)?(.+?)" + TE;
 
-  static final String INCLUDED_TMPL_CMT = "<!--\\s*" + INCLUDED_TMPL + "\\s*-->";
+  static final String INCLUDED_TMPL_CMT = CMT_S + INCLUDED_TMPL + CMT_E;
 
-  /**
-   * end-of-template sequence for inline templates. We don't use this regular expression for regular
-   * parsing, but we do use it for error reporting ("dangling end-of-template").
-   */
-  static final String EOT = TS + "end:" + NAME + TE;
-
-  /**
-   * By itself not used for regular parsing, but we do use it for error reporting ("ditch block not
-   * terminated").
-   */
-  static final String DITCH_TOKEN = "<!--%%-->";
+  static final String DITCH_TOKEN = "<!--%%.*?-->";
 
   static final String DITCH_BLOCK = "(?ms)" + DITCH_TOKEN + ".*?" + DITCH_TOKEN;
+
+  static final String PLACEHOLDER_TOKEN = "<!--%-->";
+
+  static final String PLACEHOLDER = "(?ms)" + PLACEHOLDER_TOKEN + ".*?" + PLACEHOLDER_TOKEN;
 
   // Equivalent to prefixing the regular expression with "(?ms)"
   private static final int MS_MODIFIERS = Pattern.MULTILINE | Pattern.DOTALL;
 
   static final Pattern REGEX_VARIABLE = compile(VARIABLE);
   static final Pattern REGEX_VARIABLE_CMT = compile(VARIABLE_CMT);
+  static final Pattern REGEX_INLINE_BEGIN = compile(INLINE_BEGIN);
+  static final Pattern REGEX_INLINE_END = compile(INLINE_END);
   static final Pattern REGEX_INLINE_TMPL = compile(INLINE_TMPL, MS_MODIFIERS);
   static final Pattern REGEX_INLINE_TMPL_CMT = compile(INLINE_TMPL_CMT, MS_MODIFIERS);
   static final Pattern REGEX_INCLUDED_TMPL = compile(INCLUDED_TMPL);
   static final Pattern REGEX_INCLUDED_TMPL_CMT = compile(INCLUDED_TMPL_CMT);
-  static final Pattern REGEX_DITCH_BLOCK = compile(DITCH_BLOCK);
   static final Pattern REGEX_DITCH_TOKEN = compile(DITCH_TOKEN);
-  static final Pattern REGEX_EOT = compile(EOT);
+  static final Pattern REGEX_DITCH_BLOCK = compile(DITCH_BLOCK);
+  static final Pattern REGEX_PLACEHOLDER = compile(PLACEHOLDER);
 
   static void printAll() {
     System.out.println("VARIABLE .......: " + REGEX_VARIABLE);
@@ -90,8 +95,7 @@ class Regex {
     System.out.println("INCLUDE ........: " + REGEX_INCLUDED_TMPL);
     System.out.println("INCLUDE_CMT ....: " + REGEX_INCLUDED_TMPL_CMT);
     System.out.println("DITCH_BLOCK: ...: " + REGEX_DITCH_BLOCK);
-    System.out.println("EOT ............: " + REGEX_EOT);
-    System.out.println("DITCH_TOKEN: ...: " + REGEX_DITCH_TOKEN);
+    System.out.println("PLACEHOLDER: ...: " + REGEX_PLACEHOLDER);
   }
 
   private static Check<String, KlojangRTException> checkThat(String sysprop) {

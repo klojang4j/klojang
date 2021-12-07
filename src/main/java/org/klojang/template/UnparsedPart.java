@@ -13,10 +13,6 @@ class UnparsedPart extends AbstractPart {
     return text;
   }
 
-  TextPart toTextPart() {
-    return new TextPart(text, start());
-  }
-
   @Override
   public String toString() {
     return text;
