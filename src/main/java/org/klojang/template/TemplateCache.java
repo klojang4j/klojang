@@ -4,16 +4,14 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import nl.naturalis.common.NumberMethods;
 import nl.naturalis.common.check.Check;
+import static org.klojang.SysProp.TMPL_CACHE_SIZE;
 import static org.klojang.template.Template.ROOT_TEMPLATE_NAME;
 import static nl.naturalis.common.check.CommonChecks.gte;
-import static nl.naturalis.common.check.CommonChecks.integer;
 
 class TemplateCache {
 
   private static final Logger LOG = LoggerFactory.getLogger(TemplateCache.class);
-  private static final String ERR_CACHE_SIZE = "Illegal value specified for %s: %s";
 
   static final TemplateCache INSTANCE = new TemplateCache();
 
@@ -22,12 +20,10 @@ class TemplateCache {
   private final int maxSize;
 
   private TemplateCache() {
-    String k = "org.klojang.template.cacheSize";
-    String v = System.getProperty(k, "-1");
-    maxSize = Check.that(v, k).is(integer(), ERR_CACHE_SIZE, v).ok(NumberMethods::parseInt);
+    maxSize = TMPL_CACHE_SIZE.getInt();
     String s = maxSize == 0 ? " (caching disabled)" : maxSize == -1 ? " (unlimited)" : "";
     LOG.trace("Template cache size: {}{}", maxSize, s);
-    Check.that(maxSize).is(gte(), -1, ERR_CACHE_SIZE, k, maxSize);
+    Check.that(maxSize, TMPL_CACHE_SIZE.property()).is(gte(), -1);
     if (maxSize == 0) {
       cache = null;
       entries = null;

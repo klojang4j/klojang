@@ -2,6 +2,7 @@ package org.klojang.template;
 
 import java.util.Set;
 import java.util.regex.Pattern;
+import org.klojang.SysProp;
 import nl.naturalis.common.check.Check;
 import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.toSet;
@@ -10,20 +11,16 @@ import static nl.naturalis.common.check.CommonChecks.equalTo;
 
 class Regex {
 
-  private static final String SYSPROP_BASE = "org.klojang.template.parser";
-  private static final String SYSPROP_VS = SYSPROP_BASE + "varStart";
-  private static final String SYSPROP_VE = SYSPROP_BASE + "varEnd";
-  private static final String SYSPROP_TS = SYSPROP_BASE + "tmplStart";
-  private static final String SYSPROP_TE = SYSPROP_BASE + "tmplEnd";
-
   private static final String ERR_ILLEGAL_VAL = "Illegal value for system property %s: \"%s\"";
-  private static final String ERR_IDENTICAL =
-      "Values of varStart and tmplStart must not be identical";
+  private static final String ERR_IDENTICAL = "varStart and tmplStart must be different";
 
-  static final String VAR_START = System.getProperty(SYSPROP_VS, "~%");
-  static final String VAR_END = System.getProperty(SYSPROP_VE, "%");
-  static final String TMPL_START = System.getProperty(SYSPROP_TS, "~%%");
-  static final String TMPL_END = System.getProperty(SYSPROP_TE, "%");
+  static final String VAR_START = SysProp.VAR_START.get();
+  static final String VAR_END = SysProp.VAR_END.get();
+  static final String TMPL_START = SysProp.TMPL_START.get();
+  static final String TMPL_END = SysProp.TMPL_END.get();
+
+  // By itself used only for error reporting
+  static final String PLACEHOLDER_TAG = "<!--%-->";
 
   private static Regex instance;
 
@@ -33,9 +30,6 @@ class Regex {
     }
     return instance;
   }
-
-  // By itself used only for error reporting
-  static final String PLACEHOLDER_TAG = "<!--%-->";
 
   final Pattern variable;
   final Pattern cmtVariable;
@@ -90,9 +84,9 @@ class Regex {
 
     String ptnCmtIncludedTmpl = cmtStart + ptnIncludedTmpl + cmtEnd;
 
-    String ptnDitchToken = "<!--%%.*?-->";
+    String ptnDitchTag = "<!--%%.*?-->";
 
-    String ptnDitchBlock = ptnDitchToken + ".*?" + ptnDitchToken;
+    String ptnDitchBlock = ptnDitchTag + ".*?" + ptnDitchTag;
 
     String ptnPlaceholder = PLACEHOLDER_TAG + ".*?" + PLACEHOLDER_TAG;
 
@@ -107,7 +101,7 @@ class Regex {
     this.cmtInlineTemplate = compile(ptnCmtInlineTmpl, msModifiers);
     this.includedTemplate = compile(ptnIncludedTmpl);
     this.cmtIncludedTemplate = compile(ptnCmtIncludedTmpl);
-    this.ditchTag = compile(ptnDitchToken);
+    this.ditchTag = compile(ptnDitchTag);
     this.ditchBlock = compile(ptnDitchBlock, msModifiers);
     this.placeholder = compile(ptnPlaceholder, msModifiers);
   }
