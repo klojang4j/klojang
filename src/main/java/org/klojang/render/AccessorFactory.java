@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import org.klojang.SysProp;
 import org.klojang.accessors.*;
 import org.klojang.db.Row;
 import org.klojang.template.Template;
@@ -97,13 +98,16 @@ import static nl.naturalis.common.ClassMethods.isA;
  */
 public class AccessorFactory {
 
-  /** An {@code AccessorFactory} the should be sufficent for most use cases. */
+  /**
+   * An {@code AccessorFactory} the should be sufficent for most use cases. It assumes that the
+   * names you use in your templates can be mapped as-is to your model objects.
+   */
   public static final AccessorFactory STANDARD_ACCESSORS = configure().freeze();
 
   /**
-   * Returns an {@code AccessorFactory} the should sufficent for most use cases while allowing you
-   * to specify a global {@link NameMapper} for mapping template variable names to model object
-   * properties.
+   * Returns an {@code AccessorFactory} that should be sufficient for most use cases. It allows you
+   * to specify one global {@link NameMapper} for mapping the names used in your templates to the
+   * names used in your model objects.
    *
    * @param nameMapper The {@code NameMapper} to use when accessing model objects
    * @return An {@code AccessorFactory} the should sufficent for most use cases
@@ -194,6 +198,8 @@ public class AccessorFactory {
     return new Builder();
   }
 
+  private final boolean useBeanAccessor = SysProp.USE_BEAN_ACCESSOR.getBoolean();
+
   private final Map<Class<?>, Map<Template, Accessor<?>>> accs;
   private final NameMapper defMapper;
   private final Map<Template, NameMapper> mappers;
@@ -227,8 +233,10 @@ public class AccessorFactory {
         acc = new RowAccessor(nm);
       } else if (isA(type, Object[].class)) {
         acc = ArrayAccessor.getInstance(template);
-      } else {
+      } else if (useBeanAccessor) {
         acc = new BeanAccessor<>(type, nm);
+      } else {
+        acc = new PathAccessor(nm);
       }
     }
     return acc;

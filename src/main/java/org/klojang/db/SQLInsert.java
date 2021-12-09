@@ -49,14 +49,13 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
   }
 
   /**
-   * Binds the values in the specified JavaBean to the named parameters within the SQL statement.
-   * Bean properties that do not correspond to named parameters will be ignored. The effect of
-   * passing anything other than a proper JavaBean (e.g. scalars like {@code Integer} or
-   * multi-valued objects like {@code Employee[]} or {@code ArrayList}) is undefined. The {@code
-   * idProperty} argument must be the name of the property that corresponds to the auto-increment
-   * column. The generated value for that column will be bound back into the bean. Of course, the
-   * bean or {@code Map} needs to be modifiable in that case. If you don't want the auto-increment
-   * column to be bound back into the bean or {@code Map}, just call {@link #bind(Object)}.
+   * Binds the values in the specified JavaBean to the named parameters within the SQL statement and
+   * then, once the statement has executed, binds back the value of the auto-generated key to the
+   * specified bean property. Bean properties that do not correspond to named parameters will be
+   * ignored. The effect of passing anything other than a proper JavaBean (e.g. scalars like {@code
+   * Integer} or multi-valued objects like {@code Employee[]} or {@code ArrayList}) is undefined. If
+   * you don't want the auto-increment column to be bound back into the bean or {@code Map}, just
+   * call {@link #bind(Object)}.
    *
    * <p>Klojang does not support INSERT statements that generate multiple keys or non-number keys.
    *
@@ -71,12 +70,9 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
   }
 
   /**
-   * Binds the values in the specified {@code Map} to the named parameters within the SQL statement.
-   * Map keys that do not correspond to named parameters will be ignored. The {@code idKey} argument
-   * must be the name of the map key that corresponds to the auto-increment column. The generated
-   * value for that column will be bound back into the {@code Map} under that key. Therefore, make
-   * sure the {@code Map} needs to be modifiable. If you <i>don't</i> want the auto-increment column
-   * to be bound back into the {@code Map}, just call {@link #bind(Map)}.
+   * Binds the values in the specified {@code Map} to the named parameters within the SQL statement
+   * and then, once the statement has executed, binds back the value of the auto-generated key to
+   * the specified map key.
    *
    * <p>Klojang does not support INSERT statements that generate multiple keys or non-number keys.
    *

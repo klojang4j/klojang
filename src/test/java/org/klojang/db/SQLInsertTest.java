@@ -133,4 +133,16 @@ public class SQLInsertTest {
       assertTrue(person.getId() != Integer.MIN_VALUE);
     }
   }
+
+  @Test
+  public void test05() {
+    Person person = new Person("John");
+    person.setId(Integer.MIN_VALUE);
+    try (SQLInsert insert =
+        SQL.prepareInsert().of(Person.class).into("TEST").excluding("id").prepare(MY_CON.get())) {
+      insert.bind(person, "id");
+      insert.execute();
+      assertTrue(person.getId() != Integer.MIN_VALUE);
+    }
+  }
 }

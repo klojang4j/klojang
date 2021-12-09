@@ -164,16 +164,13 @@ public class ParserTest {
     assertEquals(expected, actual);
   }
 
-  @Test
   public void testDitchBlock02() {
     String path = "ParserTest.parseDitchBlock02.html";
-    ParseException e =
-        assertThrows(
-            ParseException.class,
-            () -> {
-              Template.fromResource(getClass(), path);
-            });
-    assertTrue(e.getMessage().endsWith("ditch block not terminated"));
+    assertThrows(
+        ParseException.class, // Ditch block not terminated
+        () -> {
+          Template.fromResource(getClass(), path);
+        });
   }
 
   @Test
