@@ -31,34 +31,34 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
  * unlikely you will define many variable-specific stringifiers. If a variable's value can be
  * stringified by calling {@code toString()} on it (or to an empty string if null), you don't need
  * to specify a stringifier for it because this is default behaviour. In addition, all variables
- * with the same data type will usually have to be stringified in the same way. (For example you may
- * want to format all integers according to your country's locale.) These generic, type-based
- * stringifiers can be configured using {@link Builder#addTypeBasedStringifier(String..., Class)
- * Builder.setTypeStringifier}. Only if a template variable has very specific stringification
+ * with the same data type will usually have to be stringified in the same way. For example you may
+ * want to format <i>all</i> integers according to your country's locale. These type-based
+ * stringifiers can be configured using {@link Builder#registerByType(String..., Class)
+ * Builder.addTypeBasedStringifier}. Only if a template variable has very specific stringification
  * requirements would you register the stringifier using {@link Builder#add(Stringifier, String...)
  * Builder.setStringifier}.
  *
  * <p>Type-based stringifiers are internally kept in a {@link TypeMap}. This means that if a
  * stringifier is requested for some type, and that type is not in the {@code TypeMap}, but one of
- * its super types is, then you get the stringifier associated with the super type. For example, if
- * the {@code TypeMap} contains a {@code Number} stringifier and you request an {@code Integer}
- * stringifier, you get the {@code Number} stringifier (unless you have also added an {@code
- * Integer} stringifier to the {@code TypeMap}). This saves you from having to specify a stringifier
- * for every subclass of {@code Number} if they are all stringified in the same way.
+ * its super types is, you get the stringifier associated with the super type. For example, if the
+ * {@code TypeMap} contains a {@code Number} stringifier and you request an {@code Integer}
+ * stringifier, you get the {@code Number} stringifier (unless of course you have also registered an
+ * {@code Integer} stringifier). This saves you from having to specify a stringifier for every
+ * subclass of {@code Number} if they are all stringified in the same way.
  *
- * <p>This is how a {@link StringifierFactory} decides which stringifier to hand out for a template
- * variable:
+ * <p>This is how a {@link StringifierRegistry} decides which stringifier to hand out for a variable
+ * in a template:
  *
  * <p>
  *
  * <ol>
- *   <li>If a stringifier has been defined for a {@link XVarGroup variable group} and the variable
+ *   <li>If a stringifier has been defined for a {@link VarGroup variable group} and the variable
  *       belongs to that group, then that is the stringifier that is going to be used.
  *   <li>If a stringifier has been defined for that particular variable in that particular template,
  *       then that is the stringifier that is going to be used.
  *   <li>If a stringifier has been defined for all variables with that particular name (irrespective
  *       of which template they belong to), then that is the stringifier that is going to be used.
- *       See {@link Builder#addNameBasedStringifier(String..., Stringifier)
+ *       See {@link Builder#registerByName(String..., Stringifier)
  *       setNameBasedStringifier}.
  *   <li>If a stringifier has been defined for the data type of that particular variable, then that
  *       is the stringifier that is going to be used.
@@ -70,21 +70,21 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
  * @see SessionConfig
  * @author Ayco Holleman
  */
-public final class StringifierFactory {
+public final class StringifierRegistry {
 
   /**
    * A simple, brute-force {@code StringifierFactory} instance that always returns the {@link
    * Stringifier#DEFAULT default stringifier}, whatever the template and whatever the variable.
    * Unlikely to be satisfactory in the end, but handy in the early stages of development.
    */
-  public static final StringifierFactory STANDARD_STRINGIFIERS = configure().freeze();
+  public static final StringifierRegistry STANDARD_STRINGIFIERS = configure().freeze();
 
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
 
   /**
    * Lets you configure a {@code StringifierFactory} instance for a template. If you don't require
    * any template-specific stringifiers, you can also start out using {@link
-   * StringifierFactory#basic()}.
+   * StringifierRegistry#basic()}.
    *
    * @author Ayco Holleman
    */
@@ -164,7 +164,7 @@ public final class StringifierFactory {
      * @param groupNames The names of the variable groups to which to assign the stringifier
      * @return This {@code Builder}
      */
-    public Builder addGroupStringifier(Stringifier stringifier, String... groupNames) {
+    public Builder registerByGroup(Stringifier stringifier, String... groupNames) {
       Check.notNull(stringifier, "stringifier");
       Check.that(groupNames, "groupNames").is(deepNotEmpty());
       for (String name : groupNames) {
@@ -188,7 +188,7 @@ public final class StringifierFactory {
      * @param varNames The variable names to associate the stringifier with.
      * @return This {@code Builder}
      */
-    public Builder addNameBasedStringifier(Stringifier stringifier, String... varNames) {
+    public Builder registerByName(Stringifier stringifier, String... varNames) {
       Check.notNull(stringifier, "stringifier");
       Check.that(varNames, "varNames").is(deepNotEmpty());
       for (String var : varNames) {
@@ -218,7 +218,7 @@ public final class StringifierFactory {
      * @param types The types to associate the stringifier with.
      * @return This {@code Builder}
      */
-    public Builder addTypeBasedStringifier(Stringifier stringifier, Class<?>... types) {
+    public Builder registerByType(Stringifier stringifier, Class<?>... types) {
       Check.notNull(stringifier, "stringifier");
       Check.that(types, "types").is(deepNotEmpty());
       for (Class<?> t : types) {
@@ -230,17 +230,17 @@ public final class StringifierFactory {
     }
 
     /**
-     * Explicitly sets the data type of the specified variables within the specified template.
-     * Thisiers enables the {@code StringifierFactory} to find a type-based stringifier for a value
-     * even if the value is {@code null} (in which case {@code Object.getClass()} is not available
-     * to determine the variable's type).
+     * Explicitly sets the data type of the specified variables within the specified template. This
+     * enables the {@code StringifierFactory} to find a type-based stringifier for a value even if
+     * the value is {@code null} (in which case {@code Object.getClass()} is not available to
+     * determine the variable's type).
      *
      * @param type The data type to set for the specified variables
      * @param template The template containing the variables
      * @param varFQNames The fully-qualified name of the variables
      * @return This {@code Builder}
      */
-    public Builder setDataType(Class<?> type, Template template, String... varFQNames) {
+    public Builder setVariableType(Class<?> type, Template template, String... varFQNames) {
       Check.notNull(type, "type");
       Check.notNull(template, "template");
       Check.that(varFQNames, "varFQNames").is(deepNotEmpty());
@@ -261,8 +261,8 @@ public final class StringifierFactory {
      *
      * @return A new, immutable {@code StringifierFactory} instance
      */
-    public StringifierFactory freeze() {
-      return new StringifierFactory(
+    public StringifierRegistry freeze() {
+      return new StringifierRegistry(
           stringifiers, typeStringifiers, typeLookup, partialNames, defStringifier);
     }
   }
@@ -288,7 +288,7 @@ public final class StringifierFactory {
   private final List<Tuple<String, Stringifier>> partialNames;
   private final Stringifier defStringifier;
 
-  private StringifierFactory(
+  private StringifierRegistry(
       Map<StringifierId, Stringifier> stringifiers,
       Map<Class<?>, Stringifier> typeStringifiers,
       Map<Tuple<Template, String>, Class<?>> typeLookup,

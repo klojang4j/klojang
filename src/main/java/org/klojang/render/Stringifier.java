@@ -5,6 +5,7 @@ import nl.naturalis.common.StringMethods;
 /**
  * Stringifies the values coming back from the data access layer.
  *
+ * @see StringifierRegistry
  * @author Ayco Holleman
  */
 @FunctionalInterface
@@ -13,7 +14,7 @@ public interface Stringifier {
   /**
    * Stringifies {@code null} to an empty string and any other value by calling {@code toString()}
    * on it. It is the {@code Stringifier} that is used by default for any template variable for
-   * which no alternative {@code Stringifier} is {@link StringifierFactory.Builder configured}.
+   * which no alternative {@code Stringifier} is {@link StringifierRegistry.Builder configured}.
    */
   public static final Stringifier DEFAULT = x -> x == null ? StringMethods.EMPTY : x.toString();
 

@@ -3,7 +3,7 @@ package org.klojang.template;
 import org.klojang.render.RenderException;
 import org.klojang.render.RenderSession;
 import org.klojang.render.Stringifier;
-import org.klojang.render.StringifierFactory;
+import org.klojang.render.StringifierRegistry;
 import org.klojang.x.template.XVarGroup;
 import nl.naturalis.common.check.Check;
 import static org.klojang.x.Messages.ERR_NO_SUCH_VARGROUP;
@@ -17,7 +17,7 @@ import static nl.naturalis.common.check.CommonChecks.notNull;
  * ~%<b>dateFormat1</b>:birthDate%</code>. Variable groups can also be assigned programmatically
  * (see, for example, {@link RenderSession#set(String, Object, VarGroup) RenderSession.set}. No
  * exception is thrown if a template contains a group name prefix that is not associated with {@code
- * Stringifier} (via a {@link StringifierFactory}). However, when specifying a variable group
+ * Stringifier} (via a {@link StringifierRegistry}). However, when specifying a variable group
  * programmatically, the group <i>must</i> have been registered with the {@code StringifierFactory}
  * or a {@link RenderException} will be thrown.
  *

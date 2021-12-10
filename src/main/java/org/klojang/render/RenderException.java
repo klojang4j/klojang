@@ -21,7 +21,7 @@ public class RenderException extends KlojangException {
   /**
    * Thrown when specifying a {@link RenderSession#set(String, Object, VarGroup) default group} for
    * which no stringifier has been {@link
-   * StringifierFactory.Builder#addGroupStringifier(Stringifier, String...) defined}.
+   * StringifierRegistry.Builder#registerByGroup(Stringifier, String...) defined}.
    */
   public static RenderException noStringifierForGroup(VarGroup vg) {
     String fmt = "No stringifier associated with variable group \"%s\"";

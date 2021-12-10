@@ -82,11 +82,11 @@ public class RenderSession {
    * through the prefix will prevail. The {@code defaultGroup} argument is allowed to be {@code
    * null}. In that case, if the variable also doesn't have an inline group name prefix, the {@code
    * RenderSession} will attempt to find a suitable stringifier by other means; for example, based
-   * on the {@link StringifierFactory.Builder#addTypeBasedStringifier(Stringifier, Class...) data
-   * type} of the variable. If that fails, the {@code RenderSession} will default to using the
-   * {@link Stringifier#DEFAULT default stringifier}.
+   * on the {@link StringifierRegistry.Builder#registerByType(Stringifier, Class...) data type} of
+   * the variable. If that fails, the {@code RenderSession} will default to using the {@link
+   * Stringifier#DEFAULT default stringifier}.
    *
-   * @see StringifierFactory.Builder#addGroupStringifier(Stringifier, String...)
+   * @see StringifierRegistry.Builder#registerByGroup(Stringifier, String...)
    * @param varName The name of the variable to set
    * @param value The value of the variable
    * @param defaultGroup The variable group to assign the variable to if the variable has no group
@@ -102,14 +102,14 @@ public class RenderSession {
     Check.on(noSuchVariable(template, varName), template.getVariables()).is(containing(), varName);
     Check.on(alreadySet(template, varName), state.isSet(varName)).is(no());
     if (value == UNDEFINED) {
-      // Unless the user is manually going through, and accessing the properties of some source data
-      // object, specifying UNDEFINED misses the point of that constant, but since we can't know
-      // this, we'll have to accept that value and process it as it is meant to be processed
-      // (namely: not).
+      // Unless the user is manually going through, and accessing the properties
+      // of some source data object, specifying UNDEFINED misses the point of that
+      // constant, but since we can't know his, we'll have to accept that value
+      // and process it as it is meant to be processed (namely: not).
       return this;
     }
     IntList indices = config.getTemplate().getVarPartIndices().get(varName);
-    StringifierFactory sf = config.getStringifierFactory();
+    StringifierRegistry sf = config.getStringifiers();
     for (int i = 0; i < indices.size(); ++i) {
       int partIndex = indices.get(i);
       VariablePart part = template.getPart(partIndex);
@@ -249,7 +249,7 @@ public class RenderSession {
     separator = n2e(separator);
     suffix = n2e(suffix);
     boolean enrich = !prefix.isEmpty() || !separator.isEmpty() || !suffix.isEmpty();
-    StringifierFactory sf = config.getStringifierFactory();
+    StringifierRegistry sf = config.getStringifiers();
     // Find first non-null value to increase the chance that we find a suitable
     // stringifier:
     Object any = values.stream().filter(notNull()).findFirst().orElse(null);
@@ -327,14 +327,9 @@ public class RenderSession {
    * <p>If the specified object is an empty array or an empty {@code Collection}, the template will
    * not be rendered at all. This is the mechanism for conditional rendering: "populate" the nested
    * template with an empty array or {@code Collection} and the template will not be rendered. Note,
-   * however, that the same can be achieved more easily by just never calling the {@code populate}
-   * method for the template it will not be rendered either. By default neither template variables
-   * nor nested templates are rendered.
-   *
-   * <h4>Text-only templates</h4>
-   *
-   * <p>Although the {@code RenderSession} has a {@link #show(int, String) separate method} for
-   * dealing with text-only templates, they can also be made to be rendered by this method.
+   * however, that the same can be achieved more easily by just not calling the {@code populate}
+   * method for that template as by default neither template variables nor nested templates are
+   * rendered.
    *
    * @param nestedTemplateName The name of the nested template
    * @param sourceData An object that provides data for all or some of the nested template's
@@ -369,7 +364,7 @@ public class RenderSession {
   }
 
   /**
-   * Enabled or disables the rendering of the specified templates. The specified templates must all
+   * Enables or disables the rendering of the specified templates. The specified templates must all
    * be text-only templates, otherwise a {@link RenderException} is thrown. Equivalent to {@link
    * #show(int, String...) show(1, nestedTemplateNames)}.
    *
@@ -441,9 +436,9 @@ public class RenderSession {
   }
 
   /**
-   * Enables all nested text-only templates that have not explicitly disabled. The nested templates
-   * may in fact contain nested templates themselves, but they must not contain variables at any
-   * nesting level beneath them. A {@code RenderException} if they do.
+   * Enables all nested text-only templates that have not been explicitly disabled. The nested
+   * templates may in fact contain nested templates themselves, but they must not contain variables
+   * at any nesting level beneath them. A {@code RenderException} if they do.
    *
    * @param nestedTemplateNames The names of the nested text-only templates you want to be rendered
    * @return This {@code RenderSession}
@@ -484,8 +479,9 @@ public class RenderSession {
 
   /**
    * Convenience method for populating a nested template that contains exactly one variable and zero
-   * (doubly) nested templates. If the specified value is an array or a {@code Collection}, the
-   * template is going to be repeated for each value <i>within</i> the array or {@code Collection}.
+   * (doubly) nested templates. The variable may still occur multiple times within the template. If
+   * the specified value is an array or a {@code Collection}, the template is going to be repeated
+   * for each value within the array or {@code Collection}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
@@ -501,7 +497,7 @@ public class RenderSession {
    * Convenience method for populating a nested template that contains exactly one variable and zero
    * (doubly) nested templates. The variable may still occur multiple times within the template. If
    * the specified value is an array or a {@code Collection}, the template is going to be repeated
-   * for each value <i>within</i> the array or {@code Collection}.
+   * for each value within the array or {@code Collection}.
    *
    * @param nestedTemplateName The name of the nested template. <i>Must</i> contain exactly one
    *     variable
@@ -674,15 +670,19 @@ public class RenderSession {
 
   /**
    * Returns a {@code RenderSession} for the specified nested template. The {@code RenderSession}
-   * inherits the {@link AccessorFactory accessors} and {@link StringifierFactory stringifiers} from
-   * the parent session (i.e. <i>this</i> {@code RenderSession}). If this is the first time the
+   * inherits the {@link AccessorFactory accessors} and {@link StringifierRegistry stringifiers}
+   * from the parent session (i.e. <i>this</i> {@code RenderSession}). If this is the first time the
    * nested template is processed, a single child session will be created for it. This can be used
-   * as illustrated in the following example (assuming a nested template named {@code
-   * employeeDetails}:
+   * as illustrated in the following example (assuming the presence of a nested template named
+   * {@code employees}:
    *
-   * <p><code>{@code
-   * session.in("employeeDetails").set("firstName", "john").set("lastName", "Smith");
+   * <blockquote>
+   *
+   * <code>{@code
+   * session.in("employees").set("firstName", "john").set("lastName", "Smith");
    * }</code>
+   *
+   * </blockquote>
    *
    * <p>Note that just calling the {@code in} method already has the effect of the template becoming
    * visible.
@@ -719,8 +719,7 @@ public class RenderSession {
   /**
    * Returns whether or not the template is fully populated. That is, all variables have been set
    * and all nested templates have been populated. Note that you may not <i>want</i> the template to
-   * be fully populated. Nested templates whose rendering depended on a condition that turned out to
-   * evaluate to {@code false} will not be populated.
+   * be fully populated.
    *
    * @return Whether or not the template is fully populated
    */

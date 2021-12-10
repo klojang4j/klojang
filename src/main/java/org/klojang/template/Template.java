@@ -361,7 +361,7 @@ public class Template {
   /**
    * Returns a {@code RenderSession} that will only use the {@link
    * AccessorFactory#STANDARD_ACCESSORS predefined accessors} to extract values from source data
-   * objects, and only the {@link StringifierFactory predefined stringifiers} to stringify those
+   * objects, and only the {@link StringifierRegistry predefined stringifiers} to stringify those
    * values.
    *
    * @return A new {@code RenderSession}
@@ -379,14 +379,14 @@ public class Template {
    *     with {@link Stringifier stringifiers}
    * @return A new {@code RenderSession}
    */
-  public RenderSession newRenderSession(StringifierFactory stringifiers) {
+  public RenderSession newRenderSession(StringifierRegistry stringifiers) {
     Check.notNull(stringifiers, "stringifiers");
     return new SessionConfig(this, stringifiers).newRenderSession();
   }
 
   /**
    * Returns a {@code RenderSession} that will only use the specified {@code AccessorFactory} to
-   * extract values from source data, and the {@link StringifierFactory predefined stringifiers} to
+   * extract values from source data, and the {@link StringifierRegistry predefined stringifiers} to
    * stringify those values.
    *
    * @param accessors The {@code AccessorFactory} used to supply the {@code RenderSession} with
@@ -410,7 +410,7 @@ public class Template {
    * @return A new {@code RenderSession}
    */
   public RenderSession newRenderSession(
-      AccessorFactory accessors, StringifierFactory stringifiers) {
+      AccessorFactory accessors, StringifierRegistry stringifiers) {
     Check.notNull(accessors, "accessors");
     Check.notNull(stringifiers, "stringifiers");
     return new SessionConfig(this, accessors, stringifiers).newRenderSession();

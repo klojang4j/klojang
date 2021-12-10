@@ -15,7 +15,7 @@ public interface Accessor<T> {
    * it should not return {@code null} in this case. {@code null} is considered to be a legitimate,
    * "insertable" value. If a {@link RenderSession} requests the {@code Accessor} to provide a value
    * for some template variable and it receives a {@code null} value, it will simply insert it (or
-   * rather its {@link StringifierFactory stringification}) into the template. The variable can no
+   * rather its {@link StringifierRegistry stringification}) into the template. The variable can no
    * longer be set after that, since cannot overwrite variable values within one and the same {@code
    * RenderSession}. If, on the other hand, the {@code RenderSession} receives {@code UNDEFINED}, it
    * will skip setting that variable, leaving you the option to {@link RenderSession#insert(Object,
