@@ -153,7 +153,7 @@ class Parser {
       DUPLICATE_TMPL_NAME
           .check(name, src, offset + m.start(2), name)
           .isNot(in(), names)
-          .isNot(equalTo(), Template.ROOT_TEMPLATE_NAME);
+          .isNot(equalTo(), ROOT_TEMPLATE_NAME);
       TemplateId newId;
       if (id.clazz() != null) { // Load as resource
         if (id.clazz().getResource(path) == null) {
@@ -219,7 +219,7 @@ class Parser {
           checkGarbage(unparsed);
           String text = Regex.of().placeholder.matcher(unparsed.text()).replaceAll(EMPTY);
           if (text.contains(Regex.PLACEHOLDER_TAG)) {
-            int idx = p.start() + unparsed.text().lastIndexOf(Regex.PLACEHOLDER_TAG);
+            int idx = p.start() + unparsed.text().indexOf(Regex.PLACEHOLDER_TAG);
             throw PLACEHOLDER_NOT_CLOSED.asException(text, idx);
           }
           out.add(new TextPart(text, p.start()));
@@ -266,7 +266,7 @@ class Parser {
   private static void logParsing(String name, TemplateId id) {
     if (LOG.isTraceEnabled()) {
       if (name == ROOT_TEMPLATE_NAME) {
-        LOG.trace("Parsing template {}", name);
+        LOG.trace("Parsing root template");
       } else if (id.sourceType() == STRING) {
         LOG.trace("Parsing inline template \"{}\"", name);
       } else {

@@ -7,12 +7,14 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.klojang.template.ParseException;
 import org.klojang.template.Template;
+import nl.naturalis.common.IOMethods;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class RenderSessionTest {
+public class RenderSessionTest00 {
   @Test
   public void test00() throws ParseException, RenderException {
 
-    Template template = Template.fromResource(getClass(), "RenderSessionTest.main.html");
+    Template template = Template.fromResource(getClass(), "RenderSessionTest00.html");
 
     Map<String, Object> data = new HashMap<>();
     Map<String, Object> company = new HashMap<>();
@@ -69,5 +71,8 @@ public class RenderSessionTest {
 
     RenderSession session = template.newRenderSession();
     session.insert(data);
+    String actual = session.render();
+    String expected = IOMethods.toString(getClass(), "RenderSessionTest00.expected.html");
+    assertEquals(expected, actual);
   }
 }
