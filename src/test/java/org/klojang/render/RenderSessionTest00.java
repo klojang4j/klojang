@@ -71,6 +71,7 @@ public class RenderSessionTest00 {
 
     RenderSession session = template.newRenderSession();
     session.insert(data);
+    // session.render(System.out);
     String actual = session.render();
     String expected = IOMethods.toString(getClass(), "RenderSessionTest00.expected.html");
     assertEquals(expected, actual);
