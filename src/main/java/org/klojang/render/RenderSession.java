@@ -27,18 +27,20 @@ import static nl.naturalis.common.StringMethods.concat;
 import static nl.naturalis.common.check.CommonChecks.*;
 
 /**
- * A {@code RenderSession} is responsible for populating a template and rendering it. Populating the
- * template can be done in multiple passes. By default template variables and nested templates are
- * not rendered. That is, unless you provide them with values, they will just disappear from the
- * template upon rendering. As soon as you render the template (by calling of the {@code render}
- * methods), the {@code RenderSession} effectively becomes immutable. You can render the template
- * again, as often as you like, but the values of its variables are fixed.
+ * A {@code RenderSession} lets you populate a template and then render it. By default template
+ * variables and nested templates are not rendered. That is, unless you provide them with values,
+ * they will just disappear from the template upon rendering. As soon as you render the template (by
+ * calling any of the {@link #render()} methods), the {@code RenderSession} effectively becomes
+ * immutable. You can render the template again using that {@code RenderSession}, as often as you
+ * like, but it won't allow you to set or changes template variables any longer.
  *
- * <p>A {@code RenderSession} is a throw-away object that should go out of scope as quickly as
- * possible. It is cheap to instantiate, but can gain a lot of state as the template gets populated.
- * Therefore, make sure it doesn't survive the request method. A possible exception could be
- * templates that render relatively static content, especially if the cost of populating them is
- * high.
+ * <p>Render sessions are throw-away objects that should go out of scope as quickly as possible.
+ * They are cheap to instantiate, but can gain a lot of state as the template gets populated.
+ * Therefore, when used within a JEE(-like) framework, make sure they don't survive the request
+ * method. A possible exception could be templates that render static but expensive-to-create
+ * content. However, in that case it is better to {@link #createRenderable() obtain} a {@link
+ * Renderable} object from the {@code RenderSession} and cache that, rather than the {@code
+ * RenderSession} itself.
  *
  * <h4>Thead Safety</h4>
  *
