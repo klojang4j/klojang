@@ -373,9 +373,9 @@ public class Template {
   /**
    * Returns a {@code RenderSession} that will use the {@link AccessorFactory#STANDARD_ACCESSORS
    * predefined accessors} to extract values from source data objects, and the specified {@code
-   * StringifierFactory} to get hold of stringifiers for those values.
+   * StringifierRegistry} to get hold of stringifiers for those values.
    *
-   * @param stringifiers The {@code StringifierFactory} used to supply the {@code RenderSession}
+   * @param stringifiers The {@code StringifierRegistry} used to supply the {@code RenderSession}
    *     with {@link Stringifier stringifiers}
    * @return A new {@code RenderSession}
    */
@@ -400,12 +400,12 @@ public class Template {
 
   /**
    * Returns a {@code RenderSession} that will only use the specified {@code AccessorFactory} to
-   * extract values from source data, and the specified {@code StringifierFactory} to get hold of
+   * extract values from source data, and the specified {@code StringifierRegistry} to get hold of
    * stringifiers for those values.
    *
    * @param accessors The {@code AccessorFactory} used to supply the {@code RenderSession} with
    *     {@link Accessor accessors}
-   * @param stringifiers The {@code StringifierFactory} used to supply the {@code RenderSession}
+   * @param stringifiers The {@code StringifierRegistry} used to supply the {@code RenderSession}
    *     with {@link Stringifier stringifiers}
    * @return A new {@code RenderSession}
    */

@@ -1,6 +1,5 @@
 package org.klojang.template;
 
-import org.klojang.render.RenderException;
 import org.klojang.render.RenderSession;
 import org.klojang.render.Stringifier;
 import org.klojang.render.StringifierRegistry;
@@ -11,23 +10,30 @@ import static org.klojang.x.template.XVarGroup.withName;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 
 /**
- * A {@code VarGroup} lets you group template variables within a template or across templates in
- * order to provide them with a shared {@link Stringifier}. Variables can be assigned to a variable
- * group using a group name prefix. For example: <code>~%<b>html</b>:lastName%</code> or <code>
- * ~%<b>dateFormat1</b>:birthDate%</code>. Variable groups can also be assigned programmatically
- * (see, for example, {@link RenderSession#set(String, Object, VarGroup) RenderSession.set}. No
- * exception is thrown if a template contains a group name prefix that is not associated with {@code
- * Stringifier} (via a {@link StringifierRegistry}). However, when specifying a variable group
- * programmatically, the group <i>must</i> have been registered with the {@code StringifierFactory}
- * or a {@link RenderException} will be thrown.
+ * A {@code VarGroup} lets you group template variables across multiple templates. The prime purpose
+ * for this is to {@link StringifierRegistry.Builder#registerByGroup(Stringifier, String...)
+ * provide} them with a shared stringifier. Variables can be assigned to a variable group using a
+ * group name prefix. For example: {@code ~%html:firstName%} or {@code ~%js:firstName%} or {@code
+ * ~%myDateFormat:birthDate%}. The first two examples use the predefined {@link #HTML} and {@link
+ * #JS} groups, which provide HTML-escaping and Ecmascript-escaping, respectively. The latter is a
+ * custom group that you can define and associate with a stringifier using the {@link
+ * StringifierRegistry} class. Variable groups can also be assigned {@link RenderSession#set(String,
+ * Object, VarGroup) programmatically}.
+ *
+ * <p>Note that variable groups are assigned at the variable <i>occurrence</i> level. For example,
+ * you may have a variable named "firstName" occuring multiple times in one and the same template.
+ * For the occurrences inside a &lt;script&gt; you might want to use the "js" prefix, for the others
+ * the "html" prefix (or no prefix at all). Therefore stringifiers associated with a variable group
+ * (perhaps paradoxically) take the highest precedence when deciding which stringifier to use, even
+ * higher than stringifiers associated with a variable!
  *
  * @author Ayco Holleman
  */
 public interface VarGroup {
 
   /**
-   * A predefined variable group corresponding to the {@code text:} prefix. Forces the variable to
-   * be stringified using the {@link Stringifier#DEFAULT default stringifier}.
+   * A predefined variable group corresponding to the {@code text:} prefix. Forces the variable
+   * instance to be stringified using the {@link Stringifier#DEFAULT default stringifier}.
    */
   public static final VarGroup TEXT = withName("text");
 
@@ -48,7 +54,7 @@ public interface VarGroup {
 
   /**
    * A predefined variable group corresponding to the {@code attr:} prefix. Works just like the
-   * {@code html:} prefix except that the single and double quote characters are also escaped.
+   * {@code html:} prefix except that single and double quote characters are also escaped.
    */
   public static final VarGroup ATTR = withName("attr");
 

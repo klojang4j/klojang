@@ -9,12 +9,12 @@ import org.apache.commons.text.translate.EntityArrays;
 import org.apache.commons.text.translate.LookupTranslator;
 import org.apache.http.client.utils.URIBuilder;
 import org.klojang.render.Stringifier;
+import org.klojang.template.VarGroup;
 import static org.apache.commons.text.StringEscapeUtils.escapeEcmaScript;
+import static org.klojang.template.VarGroup.*;
 import static nl.naturalis.common.StringMethods.EMPTY;
 
 public class StandardStringifiers {
-
-  private StandardStringifiers() {}
 
   // Copied from StringEscapeUtils and added the 4th LookupTranslator
   private static final CharSequenceTranslator HTML_ATTR_TRANSLATOR =
@@ -30,19 +30,34 @@ public class StandardStringifiers {
 
   public static Stringifier ESCAPE_ATTR = wrap(HTML_ATTR_TRANSLATOR::translate);
 
-  public static Stringifier ESCAPE_JS_ATTR =
-      x -> {
-        if (x == null) {
-          return EMPTY;
-        }
-        return HTML_ATTR_TRANSLATOR.translate(escapeEcmaScript(x.toString()));
-      };
+  public static Stringifier ESCAPE_JS_ATTR = wrap(StandardStringifiers::escapeJsAttr);
 
-  public static Stringifier URL_QUERY_PARAM =
-      wrap(x -> new URIBuilder().setPathSegments(x).toString().substring(1));
+  public static Stringifier ESCAPE_QUERY_PARAM = wrap(StandardStringifiers::escapeParam);
 
-  public static Stringifier URL_PATH_SEGMENT =
-      wrap(x -> new URIBuilder().addParameter("x", x).toString().substring(3));
+  public static Stringifier ESCAPE_PATH = wrap(StandardStringifiers::escapePath);
+
+  public static Map<VarGroup, Stringifier> get() {
+    return Map.of(
+        TEXT, Stringifier.DEFAULT,
+        HTML, ESCAPE_HTML,
+        JS, ESCAPE_JS,
+        ATTR, ESCAPE_ATTR,
+        JS_ATTR, ESCAPE_JS_ATTR,
+        PARAM, ESCAPE_QUERY_PARAM,
+        PATH, ESCAPE_PATH);
+  }
+
+  private static String escapeJsAttr(String s) {
+    return HTML_ATTR_TRANSLATOR.translate(escapeEcmaScript(s));
+  }
+
+  private static String escapeParam(String s) {
+    return new URIBuilder().setPathSegments(s).toString().substring(1);
+  }
+
+  private static String escapePath(String s) {
+    return new URIBuilder().addParameter("x", s).toString().substring(3);
+  }
 
   private static Stringifier wrap(UnaryOperator<String> stringifier) {
     return x -> x == null ? EMPTY : stringifier.apply(x.toString());

@@ -4,24 +4,23 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.UnaryOperator;
-import org.apache.commons.text.StringEscapeUtils;
 import org.klojang.template.Template;
 import org.klojang.template.TemplateUtils;
 import org.klojang.template.VarGroup;
 import org.klojang.template.VariablePart;
+import org.klojang.x.render.StandardStringifiers;
 import org.klojang.x.template.XVarGroup;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.TypeMap;
-import static org.klojang.template.VarGroup.HTML;
-import static org.klojang.template.VarGroup.JS;
-import static org.klojang.template.VarGroup.TEXT;
-import static nl.naturalis.common.StringMethods.EMPTY;
+import static org.klojang.template.TemplateUtils.getNestedTemplate;
+import static org.klojang.x.Messages.ERR_NO_SUCH_VARIABLE;
+import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.common.StringMethods.ltrim;
 import static nl.naturalis.common.StringMethods.rtrim;
 import static nl.naturalis.common.StringMethods.trim;
 import static nl.naturalis.common.check.CommonChecks.deepNotEmpty;
+import static nl.naturalis.common.check.CommonChecks.empty;
 import static nl.naturalis.common.check.CommonChecks.in;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
@@ -58,8 +57,7 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
  *       then that is the stringifier that is going to be used.
  *   <li>If a stringifier has been defined for all variables with that particular name (irrespective
  *       of which template they belong to), then that is the stringifier that is going to be used.
- *       See {@link Builder#registerByName(String..., Stringifier)
- *       setNameBasedStringifier}.
+ *       See {@link Builder#registerByName(String..., Stringifier) registerByName}.
  *   <li>If a stringifier has been defined for the data type of that particular variable, then that
  *       is the stringifier that is going to be used.
  *   <li>If you have defined your own default stringifier, then that is the stringifier that is
@@ -73,18 +71,17 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
 public final class StringifierRegistry {
 
   /**
-   * A simple, brute-force {@code StringifierFactory} instance that always returns the {@link
-   * Stringifier#DEFAULT default stringifier}, whatever the template and whatever the variable.
-   * Unlikely to be satisfactory in the end, but handy in the early stages of development.
+   * A minimal {@code StringifierRegistry} instance. It contains the stringifiers for the predefined
+   * {@link VarGroup variable groups}. Variables not within these groups are stringified using the
+   * {@link Stringifier#DEFAULT default stringifier}. Unlikely to be satisfactory in the end, but
+   * handy in the early stages of development.
    */
   public static final StringifierRegistry STANDARD_STRINGIFIERS = configure().freeze();
 
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
 
   /**
-   * Lets you configure a {@code StringifierFactory} instance for a template. If you don't require
-   * any template-specific stringifiers, you can also start out using {@link
-   * StringifierRegistry#basic()}.
+   * Lets you configure a {@code StringifierRegistry} instance.
    *
    * @author Ayco Holleman
    */
@@ -102,20 +99,16 @@ public final class StringifierRegistry {
     private final Map<Tuple<Template, String>, Class<?>> typeLookup = new HashMap<>();
     private final List<Tuple<String, Stringifier>> partialNames = new ArrayList<>();
 
-    private Builder() {
-      stringifiers.put(new StringifierId(TEXT), Stringifier.DEFAULT);
-      stringifiers.put(new StringifierId(HTML), wrap(StringEscapeUtils::escapeHtml4));
-      stringifiers.put(new StringifierId(JS), wrap(StringEscapeUtils::escapeEcmaScript));
-    }
-
-    private static Stringifier wrap(UnaryOperator<String> stringifier) {
-      return x -> x == null ? EMPTY : stringifier.apply(x.toString());
+    private Builder(boolean std) {
+      if (std) {
+        StandardStringifiers.get().forEach((k, v) -> stringifiers.put(new StringifierId(k), v));
+      }
     }
 
     /**
-     * Lets you specifiy your own default stringifier, replacing {@link Stringifier#DEFAULT}.
+     * Lets you specifiy an alternative default stringifier, replacing {@link Stringifier#DEFAULT}.
      *
-     * @param stringifier The default stringifier to use
+     * @param stringifier The stringifier to use as the default stringifier
      * @return This {@code Builder}
      */
     public Builder setDefaultStringifier(Stringifier stringifier) {
@@ -124,29 +117,106 @@ public final class StringifierRegistry {
     }
 
     /**
-     * Assigns the specified stringifier to the specified variables within the specified template.
-     * The variable names are taken to be fully-qualified names, relative to the specified template.
+     * Assigns the specified stringifier to the specified variables. The variable names are taken to
+     * be fully-qualified names, relative to the specified template. For example:
+     *
+     * <blockquote>
+     *
+     * <pre>{@code
+     * Template companyTmpl = Template.fromResource(getClass(), "/html/company.html");
+     * StringifierRegistry stringifiers = StringifierRegistry
+     *  .configure()
+     *  .register(
+     *    zipCodeFormatter,
+     *    companyTmpl,
+     *    "zipCode"
+     *    "departments.employees.address.zipCode",
+     *    "departments.manager.address.zipCode")
+     *  .freeze();
+     * }</pre>
+     *
+     * </blockquote>
      *
      * @see TemplateUtils#getFQName(Template, String)
      * @see TemplateUtils#getParentTemplate(Template, String)
      * @param stringifier The stringifier
      * @param template The template containing the variables
-     * @param varFQNames The variables
+     * @param varNames Any array of fully-qualified variable names
      * @return This {@code Builder}
      */
-    public Builder addStringifier(
-        Stringifier stringifier, Template template, String... varFQNames) {
+    public Builder register(Stringifier stringifier, Template template, String... varNames) {
       Check.notNull(stringifier, "stringifier");
       Check.notNull(template, "template");
-      Check.that(varFQNames, "varFQNames").is(deepNotEmpty());
-      for (String var : varFQNames) {
-        Template tmpl = TemplateUtils.getParentTemplate(template, var);
-        // Make sure var is a variable name, not a nested template name
-        Check.that(var).is(in(), tmpl.getVariables());
-        StringifierId id = new StringifierId(template, var);
-        Check.that(id)
+      Check.that(varNames, "varNames").is(deepNotEmpty());
+      for (String name : varNames) {
+        Template tmpl = TemplateUtils.getParentTemplate(template, name);
+        Check.that(name).is(in(), tmpl.getVariables(), ERR_NO_SUCH_VARIABLE, name);
+        Check.that(new StringifierId(template, name))
             .isNot(keyIn(), stringifiers, ERR_VAR_ASSIGNED)
-            .then(x -> stringifiers.put(x, stringifier));
+            .then(id -> stringifiers.put(id, stringifier));
+      }
+      return this;
+    }
+
+    /**
+     * Assigns the specified stringifier to the specified variables. The variables are supposed to
+     * be residing in {@code nestedTemplateName}; not in some template descending from it. In other
+     * words, don't used fully-qualified variable names. If you want to target the variables in the
+     * root template itself (the {@code template} argument), specify {@code null} for {@code
+     * nestedTemplateName}. To assign the stringifier to <i>all</i> variables in the target
+     * template, specify an empty string array for {@code varNames}. For example:
+     *
+     * <blockquote>
+     *
+     * <pre>{@code
+     * Template companyTmpl = Template.fromResource(getClass(), "/html/company.html");
+     * StringifierRegistry stringifiers = StringifierRegistry
+     *  .configure()
+     *  .registerPerTemplate(
+     *    nameFormatter,
+     *    companyTmpl,
+     *    "departments.employees.firstName",
+     *    "departments.employees.lastName")
+     *  .registerPerTemplate(
+     *    nameFormatter,
+     *    companyTmpl,
+     *    "departments.manager.firstName",
+     *    "departments.manager.lastName")
+     *  .freeze();
+     * }</pre>
+     *
+     * </blockquote>
+     *
+     * @param stringifier The stringifier
+     * @param template The root template
+     * @param nestedTemplateName The name of a template descending from the root template, or {@code
+     *     null} if you want to target the variables in the root template itself
+     * @param varNames The names of the variables to which to assign the stringifier, or an empty
+     *     string array if you want to assign the stringifier to all variables within the target
+     *     template
+     * @return This {@code Builder}
+     */
+    public Builder registerPerTemplate(
+        Stringifier stringifier, Template template, String nestedTemplateName, String... varNames) {
+      Check.notNull(stringifier, "stringifier");
+      Check.notNull(template, "template");
+      Check.notNull(varNames, "varNames");
+      Template tmpl = ifNotNull(nestedTemplateName, n -> getNestedTemplate(template, n), template);
+      boolean all = varNames.length == 0;
+      String[] names;
+      if (all) {
+        names = tmpl.getVariables().toArray(String[]::new);
+      } else {
+        names = varNames;
+      }
+      for (String name : names) {
+        if (!all) {
+          Check.notNull(name, "variable name")
+              .is(in(), template.getVariables(), ERR_NO_SUCH_VARIABLE, name);
+        }
+        Check.that(new StringifierId(template, name))
+            .isNot(keyIn(), stringifiers, ERR_VAR_ASSIGNED)
+            .then(id -> stringifiers.put(id, stringifier));
       }
       return this;
     }
@@ -156,7 +226,7 @@ public final class StringifierRegistry {
      * group that a variable belongs to can be specified as a prefix within the variable
      * declaration. For example in {@code ~%format2:salary%} the {@code salary} variable is assigned
      * to variable group "format2". A variable group can also be assigned via the {@link
-     * RenderSession} class. See {@link RenderSession#set(String, Object, XVarGroup)}. Note that
+     * RenderSession} class. See {@link RenderSession#set(String, Object, VarGroup)}. Note that
      * different instances of the same variable within the same template can be assigned to
      * different variable groups (for example: {@code ~%html:fullName%} and {@code ~%js:fullName%}).
      *
@@ -166,8 +236,9 @@ public final class StringifierRegistry {
      */
     public Builder registerByGroup(Stringifier stringifier, String... groupNames) {
       Check.notNull(stringifier, "stringifier");
-      Check.that(groupNames, "groupNames").is(deepNotEmpty());
+      Check.that(groupNames, "groupNames").isNot(empty());
       for (String name : groupNames) {
+        Check.that(name, "group name").isNot(empty());
         VarGroup vg = XVarGroup.withName(name);
         StringifierId id = new StringifierId(vg);
         Check.that(id)
@@ -180,7 +251,7 @@ public final class StringifierRegistry {
     /**
      * Assigns the specified stringifier to all variables with the specified name(s). This works
      * across all templates within the application, so be careful when registering a stringifier
-     * this way. You may specify a wildcard '*' character at the beginning or and of the variable
+     * this way. You may specify a wildcard '*' character at the beginning or end of the variable
      * name. For example to assign a number formatter to all variables whose name ends with "Price",
      * specify {@code *Price} as the variable name.
      *
@@ -190,8 +261,9 @@ public final class StringifierRegistry {
      */
     public Builder registerByName(Stringifier stringifier, String... varNames) {
       Check.notNull(stringifier, "stringifier");
-      Check.that(varNames, "varNames").is(deepNotEmpty());
+      Check.that(varNames, "varNames").isNot(empty());
       for (String var : varNames) {
+        Check.that(var, "variable name").isNot(empty());
         if (var.startsWith("*") || var.endsWith("*")) {
           partialNames.add(Tuple.of(var, stringifier));
         } else {
@@ -220,9 +292,9 @@ public final class StringifierRegistry {
      */
     public Builder registerByType(Stringifier stringifier, Class<?>... types) {
       Check.notNull(stringifier, "stringifier");
-      Check.that(types, "types").is(deepNotEmpty());
+      Check.that(types, "types").isNot(empty());
       for (Class<?> t : types) {
-        Check.that(t)
+        Check.notNull(t, "type")
             .isNot(keyIn(), typeStringifiers, ERR_TYPE_ASSIGNED, t.getName())
             .then(x -> typeStringifiers.put(x, stringifier));
       }
@@ -230,36 +302,38 @@ public final class StringifierRegistry {
     }
 
     /**
-     * Explicitly sets the data type of the specified variables within the specified template. This
-     * enables the {@code StringifierFactory} to find a type-based stringifier for a value even if
-     * the value is {@code null} (in which case {@code Object.getClass()} is not available to
-     * determine the variable's type).
+     * Explicitly sets the data type of the specified variables. This enables the {@code
+     * StringifierRegistry} to find a type-based stringifier for a value even if the value is {@code
+     * null} (in which case {@code Object.getClass()} is not available to determine the variable's
+     * type). The variable names are taken to be fully-qualified names, relative to the specified
+     * template.
      *
      * @param type The data type to set for the specified variables
      * @param template The template containing the variables
-     * @param varFQNames The fully-qualified name of the variables
+     * @param varNames The fully-qualified names of the variables
      * @return This {@code Builder}
      */
-    public Builder setVariableType(Class<?> type, Template template, String... varFQNames) {
+    public Builder setVariableType(Class<?> type, Template template, String... varNames) {
       Check.notNull(type, "type");
       Check.notNull(template, "template");
-      Check.that(varFQNames, "varFQNames").is(deepNotEmpty());
-      for (String var : varFQNames) {
+      Check.that(varNames, "varNames").isNot(empty());
+      for (String var : varNames) {
+        Check.that(var, "variable name").isNot(empty());
         Template tmpl = TemplateUtils.getParentTemplate(template, var);
         // Make sure var is a variable name, not a nested template name
         Check.that(var).is(in(), tmpl.getVariables());
         Tuple<Template, String> tuple = Tuple.of(tmpl, var);
         Check.that(tuple)
             .isNot(keyIn(), typeLookup, ERR_TYPE_SET)
-            .then(x -> typeLookup.put(tuple, type));
+            .then(t -> typeLookup.put(t, type));
       }
       return this;
     }
 
     /**
-     * Returns a new, immutable {@code StringifierFactory} instance.
+     * Returns a new, immutable {@code StringifierRegistry} instance.
      *
-     * @return A new, immutable {@code StringifierFactory} instance
+     * @return A new, immutable {@code StringifierRegistry} instance
      */
     public StringifierRegistry freeze() {
       return new StringifierRegistry(
@@ -270,16 +344,24 @@ public final class StringifierRegistry {
   /* +++++++++++++++++++++[ END BUILDER CLASS ]++++++++++++++++++ */
 
   /**
-   * Returns a {@code Builder} instance that lets you configure the stringifiers for a template.
+   * Returns a {@code Builder} instance that lets you configure a {@code StringifierRegistry}. The
+   * registry will already contain stringifiers for the standard {@link VarGroup variable groups}.
    *
-   * @param template The template for which to define the stringifiers
-   * @param globalStringifiers A {@code TypeStringifiers} instance to retrieve type-based
-   *     stringifiers from
-   * @return A {@code Builder} instance that lets you configure a {@code StringifierFactory}
-   *     instance
+   * @return A {@code Builder} instance that lets you configure a {@code StringifierRegistry}
    */
   public static Builder configure() {
-    return new Builder();
+    return new Builder(true);
+  }
+
+  /**
+   * Returns a {@code Builder} instance that lets you configure a {@code StringifierRegistry}. The
+   * registry will already contain any stringifier exception the {@link Stringifier#DEFAULT default
+   * stringifier}. Useful for non-HTML templates.
+   *
+   * @return A {@code Builder} instance that lets you configure a {@code StringifierRegistry}
+   */
+  public static Builder cleanSlate() {
+    return new Builder(true);
   }
 
   private final Map<StringifierId, Stringifier> stringifiers;
