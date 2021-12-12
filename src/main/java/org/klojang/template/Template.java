@@ -360,7 +360,7 @@ public class Template {
 
   /**
    * Returns a {@code RenderSession} that will only use the {@link
-   * AccessorFactory#STANDARD_ACCESSORS predefined accessors} to extract values from source data
+   * AccessorRegistry#STANDARD_ACCESSORS predefined accessors} to extract values from source data
    * objects, and only the {@link StringifierRegistry predefined stringifiers} to stringify those
    * values.
    *
@@ -371,7 +371,7 @@ public class Template {
   }
 
   /**
-   * Returns a {@code RenderSession} that will use the {@link AccessorFactory#STANDARD_ACCESSORS
+   * Returns a {@code RenderSession} that will use the {@link AccessorRegistry#STANDARD_ACCESSORS
    * predefined accessors} to extract values from source data objects, and the specified {@code
    * StringifierRegistry} to get hold of stringifiers for those values.
    *
@@ -385,32 +385,32 @@ public class Template {
   }
 
   /**
-   * Returns a {@code RenderSession} that will only use the specified {@code AccessorFactory} to
+   * Returns a {@code RenderSession} that will only use the specified {@code AccessorRegistry} to
    * extract values from source data, and the {@link StringifierRegistry predefined stringifiers} to
    * stringify those values.
    *
-   * @param accessors The {@code AccessorFactory} used to supply the {@code RenderSession} with
+   * @param accessors The {@code AccessorRegistry} used to supply the {@code RenderSession} with
    *     {@link Accessor accessors}
    * @return A new {@code RenderSession}
    */
-  public RenderSession newRenderSession(AccessorFactory accessors) {
+  public RenderSession newRenderSession(AccessorRegistry accessors) {
     Check.notNull(accessors, "accessors");
     return new SessionConfig(this, accessors).newRenderSession();
   }
 
   /**
-   * Returns a {@code RenderSession} that will only use the specified {@code AccessorFactory} to
+   * Returns a {@code RenderSession} that will only use the specified {@code AccessorRegistry} to
    * extract values from source data, and the specified {@code StringifierRegistry} to get hold of
    * stringifiers for those values.
    *
-   * @param accessors The {@code AccessorFactory} used to supply the {@code RenderSession} with
+   * @param accessors The {@code AccessorRegistry} used to supply the {@code RenderSession} with
    *     {@link Accessor accessors}
    * @param stringifiers The {@code StringifierRegistry} used to supply the {@code RenderSession}
    *     with {@link Stringifier stringifiers}
    * @return A new {@code RenderSession}
    */
   public RenderSession newRenderSession(
-      AccessorFactory accessors, StringifierRegistry stringifiers) {
+      AccessorRegistry accessors, StringifierRegistry stringifiers) {
     Check.notNull(accessors, "accessors");
     Check.notNull(stringifiers, "stringifiers");
     return new SessionConfig(this, accessors, stringifiers).newRenderSession();

@@ -25,25 +25,27 @@ import static nl.naturalis.common.check.CommonChecks.in;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 /**
- * Provides {@link Stringifier stringifiers} for template variables. In principle each and every
- * template variable must be associated with a {@code Stringifier}. In practice, however, it is
- * unlikely you will define many variable-specific stringifiers. If a variable's value can be
- * stringified by calling {@code toString()} on it (or to an empty string if null), you don't need
- * to specify a stringifier for it because this is default behaviour. In addition, all variables
- * with the same data type will usually have to be stringified in the same way. For example you may
- * want to format <i>all</i> integers according to your country's locale. These type-based
- * stringifiers can be configured using {@link Builder#registerByType(String..., Class)
- * Builder.addTypeBasedStringifier}. Only if a template variable has very specific stringification
- * requirements would you register the stringifier using {@link Builder#add(Stringifier, String...)
- * Builder.setStringifier}.
+ * A registry of {@link Stringifier stringifiers} used by the {@link RenderSession} to stringify the
+ * values provided by the data access layer. In principle each and every template variable must be
+ * associated with a {@code Stringifier}. In practice, however, it is unlikely you will define many
+ * variable-specific stringifiers, if at all. If a variable's value can be stringified by calling
+ * {@code toString()} on it (or to an empty string if null), you don't need to specify a stringifier
+ * for it because this is default behaviour. In addition, all variables with the same data type will
+ * usually have to be stringified identically. For example you may want to format all {@code int}
+ * values according to your country's locale. These type-based stringifiers can be configured using
+ * {@link Builder#registerByType(String..., Class) Builder.addTypeBasedStringifier}. Only if a
+ * template variable has very specific stringification requirements would you {@link
+ * Builder#register(Stringifier, Template, String...) register} a variable-specific stringifier for
+ * it.
  *
- * <p>Type-based stringifiers are internally kept in a {@link TypeMap}. This means that if a
- * stringifier is requested for some type, and that type is not in the {@code TypeMap}, but one of
- * its super types is, you get the stringifier associated with the super type. For example, if the
- * {@code TypeMap} contains a {@code Number} stringifier and you request an {@code Integer}
- * stringifier, you get the {@code Number} stringifier (unless of course you have also registered an
- * {@code Integer} stringifier). This saves you from having to specify a stringifier for every
- * subclass of {@code Number} if they are all stringified in the same way.
+ * <p>Type-based stringifiers are internally kept in a {@link TypeMap}. This means that if the
+ * {@code RenderSession} requests a stringifier for some type, and that type is not in the {@code
+ * TypeMap}, but one of its super types is, it will receive the stringifier associated with the
+ * super type. For example, if the {@code TypeMap} contains a {@code Number} stringifier and the
+ * {@code RenderSession} requests an {@code Integer} stringifier, it will receive the {@code Number}
+ * stringifier (unless of course you have also registered an {@code Integer} stringifier). This
+ * saves you from having to register a stringifier for each and every subclass of {@code Number} if
+ * they are all stringified identically.
  *
  * <p>This is how a {@link StringifierRegistry} decides which stringifier to hand out for a variable
  * in a template:
@@ -51,30 +53,30 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
  * <p>
  *
  * <ol>
- *   <li>If a stringifier has been defined for a {@link VarGroup variable group} and the variable
+ *   <li>If a stringifier has been registered for a {@link VarGroup variable group} and the variable
  *       belongs to that group, then that is the stringifier that is going to be used.
- *   <li>If a stringifier has been defined for that particular variable in that particular template,
- *       then that is the stringifier that is going to be used.
- *   <li>If a stringifier has been defined for all variables with that particular name (irrespective
- *       of which template they belong to), then that is the stringifier that is going to be used.
- *       See {@link Builder#registerByName(String..., Stringifier) registerByName}.
- *   <li>If a stringifier has been defined for the data type of that particular variable, then that
- *       is the stringifier that is going to be used.
- *   <li>If you have defined your own default stringifier, then that is the stringifier that is
- *       going to be used.
+ *   <li>If a stringifier has been registered for that particular variable in that particular
+ *       template, then that is the stringifier that is going to be used.
+ *   <li>If a stringifier has been registered for all variables with that particular name
+ *       (irrespective of the template they belong to), then that is the stringifier that is going
+ *       to be used. See {@link Builder#registerByName(String..., Stringifier) registerByName}.
+ *   <li>If a stringifier has been registered for the data type of that particular variable, then
+ *       that is the stringifier that is going to be used.
+ *   <li>If you have {@link Builder#setDefaultStringifier(Stringifier) registered} an alternative
+ *       default stringifier, then that is the stringifier that is going to be used.
  *   <li>Otherwise the {@link Stringifier#DEFAULT default stringifier} is going to be used.
  * </ol>
  *
- * @see SessionConfig
  * @author Ayco Holleman
  */
 public final class StringifierRegistry {
 
   /**
-   * A minimal {@code StringifierRegistry} instance. It contains the stringifiers for the predefined
+   * A minimal {@code StringifierRegistry} instance. It contains stringifiers for the predefined
    * {@link VarGroup variable groups}. Variables not within these groups are stringified using the
-   * {@link Stringifier#DEFAULT default stringifier}. Unlikely to be satisfactory in the end, but
-   * handy in the early stages of development.
+   * {@link Stringifier#DEFAULT default stringifier}. This is the {@code StringifierRegistry} a
+   * {@link RenderSession} will use if you called {@link Template#newRenderSession()
+   * Template.newRenderSession} without the {@code StringifierRegistry} argument.
    */
   public static final StringifierRegistry STANDARD_STRINGIFIERS = configure().freeze();
 

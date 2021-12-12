@@ -2,14 +2,19 @@ package org.klojang.render;
 
 import org.klojang.template.Template;
 import nl.naturalis.common.ModulePrivate;
-import static org.klojang.render.AccessorFactory.STANDARD_ACCESSORS;
+import static org.klojang.render.AccessorRegistry.STANDARD_ACCESSORS;
 import static org.klojang.render.StringifierRegistry.STANDARD_STRINGIFIERS;
 
+/**
+ * For internal use only.
+ *
+ * @author Ayco Holleman
+ */
 @ModulePrivate
 public final class SessionConfig {
 
   private final Template template;
-  private final AccessorFactory accessors;
+  private final AccessorRegistry accessors;
   private final StringifierRegistry stringifiers;
 
   public SessionConfig(Template template) {
@@ -20,12 +25,12 @@ public final class SessionConfig {
     this(template, STANDARD_ACCESSORS, stringifiers);
   }
 
-  public SessionConfig(Template template, AccessorFactory accessors) {
+  public SessionConfig(Template template, AccessorRegistry accessors) {
     this(template, accessors, STANDARD_STRINGIFIERS);
   }
 
   public SessionConfig(
-      Template template, AccessorFactory accessors, StringifierRegistry stringifiers) {
+      Template template, AccessorRegistry accessors, StringifierRegistry stringifiers) {
     this.template = template;
     this.accessors = accessors;
     this.stringifiers = stringifiers;
@@ -39,7 +44,7 @@ public final class SessionConfig {
     return template;
   }
 
-  AccessorFactory getAccessorFactory() {
+  AccessorRegistry getAccessorFactory() {
     return accessors;
   }
 

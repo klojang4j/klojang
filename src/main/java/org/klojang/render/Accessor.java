@@ -2,7 +2,7 @@ package org.klojang.render;
 
 /**
  * Interface for objects implementing a mechanism to access source data for templates. See {@link
- * AccessorFactory} for more information.
+ * AccessorRegistry} for more information.
  *
  * @author Ayco Holleman
  */

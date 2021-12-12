@@ -3,7 +3,7 @@ package org.klojang;
 import org.klojang.accessors.BeanAccessor;
 import org.klojang.accessors.PathAccessor;
 import org.klojang.render.Accessor;
-import org.klojang.render.AccessorFactory;
+import org.klojang.render.AccessorRegistry;
 import org.klojang.render.RenderSession;
 import org.klojang.template.Template;
 import nl.naturalis.common.Bool;
@@ -68,7 +68,7 @@ public enum SysProp {
    * words, nested values are destined for nested templates (where they appear as top-level values).
    * Your application may never need to access a deeply nested value from a top-level template. If
    * so, consider using the {@code BeanAccessor} class as the fallback {@code Accessor}
-   * implementation. See also {@link AccessorFactory}.
+   * implementation. See also {@link AccessorRegistry}.
    */
   USE_BEAN_ACCESSOR(RenderSession.class, "useBeanAccessor", "false");
 

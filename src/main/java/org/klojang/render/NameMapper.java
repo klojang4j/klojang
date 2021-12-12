@@ -4,11 +4,11 @@ import org.klojang.db.Row;
 
 /**
  * Generic name mapping interface. Name mappers are used to map template variable names to model
- * object properties. See {@link AccessorFactory.Builder#setDefaultNameMapper(NameMapper)}. They are
- * also used to map column names to model object properties. See {@link
+ * object properties. See {@link AccessorRegistry.Builder#setDefaultNameMapper(NameMapper)}. They
+ * are also used to map column names to model object properties. See {@link
  * SQLQuery#withMapper(NameMapper)}. Note that the term "property" is in fact rather misleading
- * because, as for Klojang, your model objects might just as well be {@code Map<String,Object>}
- * objects or {@link Row rows}, in which case your template's variables would map to map keys.
+ * because, for Klojang, model objects might just as well be {@code Map<String,Object>} objects or
+ * {@link Row rows}, in which case template variables would map to map keys.
  *
  * @author Ayco Holleman
  */

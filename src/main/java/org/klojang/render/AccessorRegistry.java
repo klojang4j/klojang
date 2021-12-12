@@ -14,23 +14,24 @@ import nl.naturalis.common.invoke.BeanReader;
 import static nl.naturalis.common.ClassMethods.isA;
 
 /**
- * Provides {@link Accessor accessors} capable of extracting values from model objects. For example,
- * if you want to populate a template with a {@code Person} object, the {@link RenderSession} needs
- * to know how to read the {@code Person} properties that correspond to template variables. In most
- * cases the {@code AccessorFactory} defined by the {@link #STANDARD_ACCESSORS} variable is probably
- * all you need, without you actually having to implement any {@code Accessor} yourself.
+ * A registry of {@link Accessor accessors} used by the {@link RenderSession} to extract values from
+ * model objects. For example, if you want to populate a template with a {@code Person} object, the
+ * {@link RenderSession} needs to know how to read the {@code Person} properties that correspond to
+ * template variables. In most cases the {@code AccessorRegistry} defined by the {@link
+ * #STANDARD_ACCESSORS} variable is probably all you need, without you actually having to implement
+ * any {@code Accessor} yourself.
  *
- * <p>Any {@code AccessorFactory}, including the ones you build yourself and including the {@code
- * STANDARD_ACCESSORS} {@code AccessorFactory} comes with a set of predefined accessors (not exposed
- * via the API) that it hands out to the {@code RenderSession} based on the type of object the
- * {@code RenderSession} wants to access. This happens in the following manner:
+ * <p>Any {@code AccessorRegistry}, including the ones you build yourself and including the {@code
+ * STANDARD_ACCESSORS} {@code AccessorRegistry} comes with a set of predefined accessors (not
+ * exposed via the API) that it hands out to the {@code RenderSession} based on the type of object
+ * the {@code RenderSession} wants to access. This happens in the following manner:
  *
  * <p>
  *
  * <ol>
- *   <li>If you have {@link AccessorFactory.Builder#addAccessor(Class, Accessor) registered} your
- *       own {@code Accessor} for that particular type of object, then that is the {@code Accessor}
- *       that is going to be used.
+ *   <li>If you have {@link AccessorRegistry.Builder#register(Class, Accessor) registered} your own
+ *       {@code Accessor} for that particular type of object, then that is the {@code Accessor} that
+ *       is going to be used.
  *   <li>If the object is an {@link Optional}, then, if the {@code Optional} is empty, a {@link
  *       OptionalAccessor} is going to be used. This accessor returns {@link Accessor#UNDEFINED} if
  *       the {@code Optional} is empty. Otherwise another accessor is going to be used, based on the
@@ -46,12 +47,12 @@ import static nl.naturalis.common.ClassMethods.isA;
  *       to be used.
  * </ol>
  *
- * <p>Please note that the accessor used to read JavaBean properties makes use of a {@link
- * BeanReader}. This class does not use reflection to read bean properties, but it does use
- * reflection to figure out what the properties are in the first place. Thus, if you use this
- * accessor from within a Java module, you will have to open up the module to the naturalis-common
- * module, which contains the {@code BeanReader} class. If you are not comfortable with this, you
- * can, as an alternative, use the {@link SaveBeanAccessor} class:
+ * <p>Note that the accessor used to read JavaBean properties makes use of a {@link BeanReader}.
+ * This class does not use reflection to read bean properties, but it does use reflection to figure
+ * out what the properties are in the first place. Thus, if you use this accessor from within a Java
+ * module, you will have to open up the module to the naturalis-common module, which contains the
+ * {@code BeanReader} class. If you are not comfortable with this, you could, as an alternative, use
+ * the {@link SaveBeanAccessor} class:
  *
  * <blockquote>
  *
@@ -63,10 +64,11 @@ import static nl.naturalis.common.ClassMethods.isA;
  *   .with("lastName", String.class)
  *   .with("birthDate", LocalDate.class)
  *   .freeze();
- * AccessorFactory af = AccessorFactory
+ * AccessorRegistry aReg = AccessorRegistry
  *   .configure()
- *   .addAccessor(Person.class, new SaveBeanAccesor<>(personReader))
+ *   .register(Person.class, new SaveBeanAccesor<>(personReader))
  *   .freeze();
+ * RenderSession session = template.newRenderSession(aReg);
  * }</pre>
  *
  * </blockquote>
@@ -86,33 +88,35 @@ import static nl.naturalis.common.ClassMethods.isA;
  *       default : return Accessor.UNDEFINED;
  *     }
  *   };
- * AccessorFactory af = AccessorFactory
+ * AccessorRegistry aReg = AccessorRegistry
  *   .configure()
- *   .addAccessor(Person.class, new PersonAccessor())
+ *   .register(Person.class, new PersonAccessor())
  *   .freeze();
+ * RenderSession session = template.newRenderSession(aReg);
  * }</pre>
  *
  * </blockquote>
  *
+ * @see SysProp#USE_BEAN_ACCESSOR
  * @author Ayco Holleman
  */
-public class AccessorFactory {
+public class AccessorRegistry {
 
   /**
-   * An {@code AccessorFactory} the should be sufficent for most use cases. It assumes that the
+   * An {@code AccessorRegistry} the should be sufficent for most use cases. It assumes that the
    * names you use in your templates can be mapped as-is to your model objects.
    */
-  public static final AccessorFactory STANDARD_ACCESSORS = configure().freeze();
+  public static final AccessorRegistry STANDARD_ACCESSORS = configure().freeze();
 
   /**
-   * Returns an {@code AccessorFactory} that should be sufficient for most use cases. It allows you
+   * Returns an {@code AccessorRegistry} that should be sufficient for most use cases. It allows you
    * to specify one global {@link NameMapper} for mapping the names used in your templates to the
    * names used in your model objects.
    *
    * @param nameMapper The {@code NameMapper} to use when accessing model objects
-   * @return An {@code AccessorFactory} the should sufficent for most use cases
+   * @return An {@code AccessorRegistry} the should sufficent for most use cases
    */
-  public static AccessorFactory standard(NameMapper nameMapper) {
+  public static AccessorRegistry standard(NameMapper nameMapper) {
     return configure().setDefaultNameMapper(nameMapper).freeze();
   }
 
@@ -128,8 +132,8 @@ public class AccessorFactory {
 
     /**
      * Sets the default {@code NameMapper} used to map template variable names to JavaBean
-     * properties (or {@code Map} keys, or whatever identities a value within your source data). If
-     * no default {@code NameMapper} is specified, a one-to-one relationship is assumed.
+     * properties (or {@code Map} keys). If no default {@code NameMapper} is specified, the {@link
+     * NameMapper#AS_IS AS_IS} name mapper will be the default name mapper.
      *
      * @param nameMapper The name mapper
      * @return This {@code Builder} instance
@@ -161,7 +165,7 @@ public class AccessorFactory {
      * @param accessor The {@code Accessor}
      * @return This {@code Builder} instance
      */
-    public <T> Builder addAccessor(Class<T> forType, Accessor<? extends T> accessor) {
+    public <T> Builder register(Class<T> forType, Accessor<? extends T> accessor) {
       accs.computeIfAbsent(forType, k -> new HashMap<>()).put(null, accessor);
       return this;
     }
@@ -176,8 +180,7 @@ public class AccessorFactory {
      * @param accessor The {@code Accessor}
      * @return This {@code Builder} instance
      */
-    public <T> Builder addAccessor(
-        Class<T> forType, Template template, Accessor<? super T> accessor) {
+    public <T> Builder register(Class<T> forType, Template template, Accessor<? super T> accessor) {
       accs.computeIfAbsent(forType, k -> new HashMap<>()).put(template, accessor);
       return this;
     }
@@ -187,8 +190,8 @@ public class AccessorFactory {
      *
      * @return
      */
-    public AccessorFactory freeze() {
-      return new AccessorFactory(accs, defMapper, mappers);
+    public AccessorRegistry freeze() {
+      return new AccessorRegistry(accs, defMapper, mappers);
     }
   }
 
@@ -204,7 +207,7 @@ public class AccessorFactory {
   private final NameMapper defMapper;
   private final Map<Template, NameMapper> mappers;
 
-  private AccessorFactory(
+  private AccessorRegistry(
       Map<Class<?>, Map<Template, Accessor<?>>> accs,
       NameMapper defMapper,
       Map<Template, NameMapper> mappers) {
