@@ -6,11 +6,16 @@ import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.exception.UncheckedException;
 
+/**
+ * A {@link RuntimeException} that may either wrap an {@link SQLException} or indicate a
+ * Klojang-native error condition while processing or executing SQL.
+ *
+ * @author Ayco Holleman
+ */
 public class KJSQLException extends KlojangRTException {
 
-  public static RuntimeException wrap(Throwable exc, SQL sql) {
+  static RuntimeException wrap(Throwable exc, SQL sql) {
     Check.notNull(exc);
-    Check.notNull(sql);
     if (exc instanceof KJSQLException) {
       return (KJSQLException) exc;
     } else if (exc instanceof SQLException) {
@@ -22,15 +27,15 @@ public class KJSQLException extends KlojangRTException {
     return ExceptionMethods.uncheck(exc);
   }
 
-  public KJSQLException(String message, Object... msgArgs) {
+  KJSQLException(String message, Object... msgArgs) {
     super(message, msgArgs);
   }
 
-  public KJSQLException(String message, SQLException cause) {
+  KJSQLException(String message, SQLException cause) {
     super(message, cause);
   }
 
-  public KJSQLException(SQLException cause) {
+  KJSQLException(SQLException cause) {
     super(cause);
   }
 
@@ -39,6 +44,9 @@ public class KJSQLException extends KlojangRTException {
   }
 
   private static String message(SQL sql, SQLException cause) {
+    if (sql == null) {
+      return cause.getMessage();
+    }
     return cause.getMessage() + " >>>> while executing: " + sql;
   }
 }

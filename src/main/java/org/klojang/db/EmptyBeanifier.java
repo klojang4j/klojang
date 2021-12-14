@@ -1,6 +1,7 @@
 package org.klojang.db;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,12 +18,7 @@ class EmptyBeanifier<T> implements ResultSetBeanifier<T> {
   }
 
   @Override
-  public List<T> beanifyAtMost(int limit) {
-    return Collections.emptyList();
-  }
-
-  @Override
-  public List<T> beanifyAtMost(int from, int limit) {
+  public List<T> beanify(int limit) {
     return Collections.emptyList();
   }
 
@@ -37,10 +33,12 @@ class EmptyBeanifier<T> implements ResultSetBeanifier<T> {
   }
 
   @Override
-  public void close() {}
-
-  @Override
   public boolean isEmpty() {
     return true;
+  }
+
+  @Override
+  public Iterator<T> iterator() {
+    return Collections.emptyIterator();
   }
 }

@@ -65,13 +65,13 @@ public class ChannelCache {
 
   private ChannelCache() {}
 
-  public BeanChannel[] getBeanValueSetters(ResultSet rs, Class clazz, NameMapper mapper) {
+  public BeanChannel[] getBeanChannels(ResultSet rs, Class clazz, NameMapper mapper) {
     RsStrongIdentifier id = new RsStrongIdentifier(rs);
     return beanChannels.computeIfAbsent(
         id, k -> BeanChannel.createChannels(rs, clazz, mapper));
   }
 
-  public RowChannel[] getMapValueSetters(ResultSet rs, NameMapper mapper) {
+  public RowChannel[] getRowChannels(ResultSet rs, NameMapper mapper) {
     RsStrongIdentifier id = new RsStrongIdentifier(rs);
     return rowChannels.computeIfAbsent(id, k -> RowChannel.createChannels(rs, mapper));
   }

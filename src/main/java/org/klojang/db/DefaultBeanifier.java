@@ -1,110 +1,116 @@
 package org.klojang.db;
 
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 import org.klojang.x.db.rs.BeanChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;
 import static org.klojang.x.db.rs.BeanChannel.toBean;
 import static nl.naturalis.common.check.CommonChecks.gt;
+import static nl.naturalis.common.check.CommonChecks.illegalState;
+import static nl.naturalis.common.check.CommonChecks.yes;
 
 class DefaultBeanifier<T> implements ResultSetBeanifier<T> {
 
   @SuppressWarnings("unused")
   private static final Logger LOG = LoggerFactory.getLogger(DefaultBeanifier.class);
 
+  private class BeanIterator implements Iterator<T> {
+
+    DefaultBeanifier<T> beanifier;
+
+    BeanIterator(DefaultBeanifier<T> beanifier) {
+      this.beanifier = beanifier;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return beanifier.hasMore;
+    }
+
+    @Override
+    public T next() {
+      Check.on(illegalState(), beanifier.hasMore).is(yes(), "No more rows in result set");
+      return beanifier.beanify().get();
+    }
+  }
+
   private final ResultSet rs;
-  private final BeanChannel<?, ?>[] setters;
+  private final BeanChannel<?, ?>[] channels;
   private final Supplier<T> beanSupplier;
 
-  DefaultBeanifier(ResultSet rs, BeanChannel<?, ?>[] ss, Supplier<T> bs) {
+  private boolean hasMore = true;
+
+  DefaultBeanifier(ResultSet rs, BeanChannel<?, ?>[] channels, Supplier<T> supplier) {
     this.rs = rs;
-    this.setters = ss;
-    this.beanSupplier = bs;
+    this.channels = channels;
+    this.beanSupplier = supplier;
   }
 
   @Override
   public Optional<T> beanify() {
-    try {
-      return Optional.of(toBean(rs, beanSupplier, setters));
-    } catch (Throwable e) {
-      throw ExceptionMethods.uncheck(e);
+    if (!hasMore) {
+      return Optional.empty();
     }
-  }
-
-  @Override
-  public List<T> beanifyAtMost(int limit) {
-    Check.that(limit, "limit").is(gt(), 0);
     try {
-      return atMost(limit);
-    } catch (Throwable e) {
-      throw ExceptionMethods.uncheck(e);
-    }
-  }
-
-  @Override
-  public List<T> beanifyAtMost(int from, int limit) {
-    Check.that(limit, "limit").is(gt(), 0);
-    try {
-      // NB rs.next() will already have bean called once by the
-      // BeanifierFactory so start 1
-      for (int i = 1; i < from; ++i) {
-        if (!rs.next()) {
-          return Collections.emptyList();
-        }
-      }
-      return atMost(limit);
+      Optional<T> bean = Optional.of(toBean(rs, beanSupplier, channels));
+      hasMore = rs.next();
+      return bean;
     } catch (Throwable t) {
-      throw ExceptionMethods.uncheck(t);
+      throw KJSQLException.wrap(t, null);
     }
+  }
+
+  @Override
+  public List<T> beanify(int limit) {
+    Check.that(limit, "limit").is(gt(), 0);
+    if (!hasMore) {
+      return Collections.emptyList();
+    }
+    List<T> beans = new ArrayList<>(limit);
+    int i = 0;
+    try {
+      do {
+        beans.add(toBean(rs, beanSupplier, channels));
+      } while (++i < limit && (hasMore = rs.next()));
+    } catch (Throwable t) {
+      throw KJSQLException.wrap(t, null);
+    }
+    return beans;
   }
 
   @Override
   public List<T> beanifyAll() {
-    return beanifyAll(20);
+    return beanifyAll(10);
   }
 
   @Override
   public List<T> beanifyAll(int sizeEstimate) {
     Check.that(sizeEstimate, "sizeEstimate").is(gt(), 0);
-    List<T> all = new ArrayList<>(sizeEstimate);
+    if (!hasMore) {
+      return Collections.emptyList();
+    }
+    List<T> beans = new ArrayList<>(sizeEstimate);
     try {
       do {
-        all.add(toBean(rs, beanSupplier, setters));
+        beans.add(toBean(rs, beanSupplier, channels));
       } while (rs.next());
     } catch (Throwable t) {
-      throw ExceptionMethods.uncheck(t);
+      throw KJSQLException.wrap(t, null);
     }
-    return all;
-  }
-
-  private List<T> atMost(int limit) throws Throwable {
-    List<T> all = new ArrayList<>(limit);
-    int i = 0;
-    do {
-      all.add(toBean(rs, beanSupplier, setters));
-    } while (++i < limit && rs.next());
-    return all;
-  }
-
-  @Override
-  public void close() {
-    try {
-      rs.close();
-    } catch (SQLException e) {
-      throw ExceptionMethods.uncheck(e);
-    }
+    hasMore = false;
+    return beans;
   }
 
   @Override
   public boolean isEmpty() {
-    return false;
+    return !hasMore;
+  }
+
+  @Override
+  public Iterator<T> iterator() {
+    return new BeanIterator(this);
   }
 }

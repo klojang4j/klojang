@@ -87,11 +87,12 @@ public class SQL {
     return new SQLInsertBuilder();
   }
 
+  private final ReentrantLock lock = new ReentrantLock();
+
   /* These maps are unlikely to grow beyond one, maybe two entries */
   private final Map<Class<?>, BeanBinder<?>> beanBinders = new HashMap<>(4);
-  private final Map<Class<?>, BeanifierFactory<?>> beanifiers = new HashMap<>(4);
-
-  private final ReentrantLock lock = new ReentrantLock();
+  private final Map<Tuple<Class<?>, NameMapper>, BeanifierFactory<?>> beanifiers = new HashMap<>(4);
+  private final Map<NameMapper, MappifierFactory> mappifiers = new HashMap<>(4);
 
   private final SQLNormalizer normalizer;
   private final BindInfo bindInfo;
@@ -298,23 +299,27 @@ public class SQL {
 
   @SuppressWarnings("unchecked")
   <T> BeanifierFactory<T> getBeanifierFactory(Class<T> clazz, NameMapper mapper) {
-    BeanifierFactory<?> bf = beanifiers.get(clazz);
+    Tuple<Class<?>, NameMapper> key = Tuple.of(clazz, mapper);
+    BeanifierFactory<T> bf = (BeanifierFactory<T>) beanifiers.get(key);
     if (bf == null) {
-      bf = new BeanifierFactory<>(clazz, mapper);
-      beanifiers.put(clazz, bf);
+      beanifiers.put(key, bf = new BeanifierFactory<>(clazz, mapper));
     }
-    return (BeanifierFactory<T>) bf;
+    return bf;
   }
 
   @SuppressWarnings("unchecked")
   <T> BeanifierFactory<T> getBeanifierFactory(
       Class<T> clazz, Supplier<T> supplier, NameMapper mapper) {
-    BeanifierFactory<?> bf = beanifiers.get(clazz);
+    Tuple<Class<?>, NameMapper> key = Tuple.of(clazz, mapper);
+    BeanifierFactory<T> bf = (BeanifierFactory<T>) beanifiers.get(key);
     if (bf == null) {
-      bf = new BeanifierFactory<>(clazz, supplier, mapper);
-      beanifiers.put(clazz, bf);
+      beanifiers.put(key, bf = new BeanifierFactory<>(clazz, supplier, mapper));
     }
-    return (BeanifierFactory<T>) bf;
+    return bf;
+  }
+
+  MappifierFactory getMappifierFactory(NameMapper mapper) {
+    return mappifiers.computeIfAbsent(mapper, MappifierFactory::new);
   }
 
   private <T extends SQLStatement<?>> T prepare(

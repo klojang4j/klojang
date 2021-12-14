@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
 import org.klojang.render.NameMapper;
 import org.klojang.x.db.rs.ExtractorNegotiator;
@@ -15,12 +14,13 @@ import org.klojang.x.db.rs.RsExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import nl.naturalis.common.check.Check;
+import static nl.naturalis.common.check.CommonChecks.yes;
 
 public class SQLQuery extends SQLStatement<SQLQuery> {
 
   private static final Logger LOG = LoggerFactory.getLogger(SQLQuery.class);
 
-  private NameMapper nameMapper = NameMapper.AS_IS;
+  private NameMapper mapper = NameMapper.AS_IS;
 
   private PreparedStatement ps;
   private ResultSet rs;
@@ -34,23 +34,22 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
    * keys. Beware of the direction of the mappings: <i>from</i> column names <i>to</i> bean
    * properties (or map keys).
    *
-   * @param columnMapper The {@code NameMapper} to be used when mapping column names to be bean
+   * @param columnMapper The {@code NameMapper} to be used when mapping column names to bean
    *     properties or map keys.
    * @return This {@code SQLQuery} instance
    */
   public SQLQuery withMapper(NameMapper columnMapper) {
-    this.nameMapper = Check.notNull(columnMapper).ok();
+    this.mapper = Check.notNull(columnMapper).ok();
     return this;
   }
 
   /**
-   * Executes the query and returns the {@link ResultSet} produced by the JDBC driver. Do <b>not</b>
-   * use this method in combination with the {@code mappify} and {@code beanify} methods as they
-   * will manage the {@code ResultSet} themselves.
+   * Executes the query and returns the {@link ResultSet} produced by the JDBC driver. If the query
+   * had already been executed, the initial {@link ResultSet} is returned.
    *
    * @return The {@code ResultSet} produced by the JDBC driver
    */
-  public ResultSet execute() {
+  public ResultSet getResultSet() {
     try {
       return rs();
     } catch (Throwable t) {
@@ -59,32 +58,15 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
   }
 
   /**
-   * Executes the query and returns the {@link ResultSet} produced by the JDBC driver after having
-   * called {@link ResultSet#next() next()} on it. Do <b>not</b> use this method in combination with
-   * the {@code mappify} and {@code beanify} methods as they will manage the {@code ResultSet}
-   * themselves.
+   * Executes the query and returns the value of the first column in the first row. If the query had
+   * already been executed, you get the value from the second row, etc. Throws a {@link
+   * KJSQLException} if the query returned zero rows or if there are no more rows in the {@code
+   * ResultSet}.
    *
-   * @return
-   */
-  public ResultSet executeAndNext() {
-    try {
-      ResultSet rs = rs();
-      if (!rs.next()) {
-        throw new KJSQLException("Query returned zero rows");
-      }
-      return rs;
-    } catch (Throwable t) {
-      throw KJSQLException.wrap(t, sql);
-    }
-  }
-
-  /**
-   * Returns the value of the first column of the first row, converted to the specified type. Throws
-   * a {@link KJSQLException} if the query returned zero rows.
-   *
-   * @param <T>
-   * @param clazz
-   * @return
+   * @param <T> The type of the value to be returned
+   * @param clazz The class of the value to be returned
+   * @return The value of the first column in the first row
+   * @throws KJSQLException If the query returned zero rows
    */
   public <T> T lookup(Class<T> clazz) {
     ResultSet rs = executeAndNext();
@@ -98,10 +80,12 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
   }
 
   /**
-   * Returns the value of the first column of the first row as an integer. Throws a {@link
-   * KJSQLException} if the query returned zero rows.
+   * Executes the query and returns the value of the first column in the first row as an integer. If
+   * the query had already been executed, you get the value from the second row, etc. Throws a
+   * {@link KJSQLException} if the query returned zero rows or if there are no more rows in the
+   * {@code ResultSet}.
    *
-   * @return The value of the first column of the first row as an integer
+   * @return The value of the first column in the first row as an integer
    * @throws KJSQLException If the query returned zero rows
    */
   public int getInt() throws KJSQLException {
@@ -113,8 +97,10 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
   }
 
   /**
-   * Returns the value of the first column of the first row as a {@code String}. Throws a {@link
-   * KJSQLException} if the query returned zero rows.
+   * Returns the value of the first column of the first row as a {@code String}. If the query had
+   * already been executed, you get the value from the second row, etc. Throws a {@link
+   * KJSQLException} if the query returned zero rows or if there are no more rows in the {@code
+   * ResultSet}.
    *
    * @return The value of the first column of the first row as aa {@code String}
    * @throws KJSQLException If the query returned zero rows
@@ -128,8 +114,8 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
   }
 
   /**
-   * Returns a {@code List} of the values of the first column in the rows selected by the query.
-   * Equivalent to {@code getList(clazz, 10)}.
+   * Returns a {@code List} of the all values in the first column. Equivalent to {@code
+   * getList(clazz, 10)}.
    *
    * @param <T> The desired type of the values
    * @param clazz The desired class of the values
@@ -140,7 +126,8 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
   }
 
   /**
-   * Returns a {@code List} of the values of the first column in the rows selected by the query.
+   * Returns a {@code List} of the all values in the first column. In other words, this method will
+   * exhaust the {@link ResultSet}.
    *
    * @param <T> The desired type of the values
    * @param clazz The desired class of the values
@@ -165,68 +152,51 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
     }
   }
 
-  public Optional<Row> mappify() {
+  /**
+   * Executes the query and returns a {@code ResultSetMappifier} that you can use to convert the
+   * rows in the {@link ResultSet} into {@link Row} objects.
+   *
+   * @return A {@code ResultSetMappifier} that you can use to convert the rows in the {@link
+   *     ResultSet} into {@link Row} objects.
+   */
+  public ResultSetMappifier getMappifier() {
     try {
-      MappifierBox mb = new MappifierBox(nameMapper);
-      return mb.get(rs()).mappify();
+      return sql.getMappifierFactory(mapper).getMappifier(rs());
     } catch (Throwable t) {
       throw KJSQLException.wrap(t, sql);
     }
   }
 
-  public List<Row> mappifyAtMost(int limit) {
+  /**
+   * Executes the query and returns a {@code ResultSetBeanifier} that you can use to convert the
+   * rows in the {@link ResultSet} into JavaBeans.
+   *
+   * @param <T> The type of the JavaBeans
+   * @param beanClass The class of the JavaBeans
+   * @return A {@code ResultSetBeanifier} that you can use to convert the rows in the {@link
+   *     ResultSet} into JavaBeans.
+   */
+  public <T> ResultSetBeanifier<T> getBeanifier(Class<T> beanClass) {
     try {
-      MappifierBox mb = new MappifierBox(nameMapper);
-      return mb.get(rs()).mappifyAtMost(limit);
+      return sql.getBeanifierFactory(beanClass, mapper).getBeanifier(rs());
     } catch (Throwable t) {
       throw KJSQLException.wrap(t, sql);
     }
   }
 
-  public List<Row> mappifyAll() {
+  /**
+   * Executes the query and returns a {@code ResultSetBeanifier} that you can use to convert the
+   * rows in the {@link ResultSet} into JavaBeans.
+   *
+   * @param <T> The type of the JavaBeans
+   * @param beanClass The class of the JavaBeans
+   * @param beanSupplier The supplier of the JavaBean instances
+   * @return A {@code ResultSetBeanifier} that you can use to convert the rows in the {@link
+   *     ResultSet} into JavaBeans.
+   */
+  public <T> ResultSetBeanifier<T> getBeanifier(Class<T> beanClass, Supplier<T> beanSupplier) {
     try {
-      MappifierBox mb = new MappifierBox(nameMapper);
-      return mb.get(rs()).mappifyAll();
-    } catch (Throwable t) {
-      throw KJSQLException.wrap(t, sql);
-    }
-  }
-
-  public List<Row> mappifyAll(int sizeEstimate) {
-    try {
-      MappifierBox mb = new MappifierBox(nameMapper);
-      List<Row> rows = mb.get(rs()).mappifyAll(sizeEstimate);
-      LOG.trace("Query returned {} record(s)", rows.size());
-      return rows;
-    } catch (Throwable t) {
-      throw KJSQLException.wrap(t, sql);
-    }
-  }
-
-  public <T> Optional<T> beanify(Class<T> beanClass) {
-    try {
-      BeanifierFactory<T> bf = sql.getBeanifierFactory(beanClass, nameMapper);
-      return bf.getBeanifier(rs()).beanify();
-    } catch (Throwable t) {
-      throw KJSQLException.wrap(t, sql);
-    }
-  }
-
-  public <T> Optional<T> beanify(Class<T> beanClass, Supplier<T> beanSupplier) {
-    try {
-      BeanifierFactory<T> bf = sql.getBeanifierFactory(beanClass, beanSupplier, nameMapper);
-      return bf.getBeanifier(rs()).beanify();
-    } catch (Throwable t) {
-      throw KJSQLException.wrap(t, sql);
-    }
-  }
-
-  public <T> List<T> beanifyAll(Class<T> beanClass, Supplier<T> beanSupplier) {
-    try {
-      BeanifierFactory<T> bb = sql.getBeanifierFactory(beanClass, beanSupplier, nameMapper);
-      List<T> beans = bb.getBeanifier(rs()).beanifyAll();
-      LOG.trace("Query returned {} record(s)", beans.size());
-      return beans;
+      return sql.getBeanifierFactory(beanClass, beanSupplier, mapper).getBeanifier(rs());
     } catch (Throwable t) {
       throw KJSQLException.wrap(t, sql);
     }
@@ -235,6 +205,18 @@ public class SQLQuery extends SQLStatement<SQLQuery> {
   @Override
   public void close() {
     close(ps);
+  }
+
+  private ResultSet executeAndNext() {
+    ResultSet rs;
+    boolean hasRows;
+    try {
+      hasRows = (rs = rs()).next();
+    } catch (Throwable t) {
+      throw KJSQLException.wrap(t, sql);
+    }
+    Check.on(KJSQLException::new, hasRows).is(yes(), "Query returned zero rows");
+    return rs;
   }
 
   private ResultSet rs() throws Throwable {
