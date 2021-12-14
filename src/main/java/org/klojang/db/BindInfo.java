@@ -3,8 +3,8 @@ package org.klojang.db;
 import java.sql.PreparedStatement;
 
 /**
- * {@code BindInfo} objects allow you to instruct how values should be bound into a {@link
- * PreparedStatement}.
+ * {@code BindInfo} objects allow you to finetune or override how values should be bound into a
+ * {@link PreparedStatement}.
  *
  * @author Ayco Holleman
  */

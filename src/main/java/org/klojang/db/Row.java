@@ -3,7 +3,7 @@ package org.klojang.db;
 import java.sql.ResultSet;
 import java.util.*;
 import java.util.function.Function;
-import org.klojang.render.Accessor;
+import org.klojang.render.RenderSession;
 import nl.naturalis.common.Bool;
 import nl.naturalis.common.NumberMethods;
 import nl.naturalis.common.Pair;
@@ -15,17 +15,16 @@ import static nl.naturalis.common.check.CommonChecks.negative;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 
 /**
- * A thin wrapper around a {@code LinkedHashMap<String,Object>} instance that mimicks some of the
- * behaviour of the {@link ResultSet} class. {@code Row} objects are produced by a {@link
- * ResultSetMappifier} and can be quickly pushed up into the higher layers of your application
- * without them actually acquiring an awkward dependency on {@code java.sql}. Up there they can be
- * inserted directly into templates, without having to register a separate {@link Accessor} for
- * them.
+ * A thin wrapper around a {@code Map<String,Object>} instance mimicking some of the behaviour of
+ * the {@link ResultSet} class. {@code Row} objects are produced by a {@link ResultSetMappifier} and
+ * can be quickly pushed up into the higher layers of your application and then {@link
+ * RenderSession#insert(Object, String...) inserted} into a Klojang template.
  *
- * <p>Note that an important difference between a {@code Row} and a {@code ResultSet} is that a
- * {@code Row} is writable, too. As with a {@code ResultSet} you can access column values both by
- * column name and by column number, but, unlike {@code ResultSet}, column numbers need to be
- * specified in a zero-based manner.
+ * <p>Note that it is not a primary goal of the {@code Row} class to behave exactly like to the
+ * {@code ResultSet} class. Unlike a {@code ResultSet} you can update the values of the {@code Row}.
+ * As with the {@code ResultSet} you can access column values both by column name and by column
+ * number, but, unlike {@code ResultSet} class, column numbers need to be specified in a zero-based
+ * manner.
  *
  * @author Ayco Holleman
  */

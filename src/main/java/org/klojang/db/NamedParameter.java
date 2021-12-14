@@ -5,6 +5,7 @@ import nl.naturalis.common.collection.IntList;
 /**
  * Represents a single named parameter within a SQL statement.
  *
+ * @see SQL
  * @author Ayco Holleman
  */
 public class NamedParameter {
@@ -17,10 +18,20 @@ public class NamedParameter {
     this.indices = indices;
   }
 
+  /**
+   * Returns the name of the named parameter (as found in the SQL statement).
+   *
+   * @return The name of the named parameter (as found in the SQL statement)
+   */
   public String getName() {
     return name;
   }
 
+  /**
+   * Returns the positions occupied by the parameter within the SQL statement.
+   *
+   * @return The positions occupied by the parameter within the SQL statement
+   */
   public IntList getIndices() {
     return indices;
   }

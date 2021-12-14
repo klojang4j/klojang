@@ -24,15 +24,16 @@ import static nl.naturalis.common.check.CommonChecks.no;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 
 /**
- * A factory for {@link SQLQuery}, {@link SQLInsert} and {@link SQLUpdate} instances. The {@code
- * SQL} class lets you parametrize SQL in two ways:
+ * A factory for {@link SQLQuery}, {@link SQLInsert} and {@link SQLUpdate} instances. An {@code SQL}
+ * instance represents a single SQL statement that cannot be changed. The {statement can be
+ * parametrized in two ways:
  *
  * <p>
  *
  * <ol>
  *   <li>Using named parameters for values in WHERE, HAVING and LIMIT clauses. Named parameters
  *       start with a colon. For example: {@code :firstName}. Named parameters are not bound in the
- *       {@code SQL} instance itself, but in the {@code SQLQuery}, {@code SQLInsert} or {@link
+ *       {@code SQL} instance itself, but in the {@code SQLQuery}, {@code SQLInsert} or {@code
  *       SQLUpdate} instance obtained from it.
  *   <li>Using Klojang template variables for the other parts of a query. Although this basically
  *       lets you parametrize whatever makes you happy, it is especially meant to parametrize the
@@ -55,12 +56,30 @@ import static nl.naturalis.common.check.CommonChecks.notNull;
  * </blockquote>
  *
  * <p>You would then set the {@code age} and {@code salary} variables in the {@code SQL} instance,
- * request a {@link SQLQuery} from it, and then bind the {@code firstName} and {@code lastName}
- * parameters in the {@code SQLQuery} instance.
+ * request a {@code SQLQuery} from it, and then bind the {@code firstName} and {@code lastName}
+ * parameters in the {@code SQLQuery} instance:
  *
- * <p>If the SQL contains many named parameters and Klojang template variables, and is going to be
- * executed often, you might want to cache the {@code SQL} instance (e.g. as a static final variable
- * in your DAO class).
+ * <p>
+ *
+ * <blockquote>
+ *
+ * <pre>{@code
+ * SQL sql = SQL.create(theAboveSQL);
+ * sql.set("sortColumn", "BIRTH_DATE");
+ * SQLQuery query = sql.prepareQuery(conn);
+ * List<Employee> employees =
+ * query
+ *  .bind("firstName", "John")
+ *  .bind("lastName", "Smith")
+ *  .getBeanifier(Employee.class)
+ *  .beanifyAll();
+ * }</pre>
+ *
+ * </blockquote>
+ *
+ * <p>If the SQL statement contains many named parameters and Klojang template variables, and is
+ * going to be executed often, you might want to cache the {@code SQL} instance (e.g. as a static
+ * final variable in your DAO class).
  *
  * @author Ayco Holleman
  */
@@ -75,6 +94,12 @@ public class SQL {
       "No valid JDBC SQL has been generated yet. "
           + "Call prepareQuery/prepareInsert/prepareUpdate first";
 
+  /**
+   * Creates an {@code SQL} instances from the specified SQL statement.
+   *
+   * @param sql The SQL
+   * @return an {@code SQL} instance
+   */
   public static SQL create(String sql) {
     return create(sql, new BindInfo() {});
   }
@@ -150,9 +175,9 @@ public class SQL {
   }
 
   /**
-   * Sets the value of the {@code ~%sortOrder%} variable to "DESC" is the argument equals {@code
+   * Sets the value of the {@code ~%sortOrder%} variable to "DESC" if the argument equals {@code
    * true} and to "ASC" if the argument equals {@code false}. This presumes (and requires) that you
-   * that variable in your SQL template.
+   * have that variable in the SQL statement.
    *
    * @param isDescending Whether to sort in descending order
    * @return This {@code SQL} instance
@@ -163,7 +188,7 @@ public class SQL {
 
   /**
    * Sets the values of the values of the {@code ~%sortColumn%} and {@code ~%sortOrder%} variables.
-   * This presumes (and requires) that you those variables in your SQL template.
+   * This presumes (and requires) that you have those variables in the SQL statement.
    *
    * @param sortColumn The column on which to sort
    * @param sortOrder The sort order
@@ -175,7 +200,7 @@ public class SQL {
 
   /**
    * Sets the values of the values of the {@code ~%sortColumn%} and {@code ~%sortOrder%} variables.
-   * This presumes (and requires) that you those variables in your SQL template.
+   * This presumes (and requires) that you have those variables in the SQL statement.
    *
    * @param sortColumn
    * @param isDescending
