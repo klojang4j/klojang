@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.klojang</groupId>
 	<artifactId>klojang</artifactId>
-	<version>1.2.0</version>
+	<version>1.2.1</version>
 
 	<name>Klojang</name>
 
@@ -31,7 +31,7 @@
 		<!-- *** Check for updates: mvn versions:display-dependency-updates   *** -->
 		<!-- *** Check dependencies: mvn dependency:analyze                   *** -->
 		<!-- ==================================================================== -->
-		<naturalis-common.version>2.12</naturalis-common.version>
+		<naturalis-common.version>2.13</naturalis-common.version>
 		<commons-text.version>1.9</commons-text.version>
 		<apache-httpclient.version>4.5.13</apache-httpclient.version>
 		<slf4j.version>1.7.31</slf4j.version>
