@@ -3,6 +3,7 @@ package org.klojang.util.namemappers;
 import org.klojang.render.NameMapper;
 import nl.naturalis.common.check.Check;
 import static nl.naturalis.common.check.CommonChecks.empty;
+import static java.lang.Character.*;
 
 /**
  * Converts word case identifiers to came cal identifiers. For exampl {@code MyBloodyValentine}
@@ -12,10 +13,18 @@ import static nl.naturalis.common.check.CommonChecks.empty;
  */
 public class WordCaseToCameCase implements NameMapper {
 
+  /**
+   * Returns an instance of {@code WordCaseToCameCase}.
+   *
+   * @return An instance of {@code WordCaseToCameCase}
+   */
+  public static WordCaseToCameCase wordCaseToCameCase() {
+    return new WordCaseToCameCase();
+  }
+
   @Override
-  public String map(String s) {
-    char[] chars = Check.that(s).isNot(empty()).ok().toCharArray();
-    chars[0] = Character.toLowerCase(chars[0]);
-    return String.valueOf(chars);
+  public String map(String name) {
+    Check.that(name, "name").isNot(empty());
+    return toLowerCase(name.charAt(0)) + name.substring(1);
   }
 }

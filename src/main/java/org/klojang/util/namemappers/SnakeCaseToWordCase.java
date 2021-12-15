@@ -9,21 +9,21 @@ import static nl.naturalis.common.check.CommonChecks.empty;
 
 /**
  * Converts snake case identifiers to word case identifiers. For example {@code my_bloody_valentine}
- * becomes {@code myBloodyValentine}. Note that it doesn't matter whether you use lowercase letters
+ * becomes {@code MyBloodyValentine}. Note that it doesn't matter whether you use lowercase letters
  * or uppercase letters or both in your snake case identifiers. {@code MY_BLOODY_VALENTINE} and
- * {@code My_Bloody_Valentine} would also become {@code myBloodyValentine}.
+ * {@code My_Bloody_Valentine} would also become {@code MyBloodyValentine}.
  *
  * @author Ayco Holleman
  */
-public class SnakeCaseToCamelCase implements NameMapper {
+public class SnakeCaseToWordCase implements NameMapper {
 
   /**
-   * Returns an instance of {@code SnakeCaseToCamelCase}.
+   * Returns an instance of {@code SnakeCaseToWordCase}.
    *
-   * @return An instance of {@code SnakeCaseToCamelCase}
+   * @return An instance of {@code SnakeCaseToWordCase}
    */
-  public static SnakeCaseToCamelCase snakeCaseToCamelCase() {
-    return new SnakeCaseToCamelCase();
+  public static SnakeCaseToWordCase snakeCaseToWordCase() {
+    return new SnakeCaseToWordCase();
   }
 
   @Override
@@ -32,7 +32,7 @@ public class SnakeCaseToCamelCase implements NameMapper {
     String in = trim(name, " _\t\r\n");
     Check.that(in).isNot(empty(), "Cannot map \"%s\"", name);
     char[] out = new char[in.length()];
-    out[0] = toLowerCase(in.charAt(0));
+    out[0] = toUpperCase(in.charAt(0));
     boolean nextWord = false;
     int j = 1;
     for (int i = 1; i < in.length(); ++i) {
