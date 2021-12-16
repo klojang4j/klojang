@@ -1,8 +1,8 @@
 package org.klojang.template;
 
 /**
- * Captures a substring of the template that is text-only. That's simply everything that is not part
- * of a variable declaration, an inline template definition, or an template inclusion declaration.
+ * A {@link Part} implementation for representing boilerplate text. That's basically all text in
+ * between variable declarations.
  *
  * @author Ayco Holleman
  */
@@ -15,6 +15,11 @@ public class TextPart extends AbstractPart {
     this.text = text;
   }
 
+  /**
+   * Returns the text of this part of the template.
+   *
+   * @return The text of this part of the template
+   */
   public String getText() {
     return text;
   }

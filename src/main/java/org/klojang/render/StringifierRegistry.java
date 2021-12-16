@@ -31,7 +31,7 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
  * variable-specific stringifiers, if at all. If a variable's value can be stringified by calling
  * {@code toString()} on it (or to an empty string if null), you don't need to specify a stringifier
  * for it because this is default behaviour. In addition, all variables with the same data type will
- * usually have to be stringified identically. For example you may want to format all {@code int}
+ * often should be stringified identically. For example you may want to format all {@code int}
  * values according to your country's locale. These type-based stringifiers can be configured using
  * {@link Builder#registerByType(String..., Class) Builder.addTypeBasedStringifier}. Only if a
  * template variable has very specific stringification requirements would you {@link
@@ -46,6 +46,10 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
  * stringifier (unless of course you have also registered an {@code Integer} stringifier). This
  * saves you from having to register a stringifier for each and every subclass of {@code Number} if
  * they are all stringified identically.
+ *
+ * <p>Note that escaping (e.g. HTML) and formatting (e.g. numbers) are also regarded as a form of
+ * stringification, albeit from {@code String} to {@code String}. The stringifiers associated with
+ * the {@link VarGroup standard variable groups} are in fact all escape functions.
  *
  * <p>This is how a {@link StringifierRegistry} decides which stringifier to hand out for a variable
  * in a template:

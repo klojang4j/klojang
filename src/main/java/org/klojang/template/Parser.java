@@ -27,7 +27,7 @@ class Parser {
   private final TemplateId id;
   private final String src;
 
-  Parser(String tmplName, TemplateId id) throws InvalidPathException {
+  Parser(String tmplName, TemplateId id) throws PathResolutionException {
     this(tmplName, id, id.getSource());
   }
 

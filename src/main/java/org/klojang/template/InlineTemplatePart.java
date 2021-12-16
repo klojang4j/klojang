@@ -4,15 +4,7 @@ import static org.klojang.template.Regex.VAR_END;
 import static org.klojang.template.Regex.TMPL_START;
 
 /**
- * Captures a substring of the template containing an inline template definition. For example:
- *
- * <p>
- *
- * <pre>
- * ~%%begin:hello%
- *  &lt;p&gt;Some great stuff here, ~%firstName%!&lt;/p&gt;
- * ~%%end:hello%
- * </pre>
+ * A {@link Part} implementation for representing inline templates.
  *
  * @author Ayco Holleman
  */

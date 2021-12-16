@@ -69,28 +69,28 @@ public class TemplateId {
     this.clazz = null;
   }
 
-  String getSource() throws InvalidPathException {
+  String getSource() throws PathResolutionException {
     if (path == null) {
       return Check.fail(illegalState(), ERR_NO_PATH, this);
     } else if (sourceType == FILE_SYSTEM) {
       try {
         return getSource(new FileInputStream(new File(path)));
       } catch (FileNotFoundException e) {
-        throw new InvalidPathException(path);
+        throw new PathResolutionException(path);
       }
     } else if (sourceType == RESOURCE) {
       try (InputStream in = clazz.getResourceAsStream(path)) {
-        Check.on(InvalidPathException::new, in).is(notNull(), path);
+        Check.on(PathResolutionException::new, in).is(notNull(), path);
         return IOMethods.toString(in);
       } catch (IOException e) {
-        throw new InvalidPathException(path);
+        throw new PathResolutionException(path);
       }
     }
     try (InputStream in = pathResolver.resolvePath(path)) {
-      Check.on(InvalidPathException::new, in).is(notNull(), path);
+      Check.on(PathResolutionException::new, in).is(notNull(), path);
       return IOMethods.toString(in);
     } catch (IOException e) {
-      throw new InvalidPathException(path);
+      throw new PathResolutionException(path);
     }
   }
 

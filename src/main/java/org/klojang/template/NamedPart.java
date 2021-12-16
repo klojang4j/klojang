@@ -1,8 +1,8 @@
 package org.klojang.template;
 
 /**
- * Interface for those parts of a template that can be identified by name (i&#46;e&#46; template
- * variables and nested templates).
+ * Extension of the {@link Part} Interface for template parts that can be identified by name
+ * (i&#46;e&#46; template variables and nested templates).
  *
  * @author Ayco Holleman
  */

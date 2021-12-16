@@ -6,8 +6,7 @@ import static nl.naturalis.common.StringMethods.substrAfter;
 import static nl.naturalis.common.StringMethods.substrTo;
 
 /**
- * Captures a substring of the template containing a template inclusion declaration. For example:
- * {@code ~%%include:employees:/views/hr/employees.html%}.
+ * A {@link Part} implementation for representing included templates.
  *
  * @author Ayco Holleman
  */

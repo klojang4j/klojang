@@ -7,8 +7,7 @@ import static org.klojang.template.Regex.VAR_START;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
 
 /**
- * Captures a substring of the template that declares a template variable. For example: {@code
- * ~%fullName%} or {@code ~%html:fullName%}.
+ * A {@link Part} implementation for representing template variables.
  *
  * @author Ayco Holleman
  */
@@ -24,9 +23,11 @@ public class VariablePart extends AbstractPart implements NamedPart {
   }
 
   /**
-   * Returns the inline escape type of the variable.
+   * Returns an {@code Optional} containing the group name prefix, or an empty {@code Optional} if
+   * the variable was declared without a group name prefix. For example for {@code
+   * ~%html:firstName%} this method would return the {@link VarGroup#HTML} variable group.
    *
-   * @return The inline escape type of the variable
+   * @return An {@code Optional} containing the group name prefix
    */
   public Optional<VarGroup> getVarGroup() {
     return Optional.ofNullable(group);

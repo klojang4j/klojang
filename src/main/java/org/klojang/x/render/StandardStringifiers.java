@@ -24,17 +24,17 @@ public class StandardStringifiers {
           new LookupTranslator(EntityArrays.HTML40_EXTENDED_ESCAPE),
           new LookupTranslator(Map.of("'", "&#39;", "\"", "&#34;")));
 
-  public static Stringifier ESCAPE_HTML = wrap(StringEscapeUtils::escapeHtml4);
+  public static final Stringifier ESCAPE_HTML = wrap(StringEscapeUtils::escapeHtml4);
 
-  public static Stringifier ESCAPE_JS = wrap(StringEscapeUtils::escapeEcmaScript);
+  public static final Stringifier ESCAPE_JS = wrap(StringEscapeUtils::escapeEcmaScript);
 
-  public static Stringifier ESCAPE_ATTR = wrap(HTML_ATTR_TRANSLATOR::translate);
+  public static final Stringifier ESCAPE_ATTR = wrap(HTML_ATTR_TRANSLATOR::translate);
 
-  public static Stringifier ESCAPE_JS_ATTR = wrap(StandardStringifiers::escapeJsAttr);
+  public static final Stringifier ESCAPE_JS_ATTR = wrap(StandardStringifiers::escapeJsAttr);
 
-  public static Stringifier ESCAPE_QUERY_PARAM = wrap(StandardStringifiers::escapeParam);
+  public static final Stringifier ESCAPE_QUERY_PARAM = wrap(StandardStringifiers::escapeParam);
 
-  public static Stringifier ESCAPE_PATH = wrap(StandardStringifiers::escapePath);
+  public static final Stringifier ESCAPE_PATH = wrap(StandardStringifiers::escapePath);
 
   public static Map<VarGroup, Stringifier> get() {
     return Map.of(

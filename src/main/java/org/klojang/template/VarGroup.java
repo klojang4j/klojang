@@ -24,8 +24,8 @@ import static nl.naturalis.common.check.CommonChecks.notNull;
  * you may have a variable named "firstName" occuring multiple times in one and the same template.
  * For the occurrences inside a &lt;script&gt; you might want to use the "js" prefix, for the others
  * the "html" prefix (or no prefix at all). Therefore stringifiers associated with a variable group
- * (perhaps paradoxically) take the highest precedence when deciding which stringifier to use, even
- * higher than stringifiers associated with a variable!
+ * take the highest precedence when deciding which stringifier to use, even higher (perhaps
+ * paradoxically) than stringifiers associated with a variable!
  *
  * @author Ayco Holleman
  */
