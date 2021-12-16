@@ -13,7 +13,7 @@ import static nl.naturalis.common.StringMethods.concat;
 import static nl.naturalis.common.check.CommonChecks.illegalState;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 
-public class TemplateId {
+class TemplateId {
 
   private static final String ERR_NO_PATH = "Cannot load source for %s";
 
@@ -159,6 +159,7 @@ public class TemplateId {
     } else if (sourceType == FILE_SYSTEM) {
       return concat("TemplateId[sourceType=", sourceType, ";path=", path, "]");
     }
-    return concat("TemplateId[sourceType=", sourceType, ";path=", path, ";resolver=", pathResolver, "]");
+    return concat(
+        "TemplateId[sourceType=", sourceType, ";path=", path, ";resolver=", pathResolver, "]");
   }
 }

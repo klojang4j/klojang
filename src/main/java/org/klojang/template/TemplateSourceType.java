@@ -1,6 +1,6 @@
 package org.klojang.template;
 
-public enum TemplateSourceType {
+enum TemplateSourceType {
   STRING,
   RESOURCE,
   FILE_SYSTEM,

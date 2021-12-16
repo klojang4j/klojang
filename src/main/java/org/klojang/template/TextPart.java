@@ -2,7 +2,7 @@ package org.klojang.template;
 
 /**
  * A {@link Part} implementation for representing boilerplate text. That's basically all text in
- * between variable declarations.
+ * between template variables.
  *
  * @author Ayco Holleman
  */

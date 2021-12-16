@@ -1,6 +1,7 @@
 package org.klojang.template;
 
 import java.util.*;
+import org.klojang.SysProp;
 import org.klojang.render.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +20,12 @@ import static nl.naturalis.common.check.CommonChecks.notNull;
 /**
  * The {@code Template} class is responsible for loading and parsing templates and functions as a
  * factory for {@link RenderSession} objects that let you render them. The {@code Template} class
- * and the {@code RenderSession} class together constitute the heart of the Klojang library. {@code
+ * and the {@code RenderSession} class are the two central classes of the Klojang library. {@code
  * Template} instances are unmodifiable, expensive-to-create and heavy-weight objects. Generally
- * though you should not cache them yourself as this is already done by Klojang.
+ * though you should not cache them as this is already done by Klojang. You can disable template
+ * caching by means of a system property. See {@link SysProp#TMPL_CACHE_SIZE}. This is useful during
+ * development, when you want the template to be re-loaded and re-parsed with every refresh of the
+ * browser.
  *
  * @author Ayco Holleman
  */

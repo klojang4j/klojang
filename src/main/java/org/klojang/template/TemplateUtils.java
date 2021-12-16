@@ -16,7 +16,7 @@ import static nl.naturalis.common.check.CommonChecks.empty;
 import static nl.naturalis.common.check.CommonChecks.in;
 
 /**
- * Utility class extending extending the functionality of the {@link Template} class.
+ * Utility class extending the functionality of the {@link Template} class.
  *
  * @author Ayco Holleman
  */
@@ -181,6 +181,7 @@ public class TemplateUtils {
    * @return All variable names in this {@code Template} and the templates nested inside it
    */
   public static List<Tuple<Template, String>> getVarsPerTemplate(Template template) {
+    Check.notNull(template, "template");
     ArrayList<Tuple<Template, String>> tuples = new ArrayList<>(25);
     collectVarsPerTemplate(template, tuples);
     return tuples;
