@@ -11,19 +11,19 @@ class StringifierId {
   private final String varName;
   private final int hash;
 
-  public StringifierId(VarGroup varGroup) {
+  StringifierId(VarGroup varGroup) {
     this(varGroup, null, null);
   }
 
-  public StringifierId(Template template, String varName) {
+  StringifierId(Template template, String varName) {
     this(null, template, varName);
   }
 
-  public StringifierId(String varName) {
+  StringifierId(String varName) {
     this(null, null, varName);
   }
 
-  private StringifierId(VarGroup varGroup, Template template, String varName) {
+  StringifierId(VarGroup varGroup, Template template, String varName) {
     this.varGroup = varGroup;
     this.template = template;
     this.varName = varName;

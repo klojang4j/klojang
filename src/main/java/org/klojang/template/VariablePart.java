@@ -1,7 +1,7 @@
 package org.klojang.template;
 
 import java.util.Optional;
-import org.klojang.x.template.XVarGroup;
+import org.klojang.x.XVarGroup;
 import static org.klojang.template.Regex.VAR_END;
 import static org.klojang.template.Regex.VAR_START;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;

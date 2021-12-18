@@ -1,4 +1,4 @@
-package org.klojang.accessors;
+package org.klojang.x.acc;
 
 import org.klojang.render.Accessor;
 import org.klojang.render.NameMapper;
@@ -8,7 +8,7 @@ import nl.naturalis.common.invoke.SaveBeanReader;
 /**
  * An {@link Accessor} implementation that can be used to read JavaBean properties. It does not make
  * use of reflection at all and can therefore be used if your application code is inside a Java
- * module, and you are not comfortable with opening up the module to the naturalis-common library.
+ * module without opening it.
  *
  * @author Ayco Holleman
  * @param <T> The type of the JavaBean

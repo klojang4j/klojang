@@ -3,10 +3,10 @@ package org.klojang.template;
 import org.klojang.render.RenderSession;
 import org.klojang.render.Stringifier;
 import org.klojang.render.StringifierRegistry;
-import org.klojang.x.template.XVarGroup;
+import org.klojang.x.XVarGroup;
 import nl.naturalis.common.check.Check;
 import static org.klojang.x.Messages.ERR_NO_SUCH_VARGROUP;
-import static org.klojang.x.template.XVarGroup.withName;
+import static org.klojang.x.XVarGroup.withName;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 
 /**

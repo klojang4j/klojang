@@ -1,4 +1,4 @@
-package org.klojang.accessors;
+package org.klojang.x.acc;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package org.klojang.accessors;
+package org.klojang.x.acc;
 
 import org.klojang.render.Accessor;
 import org.klojang.render.RenderException;

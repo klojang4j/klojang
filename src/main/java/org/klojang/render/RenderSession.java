@@ -345,6 +345,9 @@ public class RenderSession {
       String nestedTemplateName, Object sourceData, VarGroup defaultGroup, String... names)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
+    if (sourceData == UNDEFINED) {
+      return this;
+    }
     Template t = getNestedTemplate(nestedTemplateName);
     List<?> data = asUnsafeList(sourceData);
     if (t.isTextOnly()) {
@@ -609,7 +612,9 @@ public class RenderSession {
   public RenderSession insert(Object sourceData, VarGroup defaultGroup, String... names)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    if (sourceData == null) {
+    if (sourceData == UNDEFINED) {
+      return this;
+    } else if (sourceData == null) {
       Template t = config.getTemplate();
       Check.on(notTextOnly(t), t.isTextOnly()).is(yes());
       // If we get past this check, the entire template is in fact

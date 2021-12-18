@@ -31,7 +31,7 @@
 		<!-- *** Check for updates: mvn versions:display-dependency-updates   *** -->
 		<!-- *** Check dependencies: mvn dependency:analyze                   *** -->
 		<!-- ==================================================================== -->
-		<naturalis-common.version>2.14</naturalis-common.version>
+		<naturalis-common.version>2.15</naturalis-common.version>
 		<commons-text.version>1.9</commons-text.version>
 		<apache-httpclient.version>4.5.13</apache-httpclient.version>
 		<slf4j.version>1.7.31</slf4j.version>
@@ -271,7 +271,7 @@
 							</description>
 							<detectLinks>true</detectLinks>
 							<show>protected</show>
-							<!-- excludes>src/test/**/*</excludes-->
+							<excludePackageNames>org.klojang.x</excludePackageNames>
 							<sourcepath>src/main/java</sourcepath>
 						</configuration>
 					</execution>

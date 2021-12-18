@@ -1,9 +1,6 @@
-package org.klojang.accessors;
+package org.klojang.render;
 
 import java.util.Optional;
-import org.klojang.render.Accessor;
-import org.klojang.render.AccessorRegistry;
-import org.klojang.render.RenderException;
 import org.klojang.template.Template;
 
 /**
@@ -15,12 +12,12 @@ import org.klojang.template.Template;
  * @author Ayco Holleman
  * @param <T> The type of the object inside the {@code Optional}
  */
-public class OptionalAccessor<T> implements Accessor<Optional<T>> {
+class OptionalAccessor<T> implements Accessor<Optional<T>> {
 
   private final AccessorRegistry af;
   private final Template tmpl;
 
-  public OptionalAccessor(AccessorRegistry af, Template tmpl) {
+  OptionalAccessor(AccessorRegistry af, Template tmpl) {
     this.af = af;
     this.tmpl = tmpl;
   }

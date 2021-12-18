@@ -1,4 +1,4 @@
-package org.klojang.x.render;
+package org.klojang.x;
 
 import java.util.Map;
 import java.util.function.UnaryOperator;

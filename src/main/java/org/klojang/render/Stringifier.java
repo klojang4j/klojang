@@ -3,7 +3,7 @@ package org.klojang.render;
 import nl.naturalis.common.StringMethods;
 
 /**
- * Stringifies the values coming back from the data access layer.
+ * Stringifies the values provided by the data access layer.
  *
  * @see StringifierRegistry
  * @author Ayco Holleman
@@ -13,14 +13,15 @@ public interface Stringifier {
 
   /**
    * Stringifies {@code null} to an empty string and any other value by calling {@code toString()}
-   * on it. It is the {@code Stringifier} that is used by default for any template variable for
-   * which no alternative {@code Stringifier} is {@link StringifierRegistry.Builder configured}.
+   * on it. It is the {@code Stringifier} that is used by default for all template variables.
+   *
+   * @see StringifierRegistry.Builder
    */
   public static final Stringifier DEFAULT = x -> x == null ? StringMethods.EMPTY : x.toString();
 
   /**
    * Stringifies the specified value. Stringifier implementations <i>must</i> be able to handle null
-   * values and they <i>must never</i> return null.
+   * values and they <i>must never</i> return null. A {@link BadStringifierException} is thrown if
    *
    * @param value The value to be stringified
    * @return A string representation of the value

@@ -1,11 +1,11 @@
 package org.klojang;
 
-import org.klojang.accessors.BeanAccessor;
-import org.klojang.accessors.PathAccessor;
 import org.klojang.render.Accessor;
 import org.klojang.render.AccessorRegistry;
 import org.klojang.render.RenderSession;
 import org.klojang.template.Template;
+import org.klojang.x.acc.BeanAccessor;
+import org.klojang.x.acc.PathAccessor;
 import nl.naturalis.common.Bool;
 import nl.naturalis.common.NumberMethods;
 import nl.naturalis.common.check.Check;

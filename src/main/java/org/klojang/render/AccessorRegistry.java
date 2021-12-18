@@ -5,12 +5,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.klojang.SysProp;
-import org.klojang.accessors.*;
 import org.klojang.db.Row;
 import org.klojang.template.Template;
+import org.klojang.x.acc.*;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.TypeMap;
-import nl.naturalis.common.invoke.BeanReader;
+import nl.naturalis.common.path.PathWalker;
 import static nl.naturalis.common.ClassMethods.isA;
 
 /**
@@ -22,9 +22,12 @@ import static nl.naturalis.common.ClassMethods.isA;
  * any {@code Accessor} yourself.
  *
  * <p>Any {@code AccessorRegistry}, including the ones you build yourself and including the {@code
- * STANDARD_ACCESSORS} {@code AccessorRegistry} comes with a set of predefined accessors (not
- * exposed via the API) that it hands out to the {@code RenderSession} based on the type of object
- * the {@code RenderSession} wants to access. This happens in the following manner:
+ * STANDARD_ACCESSORS} {@code AccessorRegistry} comes with a set of predefined accessors. These
+ * accessors are not exposed via the API because you are only communicating with Klojang via
+ * accessor registries, not via individual accessors. However, you can check the source code for
+ * inspiration, should you need to write enhanced versions of them. This is how the {@code
+ * AccessorRegistry} decides which accessor to hands out to the {@code RenderSession} for any
+ * particular type of object:
  *
  * <p>
  *
@@ -32,37 +35,38 @@ import static nl.naturalis.common.ClassMethods.isA;
  *   <li>If you have {@link AccessorRegistry.Builder#register(Class, Accessor) registered} your own
  *       {@code Accessor} for that particular type of object, then that is the {@code Accessor} that
  *       is going to be used.
- *   <li>If the object is an {@link Optional}, then, if the {@code Optional} is empty, a {@link
- *       OptionalAccessor} is going to be used. This accessor returns {@link Accessor#UNDEFINED} if
- *       the {@code Optional} is empty. Otherwise another accessor is going to be used, based on the
- *       type of the object within the {@code Optional}. Optionals are typically returned from (for
- *       example) the ubiquitous {@code dao.findById(id)} method and, as for Klojang, it is
- *       perfectly legitimate to {@link RenderSession#insert(Object, String...) insert} them into a
- *       template.
- *   <li>If the object is a {@code Map}, a {@link MapAccessor} is going to be used. (You could
- *       easily create an enhanced version, tailored to your particular needs, yourself. Check the
+ *   <li>If the object is an {@link Optional}, then and {@code OptionalAccessor} is going to be
+ *       used. If the {@code Optional} turns out to be empty, the {@code OptionalAccessor} forwards
+ *       to a {@code NullAccessor}. This accessor simply always returns {@link Accessor#UNDEFINED},
+ *       effectively causing the render session to do nothing. Otherwise the {@code
+ *       OptionalAccessor} defers to another {@code Accessor}, based on the type of the object
+ *       within the {@code Optional}. Optionals are typically returned from (for example) the
+ *       ubiquitous {@code dao.findById(id)} method and in Klojang it is perfectly legitimate to
+ *       {@link RenderSession#insert(Object, String...) insert} them into a template.
+ *   <li>If the object is a {@code Map}, a {@code MapAccessor} is going to be used. (You could
+ *       easily create an enhanced version yourself, tailored to your particular needs. Check the
  *       source code.)
- *   <li>If the object is a {@link Row}, a {@link RowAccessor} is going to be used.
- *   <li>In any other case the object is taken to be a JavaBean and a {@link BeanAccessor} is going
- *       to be used.
+ *   <li>If the object is a {@link Row}, a {@code RowAccessor} is going to be used.
+ *   <li>In any other case the object is taken to be a JavaBean and a {@code PathAccessor} is going
+ *       to be used (however, see {@link SysProp#USE_BEAN_ACCESSOR}). This is a very versatile
+ *       accessor that can access almost any type of object as well as deeply nested objects. See
+ *       {@link PathWalker}.
  * </ol>
  *
- * <p>Note that the accessor used to read JavaBean properties makes use of a {@link BeanReader}.
+ * <p>Note that the accessor used to read JavaBean properties makes use of a {@link PathWalker}.
  * This class does not use reflection to read bean properties, but it does use reflection to figure
  * out what the properties are in the first place. Thus, if you use this accessor from within a Java
- * module, you will have to open up the module to the naturalis-common module, which contains the
- * {@code BeanReader} class. If you are not comfortable with this, you could, as an alternative, use
- * the {@link SaveBeanAccessor} class:
+ * module, you will have to open up the module for reflection. If you are not comfortable with this,
+ * you could, as an alternative, use the {@link SaveBeanAccessor} class:
  *
  * <blockquote>
  *
  * <pre>{@code
  * SaveBeanReader<Person> personReader = SaveBeanReader
  *   .configure()
- *   .with("id", int.class)
- *   .with("firstName", String.class)
- *   .with("lastName", String.class)
- *   .with("birthDate", LocalDate.class)
+ *   .withInt("id")
+ *   .withString("firstName", "lastName")
+ *   .with(LocalDate.class, "birthDate")
  *   .freeze();
  * AccessorRegistry aReg = AccessorRegistry
  *   .configure()
@@ -73,7 +77,7 @@ import static nl.naturalis.common.ClassMethods.isA;
  *
  * </blockquote>
  *
- * <p>Or you could just write your own {@code Accessor} after all:
+ * <p>Or you could just write your own {@code Accessor}:
  *
  * <blockquote>
  *

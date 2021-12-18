@@ -1,4 +1,4 @@
-package org.klojang.x.template;
+package org.klojang.x;
 
 import java.util.HashMap;
 import org.klojang.template.VarGroup;
