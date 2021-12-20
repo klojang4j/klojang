@@ -82,7 +82,7 @@ public final class StringifierRegistry {
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
 
   /**
-   * Lets you configure a {@code StringifierRegistry} instance.
+   * Lets you configure a {@link StringifierRegistry}.
    *
    * @author Ayco Holleman
    */

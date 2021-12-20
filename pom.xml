@@ -272,7 +272,11 @@
 							</description>
 							<detectLinks>true</detectLinks>
 							<show>protected</show>
-							<excludePackageNames>org.klojang.x</excludePackageNames>
+							<excludePackageNames>
+								org.klojang.x:
+								org.klojang.x.acc:
+								org.klojang.x.db.ps:
+							</excludePackageNames>
 							<sourcepath>src/main/java</sourcepath>
 						</configuration>
 					</execution>

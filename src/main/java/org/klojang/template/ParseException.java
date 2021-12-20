@@ -3,8 +3,9 @@ package org.klojang.template;
 import org.klojang.KlojangException;
 
 /**
- * Thrown while parsing the source code for a template.
+ * Thrown if the template source could not be parsed into a {@link Template}.
  *
+ * @see ErrorType
  * @author Ayco Holleman
  */
 public class ParseException extends KlojangException {

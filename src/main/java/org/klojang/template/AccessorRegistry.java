@@ -125,6 +125,11 @@ public class AccessorRegistry {
 
   /* ++++++++++++++++++++[ BEGIN BUILDER CLASS ]+++++++++++++++++ */
 
+  /**
+   * Lets you configure an {@link AccessorRegistry}.
+   *
+   * @author Ayco Holleman
+   */
   public static class Builder {
 
     private NameMapper defMapper;
