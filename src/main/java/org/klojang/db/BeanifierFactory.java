@@ -4,7 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import org.klojang.render.NameMapper;
+import org.klojang.template.NameMapper;
 import org.klojang.x.db.rs.BeanChannel;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;

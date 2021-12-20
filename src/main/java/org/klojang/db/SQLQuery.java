@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
-import org.klojang.render.NameMapper;
+import org.klojang.template.NameMapper;
 import org.klojang.x.db.rs.ExtractorNegotiator;
 import org.klojang.x.db.rs.RsExtractor;
 import org.slf4j.Logger;

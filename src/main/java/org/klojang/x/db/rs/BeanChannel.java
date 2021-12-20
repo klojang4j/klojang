@@ -5,7 +5,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Supplier;
-import org.klojang.render.NameMapper;
+import org.klojang.template.NameMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import nl.naturalis.common.ExceptionMethods;

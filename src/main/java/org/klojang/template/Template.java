@@ -2,7 +2,7 @@ package org.klojang.template;
 
 import java.util.*;
 import org.klojang.SysProp;
-import org.klojang.render.*;
+import org.klojang.x.tmpl.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import nl.naturalis.common.StringMethods;
@@ -10,8 +10,8 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import static java.util.stream.Collectors.toUnmodifiableList;
-import static org.klojang.template.TemplateSourceType.STRING;
 import static org.klojang.template.TemplateUtils.getFQName;
+import static org.klojang.x.tmpl.TemplateSourceType.STRING;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.common.check.CommonChecks.indexOf;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
@@ -180,70 +180,6 @@ public class Template {
    */
   public String getPath() {
     return ifNotNull(id, TemplateId::path);
-  }
-
-  /**
-   * Returns the constituent parts of this {@code Template}. A template is broken up into parts
-   * containing {@link TextPart literal text}, parts containing {@link VariablePart template
-   * variables} and parts containing {@link NestedTemplatePart nested templates} (which could either
-   * be {@link InlineTemplatePart inline templates} or {@link IncludedTemplatePart included
-   * templates}). Apart from the fact that the source code for an inline template resides within the
-   * parent template, while the source code for an included template resides in a different file,
-   * there is no functional difference between them.
-   *
-   * <p>The returned {@code List} is unmodifiable.
-   *
-   * @return The constituent parts of the template file
-   */
-  public List<Part> getParts() {
-    return parts;
-  }
-
-  /**
-   * Returns the template part at the specified index.
-   *
-   * @param <T> The type of the {@code Part}
-   * @param index The {@code List} index of the {@code Part}
-   * @return The template part at the specified index
-   */
-  @SuppressWarnings("unchecked")
-  public <T extends Part> T getPart(int index) {
-    return (T) Check.that(index).is(indexOf(), parts).ok(parts::get);
-  }
-
-  /**
-   * Returns the indices of the parts in the {@link #getParts() parts list} that contain variables.
-   * The returned {@code Map} maps each variable name to an {@link IntList}, since one variable may
-   * occur multiple times in the same template. In other words, you may find the same variable in
-   * multiple parts of the parts list. The returned {@code Map} is unmodifiable.
-   *
-   * @return The list indices of parts that contain variables
-   */
-  public Map<String, IntList> getVarPartIndices() {
-    return varIndices;
-  }
-
-  /**
-   * Returns the indices of the parts in the {@link #getParts() parts list} that contain nested
-   * templates. The returned {@code Map} maps each template name to exactly one {@code List} index,
-   * since template names must be unique within the parent template. The returned {@code Map} is
-   * unmodifiable.
-   *
-   * @return The list indices of parts that contain nested templates
-   */
-  public Map<String, Integer> getTemplatePartIndices() {
-    return tmplIndices;
-  }
-
-  /**
-   * Returns the indices of the parts in the {@link #getParts() parts list} that contain literal
-   * text. Each element in the returned {@link IntList} is an index into the parts list. The
-   * returned {@code IntList} is unmodifiable.
-   *
-   * @return The list indices of parts that contain literal text
-   */
-  public IntList getTextPartIndices() {
-    return textIndices;
   }
 
   /**
@@ -459,6 +395,27 @@ public class Template {
   /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
   /* ++++++++++++++++++++++ END OF PUBLIC INTERFACE ++++++++++++++++++++++ */
   /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
+
+  List<Part> getParts() {
+    return parts;
+  }
+
+  @SuppressWarnings("unchecked")
+  <T extends Part> T getPart(int index) {
+    return (T) Check.that(index).is(indexOf(), parts).ok(parts::get);
+  }
+
+  Map<String, IntList> getVarPartIndices() {
+    return varIndices;
+  }
+
+  Map<String, Integer> getTemplatePartIndices() {
+    return tmplIndices;
+  }
+
+  IntList getTextPartIndices() {
+    return textIndices;
+  }
 
   private static Map<String, IntList> getVarIndices(List<Part> parts) {
     Map<String, IntList> indices = new LinkedHashMap<>();

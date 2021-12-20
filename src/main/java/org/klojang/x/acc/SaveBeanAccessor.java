@@ -1,8 +1,8 @@
 package org.klojang.x.acc;
 
-import org.klojang.render.Accessor;
-import org.klojang.render.NameMapper;
-import org.klojang.render.RenderException;
+import org.klojang.template.Accessor;
+import org.klojang.template.NameMapper;
+import org.klojang.template.RenderException;
 import nl.naturalis.common.invoke.SaveBeanReader;
 
 /**

@@ -1,7 +1,7 @@
 package org.klojang.x.acc;
 
-import org.klojang.render.Accessor;
-import org.klojang.render.RenderException;
+import org.klojang.template.Accessor;
+import org.klojang.template.RenderException;
 
 /**
  * An {@link Accessor} implementation that always returns {@link Accessor#UNDEFINED}.

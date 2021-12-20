@@ -1,12 +1,8 @@
 package org.klojang.template;
 
-import org.klojang.render.RenderSession;
-import org.klojang.render.Stringifier;
-import org.klojang.render.StringifierRegistry;
-import org.klojang.x.XVarGroup;
+import java.util.HashMap;
 import nl.naturalis.common.check.Check;
 import static org.klojang.x.Messages.ERR_NO_SUCH_VARGROUP;
-import static org.klojang.x.XVarGroup.withName;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 
 /**
@@ -29,7 +25,9 @@ import static nl.naturalis.common.check.CommonChecks.notNull;
  *
  * @author Ayco Holleman
  */
-public interface VarGroup {
+public class VarGroup {
+
+  public static final HashMap<String, VarGroup> VAR_GROUPS = new HashMap<>();
 
   /**
    * A predefined variable group corresponding to the {@code text:} prefix. Forces the variable
@@ -92,9 +90,25 @@ public interface VarGroup {
    * @return The {@code VarGroup} instance corresponding to the specified name
    */
   public static VarGroup forName(String name) {
-    VarGroup vg = Check.notNull(name).ok(XVarGroup::get);
+    VarGroup vg = Check.notNull(name).ok(VarGroup::get);
     return Check.that(vg).is(notNull(), ERR_NO_SUCH_VARGROUP, name).ok();
   }
 
-  String getName();
+  static VarGroup withName(String name) {
+    return VAR_GROUPS.computeIfAbsent(name, VarGroup::new);
+  }
+
+  static VarGroup get(String name) {
+    return VAR_GROUPS.get(name);
+  }
+
+  private final String name;
+
+  private VarGroup(String name) {
+    this.name = name;
+  }
+
+  public String getName() {
+    return name;
+  }
 }

@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
 import org.klojang.db.Row;
-import org.klojang.render.RenderException;
+import org.klojang.template.RenderException;
 import nl.naturalis.common.Bool;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.check.Check;

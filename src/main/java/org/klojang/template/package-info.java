@@ -1,2 +1,2 @@
-/** Classes centered around the central {@link org.klojang.template.Template} class. */
+/** Main package of this module. */
 package org.klojang.template;

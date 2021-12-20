@@ -4,7 +4,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import org.klojang.db.Row;
-import org.klojang.render.NameMapper;
+import org.klojang.template.NameMapper;
 import nl.naturalis.common.ExceptionMethods;
 
 /* Transports a single value from a ResultSet to a Map<String,Object> */

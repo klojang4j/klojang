@@ -1,6 +1,6 @@
 package org.klojang.util.namemappers;
 
-import org.klojang.render.NameMapper;
+import org.klojang.template.NameMapper;
 
 /**
  * Converts camel case identifiers to snake case identifiers. For example {@code MyBloodyValentine}

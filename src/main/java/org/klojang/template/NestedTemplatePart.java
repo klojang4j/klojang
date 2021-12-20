@@ -1,5 +1,10 @@
 package org.klojang.template;
 
+import org.klojang.x.tmpl.AbstractPart;
+import org.klojang.x.tmpl.IncludedTemplatePart;
+import org.klojang.x.tmpl.InlineTemplatePart;
+import org.klojang.x.tmpl.NamedPart;
+
 /**
  * Base class of {@link InlineTemplatePart} and {@link IncludedTemplatePart}. Except that inline
  * templates are coded within the parent template while included templates reside in a external
@@ -9,9 +14,9 @@ package org.klojang.template;
  */
 public abstract class NestedTemplatePart extends AbstractPart implements NamedPart {
 
-  final Template template;
+  protected final Template template;
 
-  NestedTemplatePart(Template template, int start) {
+  protected NestedTemplatePart(Template template, int start) {
     super(start);
     this.template = template;
   }
@@ -36,7 +41,7 @@ public abstract class NestedTemplatePart extends AbstractPart implements NamedPa
   }
 
   @Override
-  void setParentTemplate(Template parent) {
+  public void setParentTemplate(Template parent) {
     super.setParentTemplate(parent);
     template.parent = parent;
   }

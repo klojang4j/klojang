@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import org.klojang.render.NameMapper;
+import org.klojang.template.NameMapper;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.invoke.Getter;
 import nl.naturalis.common.invoke.GetterFactory;

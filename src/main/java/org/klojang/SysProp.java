@@ -1,8 +1,8 @@
 package org.klojang;
 
-import org.klojang.render.Accessor;
-import org.klojang.render.AccessorRegistry;
-import org.klojang.render.RenderSession;
+import org.klojang.template.Accessor;
+import org.klojang.template.AccessorRegistry;
+import org.klojang.template.RenderSession;
 import org.klojang.template.Template;
 import org.klojang.x.acc.BeanAccessor;
 import org.klojang.x.acc.PathAccessor;

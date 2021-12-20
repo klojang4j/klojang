@@ -3,7 +3,7 @@ package org.klojang.db;
 import java.sql.ResultSet;
 import java.util.*;
 import java.util.function.Function;
-import org.klojang.render.RenderSession;
+import org.klojang.template.RenderSession;
 import nl.naturalis.common.Bool;
 import nl.naturalis.common.NumberMethods;
 import nl.naturalis.common.Pair;

@@ -2,8 +2,8 @@ package org.klojang.x.acc;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.klojang.render.Accessor;
-import org.klojang.render.RenderException;
+import org.klojang.template.Accessor;
+import org.klojang.template.RenderException;
 import org.klojang.template.Template;
 
 public class ArrayAccessor implements Accessor<Object[]> {

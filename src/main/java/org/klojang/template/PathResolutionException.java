@@ -1,5 +1,6 @@
 package org.klojang.template;
 
+import org.klojang.x.tmpl.IncludedTemplatePart;
 import static nl.naturalis.common.StringMethods.concat;
 
 /**
@@ -10,7 +11,7 @@ import static nl.naturalis.common.StringMethods.concat;
  */
 public class PathResolutionException extends ParseException {
 
-  PathResolutionException(String path) {
+  public PathResolutionException(String path) {
     super(concat("Invalid path: \"", path, '"'));
   }
 }

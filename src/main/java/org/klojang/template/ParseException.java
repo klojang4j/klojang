@@ -9,7 +9,7 @@ import org.klojang.KlojangException;
  */
 public class ParseException extends KlojangException {
 
-  ParseException(String message) {
+  public ParseException(String message) {
     super(message);
   }
 }

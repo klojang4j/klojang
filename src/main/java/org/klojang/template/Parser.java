@@ -4,19 +4,20 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.klojang.x.tmpl.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import nl.naturalis.common.function.ThrowingBiFunction;
 import static org.klojang.template.ParseError.*;
 import static org.klojang.template.Template.ROOT_TEMPLATE_NAME;
-import static org.klojang.template.TemplateSourceType.STRING;
+import static org.klojang.x.tmpl.TemplateSourceType.STRING;
 import static nl.naturalis.common.StringMethods.EMPTY;
 import static nl.naturalis.common.check.CommonChecks.blank;
 import static nl.naturalis.common.check.CommonChecks.eq;
 import static nl.naturalis.common.check.CommonChecks.equalTo;
 import static nl.naturalis.common.check.CommonChecks.in;
 
-class Parser {
+public class Parser {
 
   private static final Logger LOG = LoggerFactory.getLogger(Parser.class);
 
@@ -27,17 +28,17 @@ class Parser {
   private final TemplateId id;
   private final String src;
 
-  Parser(String tmplName, TemplateId id) throws PathResolutionException {
+  public Parser(String tmplName, TemplateId id) throws PathResolutionException {
     this(tmplName, id, id.getSource());
   }
 
-  Parser(String tmplName, TemplateId id, String src) {
+  public Parser(String tmplName, TemplateId id, String src) {
     this.tmplName = tmplName;
     this.id = id;
     this.src = src;
   }
 
-  Template parse() throws ParseException {
+  public Template parse() throws ParseException {
     logParsing(tmplName, id);
     // Accumulates template names for duplicate checks:
     Set<String> namesInUse = new HashSet<>();

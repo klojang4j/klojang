@@ -1,6 +1,6 @@
 package org.klojang.util.namemappers;
 
-import org.klojang.render.NameMapper;
+import org.klojang.template.NameMapper;
 import nl.naturalis.common.check.Check;
 import static nl.naturalis.common.check.CommonChecks.empty;
 import static java.lang.Character.*;

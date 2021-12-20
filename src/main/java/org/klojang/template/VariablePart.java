@@ -1,9 +1,11 @@
 package org.klojang.template;
 
 import java.util.Optional;
-import org.klojang.x.XVarGroup;
-import static org.klojang.template.Regex.VAR_END;
-import static org.klojang.template.Regex.VAR_START;
+import org.klojang.x.tmpl.AbstractPart;
+import org.klojang.x.tmpl.NamedPart;
+import org.klojang.x.tmpl.Part;
+import static org.klojang.x.tmpl.Regex.VAR_END;
+import static org.klojang.x.tmpl.Regex.VAR_START;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
 
 /**
@@ -11,14 +13,14 @@ import static nl.naturalis.common.ObjectMethods.ifNotNull;
  *
  * @author Ayco Holleman
  */
-public class VariablePart extends AbstractPart implements NamedPart {
+class VariablePart extends AbstractPart implements NamedPart {
 
   private final VarGroup group;
   private final String name;
 
   VariablePart(String prefix, String name, int start) {
     super(start);
-    this.group = ifNotNull(prefix, XVarGroup::withName);
+    this.group = ifNotNull(prefix, VarGroup::withName);
     this.name = name;
   }
 
@@ -29,7 +31,7 @@ public class VariablePart extends AbstractPart implements NamedPart {
    *
    * @return An {@code Optional} containing the group name prefix
    */
-  public Optional<VarGroup> getVarGroup() {
+  Optional<VarGroup> getVarGroup() {
     return Optional.ofNullable(group);
   }
 
@@ -38,6 +40,7 @@ public class VariablePart extends AbstractPart implements NamedPart {
    *
    * @return The name of the variable
    */
+  @Override
   public String getName() {
     return name;
   }

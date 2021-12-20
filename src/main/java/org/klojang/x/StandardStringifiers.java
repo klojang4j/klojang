@@ -8,7 +8,7 @@ import org.apache.commons.text.translate.CharSequenceTranslator;
 import org.apache.commons.text.translate.EntityArrays;
 import org.apache.commons.text.translate.LookupTranslator;
 import org.apache.http.client.utils.URIBuilder;
-import org.klojang.render.Stringifier;
+import org.klojang.template.Stringifier;
 import org.klojang.template.VarGroup;
 import static org.apache.commons.text.StringEscapeUtils.escapeEcmaScript;
 import static org.klojang.template.VarGroup.*;

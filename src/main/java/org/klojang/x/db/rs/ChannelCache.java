@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import org.klojang.db.SQLTypeNames;
-import org.klojang.render.NameMapper;
+import org.klojang.template.NameMapper;
 
 @SuppressWarnings("rawtypes")
 public class ChannelCache {
