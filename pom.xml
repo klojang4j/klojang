@@ -257,6 +257,15 @@
 						<goals>
 							<goal>aggregate-jar</goal>
 						</goals>
+						<configuration>
+							<doctitle>Klojang ${project.version}</doctitle>
+							<detectLinks>true</detectLinks>
+							<show>protected</show>
+							<excludePackageNames>
+								org.klojang.x
+							</excludePackageNames>
+							<sourcepath>src/main/java</sourcepath>
+						</configuration>
 					</execution>
 					<execution>
 						<id>create-apidocs</id>
@@ -273,9 +282,7 @@
 							<detectLinks>true</detectLinks>
 							<show>protected</show>
 							<excludePackageNames>
-								org.klojang.x:
-								org.klojang.x.acc:
-								org.klojang.x.db.ps:
+								org.klojang.x
 							</excludePackageNames>
 							<sourcepath>src/main/java</sourcepath>
 						</configuration>
