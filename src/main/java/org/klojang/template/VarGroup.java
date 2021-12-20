@@ -6,13 +6,13 @@ import static org.klojang.x.Messages.ERR_NO_SUCH_VARGROUP;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 
 /**
- * A {@code VarGroup} lets you group template variables across multiple templates. The prime purpose
- * for this is to {@link StringifierRegistry.Builder#registerByGroup(Stringifier, String...)
- * provide} them with a shared stringifier. Variables can be assigned to a variable group using a
- * group name prefix. For example: {@code ~%html:firstName%} or {@code ~%js:firstName%} or {@code
+ * A {@code VarGroup} lets you group template variables across one or more templates. This enables
+ * you to {@link StringifierRegistry.Builder#registerByGroup(Stringifier, String...) provide} them
+ * with a shared stringifier. Variables can be assigned to a variable group using a group name
+ * prefix. For example: {@code ~%html:firstName%} or {@code ~%js:firstName%} or {@code
  * ~%myDateFormat:birthDate%}. The first two examples use the predefined {@link #HTML} and {@link
- * #JS} groups, which provide HTML-escaping and Ecmascript-escaping, respectively. The latter is a
- * custom group that you can define and associate with a stringifier using the {@link
+ * #JS} groups, which provide HTML-escaping and Ecmascript-escaping, respectively. The third example
+ * is a custom group that you can define and associate with a stringifier using the {@link
  * StringifierRegistry} class. Variable groups can also be assigned {@link RenderSession#set(String,
  * Object, VarGroup) programmatically}.
  *

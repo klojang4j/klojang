@@ -26,7 +26,7 @@ class RenderState {
     this.todo = new HashSet<>(config.getTemplate().getVariables());
   }
 
-  SessionConfig getSessionFactory() {
+  SessionConfig getSessionConfig() {
     return config;
   }
 

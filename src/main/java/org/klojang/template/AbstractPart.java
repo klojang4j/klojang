@@ -1,14 +1,12 @@
-package org.klojang.x.tmpl;
+package org.klojang.template;
 
-import org.klojang.template.Template;
-
-public abstract class AbstractPart implements Part {
+abstract class AbstractPart implements Part {
 
   private final int start;
 
   private Template parent;
 
-  public AbstractPart(int start) {
+  AbstractPart(int start) {
     this.start = start;
   }
 
@@ -22,7 +20,7 @@ public abstract class AbstractPart implements Part {
     return parent;
   }
 
-  public void setParentTemplate(Template parent) {
+  void setParentTemplate(Template parent) {
     this.parent = parent;
   }
 }

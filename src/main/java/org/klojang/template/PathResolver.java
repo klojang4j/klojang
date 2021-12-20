@@ -3,7 +3,6 @@ package org.klojang.template;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
-import org.klojang.x.tmpl.IncludedTemplatePart;
 
 /**
  * The {@code PathResolver} interface enables you to define a custom mechanism for loading

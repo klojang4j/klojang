@@ -1,9 +1,6 @@
 package org.klojang.template;
 
 import java.util.Optional;
-import org.klojang.x.tmpl.AbstractPart;
-import org.klojang.x.tmpl.NamedPart;
-import org.klojang.x.tmpl.Part;
 import static org.klojang.x.tmpl.Regex.VAR_END;
 import static org.klojang.x.tmpl.Regex.VAR_START;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;

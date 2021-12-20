@@ -1,41 +1,33 @@
 package org.klojang.template;
 
-import nl.naturalis.common.ModulePrivate;
 import static org.klojang.template.AccessorRegistry.STANDARD_ACCESSORS;
 import static org.klojang.template.StringifierRegistry.STANDARD_STRINGIFIERS;
 
-/**
- * For internal use only.
- *
- * @author Ayco Holleman
- */
-@ModulePrivate
-public final class SessionConfig {
+class SessionConfig {
 
   private final Template template;
   private final AccessorRegistry accessors;
   private final StringifierRegistry stringifiers;
 
-  public SessionConfig(Template template) {
+  SessionConfig(Template template) {
     this(template, STANDARD_ACCESSORS, STANDARD_STRINGIFIERS);
   }
 
-  public SessionConfig(Template template, StringifierRegistry stringifiers) {
+  SessionConfig(Template template, StringifierRegistry stringifiers) {
     this(template, STANDARD_ACCESSORS, stringifiers);
   }
 
-  public SessionConfig(Template template, AccessorRegistry accessors) {
+  SessionConfig(Template template, AccessorRegistry accessors) {
     this(template, accessors, STANDARD_STRINGIFIERS);
   }
 
-  public SessionConfig(
-      Template template, AccessorRegistry accessors, StringifierRegistry stringifiers) {
+  SessionConfig(Template template, AccessorRegistry accessors, StringifierRegistry stringifiers) {
     this.template = template;
     this.accessors = accessors;
     this.stringifiers = stringifiers;
   }
 
-  public RenderSession newRenderSession() {
+  RenderSession newRenderSession() {
     return new RenderSession(this);
   }
 

@@ -8,7 +8,7 @@ import org.klojang.x.tmpl.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import nl.naturalis.common.function.ThrowingBiFunction;
-import static org.klojang.template.ParseError.*;
+import static org.klojang.template.ErrorType.*;
 import static org.klojang.template.Template.ROOT_TEMPLATE_NAME;
 import static org.klojang.x.tmpl.TemplateSourceType.STRING;
 import static nl.naturalis.common.StringMethods.EMPTY;
@@ -17,7 +17,7 @@ import static nl.naturalis.common.check.CommonChecks.eq;
 import static nl.naturalis.common.check.CommonChecks.equalTo;
 import static nl.naturalis.common.check.CommonChecks.in;
 
-public class Parser {
+class Parser {
 
   private static final Logger LOG = LoggerFactory.getLogger(Parser.class);
 
@@ -28,17 +28,17 @@ public class Parser {
   private final TemplateId id;
   private final String src;
 
-  public Parser(String tmplName, TemplateId id) throws PathResolutionException {
+  Parser(String tmplName, TemplateId id) throws PathResolutionException {
     this(tmplName, id, id.getSource());
   }
 
-  public Parser(String tmplName, TemplateId id, String src) {
+  Parser(String tmplName, TemplateId id, String src) {
     this.tmplName = tmplName;
     this.id = id;
     this.src = src;
   }
 
-  public Template parse() throws ParseException {
+  Template parse() throws ParseException {
     logParsing(tmplName, id);
     // Accumulates template names for duplicate checks:
     Set<String> namesInUse = new HashSet<>();

@@ -10,7 +10,7 @@ import static nl.naturalis.common.ArrayMethods.prefix;
  *
  * @author Ayco Holleman
  */
-public enum ParseError {
+public enum ErrorType {
 
   /** Illegal whitespace-only variable name. */
   EMPTY_VAR_NAME("Empty variable name"),
@@ -71,7 +71,7 @@ public enum ParseError {
 
   private String format;
 
-  private ParseError(String format) {
+  private ErrorType(String format) {
     this.format = ERR_BASE + format;
   }
 

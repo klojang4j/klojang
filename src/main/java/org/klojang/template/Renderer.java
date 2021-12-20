@@ -5,8 +5,6 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
-import org.klojang.x.tmpl.Part;
-import org.klojang.x.tmpl.TextPart;
 import nl.naturalis.common.check.Check;
 import static java.util.Arrays.stream;
 import static nl.naturalis.common.StringMethods.concat;
@@ -34,7 +32,7 @@ class Renderer implements Renderable {
 
   @Override
   public String toString() {
-    Template t = state.getSessionFactory().getTemplate();
+    Template t = state.getSessionConfig().getTemplate();
     if (t.getPath() == null) {
       return concat(Renderable.class.getName(), "[template=", t.getName(), "]");
     }
@@ -42,7 +40,7 @@ class Renderer implements Renderable {
   }
 
   private void render(RenderState state0, PrintStream ps) {
-    List<Part> parts = state0.getSessionFactory().getTemplate().getParts();
+    List<Part> parts = state0.getSessionConfig().getTemplate().getParts();
     for (int i = 0; i < parts.size(); ++i) {
       Part part = parts.get(i);
       if (part.getClass() == TextPart.class) {
@@ -77,7 +75,7 @@ class Renderer implements Renderable {
   }
 
   private void render(RenderState state0, StringBuilder sb) {
-    List<Part> parts = state0.getSessionFactory().getTemplate().getParts();
+    List<Part> parts = state0.getSessionConfig().getTemplate().getParts();
     for (int i = 0; i < parts.size(); ++i) {
       Part part = parts.get(i);
       if (part.getClass() == TextPart.class) {

@@ -2,8 +2,6 @@ package org.klojang.template;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.klojang.x.tmpl.Part;
-import org.klojang.x.tmpl.TextPart;
 import nl.naturalis.common.IOMethods;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

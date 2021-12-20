@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.klojang</groupId>
 	<artifactId>klojang</artifactId>
-	<version>1.2.4</version>
+	<version>1.2.5</version>
 
 	<name>Klojang</name>
 
@@ -249,6 +249,7 @@
 					<failOnWarnings>false</failOnWarnings>
 					<quiet>true</quiet>
 					<doclint>none</doclint>
+					<excludePackageNames>org.klojang.x</excludePackageNames>
 				</configuration>
 				<executions>
 					<execution>
@@ -267,7 +268,7 @@
 						<configuration>
 							<doctitle>Klojang ${project.version}</doctitle>
 							<description>
-								Web Templates API
+								Klojang Web Templates API
 							</description>
 							<detectLinks>true</detectLinks>
 							<show>protected</show>

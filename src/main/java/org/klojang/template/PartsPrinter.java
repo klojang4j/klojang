@@ -1,9 +1,7 @@
 package org.klojang.template;
 
 import java.io.PrintStream;
-import org.klojang.x.tmpl.Part;
 import org.klojang.x.tmpl.Regex;
-import org.klojang.x.tmpl.TextPart;
 import static nl.naturalis.common.StringMethods.rpad;
 
 class PartsPrinter {

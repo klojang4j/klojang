@@ -279,7 +279,7 @@ public class Template {
   }
 
   /**
-   * Returns the names of all variables and all nested templates within this {@code Template}
+   * Returns the names of all variables and nested templates within this {@code Template}
    * (non-recursive). The returned {@code List} is unmodifiable.
    *
    * @return The names of all variables and nested templates in this {@code Template}
@@ -290,30 +290,31 @@ public class Template {
 
   /**
    * Returns whether or not this is a text-only template. In other words, whether this is a template
-   * without variables or nested templates.
+   * without any variables or nested templates.
    *
-   * @return
+   * @return Whether or not this is a text-only template
    */
   public boolean isTextOnly() {
     return names.isEmpty();
   }
 
   /**
-   * Returns a {@code RenderSession} that will only use the {@link
-   * AccessorRegistry#STANDARD_ACCESSORS predefined accessors} to extract values from source data
-   * objects, and only the {@link StringifierRegistry predefined stringifiers} to stringify those
-   * values.
+   * Returns a {@code RenderSession} with which populate and render this {@code Template}. The
+   * {@code RenderSession} use the {@link AccessorRegistry#STANDARD_ACCESSORS predefined accessors}
+   * to extract values from source data objects, and the {@link StringifierRegistry predefined
+   * stringifiers} to stringify those values.
    *
-   * @return A new {@code RenderSession}
+   * @return A {@code RenderSession}
    */
   public RenderSession newRenderSession() {
     return new SessionConfig(this).newRenderSession();
   }
 
   /**
-   * Returns a {@code RenderSession} that will use the {@link AccessorRegistry#STANDARD_ACCESSORS
-   * predefined accessors} to extract values from source data objects, and the specified {@code
-   * StringifierRegistry} to get hold of stringifiers for those values.
+   * Returns a {@code RenderSession} with which populate and render this {@code Template}. The
+   * {@code RenderSession} will use the {@link AccessorRegistry#STANDARD_ACCESSORS predefined
+   * accessors} to extract values from source data objects, and the specified {@code
+   * StringifierRegistry} to stringify those values.
    *
    * @param stringifiers The {@code StringifierRegistry} used to supply the {@code RenderSession}
    *     with {@link Stringifier stringifiers}
@@ -325,9 +326,10 @@ public class Template {
   }
 
   /**
-   * Returns a {@code RenderSession} that will only use the specified {@code AccessorRegistry} to
-   * extract values from source data, and the {@link StringifierRegistry predefined stringifiers} to
-   * stringify those values.
+   * Returns a {@code RenderSession} with which populate and render this {@code Template}. The
+   * {@code RenderSession} that will use the specified {@code AccessorRegistry} to extract values
+   * from source data, and the {@link StringifierRegistry predefined stringifiers} to stringify
+   * those values.
    *
    * @param accessors The {@code AccessorRegistry} used to supply the {@code RenderSession} with
    *     {@link Accessor accessors}
@@ -339,9 +341,9 @@ public class Template {
   }
 
   /**
-   * Returns a {@code RenderSession} that will only use the specified {@code AccessorRegistry} to
-   * extract values from source data, and the specified {@code StringifierRegistry} to get hold of
-   * stringifiers for those values.
+   * Returns a {@code RenderSession} with which populate and render this {@code Template}. The
+   * {@code RenderSession} that will use the specified {@code AccessorRegistry} to extract values
+   * from source data, and the specified {@code StringifierRegistry} to stringify those values.
    *
    * @param accessors The {@code AccessorRegistry} used to supply the {@code RenderSession} with
    *     {@link Accessor accessors}

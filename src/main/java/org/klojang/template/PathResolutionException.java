@@ -1,6 +1,5 @@
 package org.klojang.template;
 
-import org.klojang.x.tmpl.IncludedTemplatePart;
 import static nl.naturalis.common.StringMethods.concat;
 
 /**

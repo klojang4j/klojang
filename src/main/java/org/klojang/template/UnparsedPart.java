@@ -1,15 +1,15 @@
-package org.klojang.x.tmpl;
+package org.klojang.template;
 
-public class UnparsedPart extends AbstractPart {
+class UnparsedPart extends AbstractPart {
 
   private final String text;
 
-  public UnparsedPart(String text, int start) {
+  UnparsedPart(String text, int start) {
     super(start);
     this.text = text;
   }
 
-  public String text() {
+  String text() {
     return text;
   }
 

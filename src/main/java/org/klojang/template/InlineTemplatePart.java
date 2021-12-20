@@ -1,18 +1,11 @@
-package org.klojang.x.tmpl;
+package org.klojang.template;
 
 import static org.klojang.x.tmpl.Regex.VAR_END;
-import org.klojang.template.NestedTemplatePart;
-import org.klojang.template.Template;
 import static org.klojang.x.tmpl.Regex.TMPL_START;
 
-/**
- * A {@link Part} implementation for representing inline templates.
- *
- * @author Ayco Holleman
- */
-public class InlineTemplatePart extends NestedTemplatePart {
+class InlineTemplatePart extends NestedTemplatePart {
 
-  public InlineTemplatePart(Template template, int start) {
+  InlineTemplatePart(Template template, int start) {
     super(template, start);
   }
 
