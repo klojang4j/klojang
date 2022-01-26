@@ -10,6 +10,7 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import static java.util.stream.Collectors.toUnmodifiableList;
+import static nl.naturalis.common.CollectionMethods.implode;
 import static org.klojang.template.TemplateUtils.getFQName;
 import static org.klojang.x.tmpl.TemplateSourceType.STRING;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
@@ -47,8 +48,6 @@ public class Template {
    * include} declarations (e.g. {@code ~%%include:/path/to/template%}) the path will be interpreted
    * as a file system resource. Templates created from a string are never cached.
    *
-   * @param clazz Any {@code Class} object that provides access to the included tempate files by
-   *     calling {@code getResourceAsStream} on it
    * @param source The source code for the {@code Template}
    * @return a new {@code Template} instance
    * @throws ParseException
@@ -224,9 +223,7 @@ public class Template {
   public List<Template> getNestedTemplates() {
     if (nestedTemplates == null) {
       return nestedTemplates =
-          tmplIndices
-              .values()
-              .stream()
+          tmplIndices.values().stream()
               .map(parts::get)
               .map(NestedTemplatePart.class::cast)
               .map(NestedTemplatePart::getTemplate)
@@ -391,7 +388,7 @@ public class Template {
    */
   @Override
   public String toString() {
-    return StringMethods.implode(parts, "");
+    return implode(parts, "");
   }
 
   /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */
@@ -443,8 +440,7 @@ public class Template {
   }
 
   private static List<String> getNames(List<Part> parts) {
-    return parts
-        .stream()
+    return parts.stream()
         .filter(NamedPart.class::isInstance)
         .map(NamedPart.class::cast)
         .map(NamedPart::getName)

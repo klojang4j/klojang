@@ -87,7 +87,7 @@ public class Row {
   /**
    * Returns the name of the column at the specified index.
    *
-   * @param colNum The column index (zero-based)
+   * @param colNum The column number (zero-based) (zero-based)
    * @return The column name
    */
   public String getColumnName(int colNum) {
@@ -99,7 +99,7 @@ public class Row {
    * Returns the (zero-based) index of the column with the specified name.
    *
    * @param colName The column name
-   * @return The column index (zero-based)
+   * @return The column number (zero-based) (zero-based)
    */
   public int getColumnNumber(String colName) {
     Check.notNull(colName).is(keyIn(), map, ERR0, colName).ok(map::get);
@@ -191,7 +191,7 @@ public class Row {
   /**
    * Returns the value of the specified column as a {@code String}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code String} representation of the value
    */
   public String getString(int colNum) {
@@ -213,7 +213,7 @@ public class Row {
    * Returns the value of the specified column as an {@code int}, or 0 (zero) if the value was
    * {@code null}.
    *
-   * @param colName The column index
+   * @param colNum The column number (zero-based)
    * @return An {@code int} representation of the value
    */
   public int getInt(int colNum) {
@@ -236,7 +236,8 @@ public class Row {
    * Returns the value of the specified column as an {@code int}, or {@code nullValue} if the value
    * was {@code null}.
    *
-   * @param colName The column int
+   * @param colNum The column int
+   * @param nullValue The value to return if the column values was {@code null}
    * @return An {@code int} representation of the value
    */
   public int getInt(int colNum, int nullValue) {
@@ -259,7 +260,7 @@ public class Row {
    * Returns the value of the specified column as a {@code double}, or 0 (zero) if the value was
    * {@code null}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return An {@code int} representation of the value
    */
   public double getDouble(int colNum) {
@@ -282,7 +283,7 @@ public class Row {
    * Returns the value of the specified column as a {@code double}, or {@code nullValue} if the
    * value was {@code null}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code double} representation of the value
    */
   public double getDouble(int colNum, double nullValue) {
@@ -305,7 +306,7 @@ public class Row {
    * Returns the value of the specified column as a {@code float}, or 0 (zero) if the value was
    * {@code null}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code float} representation of the value
    */
   public float getFloat(int colNum) {
@@ -328,7 +329,7 @@ public class Row {
    * Returns the value of the specified column as a {@code float}, or {@code nullValue} if the value
    * was {@code null}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code float} representation of the value
    */
   public float getFloat(int colNum, float nullValue) {
@@ -351,7 +352,7 @@ public class Row {
    * Returns the value of the specified column as a {@code long}, or 0 (zero) if the value was
    * {@code null}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code long} representation of the value
    */
   public long getLong(int colNum) {
@@ -374,7 +375,7 @@ public class Row {
    * Returns the value of the specified column as a {@code long}, or {@code nullValue} if the value
    * was {@code null}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code long} representation of the value
    */
   public long getLong(int colNum, long nullValue) {
@@ -397,7 +398,7 @@ public class Row {
    * Returns the value of the specified column as a {@code short}, or 0 (zero) if the value was
    * {@code null}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code short} representation of the value
    */
   public short getShort(int colNum) {
@@ -409,6 +410,7 @@ public class Row {
    * was {@code null}.
    *
    * @param colName The column name
+   * @param nullValue The value to return if the column values was {@code null}
    * @return A {@code short} representation of the value
    */
   public short getShort(String colName, short nullValue) {
@@ -420,7 +422,8 @@ public class Row {
    * Returns the value of the specified column as a {@code short}, or {@code nullValue} if the value
    * was {@code null}.
    *
-   * @param colName The column name
+   * @param colNum The column number (zero-based)
+   * @param nullValue The value to return if the column values was {@code null}
    * @return A {@code short} representation of the value
    */
   public short getShort(int colNum, short nullValue) {
@@ -443,7 +446,7 @@ public class Row {
    * Returns the value of the specified column as a {@code byte}, or 0 (zero) if the value was
    * {@code null}.
    *
-   * @param colName The column name
+   * @param colNum The column number (zero-based)
    * @return A {@code byte} representation of the value
    */
   public byte getByte(int colNum) {
@@ -455,6 +458,7 @@ public class Row {
    * was {@code null}.
    *
    * @param colName The column name
+   * @param nullValue The value to return if the column values was {@code null}
    * @return A {@code byte} representation of the value
    */
   public byte getByte(String colName, byte nullValue) {
@@ -466,7 +470,8 @@ public class Row {
    * Returns the value of the specified column as a {@code byte}, or {@code nullValue} if the value
    * was {@code null}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
+   * @param nullValue The value to return if the column values was {@code null}
    * @return A {@code byte} representation of the value
    */
   public byte getByte(int colNum, byte nullValue) {
@@ -489,7 +494,7 @@ public class Row {
    * Returns the value of the specified column as a {@code boolean}, or {@code false} if the value
    * was {@code null}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return An {@code int} representation of the value
    */
   public boolean getBoolean(int colNum) {
@@ -501,6 +506,7 @@ public class Row {
    * value was {@code null}.
    *
    * @param colName The column name
+   * @param nullValue The value to return if the column values was {@code null}
    * @return A {@code boolean} representation of the value
    */
   public boolean getBoolean(String colName, boolean nullValue) {
@@ -511,7 +517,8 @@ public class Row {
    * Returns the value of the specified column as a {@code boolean}, or {@code nullValue} if the
    * value was {@code null}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
+   * @param nullValue The value to return if the column values was {@code null}
    * @return A {@code boolean} representation of the value
    */
   public boolean getBoolean(int colNum, boolean nullValue) {
@@ -531,7 +538,7 @@ public class Row {
   /**
    * Return the value of the specified column as an {@code Integer}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return An {@code Integer} representation of the value
    */
   public Integer getInteger(int colNum) {
@@ -551,7 +558,7 @@ public class Row {
   /**
    * Return the value of the specified column as a {@code Double}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code Double} representation of the value
    */
   public Double getDoubleObj(int colNum) {
@@ -571,7 +578,7 @@ public class Row {
   /**
    * Return the value of the specified column as a {@code Float}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code Float} representation of the value
    */
   public Float getFloatObj(int colNum) {
@@ -591,7 +598,7 @@ public class Row {
   /**
    * Return the value of the specified column as a {@code Long}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code Long} representation of the value
    */
   public Long getLongObj(int colNum) {
@@ -611,7 +618,7 @@ public class Row {
   /**
    * Return the value of the specified column as a {@code Short}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code Short} representation of the value
    */
   public Short getShortObj(int colNum) {
@@ -631,7 +638,7 @@ public class Row {
   /**
    * Return the value of the specified column as a {@code Byte}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code Byte} representation of the value
    */
   public Byte getByteObj(int colNum) {
@@ -651,7 +658,7 @@ public class Row {
   /**
    * Returns the value of the specified column as a {@code Boolean}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code Boolean} representation of the value
    */
   public Boolean getBooleanObj(int colNum) {
@@ -673,7 +680,7 @@ public class Row {
    * Returns the value of the specified column as an {@code enum} of the specified type.
    *
    * @param <T> The type of the {@code enum} class
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code Boolean} representation of the value
    */
   public <T extends Enum<T>> T getEnum(int colNum, Class<T> enumClass) {
@@ -698,7 +705,7 @@ public class Row {
    * nullValue} if the value was {@code null}.
    *
    * @param <T> The type of the {@code enum} class
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code Boolean} representation of the value
    */
   @SuppressWarnings("unchecked")
@@ -723,7 +730,7 @@ public class Row {
    * parse the value into an {@code enum} constant.
    *
    * @param <T> The type of the {@code enum} class
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code Boolean} representation of the value
    */
   public <T extends Enum<T>> T getEnum(int colNum, Function<Object, T> parser) {
@@ -735,7 +742,7 @@ public class Row {
    * parse the value into an {@code enum} constant, or {@code nullValue} if the value was {@code
    * null}.
    *
-   * @param colNum The column index
+   * @param colName The column name
    * @return A {@code Boolean} representation of the value
    */
   @SuppressWarnings("unchecked")
@@ -749,7 +756,7 @@ public class Row {
    * parse the value into an {@code enum} constant, or {@code nullValue} if the value was {@code
    * null}.
    *
-   * @param colNum The column index
+   * @param colNum The column number (zero-based)
    * @return A {@code Boolean} representation of the value
    */
   @SuppressWarnings("unchecked")
@@ -771,7 +778,7 @@ public class Row {
   /**
    * Updates the value of the column at the specified index.
    *
-   * @param colName The column name
+   * @param colNum The column number (zero-based)
    * @param value The new value
    */
   public void setColumn(int colNum, Object value) {

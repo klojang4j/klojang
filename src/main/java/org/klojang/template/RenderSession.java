@@ -119,7 +119,7 @@ public class RenderSession {
 
   /**
    * Sets the specified variable to the concatenation of the values within the specified {@code
-   * List}. Unless the variable was declared with an inline {@link EscapeType}, the values wil be
+   * List}. Unless the variable was declared with an inline group name prefix, the values wil be
    * stringified using the {@link Stringifier#DEFAULT default stringifier}. The values are first
    * stringified, then escaped, then concatenated. If the {@code List} is empty, the variable will
    * not be rendered at all (that is, an empty string will be inserted at the location of the
@@ -294,7 +294,7 @@ public class RenderSession {
    * Populates a <i>nested</i> template. The template is populated with values retrieved from the
    * specified source data. Only variables and (doubly) nested templates whose name is present in
    * the {@code names} argument will be populated. No escaping will be applied to the values
-   * retrieved from the data object. See {@link #populate(String, Object, EscapeType, String...)}.
+   * retrieved from the data object.
    *
    * @param nestedTemplateName The name of the nested template
    * @param sourceData An object that provides data for all or some of the nested template's
@@ -349,7 +349,7 @@ public class RenderSession {
     if (t.isTextOnly()) {
       return show(data.size(), t);
     }
-    Check.on(missingSourceData(t), data).is(neverNull());
+    Check.on(missingSourceData(t), data).is(deepNotNull());
     return repeat(t, data, defaultGroup, names);
   }
 
@@ -553,15 +553,14 @@ public class RenderSession {
       String nestedTemplateName, List<Tuple<T, U>> tuples, VarGroup defaultGroup)
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
-    Check.on(illegalValue("tuples", tuples), tuples).is(neverNull());
+    Check.on(illegalValue("tuples", tuples), tuples).is(deepNotNull());
     Template t = getNestedTemplate(nestedTemplateName);
     Check.on(notTupleTemplate(t), t)
         .has(tmpl -> tmpl.getVariables().size(), eq(), 2)
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
     String[] vars = t.getVariables().toArray(new String[2]);
     List<Map<String, Object>> data =
-        tuples
-            .stream()
+        tuples.stream()
             .map(tuple -> Map.of(vars[0], tuple.getLeft(), vars[1], tuple.getRight()))
             .collect(toList());
     RenderSession[] sessions = state.getOrCreateChildSessions(t, data.size());

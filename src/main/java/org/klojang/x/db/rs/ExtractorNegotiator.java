@@ -51,7 +51,7 @@ public class ExtractorNegotiator {
 
   private static Map<Class<?>, Map<Integer, RsExtractor>> configure() {
     return TypeTreeMap.build(Map.class)
-        .autobox()
+        .autobox(true)
         .add(String.class, my(new StringExtractors()))
         .add(int.class, my(new IntExtractors()))
         .add(double.class, my(new DoubleExtractors()))

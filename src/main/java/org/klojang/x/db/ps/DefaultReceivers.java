@@ -15,7 +15,7 @@ class DefaultReceivers {
   private DefaultReceivers() {
     defaults =
         TypeMap.build(Receiver.class)
-            .autobox()
+            .autobox(true)
             .add(String.class, StringReceivers.DEFAULT)
             .add(int.class, IntReceivers.DEFAULT)
             .add(boolean.class, BooleanReceivers.DEFAULT)

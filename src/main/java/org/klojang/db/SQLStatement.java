@@ -1,14 +1,16 @@
 package org.klojang.db;
 
+import nl.naturalis.common.ExceptionMethods;
+import nl.naturalis.common.check.Check;
+import org.klojang.x.db.ps.BeanBinder;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
-import org.klojang.x.db.ps.BeanBinder;
-import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.check.Check;
-import static java.util.stream.Collectors.toList;
-import static nl.naturalis.common.StringMethods.implode;
+
+import static nl.naturalis.common.CollectionMethods.freezeIntoList;
+import static nl.naturalis.common.CollectionMethods.implode;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoCloseable {
@@ -97,8 +99,8 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
   private KJSQLException notExecutable() {
     Set<NamedParameter> params = new HashSet<>(sql.getParameters());
     params.removeAll(bound);
-    List<String> unbound = params.stream().map(NamedParameter::getName).collect(toList());
-    return new KJSQLException(
-        "Some query parameters have not been bound yet: %s", implode(unbound));
+    List<String> unbound = freezeIntoList(params, NamedParameter::getName);
+    String fmt = "Some query parameters have not been bound yet: %s";
+    return new KJSQLException(fmt, implode(unbound));
   }
 }

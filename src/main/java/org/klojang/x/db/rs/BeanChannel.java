@@ -12,7 +12,8 @@ import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.invoke.Setter;
 import nl.naturalis.common.invoke.SetterFactory;
 import nl.naturalis.common.unsafe.UnsafeList;
-import static nl.naturalis.common.StringMethods.implode;
+
+import static nl.naturalis.common.CollectionMethods.implode;
 
 /* Transports a single value from a ResultSet to a bean */
 public class BeanChannel<COLUMN_TYPE, FIELD_TYPE> implements Channel<Object> {

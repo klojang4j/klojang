@@ -126,7 +126,6 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
                 Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(obj.getClass());
                 Check.on(s -> noSuchProperty(obj, key), key).is(keyIn(), setters);
                 Setter setter = setters.get(key);
-                Check.that(setter.getParamType()).is(number());
                 Number n = convert(id, (Class<? extends Number>) setter.getParamType());
                 setter.write(obj, n);
               }

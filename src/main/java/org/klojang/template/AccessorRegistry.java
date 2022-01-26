@@ -219,7 +219,7 @@ public class AccessorRegistry {
       Map<Class<?>, Map<Template, Accessor<?>>> accs,
       NameMapper defMapper,
       Map<Template, NameMapper> mappers) {
-    this.accs = accs.isEmpty() ? Collections.emptyMap() : TypeMap.withValues(accs, 32);
+    this.accs = accs.isEmpty() ? Collections.emptyMap() : TypeMap.copyOf(accs, 32);
     this.defMapper = defMapper;
     this.mappers = Map.copyOf(mappers);
   }

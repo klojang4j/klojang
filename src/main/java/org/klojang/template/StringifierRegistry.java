@@ -26,12 +26,11 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
  * variable-specific stringifiers, if at all. If a variable's value can be stringified by calling
  * {@code toString()} on it (or to an empty string if null), you don't need to specify a stringifier
  * for it because this is default behaviour. In addition, all variables with the same data type will
- * often should be stringified identically. For example you may want to format all {@code int}
+ * often should be stringified identically. For example, you may want to format all {@code int}
  * values according to your country's locale. These type-based stringifiers can be configured using
- * {@link Builder#registerByType(String..., Class) Builder.addTypeBasedStringifier}. Only if a
- * template variable has very specific stringification requirements would you {@link
- * Builder#register(Stringifier, Template, String...) register} a variable-specific stringifier for
- * it.
+ * {@link Builder#registerByType(Stringifier, Class[])} registerByType}. Only if a template variable
+ * has very specific stringification requirements would you {@link Builder#register(Stringifier,
+ * Template, String...) register} a variable-specific stringifier for it.
  *
  * <p>Type-based stringifiers are internally kept in a {@link TypeMap}. This means that if the
  * {@code RenderSession} requests a stringifier for some type, and that type is not in the {@code
@@ -58,7 +57,7 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
  *       template, then that is the stringifier that is going to be used.
  *   <li>If a stringifier has been registered for all variables with that particular name
  *       (irrespective of the template they belong to), then that is the stringifier that is going
- *       to be used. See {@link Builder#registerByName(String..., Stringifier) registerByName}.
+ *       to be used. See {@link Builder#registerByName(Stringifier, String...)} registerByName}.
  *   <li>If a stringifier has been registered for the data type of that particular variable, then
  *       that is the stringifier that is going to be used.
  *   <li>If you have {@link Builder#setDefaultStringifier(Stringifier) registered} an alternative
@@ -406,7 +405,7 @@ public final class StringifierRegistry {
       List<Tuple<String, Stringifier>> partials,
       Stringifier defStringifier) {
     this.stringifiers = Map.copyOf(stringifiers);
-    this.typeStringifiers = TypeMap.withValues(typeStringifiers);
+    this.typeStringifiers = TypeMap.copyOf(typeStringifiers);
     this.partialNames = List.copyOf(partials);
     this.typeLookup = Map.copyOf(typeLookup);
     this.defStringifier = defStringifier;

@@ -1,12 +1,14 @@
 package org.klojang.template;
 
-import java.util.function.Function;
-import org.klojang.KlojangException;
 import nl.naturalis.common.ExceptionMethods;
+import org.klojang.KlojangException;
+
+import java.util.function.Function;
+
 import static java.lang.String.format;
+import static nl.naturalis.common.ArrayMethods.implode;
 import static org.klojang.x.Messages.ERR_NO_SUCH_TEMPLATE;
 import static org.klojang.x.Messages.ERR_NO_SUCH_VARIABLE;
-import static nl.naturalis.common.ArrayMethods.implode;
 
 /**
  * Thrown from a {@link RenderSession} under various circumstances.
@@ -17,8 +19,8 @@ public class RenderException extends KlojangException {
 
   /**
    * Thrown when specifying a {@link RenderSession#set(String, Object, VarGroup) default group} for
-   * which no stringifier has been {@link
-   * StringifierRegistry.Builder#registerByGroup(Stringifier, String...) defined}.
+   * which no stringifier has been {@link StringifierRegistry.Builder#registerByGroup(Stringifier,
+   * String...) defined}.
    */
   public static RenderException noStringifierForGroup(VarGroup vg) {
     String fmt = "No stringifier associated with variable group \"%s\"";
@@ -45,11 +47,11 @@ public class RenderException extends KlojangException {
   }
 
   /**
-   * Thrown during multi-pass {@link RenderSession#populate(String, Object, EscapeType, String...)
-   * population} of a nested template if, in the second pass, you don't specify the same number of
-   * source data objects as in the first pass. The {@code List} or array of source data objects you
-   * specify in the first call to {@code populate} determines how often the template is going to
-   * repeat itself. Obviously that fixes it for subsequent calls to {@code populate}.
+   * Thrown during multi-pass population of a template if, in the second pass, you don't specify the
+   * same number of source data objects as in the first pass. The {@code List} or array of source
+   * data objects you specify in the first call to {@code populate} determines how often the
+   * template is going to repeat itself. Obviously that fixes it for subsequent calls to {@code
+   * populate}.
    */
   public static RenderException repetitionMismatch(
       Template t, RenderSession[] sessions, int repeats) {
@@ -67,10 +69,7 @@ public class RenderException extends KlojangException {
     return s -> new RenderException("Session frozen after rendering");
   }
 
-  /**
-   * Thrown if you call {@link RenderSession#show(String) RenderSession.show} more than once for
-   * text-only template.
-   */
+  /** */
   public static RenderException multiPassNotAllowed(Template t) {
     String fqn = TemplateUtils.getFQName(t);
     String fmt =
@@ -78,10 +77,7 @@ public class RenderException extends KlojangException {
     return new RenderException(format(fmt, fqn));
   }
 
-  /**
-   * Thrown if you call {@link RenderSession#show(String) RenderSession.show} for a nested template
-   * that is not a text-only template.
-   */
+  /** */
   public static Function<String, RenderException> notTextOnly(Template t) {
     String fqn = TemplateUtils.getFQName(t);
     String fmt = "Not a text-only template: %s";
@@ -98,10 +94,7 @@ public class RenderException extends KlojangException {
     return s -> new RenderException(format(fmt, fqn));
   }
 
-  /**
-   * Thrown if you call {@link RenderSession#populateWithTuple(String, Object)} for a nested
-   * template that does not contain exactly two variables and zero doubly-nested templates.
-   */
+  /** */
   public static Function<String, RenderException> notTupleTemplate(Template t) {
     String fqn = TemplateUtils.getFQName(t);
     String fmt = "Not a two-variable template: %s";

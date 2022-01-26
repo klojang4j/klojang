@@ -48,7 +48,7 @@ class ReceiverNegotiator {
 
   private static Map<Class<?>, Map<Integer, Receiver>> createReceivers() {
     return TypeTreeMap.build(Map.class)
-        .autobox()
+        .autobox(true)
         .add(String.class, my(new StringReceivers()))
         .add(int.class, my(new IntReceivers()))
         .add(long.class, my(new LongReceivers()))
