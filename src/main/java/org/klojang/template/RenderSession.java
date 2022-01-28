@@ -1,26 +1,26 @@
 package org.klojang.template;
 
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.function.Predicate;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.unsafe.UnsafeByteArrayOutputStream;
+
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.function.Predicate;
+
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.toList;
+import static nl.naturalis.common.ArrayMethods.EMPTY_STRING_ARRAY;
+import static nl.naturalis.common.CollectionMethods.asList;
+import static nl.naturalis.common.ObjectMethods.*;
+import static nl.naturalis.common.StringMethods.concat;
+import static nl.naturalis.common.check.CommonChecks.*;
 import static org.klojang.template.Accessor.UNDEFINED;
 import static org.klojang.template.RenderException.*;
 import static org.klojang.template.TemplateUtils.getFQName;
 import static org.klojang.x.Messages.ERR_TEMPLATE_NAME_NULL;
-import static nl.naturalis.common.ArrayMethods.EMPTY_STRING_ARRAY;
-import static nl.naturalis.common.CollectionMethods.asUnsafeList;
-import static nl.naturalis.common.ObjectMethods.ifNull;
-import static nl.naturalis.common.ObjectMethods.isEmpty;
-import static nl.naturalis.common.ObjectMethods.n2e;
-import static nl.naturalis.common.StringMethods.concat;
-import static nl.naturalis.common.check.CommonChecks.*;
 
 /**
  * A {@code RenderSession} lets you populate a template and then render it. By default template
@@ -345,7 +345,7 @@ public class RenderSession {
       return this;
     }
     Template t = getNestedTemplate(nestedTemplateName);
-    List<?> data = asUnsafeList(sourceData);
+    List<?> data = asList(sourceData);
     if (t.isTextOnly()) {
       return show(data.size(), t);
     }
