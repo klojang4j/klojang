@@ -1,14 +1,16 @@
 package org.klojang.db;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
+import nl.naturalis.common.CollectionMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.util.MutableInt;
-import static nl.naturalis.common.CollectionMethods.convertAndFreeze;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import static nl.naturalis.common.CollectionMethods.freezeIntoList;
 import static nl.naturalis.common.check.CommonChecks.blank;
 
@@ -75,7 +77,7 @@ class SQLNormalizer {
       }
     }
     this.normalized = out.toString();
-    this.paramMap = convertAndFreeze(tmp, IntList::copyOf);
+    this.paramMap = CollectionMethods.freeze(tmp, IntList::copyOf);
     this.params = freezeIntoList(tmp.entrySet(), this::toNamedParam);
   }
 
