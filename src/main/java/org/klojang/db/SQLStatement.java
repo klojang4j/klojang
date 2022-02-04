@@ -9,7 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
 
-import static nl.naturalis.common.CollectionMethods.freezeIntoList;
+import static nl.naturalis.common.CollectionMethods.collectionToList;
 import static nl.naturalis.common.CollectionMethods.implode;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
@@ -99,7 +99,7 @@ public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoClo
   private KJSQLException notExecutable() {
     Set<NamedParameter> params = new HashSet<>(sql.getParameters());
     params.removeAll(bound);
-    List<String> unbound = freezeIntoList(params, NamedParameter::getName);
+    List<String> unbound = collectionToList(params, NamedParameter::getName);
     String fmt = "Some query parameters have not been bound yet: %s";
     return new KJSQLException(fmt, implode(unbound));
   }

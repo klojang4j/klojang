@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import static nl.naturalis.common.CollectionMethods.freezeIntoList;
+import static nl.naturalis.common.CollectionMethods.collectionToList;
 import static nl.naturalis.common.check.CommonChecks.blank;
 
 /**
@@ -78,7 +78,7 @@ class SQLNormalizer {
     }
     this.normalized = out.toString();
     this.paramMap = CollectionMethods.freeze(tmp, IntList::copyOf);
-    this.params = freezeIntoList(tmp.entrySet(), this::toNamedParam);
+    this.params = collectionToList(tmp.entrySet(), this::toNamedParam);
   }
 
   String getUnparsedSQL() {
