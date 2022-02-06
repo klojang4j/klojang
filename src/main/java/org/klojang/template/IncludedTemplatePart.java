@@ -1,9 +1,11 @@
 package org.klojang.template;
 
+import nl.naturalis.common.StringMethods;
+
 import static org.klojang.x.tmpl.Regex.TMPL_START;
 import static org.klojang.x.tmpl.Regex.VAR_END;
 import static nl.naturalis.common.StringMethods.substrAfter;
-import static nl.naturalis.common.StringMethods.substrTo;
+import static nl.naturalis.common.StringMethods.substrBefore;
 
 /**
  * A {@link Part} implementation for representing included templates.
@@ -13,7 +15,7 @@ import static nl.naturalis.common.StringMethods.substrTo;
 class IncludedTemplatePart extends NestedTemplatePart {
 
   static String basename(String path) {
-    return substrTo(substrAfter(path, "/", true), '.');
+    return StringMethods.substrBefore(substrAfter(path, "/", true), ".");
   }
 
   IncludedTemplatePart(Template template, int start) {

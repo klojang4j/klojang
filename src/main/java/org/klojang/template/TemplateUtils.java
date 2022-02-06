@@ -5,13 +5,15 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import nl.naturalis.common.StringMethods;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import static java.util.Arrays.copyOfRange;
 import static org.klojang.x.Messages.ERR_BAD_NAME;
 import static org.klojang.x.Messages.ERR_NO_SUCH_TEMPLATE;
 import static nl.naturalis.common.StringMethods.count;
-import static nl.naturalis.common.StringMethods.substrTo;
+import static nl.naturalis.common.StringMethods.substrBefore;
 import static nl.naturalis.common.check.CommonChecks.empty;
 import static nl.naturalis.common.check.CommonChecks.in;
 
@@ -170,7 +172,7 @@ public class TemplateUtils {
       Check.that(fqName).is(in(), template.getNames(), ERR_BAD_NAME, fqName);
       return template;
     }
-    return getNestedTemplate(template, substrTo(fqName, ".", true));
+    return getNestedTemplate(template, StringMethods.substrBefore(fqName, ".", true));
   }
 
   /**
