@@ -172,7 +172,7 @@ public class TemplateUtils {
       Check.that(fqName).is(in(), template.getNames(), ERR_BAD_NAME, fqName);
       return template;
     }
-    return getNestedTemplate(template, StringMethods.substrBefore(fqName, ".", true));
+    return getNestedTemplate(template, substrBefore(fqName, ".", 1));
   }
 
   /**

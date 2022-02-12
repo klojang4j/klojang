@@ -1,7 +1,8 @@
 package org.klojang.template;
 
 import java.util.function.Function;
-import nl.naturalis.common.StringMethods;
+
+import nl.naturalis.common.PrintMethods;
 import nl.naturalis.common.check.Check;
 import static nl.naturalis.common.ArrayMethods.prefix;
 
@@ -76,7 +77,7 @@ public enum ErrorType {
   }
 
   String asMessage(String src, int pos, Object... args) {
-    int[] x = StringMethods.getLineAndColumn(src, pos);
+    int[] x = PrintMethods.getLineAndColumn(src, pos);
     return String.format(format, prefix(args, x[0] + 1, x[1] + 1));
   }
 
