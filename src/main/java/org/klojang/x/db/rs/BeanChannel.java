@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.invoke.Setter;
 import nl.naturalis.common.invoke.SetterFactory;
-import nl.naturalis.common.unsafe.UnsafeList;
 
 import static nl.naturalis.common.CollectionMethods.implode;
 
@@ -38,7 +37,7 @@ public class BeanChannel<COLUMN_TYPE, FIELD_TYPE> implements Channel<Object> {
       LOG.trace("Mapping ResultSet to {}", beanClass.getSimpleName());
       Comparator<String> cmp = Comparator.comparing(String::toLowerCase);
       Set<String> cols = new TreeSet<>(cmp);
-      cols.addAll(new UnsafeList<>(new RsStrongIdentifier(rs).getColumnNames()));
+      cols.addAll(Arrays.asList(new RsStrongIdentifier(rs).getColumnNames()));
       Set<String> props = new TreeSet<>(cmp);
       props.addAll(setters.keySet());
       LOG.trace("Columns ......: {}", implode(cols));
@@ -56,15 +55,15 @@ public class BeanChannel<COLUMN_TYPE, FIELD_TYPE> implements Channel<Object> {
         String property = nameMapper.map(label);
         Setter setter = setters.get(property);
         if (setter == null) {
-          LOG.warn(
-              "Column {} cannot be mapped to a property of {}", label, beanClass.getSimpleName());
+          String fmt = "Column {} cannot be mapped to a property of {}";
+          LOG.warn(fmt, label, beanClass.getSimpleName());
           continue;
         }
         Class<?> javaType = setter.getParamType();
         RsExtractor<?, ?> extractor = negotiator.findExtractor(javaType, sqlType);
         transporters.add(new BeanChannel<>(extractor, setter, jdbcIdx, sqlType));
       }
-      return transporters.toArray(new BeanChannel[transporters.size()]);
+      return transporters.toArray(BeanChannel[]::new);
     } catch (SQLException e) {
       throw ExceptionMethods.uncheck(e);
     }
