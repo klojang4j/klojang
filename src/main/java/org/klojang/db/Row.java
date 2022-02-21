@@ -1,18 +1,18 @@
 package org.klojang.db;
 
+import nl.naturalis.common.Bool;
+import nl.naturalis.common.IntPair;
+import nl.naturalis.common.NumberMethods;
+import nl.naturalis.common.check.Check;
+import org.klojang.template.RenderSession;
+
 import java.sql.ResultSet;
 import java.util.*;
 import java.util.function.Function;
-import org.klojang.template.RenderSession;
-import nl.naturalis.common.Bool;
-import nl.naturalis.common.NumberMethods;
-import nl.naturalis.common.Pair;
-import nl.naturalis.common.check.Check;
+
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
-import static nl.naturalis.common.check.CommonChecks.between;
-import static nl.naturalis.common.check.CommonChecks.keyIn;
-import static nl.naturalis.common.check.CommonChecks.negative;
-import static nl.naturalis.common.check.CommonChecks.notNull;
+import static nl.naturalis.common.check.CommonChecks.*;
+import static nl.naturalis.common.check.Range.from;
 
 /**
  * A thin wrapper around a {@code Map<String,Object>} instance mimicking some of the behaviour of
@@ -91,7 +91,7 @@ public class Row {
    * @return The column name
    */
   public String getColumnName(int colNum) {
-    Check.that(colNum).is(between(), Pair.of(0, map.size()), ERR2, colNum);
+    Check.that(colNum).is(inRange(), from(0, map.size()), ERR2, colNum);
     return (String) map.keySet().toArray()[colNum];
   }
 
