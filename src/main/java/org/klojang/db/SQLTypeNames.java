@@ -1,12 +1,14 @@
 package org.klojang.db;
 
+import nl.naturalis.common.ExceptionMethods;
+import nl.naturalis.common.check.Check;
+
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.sql.Types;
 import java.util.Map;
 import java.util.TreeMap;
-import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.check.Check;
+
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 public class SQLTypeNames {
@@ -17,7 +19,7 @@ public class SQLTypeNames {
     if (instance == null) {
       instance = new SQLTypeNames();
     }
-    return Check.that(sqlType)
+    return Check.that((Integer) sqlType)
         .is(keyIn(), instance.map, "No such constant in java.sql.Types: %d", sqlType)
         .ok(instance.map::get);
   }

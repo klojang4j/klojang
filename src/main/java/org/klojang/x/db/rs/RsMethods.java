@@ -28,7 +28,7 @@ class RsMethods {
   }
 
   @SuppressWarnings("unchecked")
-  <T> RsMethod<T> getMethod(int sqlType) {
+  <T> RsMethod<T> getMethod(Integer sqlType) {
     // This implicitly checks that the specified int is one of the
     // static final int constants in the java.sql.Types class
     String typeName = SQLTypeNames.getTypeName(sqlType);

@@ -115,11 +115,11 @@ public class ListBoxOptions {
   /**
    * Makes the option with the specified array index the selected option.
    *
-   * @param value The index of the option to be selected
+   * @param optionIndex The index of the option to be selected
    * @return This {@code ListBoxOptions} instance
    */
   public ListBoxOptions selectOption(int optionIndex) {
-    selectedIndex = Check.that(optionIndex).is(gte(), 0).intValue();
+    selectedIndex = Check.that(optionIndex).is(gte(), 0).ok();
     selectedValue = BAR;
     return this;
   }

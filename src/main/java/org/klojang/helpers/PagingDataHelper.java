@@ -41,16 +41,16 @@ public class PagingDataHelper {
 
   public PagingDataHelper(ScrollType scrollType, int windowSize) {
     this.scrollType = Check.notNull(scrollType, "scrollType").ok();
-    this.windowSize = Check.that(windowSize, "windowSize").is(gte(), 2).intValue();
+    this.windowSize = Check.that(windowSize, "windowSize").is(gte(), 2).ok();
   }
 
   public PagingDataHelper setRowCount(int rowCount) {
-    this.rowCount = Check.that(rowCount).isNot(negative()).intValue();
+    this.rowCount = Check.that(rowCount).isNot(negative()).ok();
     return this;
   }
 
   public PagingDataHelper setRowsPerPage(int rowsPerPage) {
-    this.rowsPerPage = Check.that(rowsPerPage).is(positive()).intValue();
+    this.rowsPerPage = Check.that(rowsPerPage).is(positive()).ok();
     return this;
   }
 
