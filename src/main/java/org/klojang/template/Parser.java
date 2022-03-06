@@ -14,7 +14,7 @@ import static org.klojang.x.tmpl.TemplateSourceType.STRING;
 import static nl.naturalis.common.StringMethods.EMPTY;
 import static nl.naturalis.common.check.CommonChecks.blank;
 import static nl.naturalis.common.check.CommonChecks.eq;
-import static nl.naturalis.common.check.CommonChecks.equalTo;
+import static nl.naturalis.common.check.CommonChecks.EQ;
 import static nl.naturalis.common.check.CommonChecks.in;
 
 class Parser {
@@ -119,7 +119,7 @@ class Parser {
       DUPLICATE_TMPL_NAME
           .check(name, src, offset + m.start(1), name)
           .isNot(in(), names)
-          .isNot(equalTo(), ROOT_TEMPLATE_NAME);
+          .isNot(EQ(), ROOT_TEMPLATE_NAME);
       names.add(name);
       Parser parser = new Parser(name, new TemplateId(id), mySrc);
       parts.add(new InlineTemplatePart(parser.parse(), offset + m.start()));
@@ -154,7 +154,7 @@ class Parser {
       DUPLICATE_TMPL_NAME
           .check(name, src, offset + m.start(2), name)
           .isNot(in(), names)
-          .isNot(equalTo(), ROOT_TEMPLATE_NAME);
+          .isNot(EQ(), ROOT_TEMPLATE_NAME);
       TemplateId newId;
       if (id.clazz() != null) { // Load as resource
         if (id.clazz().getResource(path) == null) {
