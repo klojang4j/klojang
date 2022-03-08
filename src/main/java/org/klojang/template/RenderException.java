@@ -4,6 +4,7 @@ import nl.naturalis.common.ExceptionMethods;
 import org.klojang.KlojangException;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static java.lang.String.format;
 import static nl.naturalis.common.ArrayMethods.implode;
@@ -28,9 +29,9 @@ public class RenderException extends KlojangException {
   }
 
   /** Thrown when specifying a non-existent variable name. */
-  public static Function<String, RenderException> noSuchVariable(Template t, String var) {
+  public static Supplier<RenderException> noSuchVariable(Template t, String var) {
     String fqn = TemplateUtils.getFQName(t, var);
-    return s -> new RenderException(format(ERR_NO_SUCH_VARIABLE, fqn));
+    return () -> new RenderException(format(ERR_NO_SUCH_VARIABLE, fqn));
   }
 
   /** Thrown when specifying a non-existent template name. */

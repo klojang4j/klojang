@@ -94,9 +94,9 @@ public class RenderSession {
       throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Check.notNull(varName, "varName");
-    Template template = config.getTemplate();
-    Check.on(noSuchVariable(template, varName), template.getVariables()).is(containing(), varName);
-    Check.on(alreadySet(template, varName), state.isSet(varName)).is(no());
+    Template t = config.getTemplate();
+    Check.that(t.getVariables()).is(contains(), varName, noSuchVariable(t, varName));
+    Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
     if (value == UNDEFINED) {
       // Unless the user is manually going through, and accessing the properties
       // of some source data object, specifying UNDEFINED misses the point of that
@@ -108,7 +108,7 @@ public class RenderSession {
     StringifierRegistry sf = config.getStringifiers();
     for (int i = 0; i < indices.size(); ++i) {
       int partIndex = indices.get(i);
-      VariablePart part = template.getPart(partIndex);
+      VariablePart part = t.getPart(partIndex);
       Stringifier stringifier = sf.getStringifier(part, defaultGroup, value);
       String stringified = stringify(stringifier, varName, value);
       state.setVar(partIndex, new String[] {stringified});
@@ -219,7 +219,7 @@ public class RenderSession {
     Check.notNull(varName, "varName");
     Check.notNull(values, "values");
     Template t = config.getTemplate();
-    Check.on(noSuchVariable(t, varName), t.getVariables()).is(containing(), varName);
+    Check.that(t.getVariables()).is(contains(), varName, noSuchVariable(t, varName));
     Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
     IntList indices = config.getTemplate().getVarPartIndices().get(varName);
     if (values.isEmpty()) {
@@ -281,7 +281,7 @@ public class RenderSession {
     Check.on(illegalValue("varName", varName), varName).is(notNull());
     Check.on(illegalValue("renderable", renderable), renderable).is(notNull());
     Template t = config.getTemplate();
-    Check.on(noSuchVariable(t, varName), t.getVariables()).is(containing(), varName);
+    Check.that(t.getVariables()).is(contains(), varName, noSuchVariable(t, varName));
     Check.on(alreadySet(t, varName), state.isSet(varName)).is(no());
     IntList indices = config.getTemplate().getVarPartIndices().get(varName);
     indices.forEach(i -> state.setVar(i, renderable));
