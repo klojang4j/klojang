@@ -5,7 +5,6 @@ import org.klojang.SysProp;
 import org.klojang.x.tmpl.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import nl.naturalis.common.StringMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
@@ -14,7 +13,7 @@ import static nl.naturalis.common.CollectionMethods.implode;
 import static org.klojang.template.TemplateUtils.getFQName;
 import static org.klojang.x.tmpl.TemplateSourceType.STRING;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
-import static nl.naturalis.common.check.CommonChecks.indexOf;
+import static nl.naturalis.common.check.CommonChecks.listIndexOf;
 import static nl.naturalis.common.check.CommonChecks.keyIn;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 
@@ -401,7 +400,7 @@ public class Template {
 
   @SuppressWarnings("unchecked")
   <T extends Part> T getPart(int index) {
-    return (T) Check.that(index).is(indexOf(), parts).ok(parts::get);
+    return (T) Check.that(index).is(listIndexOf(), parts).ok(parts::get);
   }
 
   Map<String, IntList> getVarPartIndices() {
