@@ -2,6 +2,7 @@ package org.klojang.x.acc;
 
 import java.util.List;
 
+import nl.naturalis.common.path.DeadEnd;
 import org.klojang.template.Accessor;
 import org.klojang.template.NameMapper;
 import org.klojang.template.RenderException;
@@ -24,7 +25,7 @@ public class PathAccessor implements Accessor<Object> {
         ? property
         : nm.map(property);
     Object val = new PathWalker(List.of(new Path(path)), RETURN_DEAD).read(data);
-    return val == PathWalker.DEAD
+    return val instanceof DeadEnd
         ? UNDEFINED
         : val;
   }
