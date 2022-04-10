@@ -9,7 +9,7 @@ import org.klojang.template.RenderException;
 import nl.naturalis.common.path.Path;
 import nl.naturalis.common.path.PathWalker;
 
-import static nl.naturalis.common.path.PathWalker.OnDeadEnd.*;
+import static nl.naturalis.common.path.PathWalker.OnError.*;
 
 public class PathAccessor implements Accessor<Object> {
 
