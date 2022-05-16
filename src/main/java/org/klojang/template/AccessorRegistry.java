@@ -1,15 +1,17 @@
 package org.klojang.template;
 
+import nl.naturalis.common.check.Check;
+import nl.naturalis.common.collection.SimpleTypeMap;
+import nl.naturalis.common.path.PathWalker;
+import org.klojang.SysProp;
+import org.klojang.db.Row;
+import org.klojang.x.acc.*;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import org.klojang.SysProp;
-import org.klojang.db.Row;
-import org.klojang.x.acc.*;
-import nl.naturalis.common.check.Check;
-import nl.naturalis.common.collection.TypeMap;
-import nl.naturalis.common.path.PathWalker;
+
 import static nl.naturalis.common.ClassMethods.isA;
 
 /**
@@ -55,28 +57,8 @@ import static nl.naturalis.common.ClassMethods.isA;
  * <p>Note that the accessor used to read JavaBean properties makes use of a {@link PathWalker}.
  * This class does not use reflection to read bean properties, but it does use reflection to figure
  * out what the properties are in the first place. Thus, if you use this accessor from within a Java
- * module, you will have to open up the module for reflection. If you are not comfortable with this,
- * you could, as an alternative, use the {@link SaveBeanAccessor} class:
- *
- * <blockquote>
- *
- * <pre>{@code
- * SaveBeanReader<Person> personReader = SaveBeanReader
- *   .configure()
- *   .withInt("id")
- *   .withString("firstName", "lastName")
- *   .with(LocalDate.class, "birthDate")
- *   .freeze();
- * AccessorRegistry aReg = AccessorRegistry
- *   .configure()
- *   .register(Person.class, new SaveBeanAccesor<>(personReader))
- *   .freeze();
- * RenderSession session = template.newRenderSession(aReg);
- * }</pre>
- *
- * </blockquote>
- *
- * <p>Or you could just write your own {@code Accessor}:
+ * module, you will have to open up the module for reflection. Alternatively, you could just write
+ * your own {@code Accessor}:
  *
  * <blockquote>
  *
@@ -100,8 +82,8 @@ import static nl.naturalis.common.ClassMethods.isA;
  *
  * </blockquote>
  *
- * @see SysProp#USE_BEAN_ACCESSOR
  * @author Ayco Holleman
+ * @see SysProp#USE_BEAN_ACCESSOR
  */
 public class AccessorRegistry {
 
@@ -201,6 +183,7 @@ public class AccessorRegistry {
     public AccessorRegistry freeze() {
       return new AccessorRegistry(accs, defMapper, mappers);
     }
+
   }
 
   /* +++++++++++++++++++++[ END BUILDER CLASS ]++++++++++++++++++ */
@@ -215,11 +198,10 @@ public class AccessorRegistry {
   private final NameMapper defMapper;
   private final Map<Template, NameMapper> mappers;
 
-  private AccessorRegistry(
-      Map<Class<?>, Map<Template, Accessor<?>>> accs,
+  private AccessorRegistry(Map<Class<?>, Map<Template, Accessor<?>>> accs,
       NameMapper defMapper,
       Map<Template, NameMapper> mappers) {
-    this.accs = accs.isEmpty() ? Collections.emptyMap() : TypeMap.copyOf(accs, 32);
+    this.accs = accs.isEmpty() ? Collections.emptyMap() : SimpleTypeMap.copyOf(accs, true, true);
     this.defMapper = defMapper;
     this.mappers = Map.copyOf(mappers);
   }
@@ -252,4 +234,5 @@ public class AccessorRegistry {
     }
     return acc;
   }
+
 }

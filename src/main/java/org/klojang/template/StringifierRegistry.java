@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import nl.naturalis.common.collection.SimpleTypeMap;
 import org.klojang.x.StandardStringifiers;
 import nl.naturalis.common.Tuple;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.TypeMap;
+
 import static org.klojang.template.TemplateUtils.getNestedTemplate;
 import static org.klojang.x.Messages.ERR_NO_SUCH_VARIABLE;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
@@ -45,7 +48,8 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
  * stringification, albeit from {@code String} to {@code String}. The stringifiers associated with
  * the {@link VarGroup standard variable groups} are in fact all escape functions.
  *
- * <p>This is how a {@link StringifierRegistry} decides which stringifier to hand out for a variable
+ * <p>This is how a {@link StringifierRegistry} decides which stringifier to hand out for a
+ * variable
  * in a template:
  *
  * <p>
@@ -137,12 +141,12 @@ public final class StringifierRegistry {
      *
      * </blockquote>
      *
-     * @see TemplateUtils#getFQName(Template, String)
-     * @see TemplateUtils#getParentTemplate(Template, String)
      * @param stringifier The stringifier
      * @param template The template containing the variables
      * @param varNames Any array of fully-qualified variable names
      * @return This {@code Builder}
+     * @see TemplateUtils#getFQName(Template, String)
+     * @see TemplateUtils#getParentTemplate(Template, String)
      */
     public Builder register(Stringifier stringifier, Template template, String... varNames) {
       Check.notNull(stringifier, "stringifier");
@@ -189,15 +193,17 @@ public final class StringifierRegistry {
      *
      * @param stringifier The stringifier
      * @param template The root template
-     * @param nestedTemplateName The name of a template descending from the root template, or {@code
-     *     null} if you want to target the variables in the root template itself
-     * @param varNames The names of the variables to which to assign the stringifier, or an empty
-     *     string array if you want to assign the stringifier to all variables within the target
-     *     template
+     * @param nestedTemplateName The name of a template descending from the root template, or
+     *     {@code null} if you want to target the variables in the root template itself
+     * @param varNames The names of the variables to which to assign the stringifier, or an
+     *     empty string array if you want to assign the stringifier to all variables within the
+     *     target template
      * @return This {@code Builder}
      */
-    public Builder registerByTemplate(
-        Stringifier stringifier, Template template, String nestedTemplateName, String... varNames) {
+    public Builder registerByTemplate(Stringifier stringifier,
+        Template template,
+        String nestedTemplateName,
+        String... varNames) {
       Check.notNull(stringifier, "stringifier");
       Check.notNull(template, "template");
       Check.notNull(varNames, "varNames");
@@ -228,7 +234,8 @@ public final class StringifierRegistry {
      * to variable group "format2". A variable group can also be assigned via the {@link
      * RenderSession} class. See {@link RenderSession#set(String, Object, VarGroup)}. Note that
      * different instances of the same variable within the same template can be assigned to
-     * different variable groups (for example: {@code ~%html:fullName%} and {@code ~%js:fullName%}).
+     * different variable groups (for example: {@code ~%html:fullName%} and {@code
+     * ~%js:fullName%}).
      *
      * @param stringifier The stringifier
      * @param groupNames The names of the variable groups to which to assign the stringifier
@@ -336,17 +343,25 @@ public final class StringifierRegistry {
      * @return A new, immutable {@code StringifierRegistry} instance
      */
     public StringifierRegistry freeze() {
-      return new StringifierRegistry(
-          stringifiers, typeStringifiers, typeLookup, partialNames, defStringifier);
+      return new StringifierRegistry(stringifiers,
+          typeStringifiers,
+          typeLookup,
+          partialNames,
+          defStringifier);
     }
+
   }
 
   /* +++++++++++++++++++++[ END BUILDER CLASS ]++++++++++++++++++ */
 
-  /** Applies HTML escaping. This is one of the standard stringifiers. */
+  /**
+   * Applies HTML escaping. This is one of the standard stringifiers.
+   */
   public static final Stringifier ESCAPE_HTML = StandardStringifiers.ESCAPE_HTML;
 
-  /** Applies Javascript escaping. This is one of the standard stringifiers. */
+  /**
+   * Applies Javascript escaping. This is one of the standard stringifiers.
+   */
   public static final Stringifier ESCAPE_JS = StandardStringifiers.ESCAPE_JS;
 
   /**
@@ -368,7 +383,9 @@ public final class StringifierRegistry {
    */
   public static final Stringifier ESCAPE_QUERY_PARAM = StandardStringifiers.ESCAPE_QUERY_PARAM;
 
-  /** To be used for escaping URL path segments. This is one of the standard stringifiers. */
+  /**
+   * To be used for escaping URL path segments. This is one of the standard stringifiers.
+   */
   public static final Stringifier ESCAPE_PATH = StandardStringifiers.ESCAPE_PATH;
 
   /**
@@ -398,14 +415,13 @@ public final class StringifierRegistry {
   private final List<Tuple<String, Stringifier>> partialNames;
   private final Stringifier defStringifier;
 
-  private StringifierRegistry(
-      Map<StringifierId, Stringifier> stringifiers,
+  private StringifierRegistry(Map<StringifierId, Stringifier> stringifiers,
       Map<Class<?>, Stringifier> typeStringifiers,
       Map<Tuple<Template, String>, Class<?>> typeLookup,
       List<Tuple<String, Stringifier>> partials,
       Stringifier defStringifier) {
     this.stringifiers = Map.copyOf(stringifiers);
-    this.typeStringifiers = TypeMap.copyOf(typeStringifiers);
+    this.typeStringifiers = SimpleTypeMap.copyOf(typeStringifiers);
     this.partialNames = List.copyOf(partials);
     this.typeLookup = Map.copyOf(typeLookup);
     this.defStringifier = defStringifier;
@@ -461,4 +477,5 @@ public final class StringifierRegistry {
     }
     return defStringifier;
   }
+
 }
