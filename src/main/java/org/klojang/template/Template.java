@@ -1,21 +1,21 @@
 package org.klojang.template;
 
-import java.util.*;
-import org.klojang.SysProp;
-import org.klojang.x.tmpl.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
+import org.klojang.SysProp;
+import org.klojang.x.tmpl.TemplateId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.*;
+
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static nl.naturalis.common.CollectionMethods.implode;
+import static nl.naturalis.common.ObjectMethods.ifNotNull;
+import static nl.naturalis.common.check.CommonChecks.*;
 import static org.klojang.template.TemplateUtils.getFQName;
 import static org.klojang.x.tmpl.TemplateSourceType.STRING;
-import static nl.naturalis.common.ObjectMethods.ifNotNull;
-import static nl.naturalis.common.check.CommonChecks.listIndexOf;
-import static nl.naturalis.common.check.CommonChecks.keyIn;
-import static nl.naturalis.common.check.CommonChecks.notNull;
 
 /**
  * The {@code Template} class is responsible for loading and parsing templates and functions as a
@@ -120,7 +120,9 @@ public class Template {
   private final Map<String, IntList> varIndices;
   private final IntList textIndices;
   private final Map<String, Integer> tmplIndices;
-  /** All variable names and nested template together */
+  /**
+   * All variable names and nested template together
+   */
   private final List<String> names;
 
   Template parent;
@@ -221,12 +223,12 @@ public class Template {
    */
   public List<Template> getNestedTemplates() {
     if (nestedTemplates == null) {
-      return nestedTemplates =
-          tmplIndices.values().stream()
-              .map(parts::get)
-              .map(NestedTemplatePart.class::cast)
-              .map(NestedTemplatePart::getTemplate)
-              .collect(toUnmodifiableList());
+      return nestedTemplates = tmplIndices.values()
+          .stream()
+          .map(parts::get)
+          .map(NestedTemplatePart.class::cast)
+          .map(NestedTemplatePart::getTemplate)
+          .collect(toUnmodifiableList());
     }
     return nestedTemplates;
   }
@@ -312,8 +314,8 @@ public class Template {
    * accessors} to extract values from source data objects, and the specified {@code
    * StringifierRegistry} to stringify those values.
    *
-   * @param stringifiers The {@code StringifierRegistry} used to supply the {@code RenderSession}
-   *     with {@link Stringifier stringifiers}
+   * @param stringifiers The {@code StringifierRegistry} used to supply the {@code
+   *     RenderSession} with {@link Stringifier stringifiers}
    * @return A new {@code RenderSession}
    */
   public RenderSession newRenderSession(StringifierRegistry stringifiers) {
@@ -343,12 +345,12 @@ public class Template {
    *
    * @param accessors The {@code AccessorRegistry} used to supply the {@code RenderSession} with
    *     {@link Accessor accessors}
-   * @param stringifiers The {@code StringifierRegistry} used to supply the {@code RenderSession}
-   *     with {@link Stringifier stringifiers}
+   * @param stringifiers The {@code StringifierRegistry} used to supply the {@code
+   *     RenderSession} with {@link Stringifier stringifiers}
    * @return A new {@code RenderSession}
    */
-  public RenderSession newRenderSession(
-      AccessorRegistry accessors, StringifierRegistry stringifiers) {
+  public RenderSession newRenderSession(AccessorRegistry accessors,
+      StringifierRegistry stringifiers) {
     Check.notNull(accessors, "accessors");
     Check.notNull(stringifiers, "stringifiers");
     return new SessionConfig(this, accessors, stringifiers).newRenderSession();
@@ -400,7 +402,7 @@ public class Template {
 
   @SuppressWarnings("unchecked")
   <T extends Part> T getPart(int index) {
-    return (T) Check.that(index).is(listIndexOf(), parts).ok(parts::get);
+    return (T) Check.that(index).is(indexOf(), parts).ok(parts::get);
   }
 
   Map<String, IntList> getVarPartIndices() {
@@ -455,4 +457,5 @@ public class Template {
     }
     return IntList.copyOf(indices);
   }
+
 }
