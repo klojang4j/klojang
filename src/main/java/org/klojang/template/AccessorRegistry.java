@@ -1,7 +1,7 @@
 package org.klojang.template;
 
 import nl.naturalis.common.check.Check;
-import nl.naturalis.common.collection.SimpleTypeMap;
+import nl.naturalis.common.collection.TypeHashMap;
 import nl.naturalis.common.path.PathWalker;
 import org.klojang.SysProp;
 import org.klojang.db.Row;
@@ -15,20 +15,23 @@ import java.util.Optional;
 import static nl.naturalis.common.ClassMethods.isA;
 
 /**
- * A registry of {@link Accessor accessors} used by the {@link RenderSession} to extract values from
- * model objects. For example, if you want to populate a template with a {@code Person} object, the
- * {@link RenderSession} needs to know how to read the {@code Person} properties that correspond to
- * template variables. In most cases the {@code AccessorRegistry} defined by the {@link
- * #STANDARD_ACCESSORS} variable is probably all you need, without you actually having to implement
- * any {@code Accessor} yourself.
+ * A registry of {@link Accessor accessors} used by the {@link RenderSession} to
+ * extract values from model objects. For example, if you want to populate a template
+ * with a {@code Person} object, the {@link RenderSession} needs to know how to read
+ * the {@code Person} properties that correspond to template variables. In most cases
+ * the {@code AccessorRegistry} defined by the {@link #STANDARD_ACCESSORS} variable
+ * is probably all you need, without you actually having to implement any {@code
+ * Accessor} yourself.
  *
- * <p>Any {@code AccessorRegistry}, including the ones you build yourself and including the {@code
- * STANDARD_ACCESSORS} {@code AccessorRegistry} comes with a set of predefined accessors. These
- * accessors are not exposed via the API because you are only communicating with Klojang via
- * accessor registries, not via individual accessors. However, you can check the source code for
- * inspiration, should you need to write enhanced versions of them. This is how the {@code
- * AccessorRegistry} decides which accessor to hands out to the {@code RenderSession} for any
- * particular type of object:
+ * <p>Any {@code AccessorRegistry}, including the ones you build yourself and
+ * including the {@code
+ * STANDARD_ACCESSORS} {@code AccessorRegistry} comes with a set of predefined
+ * accessors. These accessors are not exposed via the API because you are only
+ * communicating with Klojang via accessor registries, not via individual accessors.
+ * However, you can check the source code for inspiration, should you need to write
+ * enhanced versions of them. This is how the {@code AccessorRegistry} decides which
+ * accessor to hands out to the {@code RenderSession} for any particular type of
+ * object:
  *
  * <p>
  *
@@ -88,17 +91,19 @@ import static nl.naturalis.common.ClassMethods.isA;
 public class AccessorRegistry {
 
   /**
-   * An {@code AccessorRegistry} the should be sufficent for most use cases. It assumes that the
-   * names you use in your templates can be mapped as-is to your model objects.
+   * An {@code AccessorRegistry} the should be sufficent for most use cases. It
+   * assumes that the names you use in your templates can be mapped as-is to your
+   * model objects.
    */
   public static final AccessorRegistry STANDARD_ACCESSORS = configure().freeze();
 
   /**
-   * Returns an {@code AccessorRegistry} that should be sufficient for most use cases. It allows you
-   * to specify one global {@link NameMapper} for mapping the names used in your templates to the
-   * names used in your model objects.
+   * Returns an {@code AccessorRegistry} that should be sufficient for most use
+   * cases. It allows you to specify one global {@link NameMapper} for mapping the
+   * names used in your templates to the names used in your model objects.
    *
-   * @param nameMapper The {@code NameMapper} to use when accessing model objects
+   * @param nameMapper The {@code NameMapper} to use when accessing model
+   *     objects
    * @return An {@code AccessorRegistry} the should sufficent for most use cases
    */
   public static AccessorRegistry standard(NameMapper nameMapper) {
@@ -121,9 +126,10 @@ public class AccessorRegistry {
     private Builder() {}
 
     /**
-     * Sets the default {@code NameMapper} used to map template variable names to JavaBean
-     * properties (or {@code Map} keys). If no default {@code NameMapper} is specified, the {@link
-     * NameMapper#AS_IS AS_IS} name mapper will be the default name mapper.
+     * Sets the default {@code NameMapper} used to map template variable names to
+     * JavaBean properties (or {@code Map} keys). If no default {@code NameMapper} is
+     * specified, the {@link NameMapper#AS_IS AS_IS} name mapper will be the default
+     * name mapper.
      *
      * @param nameMapper The name mapper
      * @return This {@code Builder} instance
@@ -161,8 +167,8 @@ public class AccessorRegistry {
     }
 
     /**
-     * Sets the {@code Accessor} to be used for objects of the specified type, destined for the
-     * specified template.
+     * Sets the {@code Accessor} to be used for objects of the specified type,
+     * destined for the specified template.
      *
      * @param <T> The type of the objects for which to use the {@code Accessor}
      * @param forType The {@code Class} object corresponding to the type
@@ -170,7 +176,9 @@ public class AccessorRegistry {
      * @param accessor The {@code Accessor}
      * @return This {@code Builder} instance
      */
-    public <T> Builder register(Class<T> forType, Template template, Accessor<? super T> accessor) {
+    public <T> Builder register(Class<T> forType,
+        Template template,
+        Accessor<? super T> accessor) {
       accs.computeIfAbsent(forType, k -> new HashMap<>()).put(template, accessor);
       return this;
     }
@@ -201,7 +209,9 @@ public class AccessorRegistry {
   private AccessorRegistry(Map<Class<?>, Map<Template, Accessor<?>>> accs,
       NameMapper defMapper,
       Map<Template, NameMapper> mappers) {
-    this.accs = accs.isEmpty() ? Collections.emptyMap() : SimpleTypeMap.copyOf(accs, true, true);
+    this.accs = accs.isEmpty()
+        ? Collections.emptyMap()
+        : TypeHashMap.copyOf(accs, true, true);
     this.defMapper = defMapper;
     this.mappers = Map.copyOf(mappers);
   }

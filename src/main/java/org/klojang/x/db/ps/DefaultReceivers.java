@@ -4,8 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-import nl.naturalis.common.collection.SimpleTypeMap;
-import nl.naturalis.common.collection.TypeMap;
+import nl.naturalis.common.collection.TypeHashMap;
 
 @SuppressWarnings("rawtypes")
 class DefaultReceivers {
@@ -15,7 +14,7 @@ class DefaultReceivers {
   private Map<Class<?>, Receiver> defaults;
 
   private DefaultReceivers() {
-    defaults = SimpleTypeMap.build(Receiver.class)
+    defaults = TypeHashMap.build(Receiver.class)
         .autobox(true)
         .add(String.class, StringReceivers.DEFAULT)
         .add(Integer.class, IntReceivers.DEFAULT)

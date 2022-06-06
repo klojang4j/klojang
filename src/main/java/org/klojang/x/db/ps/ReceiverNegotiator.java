@@ -5,8 +5,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 import nl.naturalis.common.check.Check;
-import nl.naturalis.common.collection.TypeGraphMap;
-import nl.naturalis.common.collection.TypeMap;
+import nl.naturalis.common.collection.TypeGraph;
 
 import static org.klojang.db.SQLTypeNames.getTypeName;
 import static nl.naturalis.common.ClassMethods.className;
@@ -27,29 +26,28 @@ class ReceiverNegotiator {
   private final Map<Class<?>, Map<Integer, Receiver>> all;
 
   private ReceiverNegotiator() {
-    all = createReceivers();
+    Map tmp = createReceivers(); // to hell with generics
+    all = (Map<Class<?>, Map<Integer, Receiver>>) tmp;
   }
 
   <T, U> Receiver<T, U> getDefaultReceiver(Class<T> fieldType) {
-    return Check.that(DefaultReceivers.INSTANCE.getDefaultReceiver(fieldType))
-        .is(notNull(), "Type not supported: %s", className(fieldType))
-        .ok();
+    Receiver receiver = DefaultReceivers.INSTANCE.getDefaultReceiver(fieldType);
+    return Check.that(receiver).is(notNull(), "Type not supported: {type}").ok();
   }
 
   <T, U> Receiver<T, U> findReceiver(Class<T> fieldType, int sqlType) {
     // This implicitly checks that the specified int is one of the
     // static final int constants in the java.sql.Types class
     String sqlTypeName = getTypeName(sqlType);
-    Map<Integer, Receiver> receivers = Check.that(all.get(fieldType))
-        .is(notNull(), "Type not supported: %s", className(fieldType))
-        .ok();
-    return Check.that(receivers.get(sqlType))
-        .is(notNull(), "Cannot convert %s to %s", sqlTypeName, className(fieldType))
-        .ok();
+    Map<Integer, Receiver> receivers = all.get(fieldType);
+    Check.that(receivers).is(notNull(), "Type not supported: {type}");
+    Receiver<T, U> receiver = receivers.get(sqlType);
+    Check.that(receiver).is(notNull(), "Cannot convert {0} to {type}", sqlTypeName);
+    return receiver;
   }
 
-  private static Map<Class<?>, Map<Integer, Receiver>> createReceivers() {
-    return TypeGraphMap.build(Map.class)
+  private static Map createReceivers() {
+    return TypeGraph.build(Map.class)
         .autobox(true)
         .add(String.class, my(new StringReceivers()))
         .add(Integer.class, my(new IntReceivers()))

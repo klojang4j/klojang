@@ -2,7 +2,7 @@ package org.klojang.x.db.rs;
 
 import nl.naturalis.common.ModulePrivate;
 import nl.naturalis.common.check.Check;
-import nl.naturalis.common.collection.TypeGraphMap;
+import nl.naturalis.common.collection.TypeGraph;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -13,11 +13,12 @@ import static nl.naturalis.common.check.CommonChecks.notNull;
 import static org.klojang.db.SQLTypeNames.getTypeName;
 
 /**
- * Finds the most suitable of the {@code ResultSet.getXXX} methods for a given Java type. If no
- * sure-fire match can be found, then an {@link Adapter} function can be specified that converts the
- * result of the {@code getXXX} method to the required Java type. Therefore what actually gets
- * negotiated is not so much the {@code getXXX} method per se, but an {@link RsExtractor}, which
- * combines a {@code getXXX} method with an (optional) converter function.
+ * Finds the most suitable of the {@code ResultSet.getXXX} methods for a given Java
+ * type. If no sure-fire match can be found, then an {@link Adapter} function can be
+ * specified that converts the result of the {@code getXXX} method to the required
+ * Java type. Therefore what actually gets negotiated is not so much the {@code
+ * getXXX} method per se, but an {@link RsExtractor}, which combines a {@code getXXX}
+ * method with an (optional) converter function.
  */
 @ModulePrivate
 @SuppressWarnings("rawtypes")
@@ -51,8 +52,8 @@ public class ExtractorNegotiator {
         .ok();
   }
 
-  private static Map<Class<?>, Map<Integer, RsExtractor>> configure() {
-    return TypeGraphMap.build(Map.class)
+  private static Map configure() {
+    return TypeGraph.build(Map.class)
         .autobox(true)
         .add(String.class, my(new StringExtractors()))
         .add(Integer.class, my(new IntExtractors()))

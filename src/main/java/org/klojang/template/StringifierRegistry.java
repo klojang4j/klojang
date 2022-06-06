@@ -1,56 +1,55 @@
 package org.klojang.template;
 
+import nl.naturalis.common.Tuple;
+import nl.naturalis.common.check.Check;
+import nl.naturalis.common.collection.TypeHashMap;
+import nl.naturalis.common.collection.TypeMap;
+import org.klojang.x.StandardStringifiers;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.naturalis.common.collection.SimpleTypeMap;
-import org.klojang.x.StandardStringifiers;
-import nl.naturalis.common.Tuple;
-import nl.naturalis.common.check.Check;
-import nl.naturalis.common.collection.TypeMap;
-
+import static nl.naturalis.common.ObjectMethods.ifNotNull;
+import static nl.naturalis.common.StringMethods.*;
+import static nl.naturalis.common.check.CommonChecks.*;
 import static org.klojang.template.TemplateUtils.getNestedTemplate;
 import static org.klojang.x.Messages.ERR_NO_SUCH_VARIABLE;
-import static nl.naturalis.common.ObjectMethods.ifNotNull;
-import static nl.naturalis.common.StringMethods.ltrim;
-import static nl.naturalis.common.StringMethods.rtrim;
-import static nl.naturalis.common.StringMethods.trim;
-import static nl.naturalis.common.check.CommonChecks.deepNotEmpty;
-import static nl.naturalis.common.check.CommonChecks.empty;
-import static nl.naturalis.common.check.CommonChecks.in;
-import static nl.naturalis.common.check.CommonChecks.keyIn;
 
 /**
- * A registry of {@link Stringifier stringifiers} used by the {@link RenderSession} to stringify the
- * values provided by the data access layer. In principle each and every template variable must be
- * associated with a {@code Stringifier}. In practice, however, it is unlikely you will define many
- * variable-specific stringifiers, if at all. If a variable's value can be stringified by calling
- * {@code toString()} on it (or to an empty string if null), you don't need to specify a stringifier
- * for it because this is default behaviour. In addition, all variables with the same data type will
- * often should be stringified identically. For example, you may want to format all {@code int}
- * values according to your country's locale. These type-based stringifiers can be configured using
- * {@link Builder#registerByType(Stringifier, Class[])} registerByType}. Only if a template variable
- * has very specific stringification requirements would you {@link Builder#register(Stringifier,
- * Template, String...) register} a variable-specific stringifier for it.
+ * A registry of {@link Stringifier stringifiers} used by the {@link RenderSession}
+ * to stringify the values provided by the data access layer. In principle each and
+ * every template variable must be associated with a {@code Stringifier}. In
+ * practice, however, it is unlikely you will define many variable-specific
+ * stringifiers, if at all. If a variable's value can be stringified by calling
+ * {@code toString()} on it (or to an empty string if null), you don't need to
+ * specify a stringifier for it because this is default behaviour. In addition, all
+ * variables with the same data type will often should be stringified identically.
+ * For example, you may want to format all {@code int} values according to your
+ * country's locale. These type-based stringifiers can be configured using {@link
+ * Builder#registerByType(Stringifier, Class[])} registerByType}. Only if a template
+ * variable has very specific stringification requirements would you {@link
+ * Builder#register(Stringifier, Template, String...) register} a variable-specific
+ * stringifier for it.
  *
- * <p>Type-based stringifiers are internally kept in a {@link TypeMap}. This means that if the
- * {@code RenderSession} requests a stringifier for some type, and that type is not in the {@code
- * TypeMap}, but one of its super types is, it will receive the stringifier associated with the
- * super type. For example, if the {@code TypeMap} contains a {@code Number} stringifier and the
- * {@code RenderSession} requests an {@code Integer} stringifier, it will receive the {@code Number}
- * stringifier (unless of course you have also registered an {@code Integer} stringifier). This
- * saves you from having to register a stringifier for each and every subclass of {@code Number} if
- * they are all stringified identically.
+ * <p>Type-based stringifiers are internally kept in a {@link TypeMap}. This
+ * means that if the {@code RenderSession} requests a stringifier for some type, and
+ * that type is not in the {@code TypeMap}, but one of its super types is, it will
+ * receive the stringifier associated with the super type. For example, if the {@code
+ * TypeMap} contains a {@code Number} stringifier and the {@code RenderSession}
+ * requests an {@code Integer} stringifier, it will receive the {@code Number}
+ * stringifier (unless of course you have also registered an {@code Integer}
+ * stringifier). This saves you from having to register a stringifier for each and
+ * every subclass of {@code Number} if they are all stringified identically.
  *
- * <p>Note that escaping (e.g. HTML) and formatting (e.g. numbers) are also regarded as a form of
- * stringification, albeit from {@code String} to {@code String}. The stringifiers associated with
- * the {@link VarGroup standard variable groups} are in fact all escape functions.
+ * <p>Note that escaping (e.g. HTML) and formatting (e.g. numbers) are also regarded
+ * as a form of stringification, albeit from {@code String} to {@code String}. The
+ * stringifiers associated with the {@link VarGroup standard variable groups} are in
+ * fact all escape functions.
  *
- * <p>This is how a {@link StringifierRegistry} decides which stringifier to hand out for a
- * variable
- * in a template:
+ * <p>This is how a {@link StringifierRegistry} decides which stringifier to hand
+ * out for a variable in a template:
  *
  * <p>
  *
@@ -74,11 +73,12 @@ import static nl.naturalis.common.check.CommonChecks.keyIn;
 public final class StringifierRegistry {
 
   /**
-   * A minimal {@code StringifierRegistry} instance. It contains stringifiers for the predefined
-   * {@link VarGroup variable groups}. Variables not within these groups are stringified using the
-   * {@link Stringifier#DEFAULT default stringifier}. This is the {@code StringifierRegistry} a
-   * {@link RenderSession} will use if you called {@link Template#newRenderSession()
-   * Template.newRenderSession} without the {@code StringifierRegistry} argument.
+   * A minimal {@code StringifierRegistry} instance. It contains stringifiers for the
+   * predefined {@link VarGroup variable groups}. Variables not within these groups
+   * are stringified using the {@link Stringifier#DEFAULT default stringifier}. This
+   * is the {@code StringifierRegistry} a {@link RenderSession} will use if you
+   * called {@link Template#newRenderSession() Template.newRenderSession} without the
+   * {@code StringifierRegistry} argument.
    */
   public static final StringifierRegistry STANDARD_STRINGIFIERS = configure().freeze();
 
@@ -105,12 +105,14 @@ public final class StringifierRegistry {
 
     private Builder(boolean std) {
       if (std) {
-        StandardStringifiers.get().forEach((k, v) -> stringifiers.put(new StringifierId(k), v));
+        StandardStringifiers.get()
+            .forEach((k, v) -> stringifiers.put(new StringifierId(k), v));
       }
     }
 
     /**
-     * Lets you specifiy an alternative default stringifier, replacing {@link Stringifier#DEFAULT}.
+     * Lets you specifiy an alternative default stringifier, replacing {@link
+     * Stringifier#DEFAULT}.
      *
      * @param stringifier The stringifier to use as the default stringifier
      * @return This {@code Builder}
@@ -121,8 +123,9 @@ public final class StringifierRegistry {
     }
 
     /**
-     * Assigns the specified stringifier to the specified variables. The variable names are taken to
-     * be fully-qualified names, relative to the specified template. For example:
+     * Assigns the specified stringifier to the specified variables. The variable
+     * names are taken to be fully-qualified names, relative to the specified
+     * template. For example:
      *
      * <blockquote>
      *
@@ -148,7 +151,9 @@ public final class StringifierRegistry {
      * @see TemplateUtils#getFQName(Template, String)
      * @see TemplateUtils#getParentTemplate(Template, String)
      */
-    public Builder register(Stringifier stringifier, Template template, String... varNames) {
+    public Builder register(Stringifier stringifier,
+        Template template,
+        String... varNames) {
       Check.notNull(stringifier, "stringifier");
       Check.notNull(template, "template");
       Check.that(varNames, "varNames").is(deepNotEmpty());
@@ -163,12 +168,14 @@ public final class StringifierRegistry {
     }
 
     /**
-     * Assigns the specified stringifier to the specified variables. The variables are supposed to
-     * be residing in {@code nestedTemplateName}; not in some template descending from it. In other
-     * words, don't used fully-qualified variable names. If you want to target the variables in the
-     * root template itself (the {@code template} argument), specify {@code null} for {@code
-     * nestedTemplateName}. To assign the stringifier to <i>all</i> variables in the target
-     * template, specify an empty string array for {@code varNames}. For example:
+     * Assigns the specified stringifier to the specified variables. The variables
+     * are supposed to be residing in {@code nestedTemplateName}; not in some
+     * template descending from it. In other words, don't used fully-qualified
+     * variable names. If you want to target the variables in the root template
+     * itself (the {@code template} argument), specify {@code null} for {@code
+     * nestedTemplateName}. To assign the stringifier to <i>all</i> variables in the
+     * target template, specify an empty string array for {@code varNames}. For
+     * example:
      *
      * <blockquote>
      *
@@ -193,11 +200,12 @@ public final class StringifierRegistry {
      *
      * @param stringifier The stringifier
      * @param template The root template
-     * @param nestedTemplateName The name of a template descending from the root template, or
-     *     {@code null} if you want to target the variables in the root template itself
-     * @param varNames The names of the variables to which to assign the stringifier, or an
-     *     empty string array if you want to assign the stringifier to all variables within the
-     *     target template
+     * @param nestedTemplateName The name of a template descending from the root
+     *     template, or {@code null} if you want to target the variables in the root
+     *     template itself
+     * @param varNames The names of the variables to which to assign the
+     *     stringifier, or an empty string array if you want to assign the
+     *     stringifier to all variables within the target template
      * @return This {@code Builder}
      */
     public Builder registerByTemplate(Stringifier stringifier,
@@ -207,7 +215,9 @@ public final class StringifierRegistry {
       Check.notNull(stringifier, "stringifier");
       Check.notNull(template, "template");
       Check.notNull(varNames, "varNames");
-      Template tmpl = ifNotNull(nestedTemplateName, n -> getNestedTemplate(template, n), template);
+      Template tmpl = ifNotNull(nestedTemplateName,
+          n -> getNestedTemplate(template, n),
+          template);
       boolean all = varNames.length == 0;
       String[] names;
       if (all) {
@@ -228,17 +238,19 @@ public final class StringifierRegistry {
     }
 
     /**
-     * Assigns the specified stringifier to the specified {@link VarGroup variable groups}. The
-     * group that a variable belongs to can be specified as a prefix within the variable
-     * declaration. For example in {@code ~%format2:salary%} the {@code salary} variable is assigned
-     * to variable group "format2". A variable group can also be assigned via the {@link
-     * RenderSession} class. See {@link RenderSession#set(String, Object, VarGroup)}. Note that
-     * different instances of the same variable within the same template can be assigned to
-     * different variable groups (for example: {@code ~%html:fullName%} and {@code
+     * Assigns the specified stringifier to the specified {@link VarGroup variable
+     * groups}. The group that a variable belongs to can be specified as a prefix
+     * within the variable declaration. For example in {@code ~%format2:salary%} the
+     * {@code salary} variable is assigned to variable group "format2". A variable
+     * group can also be assigned via the {@link RenderSession} class. See {@link
+     * RenderSession#set(String, Object, VarGroup)}. Note that different instances of
+     * the same variable within the same template can be assigned to different
+     * variable groups (for example: {@code ~%html:fullName%} and {@code
      * ~%js:fullName%}).
      *
      * @param stringifier The stringifier
-     * @param groupNames The names of the variable groups to which to assign the stringifier
+     * @param groupNames The names of the variable groups to which to assign the
+     *     stringifier
      * @return This {@code Builder}
      */
     public Builder registerByGroup(Stringifier stringifier, String... groupNames) {
@@ -256,11 +268,12 @@ public final class StringifierRegistry {
     }
 
     /**
-     * Assigns the specified stringifier to all variables with the specified name(s). This works
-     * across all templates within the application, so be careful when registering a stringifier
-     * this way. You may specify a wildcard '*' character at the beginning or end of the variable
-     * name. For example to assign a number formatter to all variables whose name ends with "Price",
-     * specify {@code *Price} as the variable name.
+     * Assigns the specified stringifier to all variables with the specified name(s).
+     * This works across all templates within the application, so be careful when
+     * registering a stringifier this way. You may specify a wildcard '*' character
+     * at the beginning or end of the variable name. For example to assign a number
+     * formatter to all variables whose name ends with "Price", specify {@code
+     * *Price} as the variable name.
      *
      * @param stringifier The stringifier
      * @param varNames The variable names to associate the stringifier with.
@@ -284,14 +297,15 @@ public final class StringifierRegistry {
     }
 
     /**
-     * Assigns the specified stringifier to the specified types. In other words, if a value is an
-     * instance of one of those types, then it will be stringified using the specified stringifier,
-     * whatever the variable receiving that value. Internally, type-based stringifiers are stored
-     * into, and looked up in a {@link TypeMap}. This means that if there is no stringifier defined
-     * for, say, {@code Short.class}, but there is a stringifier for {@code Number.class}, then that
-     * is the stringifier that is going to be used for {@code Short} values. This saves you from
-     * having to specify a stringifier for each and every subclass of {@code Number} if they can all
-     * be stringified in the same way.
+     * Assigns the specified stringifier to the specified types. In other words, if a
+     * value is an instance of one of those types, then it will be stringified using
+     * the specified stringifier, whatever the variable receiving that value.
+     * Internally, type-based stringifiers are stored into, and looked up in a {@link
+     * TypeMap}. This means that if there is no stringifier defined for, say, {@code
+     * Short.class}, but there is a stringifier for {@code Number.class}, then that
+     * is the stringifier that is going to be used for {@code Short} values. This
+     * saves you from having to specify a stringifier for each and every subclass of
+     * {@code Number} if they can all be stringified in the same way.
      *
      * @param stringifier The stringifier
      * @param types The types to associate the stringifier with.
@@ -309,18 +323,20 @@ public final class StringifierRegistry {
     }
 
     /**
-     * Explicitly sets the data type of the specified variables. This enables the {@code
-     * StringifierRegistry} to find a type-based stringifier for a value even if the value is {@code
-     * null} (in which case {@code Object.getClass()} is not available to determine the variable's
-     * type). The variable names are taken to be fully-qualified names, relative to the specified
-     * template.
+     * Explicitly sets the data type of the specified variables. This enables the
+     * {@code StringifierRegistry} to find a type-based stringifier for a value even
+     * if the value is {@code null} (in which case {@code Object.getClass()} is not
+     * available to determine the variable's type). The variable names are taken to
+     * be fully-qualified names, relative to the specified template.
      *
      * @param type The data type to set for the specified variables
      * @param template The template containing the variables
      * @param varNames The fully-qualified names of the variables
      * @return This {@code Builder}
      */
-    public Builder setVariableType(Class<?> type, Template template, String... varNames) {
+    public Builder setVariableType(Class<?> type,
+        Template template,
+        String... varNames) {
       Check.notNull(type, "type");
       Check.notNull(template, "template");
       Check.that(varNames, "varNames").isNot(empty());
@@ -365,45 +381,51 @@ public final class StringifierRegistry {
   public static final Stringifier ESCAPE_JS = StandardStringifiers.ESCAPE_JS;
 
   /**
-   * To be used for escaping HTML attributes. Same as {@link #ESCAPE_HTML} except that single quotes
-   * and double quotes are also escaped. This is one of the standard stringifiers.
+   * To be used for escaping HTML attributes. Same as {@link #ESCAPE_HTML} except
+   * that single quotes and double quotes are also escaped. This is one of the
+   * standard stringifiers.
    */
   public static final Stringifier ESCAPE_ATTR = StandardStringifiers.ESCAPE_ATTR;
 
   /**
-   * To be used for escaping HTML attributes containing Javascript, like {@code onclick}. This is
-   * one of the standard stringifiers.
+   * To be used for escaping HTML attributes containing Javascript, like {@code
+   * onclick}. This is one of the standard stringifiers.
    */
   public static final Stringifier ESCAPE_JS_ATTR = StandardStringifiers.ESCAPE_JS_ATTR;
 
   /**
-   * To be used for escaping URL query parameter. Both paramter names and parameter values can be
-   * escaped using this stringifier since they are escaped identically. This is one of the standard
-   * stringifiers.
+   * To be used for escaping URL query parameter. Both paramter names and parameter
+   * values can be escaped using this stringifier since they are escaped identically.
+   * This is one of the standard stringifiers.
    */
   public static final Stringifier ESCAPE_QUERY_PARAM = StandardStringifiers.ESCAPE_QUERY_PARAM;
 
   /**
-   * To be used for escaping URL path segments. This is one of the standard stringifiers.
+   * To be used for escaping URL path segments. This is one of the standard
+   * stringifiers.
    */
   public static final Stringifier ESCAPE_PATH = StandardStringifiers.ESCAPE_PATH;
 
   /**
-   * Returns a {@code Builder} instance that lets you configure a {@code StringifierRegistry}. The
-   * registry will already contain stringifiers for the standard {@link VarGroup variable groups}.
+   * Returns a {@code Builder} instance that lets you configure a {@code
+   * StringifierRegistry}. The registry will already contain stringifiers for the
+   * standard {@link VarGroup variable groups}.
    *
-   * @return A {@code Builder} instance that lets you configure a {@code StringifierRegistry}
+   * @return A {@code Builder} instance that lets you configure a {@code
+   *     StringifierRegistry}
    */
   public static Builder configure() {
     return new Builder(true);
   }
 
   /**
-   * Returns a {@code Builder} instance that lets you configure a {@code StringifierRegistry}. The
-   * registry will already contain any stringifier exception the {@link Stringifier#DEFAULT default
-   * stringifier}. Useful for non-HTML templates.
+   * Returns a {@code Builder} instance that lets you configure a {@code
+   * StringifierRegistry}. The registry will already contain any stringifier
+   * exception the {@link Stringifier#DEFAULT default stringifier}. Useful for
+   * non-HTML templates.
    *
-   * @return A {@code Builder} instance that lets you configure a {@code StringifierRegistry}
+   * @return A {@code Builder} instance that lets you configure a {@code
+   *     StringifierRegistry}
    */
   public static Builder cleanSlate() {
     return new Builder(true);
@@ -421,7 +443,7 @@ public final class StringifierRegistry {
       List<Tuple<String, Stringifier>> partials,
       Stringifier defStringifier) {
     this.stringifiers = Map.copyOf(stringifiers);
-    this.typeStringifiers = SimpleTypeMap.copyOf(typeStringifiers);
+    this.typeStringifiers = TypeHashMap.copyOf(typeStringifiers);
     this.partialNames = List.copyOf(partials);
     this.typeLookup = Map.copyOf(typeLookup);
     this.defStringifier = defStringifier;
