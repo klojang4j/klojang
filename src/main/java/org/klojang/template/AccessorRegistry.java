@@ -1,5 +1,6 @@
 package org.klojang.template;
 
+import nl.naturalis.common.ClassMethods;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.TypeHashMap;
 import nl.naturalis.common.path.PathWalker;
@@ -12,8 +13,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static nl.naturalis.common.ClassMethods.isA;
-
 /**
  * A registry of {@link Accessor accessors} used by the {@link RenderSession} to
  * extract values from model objects. For example, if you want to populate a template
@@ -24,14 +23,13 @@ import static nl.naturalis.common.ClassMethods.isA;
  * Accessor} yourself.
  *
  * <p>Any {@code AccessorRegistry}, including the ones you build yourself and
- * including the {@code
- * STANDARD_ACCESSORS} {@code AccessorRegistry} comes with a set of predefined
- * accessors. These accessors are not exposed via the API because you are only
- * communicating with Klojang via accessor registries, not via individual accessors.
- * However, you can check the source code for inspiration, should you need to write
- * enhanced versions of them. This is how the {@code AccessorRegistry} decides which
- * accessor to hands out to the {@code RenderSession} for any particular type of
- * object:
+ * including the {@code STANDARD_ACCESSORS} {@code AccessorRegistry} comes with a set
+ * of predefined accessors. These accessors are not exposed via the API because you
+ * are only communicating with Klojang via accessor registries, not via individual
+ * accessors. However, you can check the source code for inspiration, should you need
+ * to write enhanced versions of them. This is how the {@code AccessorRegistry}
+ * decides which accessor to hands out to the {@code RenderSession} for any
+ * particular type of object:
  *
  * <p>
  *
@@ -230,11 +228,11 @@ public class AccessorRegistry {
       NameMapper nm = mappers.getOrDefault(template, defMapper);
       if (type == Optional.class) {
         return new OptionalAccessor<>(this, template);
-      } else if (isA(type, Map.class)) {
+      } else if (ClassMethods.isSubtype(type, Map.class)) {
         acc = new MapAccessor(nm);
-      } else if (isA(type, Row.class)) {
+      } else if (ClassMethods.isSubtype(type, Row.class)) {
         acc = new RowAccessor(nm);
-      } else if (isA(type, Object[].class)) {
+      } else if (ClassMethods.isSubtype(type, Object[].class)) {
         acc = ArrayAccessor.getInstance(template);
       } else if (useBeanAccessor) {
         acc = new BeanAccessor<>(type, nm);

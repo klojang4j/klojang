@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
 import org.klojang.db.BindInfo;
 import org.klojang.db.NamedParameter;
 import org.slf4j.Logger;
@@ -16,24 +17,24 @@ import nl.naturalis.common.invoke.GetterFactory;
 /**
  * Binds a single value from a JavaBean into a PreparedStatement.
  *
- * @author Ayco Holleman
  * @param <FIELD_TYPE>
  * @param <PARAM_TYPE>
+ * @author Ayco Holleman
  */
 class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
 
   private static final Logger LOG = LoggerFactory.getLogger(BeanValueBinder.class);
 
-  static <T> void bindBean(PreparedStatement ps, T bean, BeanValueBinder<?, ?>[] binders)
-      throws Throwable {
+  static <T> void bindBean(PreparedStatement ps,
+      T bean,
+      BeanValueBinder<?, ?>[] binders) throws Throwable {
     LOG.debug("Binding {} to PreparedStatement", bean.getClass().getSimpleName());
     for (BeanValueBinder<?, ?> binder : binders) {
       binder.bindValue(ps, bean);
     }
   }
 
-  static BeanValueBinder<?, ?>[] createBeanValueBinders(
-      Class<?> beanClass,
+  static BeanValueBinder<?, ?>[] createBeanValueBinders(Class<?> beanClass,
       List<NamedParameter> params,
       BindInfo bindInfo,
       Collection<NamedParameter> bound) {
@@ -49,7 +50,8 @@ class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
       String property = param.getName();
       Class<?> type = getter.getReturnType();
       Receiver<?, ?> receiver;
-      if (ClassMethods.isA(type, Enum.class) && bindInfo.bindEnumUsingToString(property)) {
+      if (ClassMethods.isSubtype(type, Enum.class)
+          && bindInfo.bindEnumUsingToString(property)) {
         receiver = EnumReceivers.ENUM_TO_STRING;
       } else {
         Integer sqlType = bindInfo.getSqlType(property, type);
@@ -68,8 +70,9 @@ class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
   private final Receiver<FIELD_TYPE, PARAM_TYPE> receiver;
   private final NamedParameter param;
 
-  private BeanValueBinder(
-      Getter getter, Receiver<FIELD_TYPE, PARAM_TYPE> receiver, NamedParameter param) {
+  private BeanValueBinder(Getter getter,
+      Receiver<FIELD_TYPE, PARAM_TYPE> receiver,
+      NamedParameter param) {
     this.getter = getter;
     this.receiver = receiver;
     this.param = param;
@@ -87,4 +90,5 @@ class BeanValueBinder<FIELD_TYPE, PARAM_TYPE> {
     }
     param.getIndices().forEachThrowing(i -> receiver.bind(ps, i, paramValue));
   }
+
 }
