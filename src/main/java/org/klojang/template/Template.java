@@ -18,14 +18,15 @@ import static org.klojang.template.TemplateUtils.getFQName;
 import static org.klojang.x.tmpl.TemplateSourceType.STRING;
 
 /**
- * The {@code Template} class is responsible for loading and parsing templates and functions as a
- * factory for {@link RenderSession} objects that let you render them. The {@code Template} class
- * and the {@code RenderSession} class are the two central classes of the Klojang library. {@code
- * Template} instances are unmodifiable, expensive-to-create and heavy-weight objects. Generally
- * though you should not cache them as this is already done by Klojang. You can disable template
- * caching by means of a system property. See {@link SysProp#TMPL_CACHE_SIZE}. This is useful during
- * development, when you want the template to be re-loaded and re-parsed with every refresh of the
- * browser.
+ * The {@code Template} class is responsible for loading and parsing templates and
+ * functions as a factory for {@link RenderSession} objects that let you render them.
+ * The {@code Template} class and the {@code RenderSession} class are the two central
+ * classes of the Klojang library. {@code Template} instances are unmodifiable,
+ * expensive-to-create and heavy-weight objects. Generally though you should not
+ * cache them as this is already done by Klojang. You can disable template caching by
+ * means of a system property. See {@link SysProp#TMPL_CACHE_SIZE}. This is useful
+ * during development, when you want the template to be re-loaded and re-parsed with
+ * every refresh of the browser.
  *
  * @author Ayco Holleman
  */
@@ -35,17 +36,19 @@ public class Template {
   private static final Logger LOG = LoggerFactory.getLogger(Template.class);
 
   /**
-   * The name given to the root template: "{root}". Any {@code Template} that is explicitly
-   * instantiated by calling one of the {@code parse} methods gets this name. Templates nested
-   * inside this template get their name from the source code (for example: {@code ~%%begin:foo%} or
-   * {@code ~%%include:/views/foo.html%} or {@code ~%%include:foo:/views/bar.html%}).
+   * The name given to the root template: "{root}". Any {@code Template} that is
+   * explicitly instantiated by calling one of the {@code parse} methods gets this
+   * name. Templates nested inside this template get their name from the source code
+   * (for example: {@code ~%%begin:foo%} or {@code ~%%include:/views/foo.html%} or
+   * {@code ~%%include:foo:/views/bar.html%}).
    */
   public static final String ROOT_TEMPLATE_NAME = "{root}";
 
   /**
-   * Parses the specified string into a {@code Template} instance. If the string contains any {@code
-   * include} declarations (e.g. {@code ~%%include:/path/to/template%}) the path will be interpreted
-   * as a file system resource. Templates created from a string are never cached.
+   * Parses the specified string into a {@code Template} instance. If the string
+   * contains any {@code include} declarations (e.g. {@code
+   * ~%%include:/path/to/template%}) the path will be interpreted as a file system
+   * resource. Templates created from a string are never cached.
    *
    * @param source The source code for the {@code Template}
    * @return a new {@code Template} instance
@@ -57,46 +60,55 @@ public class Template {
   }
 
   /**
-   * Parses the specified string into a {@code Template} instance. The specified class will be used
-   * to include other templates using {@code clazz.getResourceAsStream("/path/to/template")}.
-   * Templates created from a string are never cached.
+   * Parses the specified string into a {@code Template} instance. The specified
+   * class will be used to include other templates using {@code
+   * clazz.getResourceAsStream("/path/to/template")}. Templates created from a string
+   * are never cached.
    *
-   * @param clazz Any {@code Class} object that provides access to the included tempate files by
-   *     calling {@code getResourceAsStream} on it
+   * @param clazz Any {@code Class} object that provides access to the included
+   *     tempate files by calling {@code getResourceAsStream} on it
    * @param source The source code for the {@code Template}
    * @return a {@code Template} instance
    * @throws ParseException
    */
-  public static Template fromString(Class<?> clazz, String source) throws ParseException {
+  public static Template fromString(Class<?> clazz, String source)
+      throws ParseException {
     Check.notNull(clazz, "clazz");
     Check.notNull(source, "source");
     return new Parser(ROOT_TEMPLATE_NAME, new TemplateId(clazz), source).parse();
   }
 
   /**
-   * Parses the specified resource into a {@code Template} instance. The resource is read using
-   * {@code clazz.getResourceAsStream(path)}. Any included templates will be loaded this way as
-   * well. Templates created from a classpath resource are always cached. Thus, calling this method
-   * multiple times with the same {@code clazz} and {@code path} arguments will always return the
-   * same {@code Template} instance. (More precizely: the cache key is the combination of {@code
+   * Parses the specified resource into a {@code Template} instance. The resource is
+   * read using {@code clazz.getResourceAsStream(path)}. Any included templates will
+   * be loaded this way as well. Templates created from a classpath resource are
+   * always cached. Thus, calling this method multiple times with the same {@code
+   * clazz} and {@code path} arguments will always return the same {@code Template}
+   * instance. (More precizely: the cache key is the combination of {@code
    * clazz.getPackage()} and {@code path}.)
    *
-   * @param clazz Any {@code Class} object that provides access to the tempate file by calling
-   *     {@code getResourceAsStream} on it
+   * @param clazz Any {@code Class} object that provides access to the tempate
+   *     file by calling {@code getResourceAsStream} on it
    * @param path The location of the template file
    * @return a {@code Template} instance
    * @throws ParseException
    */
-  public static Template fromResource(Class<?> clazz, String path) throws ParseException {
+  public static Template fromResource(Class<?> clazz, String path)
+      throws ParseException {
     Check.notNull(clazz, "clazz");
-    Check.notNull(path, "path").has(clazz::getResource, notNull(), "Resource not found: %s", path);
-    return TemplateCache.INSTANCE.get(ROOT_TEMPLATE_NAME, new TemplateId(clazz, path));
+    Check.notNull(path, "path").has(clazz::getResource,
+        notNull(),
+        "Resource not found: %s",
+        path);
+    return TemplateCache.INSTANCE.get(ROOT_TEMPLATE_NAME,
+        new TemplateId(clazz, path));
   }
 
   /**
-   * Parses the specified file into a {@code Template} instance. Templates created from file are
-   * always cached. Thus, calling this method multiple times with the same {@code path} argument
-   * will always return the same {@code Template} instance.
+   * Parses the specified file into a {@code Template} instance. Templates created
+   * from file are always cached. Thus, calling this method multiple times with the
+   * same {@code path} argument will always return the same {@code Template}
+   * instance.
    *
    * @param path The path of the file to be parsed
    * @return a {@code Template} instance
@@ -111,7 +123,8 @@ public class Template {
       throws ParseException {
     Check.notNull(pathResolver, "pathResolver");
     Check.notNull(path, "path");
-    return TemplateCache.INSTANCE.get(ROOT_TEMPLATE_NAME, new TemplateId(pathResolver, path));
+    return TemplateCache.INSTANCE.get(ROOT_TEMPLATE_NAME,
+        new TemplateId(pathResolver, path));
   }
 
   private final String name;
@@ -148,9 +161,9 @@ public class Template {
   }
 
   /**
-   * Returns the template inside which this {@code Template} is nested. If this is a root template
-   * (it was <i>created from</i> source code rather than <i>defined in</i> source code), this method
-   * returns {@code null}.
+   * Returns the template inside which this {@code Template} is nested. If this is a
+   * root template (it was <i>created from</i> source code rather than <i>defined
+   * in</i> source code), this method returns {@code null}.
    *
    * @return The template inside which this {@code Template} is nested
    */
@@ -170,11 +183,12 @@ public class Template {
   }
 
   /**
-   * If the template was created from a file or classpath resource, this method returns its path,
-   * else null. In other words, for {@code included} templates this method (by definition) returns a
-   * non-null value. For inline templates this method (by definition) returns null. For <i>this</i>
-   * {@code Template} the return value depends on which of the static factory methods was used to
-   * instantiate the template.
+   * If the template was created from a file or classpath resource, this method
+   * returns its path, else null. In other words, for {@code included} templates this
+   * method (by definition) returns a non-null value. For inline templates this
+   * method (by definition) returns null. For <i>this</i> {@code Template} the return
+   * value depends on which of the static factory methods was used to instantiate the
+   * template.
    *
    * @return The file location (if any) of the source code for this {@code Template}
    */
@@ -183,8 +197,9 @@ public class Template {
   }
 
   /**
-   * Returns the names of all variables in this {@code Template} (non-recursive), in order of their
-   * first appearance in the template. The returned {@code Set} is unmodifiable.
+   * Returns the names of all variables in this {@code Template} (non-recursive), in
+   * order of their first appearance in the template. The returned {@code Set} is
+   * unmodifiable.
    *
    * @return The names of all variables in this {@code Template}
    */
@@ -193,19 +208,21 @@ public class Template {
   }
 
   /**
-   * Returns whether or not this {@code Template} contains a variable with the specified name.
+   * Returns whether or not this {@code Template} contains a variable with the
+   * specified name.
    *
    * @param name The name of the variable
-   * @return Whether or not this {@code Template} contains a variable with the specified name
+   * @return Whether or not this {@code Template} contains a variable with the
+   *     specified name
    */
   public boolean containsVariable(String name) {
     return Check.notNull(name).ok(varIndices::containsKey);
   }
 
   /**
-   * Returns the total number of variables in this {@code Template}. Note that this method does not
-   * count the number of <i>unique</i> variable names (which would be {@link #getVariables()
-   * getVars().size()}).
+   * Returns the total number of variables in this {@code Template}. Note that this
+   * method does not count the number of <i>unique</i> variable names (which would be
+   * {@link #getVariables() getVars().size()}).
    *
    * @return The total number of variables in this {@code Template}
    */
@@ -216,8 +233,8 @@ public class Template {
   private List<Template> nestedTemplates;
 
   /**
-   * Returns all templates nested inside this {@code Template} (non-recursive). The returned {@code
-   * List} is unmodifiable.
+   * Returns all templates nested inside this {@code Template} (non-recursive). The
+   * returned {@code List} is unmodifiable.
    *
    * @return All templates nested inside this {@code Template}
    */
@@ -234,8 +251,8 @@ public class Template {
   }
 
   /**
-   * Returns the names of all templates nested inside this {@code Template} (non-recursive). The
-   * returned {@code Set} is unmodifiable.
+   * Returns the names of all templates nested inside this {@code Template}
+   * (non-recursive). The returned {@code Set} is unmodifiable.
    *
    * @return The names of all nested templates
    */
@@ -244,18 +261,20 @@ public class Template {
   }
 
   /**
-   * Returns whether or not this {@code Template} contains a nested template with the specified
-   * name.
+   * Returns whether or not this {@code Template} contains a nested template with the
+   * specified name.
    *
    * @param name The name of the nested template
-   * @return Whether or not this {@code Template} contains a nested template with the specified name
+   * @return Whether or not this {@code Template} contains a nested template with the
+   *     specified name
    */
   public boolean containsNestedTemplate(String name) {
     return Check.notNull(name).ok(varIndices::containsKey);
   }
 
   /**
-   * Returns the number of templates nested inside this {@code Template} (non-recursive).
+   * Returns the number of templates nested inside this {@code Template}
+   * (non-recursive).
    *
    * @return The number of nested templates
    */
@@ -264,8 +283,9 @@ public class Template {
   }
 
   /**
-   * Returns the nested template identified by the specified name. This method throws an {@link
-   * IllegalArgumentException} if no nested template has the specified name.
+   * Returns the nested template identified by the specified name. This method throws
+   * an {@link IllegalArgumentException} if no nested template has the specified
+   * name.
    *
    * @param name The name of a nested template
    * @return The {@code Template} with the specified name
@@ -277,8 +297,8 @@ public class Template {
   }
 
   /**
-   * Returns the names of all variables and nested templates within this {@code Template}
-   * (non-recursive). The returned {@code List} is unmodifiable.
+   * Returns the names of all variables and nested templates within this {@code
+   * Template} (non-recursive). The returned {@code List} is unmodifiable.
    *
    * @return The names of all variables and nested templates in this {@code Template}
    */
@@ -287,8 +307,8 @@ public class Template {
   }
 
   /**
-   * Returns whether or not this is a text-only template. In other words, whether this is a template
-   * without any variables or nested templates.
+   * Returns whether or not this is a text-only template. In other words, whether
+   * this is a template without any variables or nested templates.
    *
    * @return Whether or not this is a text-only template
    */
@@ -297,10 +317,10 @@ public class Template {
   }
 
   /**
-   * Returns a {@code RenderSession} with which populate and render this {@code Template}. The
-   * {@code RenderSession} use the {@link AccessorRegistry#STANDARD_ACCESSORS predefined accessors}
-   * to extract values from source data objects, and the {@link StringifierRegistry predefined
-   * stringifiers} to stringify those values.
+   * Returns a {@code RenderSession} with which populate and render this {@code
+   * Template}. The {@code RenderSession} use the {@link AccessorRegistry#STANDARD_ACCESSORS
+   * predefined accessors} to extract values from source data objects, and the {@link
+   * StringifierRegistry predefined stringifiers} to stringify those values.
    *
    * @return A {@code RenderSession}
    */
@@ -309,13 +329,14 @@ public class Template {
   }
 
   /**
-   * Returns a {@code RenderSession} with which populate and render this {@code Template}. The
-   * {@code RenderSession} will use the {@link AccessorRegistry#STANDARD_ACCESSORS predefined
-   * accessors} to extract values from source data objects, and the specified {@code
-   * StringifierRegistry} to stringify those values.
+   * Returns a {@code RenderSession} with which populate and render this {@code
+   * Template}. The {@code RenderSession} will use the {@link
+   * AccessorRegistry#STANDARD_ACCESSORS predefined accessors} to extract values from
+   * source data objects, and the specified {@code StringifierRegistry} to stringify
+   * those values.
    *
-   * @param stringifiers The {@code StringifierRegistry} used to supply the {@code
-   *     RenderSession} with {@link Stringifier stringifiers}
+   * @param stringifiers The {@code StringifierRegistry} used to supply the
+   *     {@code RenderSession} with {@link Stringifier stringifiers}
    * @return A new {@code RenderSession}
    */
   public RenderSession newRenderSession(StringifierRegistry stringifiers) {
@@ -324,13 +345,13 @@ public class Template {
   }
 
   /**
-   * Returns a {@code RenderSession} with which populate and render this {@code Template}. The
-   * {@code RenderSession} that will use the specified {@code AccessorRegistry} to extract values
-   * from source data, and the {@link StringifierRegistry predefined stringifiers} to stringify
-   * those values.
+   * Returns a {@code RenderSession} with which populate and render this {@code
+   * Template}. The {@code RenderSession} that will use the specified {@code
+   * AccessorRegistry} to extract values from source data, and the {@link
+   * StringifierRegistry predefined stringifiers} to stringify those values.
    *
-   * @param accessors The {@code AccessorRegistry} used to supply the {@code RenderSession} with
-   *     {@link Accessor accessors}
+   * @param accessors The {@code AccessorRegistry} used to supply the {@code
+   *     RenderSession} with {@link Accessor accessors}
    * @return A new {@code RenderSession}
    */
   public RenderSession newRenderSession(AccessorRegistry accessors) {
@@ -339,14 +360,15 @@ public class Template {
   }
 
   /**
-   * Returns a {@code RenderSession} with which populate and render this {@code Template}. The
-   * {@code RenderSession} that will use the specified {@code AccessorRegistry} to extract values
-   * from source data, and the specified {@code StringifierRegistry} to stringify those values.
+   * Returns a {@code RenderSession} with which populate and render this {@code
+   * Template}. The {@code RenderSession} that will use the specified {@code
+   * AccessorRegistry} to extract values from source data, and the specified {@code
+   * StringifierRegistry} to stringify those values.
    *
-   * @param accessors The {@code AccessorRegistry} used to supply the {@code RenderSession} with
-   *     {@link Accessor accessors}
-   * @param stringifiers The {@code StringifierRegistry} used to supply the {@code
-   *     RenderSession} with {@link Stringifier stringifiers}
+   * @param accessors The {@code AccessorRegistry} used to supply the {@code
+   *     RenderSession} with {@link Accessor accessors}
+   * @param stringifiers The {@code StringifierRegistry} used to supply the
+   *     {@code RenderSession} with {@link Stringifier stringifiers}
    * @return A new {@code RenderSession}
    */
   public RenderSession newRenderSession(AccessorRegistry accessors,
@@ -383,9 +405,10 @@ public class Template {
   }
 
   /**
-   * More or less re-assembles to source code from the constituent parts of the {@code Template}.
-   * Note, however, that ditch block are ditched early on in the parsing process and there is no
-   * trace of them left in the resulting {@code Template} instance.
+   * More or less re-assembles to source code from the constituent parts of the
+   * {@code Template}. Note, however, that ditch block are ditched early on in the
+   * parsing process and there is no trace of them left in the resulting {@code
+   * Template} instance.
    */
   @Override
   public String toString() {
@@ -402,7 +425,7 @@ public class Template {
 
   @SuppressWarnings("unchecked")
   <T extends Part> T getPart(int index) {
-    return (T) Check.that(index).is(indexOf(), parts).ok(parts::get);
+    return (T) Check.that(index).is(arrayIndexOf(), parts).ok(parts::get);
   }
 
   Map<String, IntList> getVarPartIndices() {
