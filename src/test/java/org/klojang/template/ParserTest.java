@@ -1,8 +1,10 @@
 package org.klojang.template;
 
 import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import nl.naturalis.common.IOMethods;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -57,7 +59,8 @@ public class ParserTest {
     assertEquals(VarGroup.HTML, vp.getVarGroup().get());
     assertEquals("foo", vp.getName());
     assertTrue(parts.get(2) instanceof TextPart);
-    assertEquals("</td>\n<!-- some comment -->\n<td>", ((TextPart) parts.get(2)).getText());
+    assertEquals("</td>\n<!-- some comment -->\n<td>",
+        ((TextPart) parts.get(2)).getText());
     assertTrue(parts.get(3) instanceof VariablePart);
     vp = (VariablePart) parts.get(3);
     assertEquals(VarGroup.TEXT, vp.getVarGroup().get());
@@ -150,7 +153,8 @@ public class ParserTest {
   public void testDitchBlock00() throws ParseException {
     String path = "ParserTest.parseDitchBlock00.html";
     Template template = Template.fromResource(getClass(), path);
-    String expected = IOMethods.toString(getClass(), "ParserTest.parseDitchBlock00.expected.html");
+    String expected = IOMethods.getContents(getClass(),
+        "ParserTest.parseDitchBlock00.expected.html");
     String actual = template.newRenderSession().render();
     assertEquals(expected, actual);
   }
@@ -159,7 +163,8 @@ public class ParserTest {
   public void testDitchBlock01() throws ParseException, RenderException {
     String path = "ParserTest.parseDitchBlock01.html";
     Template template = Template.fromResource(getClass(), path);
-    String expected = IOMethods.toString(getClass(), "ParserTest.parseDitchBlock01.expected.html");
+    String expected = IOMethods.getContents(getClass(),
+        "ParserTest.parseDitchBlock01.expected.html");
     String actual = template.newRenderSession().set("foo", "bar").render();
     assertEquals(expected, actual);
   }
@@ -179,4 +184,5 @@ public class ParserTest {
     Template template = Template.fromResource(getClass(), path);
     TemplateUtils.printParts(template, System.out);
   }
+
 }

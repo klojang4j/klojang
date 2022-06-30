@@ -2,11 +2,13 @@ package org.klojang.x.tmpl;
 
 import java.io.*;
 import java.util.Objects;
+
 import org.klojang.template.PathResolutionException;
 import org.klojang.template.PathResolver;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.IOMethods;
 import nl.naturalis.common.check.Check;
+
 import static org.klojang.x.tmpl.TemplateSourceType.FILE_SYSTEM;
 import static org.klojang.x.tmpl.TemplateSourceType.RESOLVER;
 import static org.klojang.x.tmpl.TemplateSourceType.RESOURCE;
@@ -83,14 +85,14 @@ public class TemplateId {
     } else if (sourceType == RESOURCE) {
       try (InputStream in = clazz.getResourceAsStream(path)) {
         Check.on(PathResolutionException::new, in).is(notNull(), path);
-        return IOMethods.toString(in);
+        return IOMethods.getContents(in);
       } catch (IOException e) {
         throw new PathResolutionException(path);
       }
     }
     try (InputStream in = pathResolver.resolvePath(path)) {
       Check.on(PathResolutionException::new, in).is(notNull(), path);
-      return IOMethods.toString(in);
+      return IOMethods.getContents(in);
     } catch (IOException e) {
       throw new PathResolutionException(path);
     }
@@ -98,7 +100,7 @@ public class TemplateId {
 
   private static String getSource(InputStream in) {
     try (in) {
-      return IOMethods.toString(in);
+      return IOMethods.getContents(in);
     } catch (IOException e) {
       throw ExceptionMethods.uncheck(e);
     }
@@ -162,6 +164,13 @@ public class TemplateId {
       return concat("TemplateId[sourceType=", sourceType, ";path=", path, "]");
     }
     return concat(
-        "TemplateId[sourceType=", sourceType, ";path=", path, ";resolver=", pathResolver, "]");
+        "TemplateId[sourceType=",
+        sourceType,
+        ";path=",
+        path,
+        ";resolver=",
+        pathResolver,
+        "]");
   }
+
 }

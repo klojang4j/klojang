@@ -2,8 +2,10 @@ package org.klojang.template;
 
 import java.time.LocalDate;
 import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import nl.naturalis.common.IOMethods;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class RenderSessionTest02 {
@@ -13,12 +15,14 @@ public class RenderSessionTest02 {
     List<Employee> employees = getEmployees();
     Employee manager = getManager();
     Department department = new Department("HR", manager, employees);
-    Template template = Template.fromResource(getClass(), "RenderSessionTest02_a.txt");
+    Template template = Template.fromResource(getClass(),
+        "RenderSessionTest02_a.txt");
     RenderSession session = template.newRenderSession();
     session.insert(department);
     // session.render(System.out);
     String actual = session.render();
-    String expected = IOMethods.toString(getClass(), "RenderSessionTest02.expected.txt");
+    String expected = IOMethods.getContents(getClass(),
+        "RenderSessionTest02.expected.txt");
     assertEquals(expected, actual);
   }
 
@@ -27,30 +31,41 @@ public class RenderSessionTest02 {
     List<Employee> employees = getEmployees();
     Employee manager = getManager();
     Department department = new Department("HR", manager, employees);
-    Template template = Template.fromResource(getClass(), "RenderSessionTest02_b.txt");
+    Template template = Template.fromResource(getClass(),
+        "RenderSessionTest02_b.txt");
     RenderSession session = template.newRenderSession();
     session.insert(department);
     // session.render(System.out);
     String actual = session.render();
-    String expected = IOMethods.toString(getClass(), "RenderSessionTest02.expected.txt");
+    String expected = IOMethods.getContents(getClass(),
+        "RenderSessionTest02.expected.txt");
     assertEquals(expected, actual);
   }
 
   private static List<Employee> getEmployees() {
     return List.of(
         new Employee(
-            "Richard Dawkins", new Address("Dawkins street", 8), LocalDate.of(1978, 8, 12)),
-        new Employee("Roger Penrose", new Address("Penrose blvd.", 103), LocalDate.of(1989, 2, 17)),
+            "Richard Dawkins",
+            new Address("Dawkins street", 8),
+            LocalDate.of(1978, 8, 12)),
+        new Employee("Roger Penrose",
+            new Address("Penrose blvd.", 103),
+            LocalDate.of(1989, 2, 17)),
         new Employee(
-            "Juan Maldacena", new Address("Maldacena ave.", 34), LocalDate.of(1961, 10, 29)));
+            "Juan Maldacena",
+            new Address("Maldacena ave.", 34),
+            LocalDate.of(1961, 10, 29)));
   }
 
   private static Employee getManager() {
     return new Employee(
-        "Albert Einstein", new Address("Einstein rd.", 2), LocalDate.of(1968, 7, 12));
+        "Albert Einstein",
+        new Address("Einstein rd.", 2),
+        LocalDate.of(1968, 7, 12));
   }
 
   public static class Address {
+
     String street;
     int number;
 
@@ -66,9 +81,11 @@ public class RenderSessionTest02 {
     public int getNumber() {
       return number;
     }
+
   }
 
   public static class Employee {
+
     String name;
     Address address;
     LocalDate birthDate;
@@ -90,9 +107,11 @@ public class RenderSessionTest02 {
     public LocalDate getBirthDate() {
       return birthDate;
     }
+
   }
 
   public static class Department {
+
     String name;
     Employee manager;
     List<Employee> employees;
@@ -114,5 +133,7 @@ public class RenderSessionTest02 {
     public List<Employee> getEmployees() {
       return employees;
     }
+
   }
+
 }

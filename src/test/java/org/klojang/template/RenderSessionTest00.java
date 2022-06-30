@@ -4,15 +4,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 import nl.naturalis.common.IOMethods;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class RenderSessionTest00 {
+
   @Test
   public void test00() throws ParseException, RenderException {
 
-    Template template = Template.fromResource(getClass(), "RenderSessionTest00.html");
+    Template template = Template.fromResource(getClass(),
+        "RenderSessionTest00.html");
 
     Map<String, Object> data = new HashMap<>();
     Map<String, Object> company = new HashMap<>();
@@ -71,7 +75,9 @@ public class RenderSessionTest00 {
     session.insert(data);
     // session.render(System.out);
     String actual = session.render();
-    String expected = IOMethods.toString(getClass(), "RenderSessionTest00.expected.html");
+    String expected = IOMethods.getContents(getClass(),
+        "RenderSessionTest00.expected.html");
     assertEquals(expected, actual);
   }
+
 }
