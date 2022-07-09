@@ -28,6 +28,7 @@ public class PathAccessor implements Accessor<Object> {
       return pw.read(data);
     } catch (PathWalkerException e) {
       return switch (e.getErrorCode()) {
+        case NO_SUCH_KEY, NO_SUCH_PROPERTY -> UNDEFINED;
         default -> new RenderException(e.getMessage());
       };
     }
