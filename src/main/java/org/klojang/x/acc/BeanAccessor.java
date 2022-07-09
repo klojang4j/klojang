@@ -18,9 +18,10 @@ public class BeanAccessor<T> implements Accessor<T> {
   @Override
   public Object access(T data, String name) throws RenderException {
     String prop = nm == null ? name : nm.map(name);
-    if (br.getIncludedProperties().contains(prop)) {
+    if (br.getReadableProperties().contains(prop)) {
       return br.read(data, prop);
     }
     return UNDEFINED;
   }
+
 }

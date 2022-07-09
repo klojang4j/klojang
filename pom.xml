@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.klojang</groupId>
@@ -12,8 +13,8 @@
         <!-- ==================================================================== -->
         <!-- *** Build settings                                               *** -->
         <!-- ==================================================================== -->
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>18</maven.compiler.source>
+        <maven.compiler.target>18</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- ==================================================================== -->
@@ -33,7 +34,7 @@
         <!-- *** Check for updates: mvn versions:display-dependency-updates   *** -->
         <!-- *** Check dependencies: mvn dependency:analyze                   *** -->
         <!-- ==================================================================== -->
-        <naturalis-common.version>3.0.0</naturalis-common.version>
+        <naturalis-common.version>3.0.5</naturalis-common.version>
         <commons-text.version>1.9</commons-text.version>
         <apache-httpclient.version>4.5.13</apache-httpclient.version>
         <slf4j.version>1.7.31</slf4j.version>
@@ -162,6 +163,9 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven-surefire-plugin.version}</version>
+                    <configuration>
+                        <argLine>--enable-preview</argLine>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -239,8 +243,11 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <showDeprecation>true</showDeprecation>
-                    <release>11</release>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <compilerArgs>
+                        <arg>--enable-preview</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>
@@ -251,7 +258,8 @@
                     <failOnWarnings>false</failOnWarnings>
                     <quiet>true</quiet>
                     <doclint>none</doclint>
-                    <excludePackageNames>org.klojang.x:org.klojang.x.*</excludePackageNames>
+                    <excludePackageNames>org.klojang.x:org.klojang.x.*
+                    </excludePackageNames>
                 </configuration>
                 <executions>
                     <execution>
@@ -263,7 +271,8 @@
                             <doctitle>Klojang ${project.version}</doctitle>
                             <detectLinks>true</detectLinks>
                             <show>protected</show>
-                            <excludePackageNames>org.klojang.x:org.klojang.x.*</excludePackageNames>
+                            <excludePackageNames>org.klojang.x:org.klojang.x.*
+                            </excludePackageNames>
                             <sourcepath>src/main/java</sourcepath>
                         </configuration>
                     </execution>
@@ -281,7 +290,8 @@
                             </description>
                             <detectLinks>true</detectLinks>
                             <show>protected</show>
-                            <excludePackageNames>org.klojang.x:org.klojang.x.*</excludePackageNames>
+                            <excludePackageNames>org.klojang.x:org.klojang.x.*
+                            </excludePackageNames>
                             <sourcepath>src/main/java</sourcepath>
                         </configuration>
                     </execution>
