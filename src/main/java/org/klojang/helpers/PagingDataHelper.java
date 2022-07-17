@@ -3,8 +3,10 @@ package org.klojang.helpers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import nl.naturalis.common.Tuple;
+
+import nl.naturalis.common.Tuple2;
 import nl.naturalis.common.check.Check;
+
 import static org.klojang.helpers.PagingDataHelper.ScrollType.SHIFT_WINDOW;
 import static nl.naturalis.common.check.CommonChecks.gte;
 import static nl.naturalis.common.check.CommonChecks.ne;
@@ -109,15 +111,15 @@ public class PagingDataHelper {
     return this;
   }
 
-  public List<Tuple<Boolean, Integer>> data() {
+  public List<Tuple2<Boolean, Integer>> data() {
     Check.that(rowCount).is(ne(), -1, ERR_NO_ROW_COUNT);
     if (rowCount <= rowsPerPage) {
       return Collections.emptyList();
     }
     int numLinks = Math.min(getPageCount() - first, windowSize);
-    List<Tuple<Boolean, Integer>> tuples = new ArrayList<>(numLinks);
+    List<Tuple2<Boolean, Integer>> tuples = new ArrayList<>(numLinks);
     for (int i = first; i < first + numLinks; ++i) {
-      tuples.add(Tuple.of(i == page, i + 1));
+      tuples.add(Tuple2.of(i == page, i + 1));
     }
     return tuples;
   }
@@ -137,4 +139,5 @@ public class PagingDataHelper {
   private int getPageCount() {
     return (int) Math.ceil((double) rowCount / (double) rowsPerPage);
   }
+
 }

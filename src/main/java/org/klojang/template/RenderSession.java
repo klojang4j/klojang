@@ -1,6 +1,6 @@
 package org.klojang.template;
 
-import nl.naturalis.common.Tuple;
+import nl.naturalis.common.LaxTuple2;
 import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.io.UnsafeByteArrayOutputStream;
@@ -26,19 +26,20 @@ import static org.klojang.x.Messages.ERR_TEMPLATE_NAME_NULL;
  * A {@code RenderSession} lets you populate a template and then render it. By
  * default template variables and nested templates are not rendered. That is, unless
  * you provide them with values, they will just disappear from the template upon
- * rendering. As soon as you render the template (by calling any of the {@link
- * #render()} methods), the {@code RenderSession} effectively becomes immutable. You
- * can render the template again using that {@code RenderSession}, as often as you
- * like, but it won't allow you to set or changes template variables any longer.
+ * rendering. As soon as you render the template (by calling any of the
+ * {@link #render()} methods), the {@code RenderSession} effectively becomes
+ * immutable. You can render the template again using that {@code RenderSession}, as
+ * often as you like, but it won't allow you to set or changes template variables any
+ * longer.
  *
  * <p>Render sessions are throw-away objects that should go out of scope as quickly
- * as possible.
- * They are cheap to instantiate, but can gain a lot of state as the template gets
- * populated. Therefore, when used within a JEE(-like) framework, make sure they
- * don't survive the request method. A possible exception could be templates that
- * render static but expensive-to-create content. However, in that case it is better
- * to {@link #createRenderable() obtain} a {@link Renderable} object from the {@code
- * RenderSession} and cache that, rather than the {@code RenderSession} itself.
+ * as possible. They are cheap to instantiate, but can gain a lot of state as the
+ * template gets populated. Therefore, when used within a JEE(-like) framework, make
+ * sure they don't survive the request method. A possible exception could be
+ * templates that render static but expensive-to-create content. However, in that
+ * case it is better to {@link #createRenderable() obtain} a {@link Renderable}
+ * object from the {@code RenderSession} and cache that, rather than the
+ * {@code RenderSession} itself.
  *
  * <h4>Thead Safety</h4>
  *
@@ -62,8 +63,8 @@ public class RenderSession {
   /* METHODS FOR SETTING A SINGLE TEMPLATE VARIABLE */
 
   /**
-   * Sets the specified variable to the specified value. Equivalent to {@link
-   * #set(String, Object, VarGroup) set(varName, value, null)}.
+   * Sets the specified variable to the specified value. Equivalent to
+   * {@link #set(String, Object, VarGroup) set(varName, value, null)}.
    *
    * @param varName The name of the variable to set
    * @param value The value of the variable
@@ -74,16 +75,17 @@ public class RenderSession {
   }
 
   /**
-   * Sets the specified variable to the specified value, using the {@link Stringifier
-   * stringifier} associated with the specified {@link VarGroup variable group} to
-   * stringify the value. If the variable has an inline group name prefix (e.g.
-   * ~%<b>html</b>:fullName%), the group specified through the prefix will prevail.
-   * The {@code defaultGroup} argument is allowed to be {@code null}. In that case,
-   * if the variable also doesn't have an inline group name prefix, the {@code
-   * RenderSession} will attempt to find a suitable stringifier by other means; for
-   * example, based on the {@link StringifierRegistry.Builder#registerByType(Stringifier,
-   * Class...) data type} of the variable. If that fails, the {@code RenderSession}
-   * will default to using the {@link Stringifier#DEFAULT default stringifier}.
+   * Sets the specified variable to the specified value, using the
+   * {@link Stringifier stringifier} associated with the specified
+   * {@link VarGroup variable group} to stringify the value. If the variable has an
+   * inline group name prefix (e.g. ~%<b>html</b>:fullName%), the group specified
+   * through the prefix will prevail. The {@code defaultGroup} argument is allowed to
+   * be {@code null}. In that case, if the variable also doesn't have an inline group
+   * name prefix, the {@code RenderSession} will attempt to find a suitable
+   * stringifier by other means; for example, based on the
+   * {@link StringifierRegistry.Builder#registerByType(Stringifier, Class...) data
+   * type} of the variable. If that fails, the {@code RenderSession} will default to
+   * using the {@link Stringifier#DEFAULT default stringifier}.
    *
    * @param varName The name of the variable to set
    * @param value The value of the variable
@@ -123,11 +125,11 @@ public class RenderSession {
   /**
    * Sets the specified variable to the concatenation of the values within the
    * specified {@code List}. Unless the variable was declared with an inline group
-   * name prefix, the values wil be stringified using the {@link Stringifier#DEFAULT
-   * default stringifier}. The values are first stringified, then escaped, then
-   * concatenated. If the {@code List} is empty, the variable will not be rendered at
-   * all (that is, an empty string will be inserted at the location of the variable
-   * within the template).
+   * name prefix, the values wil be stringified using the
+   * {@link Stringifier#DEFAULT default stringifier}. The values are first
+   * stringified, then escaped, then concatenated. If the {@code List} is empty, the
+   * variable will not be rendered at all (that is, an empty string will be inserted
+   * at the location of the variable within the template).
    *
    * @param varName The name of the variable to set
    * @param values The string values to concatenate
@@ -286,11 +288,11 @@ public class RenderSession {
   }
 
   /**
-   * Sets the specified variable to the entire output of the specified {@code
-   * Renderable}. This allows you to create and populate a template for an HTML
-   * snippet once, and then repeatedly (for each render session of the current
-   * template) "paste" its output into the current template. See {@link
-   * #createRenderable()}.
+   * Sets the specified variable to the entire output of the specified
+   * {@code Renderable}. This allows you to create and populate a template for an
+   * HTML snippet once, and then repeatedly (for each render session of the current
+   * template) "paste" its output into the current template. See
+   * {@link #createRenderable()}.
    *
    * @param varName The template variable to set
    * @param renderable The {@code Renderable}
@@ -339,20 +341,20 @@ public class RenderSession {
    * <h4>Repeating Templates</h4>
    *
    * <p>If the specified object is an array or a {@code Collection}, the template
-   * will be repeated
-   * for each object in the array or {@code Collection}. This can be used, for
-   * example, to generate an HTML table from a nested template that contains just a
-   * single row.
+   * will be repeated for each object in the array or {@code Collection}. This can be
+   * used, for example, to generate an HTML table from a nested template that
+   * contains just a single row.
    *
    * <h4>Conditional Rendering</h4>
    *
-   * <p>If the specified object is an empty array or an empty {@code Collection}, the
-   * template will
-   * not be rendered at all. This is the mechanism for conditional rendering:
-   * "populate" the nested template with an empty array or {@code Collection} and the
-   * template will not be rendered. Note, however, that the same can be achieved more
-   * easily by just not calling the {@code populate} method for that template as by
-   * default neither template variables nor nested templates are rendered.
+   * <p>If the specified object is an empty array or an empty {@code Collection},
+   * the
+   * template will not be rendered at all. This is the mechanism for conditional
+   * rendering: "populate" the nested template with an empty array or
+   * {@code Collection} and the template will not be rendered. Note, however, that
+   * the same can be achieved more easily by just not calling the {@code populate}
+   * method for that template as by default neither template variables nor nested
+   * templates are rendered.
    *
    * @param nestedTemplateName The name of the nested template
    * @param sourceData An object that provides data for all or some of the nested
@@ -395,8 +397,8 @@ public class RenderSession {
   /**
    * Enables or disables the rendering of the specified templates. The specified
    * templates must all be text-only templates, otherwise a {@link RenderException}
-   * is thrown. Equivalent to {@link #show(int, String...) show(1,
-   * nestedTemplateNames)}.
+   * is thrown. Equivalent to
+   * {@link #show(int, String...) show(1, nestedTemplateNames)}.
    *
    * @param nestedTemplateNames The names of the nested templates to be
    *     rendered.
@@ -410,10 +412,10 @@ public class RenderSession {
   /**
    * Enabled or disables the rendering of the specified templates. Each of the
    * specified templates will be repeated the specified number of times. The
-   * specified templates must all be text-only templates, otherwise a {@link
-   * RenderException} is thrown. A text-only template is a template that does not
-   * contain any variables or nested templates. Some reasons you might want to have
-   * such a template are:
+   * specified templates must all be text-only templates, otherwise a
+   * {@link RenderException} is thrown. A text-only template is a template that does
+   * not contain any variables or nested templates. Some reasons you might want to
+   * have such a template are:
    *
    * <p>
    *
@@ -472,8 +474,8 @@ public class RenderSession {
   /**
    * Enables all nested text-only templates that have not been explicitly disabled.
    * The nested templates may in fact contain nested templates themselves, but they
-   * must not contain variables at any nesting level beneath them. A {@code
-   * RenderException} if they do.
+   * must not contain variables at any nesting level beneath them. A
+   * {@code RenderException} if they do.
    *
    * @param nestedTemplateNames The names of the nested text-only templates you
    *     want to be rendered
@@ -577,7 +579,7 @@ public class RenderSession {
    * @throws RenderException
    */
   public <T, U> RenderSession populateWithTuple(String nestedTemplateName,
-      List<Tuple<T, U>> tuples) throws RenderException {
+      List<LaxTuple2<T, U>> tuples) throws RenderException {
     return populateWithTuple(nestedTemplateName, tuples, null);
   }
 
@@ -595,7 +597,7 @@ public class RenderSession {
    * @throws RenderException
    */
   public <T, U> RenderSession populateWithTuple(String nestedTemplateName,
-      List<Tuple<T, U>> tuples,
+      List<LaxTuple2<T, U>> tuples,
       VarGroup defaultGroup) throws RenderException {
     Check.on(frozenSession(), state.isFrozen()).is(no());
     Check.on(illegalValue("tuples", tuples), tuples).is(deepNotNull());
@@ -605,7 +607,7 @@ public class RenderSession {
         .has(tmpl -> tmpl.countNestedTemplates(), eq(), 0);
     String[] vars = t.getVariables().toArray(new String[2]);
     List<Map<String, Object>> data = tuples.stream()
-        .map(tuple -> Map.of(vars[0], tuple.getLeft(), vars[1], tuple.getRight()))
+        .map(tuple -> Map.of(vars[0], tuple.first(), vars[1], tuple.second()))
         .collect(toList());
     RenderSession[] sessions = state.getOrCreateChildSessions(t, data.size());
     for (int i = 0; i < sessions.length; ++i) {
@@ -617,9 +619,9 @@ public class RenderSession {
   /* METHODS FOR POPULATING WHATEVER IS IN THE PROVIDED OBJECT */
 
   /**
-   * Populates the <i>current</i> template (the template for which this {@code
-   * RenderSession} was created). No escaping will be applied to the values extracted
-   * from the source data.
+   * Populates the <i>current</i> template (the template for which this
+   * {@code RenderSession} was created). No escaping will be applied to the values
+   * extracted from the source data.
    *
    * @param sourceData An object that provides data for all or some of the
    *     template variables and nested templates
@@ -635,11 +637,11 @@ public class RenderSession {
   }
 
   /**
-   * Populates the <i>current</i> template (the template for which this {@code
-   * RenderSession} was created) using the provided source data object. The source
-   * data object is not required to populate the entire template in one shot. You can
-   * call this and similar methods multiple times until you are satisfied and ready
-   * to {@link #render(OutputStream) render} the template.
+   * Populates the <i>current</i> template (the template for which this
+   * {@code RenderSession} was created) using the provided source data object. The
+   * source data object is not required to populate the entire template in one shot.
+   * You can call this and similar methods multiple times until you are satisfied and
+   * ready to {@link #render(OutputStream) render} the template.
    *
    * @param sourceData An object that provides data for all or some of the
    *     template variables and nested templates
@@ -718,13 +720,13 @@ public class RenderSession {
   /* MISCELLANEOUS METHODS */
 
   /**
-   * Returns a {@code RenderSession} for the specified nested template. The {@code
-   * RenderSession} inherits the {@link AccessorRegistry accessors} and {@link
-   * StringifierRegistry stringifiers} from the parent session (i.e. <i>this</i>
-   * {@code RenderSession}). If this is the first time the nested template is
-   * processed, a single child session will be created for it. This can be used as
-   * illustrated in the following example (assuming the presence of a nested template
-   * named {@code employees}:
+   * Returns a {@code RenderSession} for the specified nested template. The
+   * {@code RenderSession} inherits the {@link AccessorRegistry accessors} and
+   * {@link StringifierRegistry stringifiers} from the parent session (i.e.
+   * <i>this</i> {@code RenderSession}). If this is the first time the nested
+   * template is processed, a single child session will be created for it. This can
+   * be used as illustrated in the following example (assuming the presence of a
+   * nested template named {@code employees}:
    *
    * <blockquote>
    *
@@ -735,8 +737,7 @@ public class RenderSession {
    * </blockquote>
    *
    * <p>Note that just calling the {@code in} method already has the effect of the
-   * template becoming
-   * visible.
+   * template becoming visible.
    *
    * @param nestedTemplateName The nested template for which to create the child
    *     session

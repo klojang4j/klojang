@@ -7,8 +7,9 @@ import java.util.List;
 import java.util.Set;
 
 import nl.naturalis.common.StringMethods;
-import nl.naturalis.common.Tuple;
+import nl.naturalis.common.LaxTuple2;
 import nl.naturalis.common.check.Check;
+
 import static java.util.Arrays.copyOfRange;
 import static org.klojang.x.Messages.ERR_BAD_NAME;
 import static org.klojang.x.Messages.ERR_NO_SUCH_TEMPLATE;
@@ -27,10 +28,11 @@ public class TemplateUtils {
   private TemplateUtils() {}
 
   /**
-   * Returns the fully-qualified name of the specified template, relative to the root template. If
-   * the template <i>is</i> the root template, {@link Template#ROOT_TEMPLATE_NAME} is returned. The
-   * fully-qualified name is a dot-separated concatenation of template names, with each subsequent
-   * name representing a template at the next nesting level.
+   * Returns the fully-qualified name of the specified template, relative to the root
+   * template. If the template <i>is</i> the root template,
+   * {@link Template#ROOT_TEMPLATE_NAME} is returned. The fully-qualified name is a
+   * dot-separated concatenation of template names, with each subsequent name
+   * representing a template at the next nesting level.
    *
    * @param template
    * @return
@@ -42,7 +44,9 @@ public class TemplateUtils {
     }
     int sz = 0;
     ArrayList<String> chunks = new ArrayList<>(5);
-    for (Template t = template; t != null && t.getParent() != null; t = t.getParent()) {
+    for (Template t = template;
+        t != null && t.getParent() != null;
+        t = t.getParent()) {
       chunks.add(t.getName());
       sz += t.getName().length() + 1;
     }
@@ -57,10 +61,11 @@ public class TemplateUtils {
   }
 
   /**
-   * Returns the fully-qualified name of the specified name, relative to the specified template. The
-   * fully-qualified name is a dot-separated concatenation of template names, with each subsequent
-   * name representing a template at the next nesting level. The last segment of the fully-qualified
-   * name will be the specified name itself.
+   * Returns the fully-qualified name of the specified name, relative to the
+   * specified template. The fully-qualified name is a dot-separated concatenation of
+   * template names, with each subsequent name representing a template at the next
+   * nesting level. The last segment of the fully-qualified name will be the
+   * specified name itself.
    *
    * @param template
    * @param name
@@ -72,7 +77,9 @@ public class TemplateUtils {
     int sz = name.length();
     ArrayList<String> chunks = new ArrayList<>(5);
     chunks.add(name);
-    for (Template t = template; t != null && t.getParent() != null; t = t.getParent()) {
+    for (Template t = template;
+        t != null && t.getParent() != null;
+        t = t.getParent()) {
       chunks.add(t.getName());
       sz += t.getName().length() + 1;
     }
@@ -87,12 +94,13 @@ public class TemplateUtils {
   }
 
   /**
-   * Returns the names of all variables and all nested templates within the specified template and
-   * all templates descending from it. The returned {@code Set} is created on demand and modifiable.
+   * Returns the names of all variables and all nested templates within the specified
+   * template and all templates descending from it. The returned {@code Set} is
+   * created on demand and modifiable.
    *
    * @param template The {@code Template} to extract the names from
-   * @return The names of all variables and nested templates within the specified template and all
-   *     templates descending from it
+   * @return The names of all variables and nested templates within the specified
+   *     template and all templates descending from it
    */
   public static Set<String> getAllNames(Template template) {
     Check.notNull(template, "template");
@@ -109,11 +117,13 @@ public class TemplateUtils {
   }
 
   /**
-   * Returns a {@code List} containing the specified {@code Template} and all templates descending
-   * from it. The specified {@code Template} will be the first element of the {@code List}. The
-   * {@code List} is created on demand and modifiable.
+   * Returns a {@code List} containing the specified {@code Template} and all
+   * templates descending from it. The specified {@code Template} will be the first
+   * element of the {@code List}. The {@code List} is created on demand and
+   * modifiable.
    *
-   * @return A {@code List} containing the {@code Template} and all templates descending from it
+   * @return A {@code List} containing the {@code Template} and all templates
+   *     descending from it
    */
   public static List<Template> getTemplateHierarchy(Template template) {
     Check.notNull(template, "template");
@@ -130,16 +140,17 @@ public class TemplateUtils {
   }
 
   /**
-   * Returns the nested template corresponding to the specified fully-qualified name. Contrary to
-   * {@link Template#getNestedTemplate(String) Template.getNestedTemplate} this method lets you
-   * retrieve nested templates at any depth (nesting level). The fully-qualified name must be
-   * relative to the specified template and must not start with the specified template's name
-   * itself.
+   * Returns the nested template corresponding to the specified fully-qualified name.
+   * Contrary to
+   * {@link Template#getNestedTemplate(String) Template.getNestedTemplate} this
+   * method lets you retrieve nested templates at any depth (nesting level). The
+   * fully-qualified name must be relative to the specified template and must not
+   * start with the specified template's name itself.
    *
    * @param template The template containing the (deeply) nested template
    * @param fqName The fully qualified name of the nested template
-   * @return The (possibly deeply) nested template corresponding to the specified fully-qualified
-   *     name
+   * @return The (possibly deeply) nested template corresponding to the specified
+   *     fully-qualified name
    */
   public static Template getNestedTemplate(Template template, String fqName) {
     Check.notNull(template, "template");
@@ -147,23 +158,29 @@ public class TemplateUtils {
     return getNestedTemplate(template, fqName, fqName.split("\\."));
   }
 
-  private static Template getNestedTemplate(Template t0, String fqName, String[] names) {
+  private static Template getNestedTemplate(Template t0,
+      String fqName,
+      String[] names) {
     if (names.length == 0) {
       return t0;
     }
-    Check.that(names[0]).is(in(), t0.getNestedTemplateNames(), ERR_NO_SUCH_TEMPLATE, fqName);
+    Check.that(names[0]).is(in(),
+        t0.getNestedTemplateNames(),
+        ERR_NO_SUCH_TEMPLATE,
+        fqName);
     t0 = t0.getNestedTemplate(names[0]);
     return getNestedTemplate(t0, fqName, copyOfRange(names, 1, names.length));
   }
 
   /**
-   * Returns the template containing the variable or nested template denoted by the specified
-   * fully-qualified name, relative to the specified template.
+   * Returns the template containing the variable or nested template denoted by the
+   * specified fully-qualified name, relative to the specified template.
    *
-   * @param template The template relative to which the fully-qualified name should be taken
+   * @param template The template relative to which the fully-qualified name
+   *     should be taken
    * @param fqName The fully-qualified name
-   * @return The template containing the variable or nested template denoted by the specified
-   *     fully-qualified name
+   * @return The template containing the variable or nested template denoted by the
+   *     specified fully-qualified name
    */
   public static Template getParentTemplate(Template template, String fqName) {
     Check.notNull(template, "template");
@@ -176,40 +193,45 @@ public class TemplateUtils {
   }
 
   /**
-   * Returns, for this {@code Template} and all templates descending from it, the names of their
-   * variables. Each tuple in the returned {@code List} contains a {@code Template} instance and a
-   * variable name. The returned {@code List} is created on demand and modifiable.
+   * Returns, for this {@code Template} and all templates descending from it, the
+   * names of their variables. Each tuple in the returned {@code List} contains a
+   * {@code Template} instance and a variable name. The returned {@code List} is
+   * created on demand and modifiable.
    *
-   * @return All variable names in this {@code Template} and the templates nested inside it
+   * @return All variable names in this {@code Template} and the templates nested
+   *     inside it
    */
-  public static List<Tuple<Template, String>> getVarsPerTemplate(Template template) {
+  public static List<LaxTuple2<Template, String>> getVarsPerTemplate(Template template) {
     Check.notNull(template, "template");
-    ArrayList<Tuple<Template, String>> tuples = new ArrayList<>(25);
+    ArrayList<LaxTuple2<Template, String>> tuples = new ArrayList<>(25);
     collectVarsPerTemplate(template, tuples);
     return tuples;
   }
 
   private static void collectVarsPerTemplate(
-      Template t0, ArrayList<Tuple<Template, String>> tuples) {
-    t0.getVariables().stream().map(s -> Tuple.of(t0, s)).forEach(tuples::add);
+      Template t0, ArrayList<LaxTuple2<Template, String>> tuples) {
+    t0.getVariables().stream().map(s -> LaxTuple2.of(t0, s)).forEach(tuples::add);
     t0.getNestedTemplates().forEach(t -> collectVarsPerTemplate(t, tuples));
   }
 
   /**
-   * Returns all instances of variables within the specified template and with the specified prefix.
+   * Returns all instances of variables within the specified template and with the
+   * specified prefix.
    *
    * @param template The {@code Template} in which to search
    * @param prefix The variable prefix (a.k.a. the variable group)
    * @return All instances of variables with the specified name and prefix
    */
-  public static List<VariablePart> getVariableInstances(Template template, String prefix) {
+  public static List<VariablePart> getVariableInstances(Template template,
+      String prefix) {
     Check.notNull(template, "template");
     Check.notNull(prefix, "prefix");
     List<VariablePart> vars = new ArrayList<>(template.getParts().size());
     for (Part p : template.getParts()) {
       if (p.getClass() == VariablePart.class) {
         VariablePart vp = (VariablePart) p;
-        if (vp.getVarGroup().isPresent() && vp.getVarGroup().get().getName().equals(prefix)) {
+        if (vp.getVarGroup().isPresent() && vp.getVarGroup().get().getName().equals(
+            prefix)) {
           vars.add(vp);
         }
       }
@@ -218,8 +240,8 @@ public class TemplateUtils {
   }
 
   /**
-   * Returns all instances of variables within the specified template, with the specified name, and
-   * with the specified prefix.
+   * Returns all instances of variables within the specified template, with the
+   * specified name, and with the specified prefix.
    *
    * @param template The {@code Template} in which to search
    * @param prefix The variable prefix (a.k.a. the variable group)
@@ -236,7 +258,10 @@ public class TemplateUtils {
       if (p.getClass() == VariablePart.class) {
         VariablePart vp = (VariablePart) p;
         if (vp.getName().equals(varName)) {
-          if (vp.getVarGroup().isPresent() && vp.getVarGroup().get().getName().equals(prefix)) {
+          if (vp.getVarGroup().isPresent() && vp.getVarGroup()
+              .get()
+              .getName()
+              .equals(prefix)) {
             vars.add(vp);
           }
         }
@@ -246,8 +271,8 @@ public class TemplateUtils {
   }
 
   /**
-   * Prints out the constituent parts of the specified {@code Template}. Can be used for debugging
-   * purposes.
+   * Prints out the constituent parts of the specified {@code Template}. Can be used
+   * for debugging purposes.
    *
    * @param template The {@code Template} whose parts to print
    * @param out The {@code PrintStream} to which to print
@@ -255,4 +280,5 @@ public class TemplateUtils {
   public static void printParts(Template template, PrintStream out) {
     new PartsPrinter(template).printParts(out);
   }
+
 }

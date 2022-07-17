@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.Test;
 import nl.naturalis.common.collection.IntList;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static nl.naturalis.common.StringMethods.append;
 
@@ -21,7 +23,8 @@ public class TemplateTest {
     assertEquals(5, t0_0.countVariables());
     assertEquals(1, t0_0.countNestedTemplates());
     assertEquals(
-        List.of("name", "poBox", "established", "director"), List.copyOf(t0_0.getVariables()));
+        List.of("name", "poBox", "established", "director"),
+        List.copyOf(t0_0.getVariables()));
     Template t0_0_0 = t0_0.getNestedTemplate("departments");
     assertEquals(2, t0_0_0.countVariables());
     assertEquals(1, t0_0_0.countNestedTemplates());
@@ -46,14 +49,16 @@ public class TemplateTest {
             + "roles:role;";
     StringBuilder sb = new StringBuilder(100);
     TemplateUtils.getVarsPerTemplate(t0)
-        .forEach(t -> append(sb, t.getLeft().getName(), ":", t.getRight(), ";"));
+        .forEach(t -> append(sb, t.first().getName(), ":", t.second(), ";"));
     assertEquals(expected, sb.toString());
   }
 
   @Test // getVarPartIndices
   public void test02() throws ParseException {
     Template t0 = Template.fromResource(getClass(), "TemplateTest.main.html");
-    IntList indices = t0.getNestedTemplate("company").getVarPartIndices().get("name");
+    IntList indices = t0.getNestedTemplate("company")
+        .getVarPartIndices()
+        .get("name");
     assertEquals(2, indices.size());
     indices = t0.getNestedTemplate("company").getVarPartIndices().get("poBox");
     assertEquals(1, indices.size());
@@ -80,11 +85,13 @@ public class TemplateTest {
 
   @Test
   public void testEncounterOrder() throws ParseException {
-    Template t0 = Template.fromResource(getClass(), "TemplateTest.testEncounterOrder.html");
+    Template t0 = Template.fromResource(getClass(),
+        "TemplateTest.testEncounterOrder.html");
     String varStr =
         "topdeskId, id, department, instituteCode, collectionCode, firstNumber, lastNumber, amount, issueDate";
     String[] varNames = varStr.split(",");
-    List<String> expected = Arrays.stream(varNames).map(String::strip).collect(Collectors.toList());
+    List<String> expected = Arrays.stream(varNames).map(String::strip).collect(
+        Collectors.toList());
     List<String> actual = new ArrayList<>(t0.getVariables());
     assertEquals(expected, actual);
   }
@@ -139,4 +146,5 @@ public class TemplateTest {
     Package pkg1 = Accessor.class.getPackage();
     assertEquals(pkg0, pkg1);
   }
+
 }

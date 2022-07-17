@@ -46,9 +46,9 @@ public class Template {
 
   /**
    * Parses the specified string into a {@code Template} instance. If the string
-   * contains any {@code include} declarations (e.g. {@code
-   * ~%%include:/path/to/template%}) the path will be interpreted as a file system
-   * resource. Templates created from a string are never cached.
+   * contains any {@code include} declarations (e.g.
+   * {@code ~%%include:/path/to/template%}) the path will be interpreted as a file
+   * system resource. Templates created from a string are never cached.
    *
    * @param source The source code for the {@code Template}
    * @return a new {@code Template} instance
@@ -61,9 +61,9 @@ public class Template {
 
   /**
    * Parses the specified string into a {@code Template} instance. The specified
-   * class will be used to include other templates using {@code
-   * clazz.getResourceAsStream("/path/to/template")}. Templates created from a string
-   * are never cached.
+   * class will be used to include other templates using
+   * {@code clazz.getResourceAsStream("/path/to/template")}. Templates created from a
+   * string are never cached.
    *
    * @param clazz Any {@code Class} object that provides access to the included
    *     tempate files by calling {@code getResourceAsStream} on it
@@ -82,10 +82,10 @@ public class Template {
    * Parses the specified resource into a {@code Template} instance. The resource is
    * read using {@code clazz.getResourceAsStream(path)}. Any included templates will
    * be loaded this way as well. Templates created from a classpath resource are
-   * always cached. Thus, calling this method multiple times with the same {@code
-   * clazz} and {@code path} arguments will always return the same {@code Template}
-   * instance. (More precizely: the cache key is the combination of {@code
-   * clazz.getPackage()} and {@code path}.)
+   * always cached. Thus, calling this method multiple times with the same
+   * {@code clazz} and {@code path} arguments will always return the same
+   * {@code Template} instance. (More precizely: the cache key is the combination of
+   * {@code clazz.getPackage()} and {@code path}.)
    *
    * @param clazz Any {@code Class} object that provides access to the tempate
    *     file by calling {@code getResourceAsStream} on it
@@ -297,8 +297,8 @@ public class Template {
   }
 
   /**
-   * Returns the names of all variables and nested templates within this {@code
-   * Template} (non-recursive). The returned {@code List} is unmodifiable.
+   * Returns the names of all variables and nested templates within this
+   * {@code Template} (non-recursive). The returned {@code List} is unmodifiable.
    *
    * @return The names of all variables and nested templates in this {@code Template}
    */
@@ -317,10 +317,11 @@ public class Template {
   }
 
   /**
-   * Returns a {@code RenderSession} with which populate and render this {@code
-   * Template}. The {@code RenderSession} use the {@link AccessorRegistry#STANDARD_ACCESSORS
-   * predefined accessors} to extract values from source data objects, and the {@link
-   * StringifierRegistry predefined stringifiers} to stringify those values.
+   * Returns a {@code RenderSession} with which populate and render this
+   * {@code Template}. The {@code RenderSession} use the
+   * {@link AccessorRegistry#STANDARD_ACCESSORS predefined accessors} to extract
+   * values from source data objects, and the
+   * {@link StringifierRegistry predefined stringifiers} to stringify those values.
    *
    * @return A {@code RenderSession}
    */
@@ -329,11 +330,11 @@ public class Template {
   }
 
   /**
-   * Returns a {@code RenderSession} with which populate and render this {@code
-   * Template}. The {@code RenderSession} will use the {@link
-   * AccessorRegistry#STANDARD_ACCESSORS predefined accessors} to extract values from
-   * source data objects, and the specified {@code StringifierRegistry} to stringify
-   * those values.
+   * Returns a {@code RenderSession} with which populate and render this
+   * {@code Template}. The {@code RenderSession} will use the
+   * {@link AccessorRegistry#STANDARD_ACCESSORS predefined accessors} to extract
+   * values from source data objects, and the specified {@code StringifierRegistry}
+   * to stringify those values.
    *
    * @param stringifiers The {@code StringifierRegistry} used to supply the
    *     {@code RenderSession} with {@link Stringifier stringifiers}
@@ -345,13 +346,13 @@ public class Template {
   }
 
   /**
-   * Returns a {@code RenderSession} with which populate and render this {@code
-   * Template}. The {@code RenderSession} that will use the specified {@code
-   * AccessorRegistry} to extract values from source data, and the {@link
-   * StringifierRegistry predefined stringifiers} to stringify those values.
+   * Returns a {@code RenderSession} with which populate and render this
+   * {@code Template}. The {@code RenderSession} that will use the specified
+   * {@code AccessorRegistry} to extract values from source data, and the
+   * {@link StringifierRegistry predefined stringifiers} to stringify those values.
    *
-   * @param accessors The {@code AccessorRegistry} used to supply the {@code
-   *     RenderSession} with {@link Accessor accessors}
+   * @param accessors The {@code AccessorRegistry} used to supply the
+   *     {@code RenderSession} with {@link Accessor accessors}
    * @return A new {@code RenderSession}
    */
   public RenderSession newRenderSession(AccessorRegistry accessors) {
@@ -360,13 +361,13 @@ public class Template {
   }
 
   /**
-   * Returns a {@code RenderSession} with which populate and render this {@code
-   * Template}. The {@code RenderSession} that will use the specified {@code
-   * AccessorRegistry} to extract values from source data, and the specified {@code
-   * StringifierRegistry} to stringify those values.
+   * Returns a {@code RenderSession} with which populate and render this
+   * {@code Template}. The {@code RenderSession} that will use the specified
+   * {@code AccessorRegistry} to extract values from source data, and the specified
+   * {@code StringifierRegistry} to stringify those values.
    *
-   * @param accessors The {@code AccessorRegistry} used to supply the {@code
-   *     RenderSession} with {@link Accessor accessors}
+   * @param accessors The {@code AccessorRegistry} used to supply the
+   *     {@code RenderSession} with {@link Accessor accessors}
    * @param stringifiers The {@code StringifierRegistry} used to supply the
    *     {@code RenderSession} with {@link Stringifier stringifiers}
    * @return A new {@code RenderSession}
@@ -407,8 +408,8 @@ public class Template {
   /**
    * More or less re-assembles to source code from the constituent parts of the
    * {@code Template}. Note, however, that ditch block are ditched early on in the
-   * parsing process and there is no trace of them left in the resulting {@code
-   * Template} instance.
+   * parsing process and there is no trace of them left in the resulting
+   * {@code Template} instance.
    */
   @Override
   public String toString() {
@@ -425,7 +426,7 @@ public class Template {
 
   @SuppressWarnings("unchecked")
   <T extends Part> T getPart(int index) {
-    return (T) Check.that(index).is(arrayIndexOf(), parts).ok(parts::get);
+    return (T) Check.that(index).is(listIndexOf(), parts).ok(parts::get);
   }
 
   Map<String, IntList> getVarPartIndices() {
