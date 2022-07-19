@@ -23,7 +23,7 @@ public class PathAccessor implements Accessor<Object> {
   @Override
   public Object access(Object data, String property) throws RenderException {
     String path = nm == null ? property : nm.map(property);
-    PathWalker pw = new PathWalker(asList(new Path(path)), false);
+    PathWalker pw = new PathWalker(asList(Path.of(path)), false);
     try {
       return pw.read(data);
     } catch (PathWalkerException e) {
