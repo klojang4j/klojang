@@ -21,14 +21,14 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
 
 import static nl.naturalis.common.ObjectMethods.ifNull;
-import static nl.naturalis.common.check.CommonChecks.illegalState;
+import static nl.naturalis.common.check.CommonExceptions.illegalState;
 import static nl.naturalis.common.check.CommonChecks.no;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 
 /**
- * A factory for {@link SQLQuery}, {@link SQLInsert} and {@link SQLUpdate} instances.
- * An {@code SQL} instance represents a single SQL statement that cannot be changed.
- * The {statement can be parametrized in two ways:
+ * A factory for {@link SQLQuery}, {@link SQLInsert} and {@link SQLUpdate} instances. An {@code SQL}
+ * instance represents a single SQL statement that cannot be changed. The {statement can be
+ * parametrized in two ways:
  *
  * <p>
  *
@@ -118,8 +118,8 @@ public class SQL {
 
   /* These maps are unlikely to grow beyond one, maybe two entries */
   private final Map<Class<?>, BeanBinder<?>> beanBinders = new HashMap<>(4);
-  private final Map<Tuple2<Class<?>, NameMapper>, BeanifierFactory<?>> beanifiers = new HashMap<>(
-      4);
+  private final Map<Tuple2<Class<?>, NameMapper>, BeanifierFactory<?>> beanifiers =
+      new HashMap<>(4);
   private final Map<NameMapper, MappifierFactory> mappifiers = new HashMap<>(4);
 
   private final SQLNormalizer normalizer;
@@ -152,8 +152,8 @@ public class SQL {
   }
 
   /**
-   * If you decide to go along and parametrize the sort column using a variable named
-   * {@code ~%sortColumn%}, this method lets you set the value for that variable.
+   * If you decide to go along and parametrize the sort column using a variable named {@code
+   * ~%sortColumn%}, this method lets you set the value for that variable.
    *
    * @param sortColumn The column on which to sort
    * @return This {@code SQL} instance
@@ -163,11 +163,10 @@ public class SQL {
   }
 
   /**
-   * If you decide to go along and parametrize the sort order using a variable named
-   * {@code ~%sortOrder%}, this method lets you set the value for that variable.
-   * Calling {@code toString()} on the argument must yield "ASC", "DESC" or an empty
-   * string. The argument may also be a {@code Boolean} with {@code false} being
-   * translated into "ASC" and {@code true} into "DESC".
+   * If you decide to go along and parametrize the sort order using a variable named {@code
+   * ~%sortOrder%}, this method lets you set the value for that variable. Calling {@code toString()}
+   * on the argument must yield "ASC", "DESC" or an empty string. The argument may also be a {@code
+   * Boolean} with {@code false} being translated into "ASC" and {@code true} into "DESC".
    *
    * @param sortOrder The sort order
    * @return This {@code SQL} instance
@@ -179,9 +178,9 @@ public class SQL {
   }
 
   /**
-   * Sets the value of the {@code ~%sortOrder%} variable to "DESC" if the argument
-   * equals {@code true} and to "ASC" if the argument equals {@code false}. This
-   * presumes (and requires) that you have that variable in the SQL statement.
+   * Sets the value of the {@code ~%sortOrder%} variable to "DESC" if the argument equals {@code
+   * true} and to "ASC" if the argument equals {@code false}. This presumes (and requires) that you
+   * have that variable in the SQL statement.
    *
    * @param isDescending Whether to sort in descending order
    * @return This {@code SQL} instance
@@ -191,9 +190,8 @@ public class SQL {
   }
 
   /**
-   * Sets the values of the values of the {@code ~%sortColumn%} and {@code
-   * ~%sortOrder%} variables. This presumes (and requires) that you have those
-   * variables in the SQL statement.
+   * Sets the values of the values of the {@code ~%sortColumn%} and {@code ~%sortOrder%} variables.
+   * This presumes (and requires) that you have those variables in the SQL statement.
    *
    * @param sortColumn The column on which to sort
    * @param sortOrder The sort order
@@ -204,9 +202,8 @@ public class SQL {
   }
 
   /**
-   * Sets the values of the values of the {@code ~%sortColumn%} and {@code
-   * ~%sortOrder%} variables. This presumes (and requires) that you have those
-   * variables in the SQL statement.
+   * Sets the values of the values of the {@code ~%sortColumn%} and {@code ~%sortOrder%} variables.
+   * This presumes (and requires) that you have those variables in the SQL statement.
    *
    * @param sortColumn
    * @param isDescending
@@ -217,9 +214,9 @@ public class SQL {
   }
 
   /**
-   * Produces a {@link SQLQuery} instance from the SQL passed in through one of the
-   * {@link #create(String) create} methods. Calling this method for SQL that is not
-   * a SELECT statement has undefined consequences.
+   * Produces a {@link SQLQuery} instance from the SQL passed in through one of the {@link
+   * #create(String) create} methods. Calling this method for SQL that is not a SELECT statement has
+   * undefined consequences.
    *
    * @param con The database connection to use when executing the statement
    * @return
@@ -229,9 +226,9 @@ public class SQL {
   }
 
   /**
-   * Produces a {@link SQLInsert} instance from the SQL passed in through one of the
-   * {@link #create(String) create} methods. Calling this method for SQL that is not
-   * an INSERT statement has undefined consequences.
+   * Produces a {@link SQLInsert} instance from the SQL passed in through one of the {@link
+   * #create(String) create} methods. Calling this method for SQL that is not an INSERT statement
+   * has undefined consequences.
    *
    * @param con The database connection to use when executing the statement
    * @return
@@ -241,9 +238,9 @@ public class SQL {
   }
 
   /**
-   * Produces a {@link SQLInsert} instance from the SQL passed in through one of the
-   * {@link #create(String) create} methods. Calling this method for SQL that is not
-   * an UPDATE OR DELETE statement has undefined consequences.
+   * Produces a {@link SQLInsert} instance from the SQL passed in through one of the {@link
+   * #create(String) create} methods. Calling this method for SQL that is not an UPDATE OR DELETE
+   * statement has undefined consequences.
    *
    * @param con The database connection to use when executing the statement
    * @return
@@ -253,8 +250,8 @@ public class SQL {
   }
 
   /**
-   * Returns the original, unparsed SQL, with all named parameters and Klojang
-   * template variables still in it.
+   * Returns the original, unparsed SQL, with all named parameters and Klojang template variables
+   * still in it.
    *
    * @return The original, unparsed SQL
    */
@@ -263,12 +260,11 @@ public class SQL {
   }
 
   /**
-   * Returns a SQL string in which all named parameters have been replaced with
-   * positional parameters (i&#46;e&#46; a question mark), but with the Klojang
-   * template variables still in it.
+   * Returns a SQL string in which all named parameters have been replaced with positional
+   * parameters (i&#46;e&#46; a question mark), but with the Klojang template variables still in it.
    *
-   * @return A SQL string in which all named parameters have been replaced with
-   *     positional parameters
+   * @return A SQL string in which all named parameters have been replaced with positional
+   *     parameters
    */
   public String getNormalizedSQL() {
     return normalizer.getNormalizedSQL();
@@ -284,8 +280,8 @@ public class SQL {
   }
 
   /**
-   * Returns the named parameters that were extracted from the SQL passed in through
-   * the {@link #create(String) create} methods.
+   * Returns the named parameters that were extracted from the SQL passed in through the {@link
+   * #create(String) create} methods.
    *
    * @return The named parameters that were extracted from the SQL
    */
@@ -294,11 +290,11 @@ public class SQL {
   }
 
   /**
-   * Returns a map that specifies for each named parameter at which positions it is
-   * found within the SQL.
+   * Returns a map that specifies for each named parameter at which positions it is found within the
+   * SQL.
    *
-   * @return A map that specifies for each named parameter at which positions it is
-   *     found within the SQL
+   * @return A map that specifies for each named parameter at which positions it is found within the
+   *     SQL
    */
   public Map<String, IntList> getParameterMap() {
     return normalizer.getParameterMap();
@@ -379,5 +375,4 @@ public class SQL {
       throw KJSQLException.wrap(t, this);
     }
   }
-
 }

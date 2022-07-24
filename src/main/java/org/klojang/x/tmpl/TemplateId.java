@@ -14,7 +14,7 @@ import static org.klojang.x.tmpl.TemplateSourceType.RESOLVER;
 import static org.klojang.x.tmpl.TemplateSourceType.RESOURCE;
 import static org.klojang.x.tmpl.TemplateSourceType.STRING;
 import static nl.naturalis.common.StringMethods.concat;
-import static nl.naturalis.common.check.CommonChecks.illegalState;
+import static nl.naturalis.common.check.CommonExceptions.illegalState;
 import static nl.naturalis.common.check.CommonChecks.notNull;
 
 public class TemplateId {
@@ -164,13 +164,6 @@ public class TemplateId {
       return concat("TemplateId[sourceType=", sourceType, ";path=", path, "]");
     }
     return concat(
-        "TemplateId[sourceType=",
-        sourceType,
-        ";path=",
-        path,
-        ";resolver=",
-        pathResolver,
-        "]");
+        "TemplateId[sourceType=", sourceType, ";path=", path, ";resolver=", pathResolver, "]");
   }
-
 }

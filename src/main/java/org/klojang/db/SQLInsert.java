@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import nl.naturalis.common.check.CommonExceptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import nl.naturalis.common.check.Check;
@@ -52,22 +53,18 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
   }
 
   /**
-   * Binds the values in the specified JavaBean to the named parameters within the
-   * SQL statement and then, once the statement has executed, binds back the value of
-   * the auto-generated key to the specified bean property. Bean properties that do
-   * not correspond to named parameters will be ignored. The effect of passing
-   * anything other than a proper JavaBean (e.g. scalars like {@code Integer} or
-   * multi-valued objects like {@code Employee[]} or {@code ArrayList}) is undefined.
-   * If you don't want the auto-increment column to be bound back into the bean or
-   * {@code Map}, just call {@link #bind(Object)}.
+   * Binds the values in the specified JavaBean to the named parameters within the SQL statement and
+   * then, once the statement has executed, binds back the value of the auto-generated key to the
+   * specified bean property. Bean properties that do not correspond to named parameters will be
+   * ignored. The effect of passing anything other than a proper JavaBean (e.g. scalars like {@code
+   * Integer} or multi-valued objects like {@code Employee[]} or {@code ArrayList}) is undefined. If
+   * you don't want the auto-increment column to be bound back into the bean or {@code Map}, just
+   * call {@link #bind(Object)}.
    *
-   * <p>Klojang does not support INSERT statements that generate multiple keys or
-   * non-number keys.
+   * <p>Klojang does not support INSERT statements that generate multiple keys or non-number keys.
    *
-   * @param bean The bean whose values to bind to the named parameters within the
-   *     SQL statement
-   * @param idProperty The name of the property representing the auto-generated
-   *     primary key.
+   * @param bean The bean whose values to bind to the named parameters within the SQL statement
+   * @param idProperty The name of the property representing the auto-generated primary key.
    * @return This {@code SQLInsert} instance
    */
   public SQLInsert bind(Object bean, String idProperty) {
@@ -77,17 +74,14 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
   }
 
   /**
-   * Binds the values in the specified {@code Map} to the named parameters within the
-   * SQL statement and then, once the statement has executed, binds back the value of
-   * the auto-generated key to the specified map key.
+   * Binds the values in the specified {@code Map} to the named parameters within the SQL statement
+   * and then, once the statement has executed, binds back the value of the auto-generated key to
+   * the specified map key.
    *
-   * <p>Klojang does not support INSERT statements that generate multiple keys or
-   * non-number keys.
+   * <p>Klojang does not support INSERT statements that generate multiple keys or non-number keys.
    *
-   * @param map The bean whose values to bind to the named parameters within the
-   *     SQL statement
-   * @param idKey The name of the map key representing the auto-generated primary
-   *     key.
+   * @param map The bean whose values to bind to the named parameters within the SQL statement
+   * @param idKey The name of the map key representing the auto-generated primary key.
    * @return This {@code SQLInsert} instance
    */
   public SQLInsert bind(Map<String, ?> map, String idKey) {
@@ -97,8 +91,8 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
   }
 
   public <U> void insertAll(Collection<U> beans) {
-    Check.on(illegalState(), bindables).is(empty(),
-        "insertAll not allowed on dirty instance");
+    Check.on(CommonExceptions.illegalState(), bindables)
+        .is(empty(), "insertAll not allowed on dirty instance");
     try {
       for (U bean : beans) {
         bindables.clear();
@@ -137,8 +131,7 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
                 Map<String, Setter> setters = SetterFactory.INSTANCE.getSetters(obj.getClass());
                 Check.on(s -> noSuchProperty(obj, key), key).is(keyIn(), setters);
                 Setter setter = setters.get(key);
-                Number n = convert(id,
-                    (Class<? extends Number>) box(setter.getParamType()));
+                Number n = convert(id, (Class<? extends Number>) box(setter.getParamType()));
                 setter.write(obj, n);
               }
             }
@@ -203,5 +196,4 @@ public class SQLInsert extends SQLStatement<SQLInsert> {
       throw KJSQLException.wrap(e, getSQL());
     }
   }
-
 }

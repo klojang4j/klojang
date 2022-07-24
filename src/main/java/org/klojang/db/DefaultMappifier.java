@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import nl.naturalis.common.check.Check;
 import static org.klojang.x.db.rs.RowChannel.toRow;
 import static nl.naturalis.common.check.CommonChecks.gt;
-import static nl.naturalis.common.check.CommonChecks.illegalState;
+import static nl.naturalis.common.check.CommonExceptions.illegalState;
 import static nl.naturalis.common.check.CommonChecks.no;
 
 class DefaultMappifier implements ResultSetMappifier {
