@@ -21,6 +21,7 @@ import nl.naturalis.common.check.Check;
 import nl.naturalis.common.collection.IntList;
 
 import static nl.naturalis.common.ObjectMethods.ifNull;
+import static nl.naturalis.common.check.CommonExceptions.STATE;
 import static nl.naturalis.common.check.CommonExceptions.illegalState;
 import static nl.naturalis.common.check.CommonChecks.no;
 import static nl.naturalis.common.check.CommonChecks.notNull;
@@ -352,7 +353,7 @@ public class SQL {
 
   private <T extends SQLStatement<?>> T prepare(
       Connection con, BiFunction<Connection, SQL, T> constructor) {
-    Check.on(illegalState(), lock.isHeldByCurrentThread()).is(no(), ERR_LOCKED);
+    Check.on(STATE, lock.isHeldByCurrentThread()).is(no(), ERR_LOCKED);
     lock.lock();
     try {
       if (vars != null) {

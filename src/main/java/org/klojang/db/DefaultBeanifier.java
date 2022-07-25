@@ -7,6 +7,8 @@ import org.klojang.x.db.rs.BeanChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import nl.naturalis.common.check.Check;
+
+import static nl.naturalis.common.check.CommonExceptions.STATE;
 import static org.klojang.x.db.rs.BeanChannel.toBean;
 import static nl.naturalis.common.check.CommonChecks.gt;
 import static nl.naturalis.common.check.CommonExceptions.illegalState;
@@ -32,7 +34,7 @@ class DefaultBeanifier<T> implements ResultSetBeanifier<T> {
 
     @Override
     public T next() {
-      Check.on(illegalState(), beanifier.hasMore).is(yes(), "No more rows in result set");
+      Check.on(STATE, beanifier.hasMore).is(yes(), "No more rows in result set");
       return beanifier.beanify().get();
     }
   }

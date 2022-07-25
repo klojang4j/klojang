@@ -6,6 +6,8 @@ import org.klojang.x.db.rs.RowChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import nl.naturalis.common.check.Check;
+
+import static nl.naturalis.common.check.CommonExceptions.STATE;
 import static org.klojang.x.db.rs.RowChannel.toRow;
 import static nl.naturalis.common.check.CommonChecks.gt;
 import static nl.naturalis.common.check.CommonExceptions.illegalState;
@@ -31,7 +33,7 @@ class DefaultMappifier implements ResultSetMappifier {
 
     @Override
     public Row next() {
-      Check.on(illegalState(), dm.empty).is(no(), "No more rows in result set");
+      Check.on(STATE, dm.empty).is(no(), "No more rows in result set");
       return dm.mappify().get();
     }
   }

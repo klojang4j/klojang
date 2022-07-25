@@ -1,21 +1,18 @@
 package org.klojang.x.tmpl;
 
-import java.io.*;
-import java.util.Objects;
-
-import org.klojang.template.PathResolutionException;
-import org.klojang.template.PathResolver;
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.IOMethods;
 import nl.naturalis.common.check.Check;
+import org.klojang.template.PathResolutionException;
+import org.klojang.template.PathResolver;
 
-import static org.klojang.x.tmpl.TemplateSourceType.FILE_SYSTEM;
-import static org.klojang.x.tmpl.TemplateSourceType.RESOLVER;
-import static org.klojang.x.tmpl.TemplateSourceType.RESOURCE;
-import static org.klojang.x.tmpl.TemplateSourceType.STRING;
+import java.io.*;
+import java.util.Objects;
+
 import static nl.naturalis.common.StringMethods.concat;
-import static nl.naturalis.common.check.CommonExceptions.illegalState;
 import static nl.naturalis.common.check.CommonChecks.notNull;
+import static nl.naturalis.common.check.CommonExceptions.STATE;
+import static org.klojang.x.tmpl.TemplateSourceType.*;
 
 public class TemplateId {
 
@@ -75,10 +72,10 @@ public class TemplateId {
 
   public String getSource() throws PathResolutionException {
     if (path == null) {
-      return Check.fail(illegalState(), ERR_NO_PATH, this);
+      return Check.failOn(STATE, ERR_NO_PATH, this);
     } else if (sourceType == FILE_SYSTEM) {
       try {
-        return getSource(new FileInputStream(new File(path)));
+        return getSource(new FileInputStream(path));
       } catch (FileNotFoundException e) {
         throw new PathResolutionException(path);
       }

@@ -16,6 +16,7 @@ import static nl.naturalis.common.ObjectMethods.ifNull;
 import static nl.naturalis.common.ObjectMethods.isEmpty;
 import static nl.naturalis.common.StringMethods.append;
 import static nl.naturalis.common.check.CommonChecks.empty;
+import static nl.naturalis.common.check.CommonExceptions.STATE;
 import static nl.naturalis.common.check.CommonExceptions.illegalState;
 import static nl.naturalis.common.check.CommonChecks.in;
 import static nl.naturalis.common.check.CommonChecks.notNull;
@@ -72,7 +73,7 @@ public class SQLInsertBuilder {
 
   public SQLInsert prepare(Connection con) {
     Check.notNull(con);
-    Check.on(illegalState(), beanClass, "beanClass").is(notNull());
+    Check.on(STATE, beanClass, "beanClass").is(notNull());
     Map<String, Getter> getters = GetterFactory.INSTANCE.getGetters(beanClass, true);
     Set<String> props = getters.keySet();
     if (!isEmpty(properties)) {
@@ -99,7 +100,7 @@ public class SQLInsertBuilder {
   }
 
   private ObjectCheck<String, IllegalStateException> checkProperty(Set<String> props, String prop) {
-    return Check.on(illegalState(), prop)
+    return Check.on(STATE, prop)
         .isNot(empty(), "Empty property name not allowed")
         .is(in(), props, "No such property in %s: %s", beanClass.getSimpleName(), prop);
   }
