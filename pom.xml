@@ -13,8 +13,8 @@
         <!-- ==================================================================== -->
         <!-- *** Build settings                                               *** -->
         <!-- ==================================================================== -->
-        <maven.compiler.source>18</maven.compiler.source>
-        <maven.compiler.target>18</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- ==================================================================== -->
@@ -34,7 +34,7 @@
         <!-- *** Check for updates: mvn versions:display-dependency-updates   *** -->
         <!-- *** Check dependencies: mvn dependency:analyze                   *** -->
         <!-- ==================================================================== -->
-        <naturalis-common.version>3.0.6</naturalis-common.version>
+        <naturalis-common.version>3.0.7</naturalis-common.version>
         <commons-text.version>1.9</commons-text.version>
         <apache-httpclient.version>4.5.13</apache-httpclient.version>
         <slf4j.version>1.7.31</slf4j.version>
@@ -245,8 +245,9 @@
                 <configuration>
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
                     <compilerArgs>
-                        <arg>--enable-preview</arg>
+                        <!--arg>++enable-preview</arg-->
                     </compilerArgs>
                 </configuration>
             </plugin>
