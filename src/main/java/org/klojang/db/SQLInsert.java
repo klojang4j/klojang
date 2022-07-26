@@ -11,7 +11,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import nl.naturalis.common.invoke.Setter;
 import nl.naturalis.common.invoke.SetterFactory;
 
@@ -19,8 +19,8 @@ import static java.sql.Statement.NO_GENERATED_KEYS;
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
 import static nl.naturalis.common.ClassMethods.box;
 import static nl.naturalis.common.NumberMethods.convert;
-import static nl.naturalis.common.check.CommonChecks.*;
-import static nl.naturalis.common.check.CommonExceptions.STATE;
+import static nl.naturalis.check.CommonChecks.*;
+import static nl.naturalis.check.CommonExceptions.STATE;
 import static nl.naturalis.common.invoke.NoSuchPropertyException.noSuchProperty;
 
 public class SQLInsert extends SQLStatement<SQLInsert> {

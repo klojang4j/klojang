@@ -5,9 +5,9 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import nl.naturalis.common.check.ObjectCheck;
+import nl.naturalis.check.ObjectCheck;
 import org.klojang.template.NameMapper;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import nl.naturalis.common.invoke.Getter;
 import nl.naturalis.common.invoke.GetterFactory;
 
@@ -15,11 +15,11 @@ import static java.util.stream.Collectors.joining;
 import static nl.naturalis.common.ObjectMethods.ifNull;
 import static nl.naturalis.common.ObjectMethods.isEmpty;
 import static nl.naturalis.common.StringMethods.append;
-import static nl.naturalis.common.check.CommonChecks.empty;
-import static nl.naturalis.common.check.CommonExceptions.STATE;
-import static nl.naturalis.common.check.CommonExceptions.illegalState;
-import static nl.naturalis.common.check.CommonChecks.in;
-import static nl.naturalis.common.check.CommonChecks.notNull;
+import static nl.naturalis.check.CommonChecks.empty;
+import static nl.naturalis.check.CommonExceptions.STATE;
+import static nl.naturalis.check.CommonExceptions.illegalState;
+import static nl.naturalis.check.CommonChecks.in;
+import static nl.naturalis.check.CommonChecks.notNull;
 
 public class SQLInsertBuilder {
 

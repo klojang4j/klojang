@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import org.klojang.db.SQLTypeNames;
 import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import static nl.naturalis.common.ArrayMethods.implode;
 import static nl.naturalis.common.StringMethods.append;
 

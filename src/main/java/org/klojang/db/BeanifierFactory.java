@@ -7,7 +7,7 @@ import java.util.function.Supplier;
 import org.klojang.template.NameMapper;
 import org.klojang.x.db.rs.BeanChannel;
 import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import static org.klojang.x.db.rs.BeanChannel.createChannels;
 
 /**

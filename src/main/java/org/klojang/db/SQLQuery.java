@@ -13,8 +13,8 @@ import org.klojang.x.db.rs.ExtractorNegotiator;
 import org.klojang.x.db.rs.RsExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import nl.naturalis.common.check.Check;
-import static nl.naturalis.common.check.CommonChecks.yes;
+import nl.naturalis.check.Check;
+import static nl.naturalis.check.CommonChecks.yes;
 
 public class SQLQuery extends SQLStatement<SQLQuery> {
 

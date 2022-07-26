@@ -5,13 +5,13 @@ import java.util.*;
 import org.klojang.x.db.rs.RowChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 
-import static nl.naturalis.common.check.CommonExceptions.STATE;
+import static nl.naturalis.check.CommonExceptions.STATE;
 import static org.klojang.x.db.rs.RowChannel.toRow;
-import static nl.naturalis.common.check.CommonChecks.gt;
-import static nl.naturalis.common.check.CommonExceptions.illegalState;
-import static nl.naturalis.common.check.CommonChecks.no;
+import static nl.naturalis.check.CommonChecks.gt;
+import static nl.naturalis.check.CommonExceptions.illegalState;
+import static nl.naturalis.check.CommonChecks.no;
 
 class DefaultMappifier implements ResultSetMappifier {
 

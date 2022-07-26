@@ -2,7 +2,7 @@ package org.klojang.x.tmpl;
 
 import nl.naturalis.common.ExceptionMethods;
 import nl.naturalis.common.IOMethods;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import org.klojang.template.PathResolutionException;
 import org.klojang.template.PathResolver;
 
@@ -10,8 +10,8 @@ import java.io.*;
 import java.util.Objects;
 
 import static nl.naturalis.common.StringMethods.concat;
-import static nl.naturalis.common.check.CommonChecks.notNull;
-import static nl.naturalis.common.check.CommonExceptions.STATE;
+import static nl.naturalis.check.CommonChecks.notNull;
+import static nl.naturalis.check.CommonExceptions.STATE;
 import static org.klojang.x.tmpl.TemplateSourceType.*;
 
 public class TemplateId {

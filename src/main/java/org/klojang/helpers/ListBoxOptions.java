@@ -7,15 +7,15 @@ import org.klojang.db.Row;
 import org.klojang.template.RenderException;
 import nl.naturalis.common.Bool;
 import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import static org.klojang.x.StandardStringifiers.ESCAPE_ATTR;
 import static org.klojang.x.StandardStringifiers.ESCAPE_HTML;
 import static nl.naturalis.common.ObjectMethods.isEmpty;
 import static nl.naturalis.common.ObjectMethods.isNotEmpty;
 import static nl.naturalis.common.StringMethods.EMPTY;
 import static nl.naturalis.common.StringMethods.append;
-import static nl.naturalis.common.check.CommonChecks.gte;
-import static nl.naturalis.common.check.CommonChecks.sameAs;
+import static nl.naturalis.check.CommonChecks.gte;
+import static nl.naturalis.check.CommonChecks.sameAs;
 
 /**
  * A helper class that assists in generating the {@code <option>} elements for an HTML list box.

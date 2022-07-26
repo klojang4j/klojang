@@ -6,17 +6,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import nl.naturalis.common.StringMethods;
 import nl.naturalis.common.LaxTuple2;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 
 import static java.util.Arrays.copyOfRange;
 import static org.klojang.x.Messages.ERR_BAD_NAME;
 import static org.klojang.x.Messages.ERR_NO_SUCH_TEMPLATE;
 import static nl.naturalis.common.StringMethods.count;
 import static nl.naturalis.common.StringMethods.substrBefore;
-import static nl.naturalis.common.check.CommonChecks.empty;
-import static nl.naturalis.common.check.CommonChecks.in;
+import static nl.naturalis.check.CommonChecks.empty;
+import static nl.naturalis.check.CommonChecks.in;
 
 /**
  * Utility class extending the functionality of the {@link Template} class.

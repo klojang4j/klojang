@@ -1,7 +1,7 @@
 package org.klojang.db;
 
 import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import org.klojang.x.db.ps.BeanBinder;
 
 import java.sql.Connection;
@@ -11,7 +11,7 @@ import java.util.*;
 
 import static nl.naturalis.common.CollectionMethods.collectionToList;
 import static nl.naturalis.common.CollectionMethods.implode;
-import static nl.naturalis.common.check.CommonChecks.keyIn;
+import static nl.naturalis.check.CommonChecks.keyIn;
 
 public abstract class SQLStatement<T extends SQLStatement<T>> implements AutoCloseable {
 

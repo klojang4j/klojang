@@ -5,7 +5,7 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import static java.util.Arrays.stream;
 import static nl.naturalis.common.StringMethods.concat;
 

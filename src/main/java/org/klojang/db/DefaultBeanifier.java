@@ -6,13 +6,13 @@ import java.util.function.Supplier;
 import org.klojang.x.db.rs.BeanChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 
-import static nl.naturalis.common.check.CommonExceptions.STATE;
+import static nl.naturalis.check.CommonExceptions.STATE;
 import static org.klojang.x.db.rs.BeanChannel.toBean;
-import static nl.naturalis.common.check.CommonChecks.gt;
-import static nl.naturalis.common.check.CommonExceptions.illegalState;
-import static nl.naturalis.common.check.CommonChecks.yes;
+import static nl.naturalis.check.CommonChecks.gt;
+import static nl.naturalis.check.CommonExceptions.illegalState;
+import static nl.naturalis.check.CommonChecks.yes;
 
 class DefaultBeanifier<T> implements ResultSetBeanifier<T> {
 

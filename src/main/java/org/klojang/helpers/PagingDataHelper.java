@@ -5,13 +5,13 @@ import java.util.Collections;
 import java.util.List;
 
 import nl.naturalis.common.Tuple2;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 
 import static org.klojang.helpers.PagingDataHelper.ScrollType.SHIFT_WINDOW;
-import static nl.naturalis.common.check.CommonChecks.gte;
-import static nl.naturalis.common.check.CommonChecks.ne;
-import static nl.naturalis.common.check.CommonChecks.negative;
-import static nl.naturalis.common.check.CommonChecks.positive;
+import static nl.naturalis.check.CommonChecks.gte;
+import static nl.naturalis.check.CommonChecks.ne;
+import static nl.naturalis.check.CommonChecks.negative;
+import static nl.naturalis.check.CommonChecks.positive;
 
 public class PagingDataHelper {
 

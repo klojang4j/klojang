@@ -3,9 +3,9 @@ package org.klojang.template;
 import java.util.function.Function;
 
 import nl.naturalis.common.StringMethods;
-import nl.naturalis.common.check.Check;
-import nl.naturalis.common.check.IntCheck;
-import nl.naturalis.common.check.ObjectCheck;
+import nl.naturalis.check.Check;
+import nl.naturalis.check.IntCheck;
+import nl.naturalis.check.ObjectCheck;
 
 import static nl.naturalis.common.ArrayMethods.prefix;
 

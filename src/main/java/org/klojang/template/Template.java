@@ -1,6 +1,6 @@
 package org.klojang.template;
 
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import org.klojang.SysProp;
@@ -13,7 +13,7 @@ import java.util.*;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static nl.naturalis.common.CollectionMethods.implode;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
-import static nl.naturalis.common.check.CommonChecks.*;
+import static nl.naturalis.check.CommonChecks.*;
 import static org.klojang.template.TemplateUtils.getFQName;
 import static org.klojang.x.tmpl.TemplateSourceType.STRING;
 

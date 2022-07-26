@@ -1,7 +1,7 @@
 package org.klojang.template;
 
 import nl.naturalis.common.ClassMethods;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import nl.naturalis.common.collection.TypeHashMap;
 import nl.naturalis.common.path.PathWalker;
 import org.klojang.SysProp;

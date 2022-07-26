@@ -4,12 +4,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import nl.naturalis.common.collection.TypeGraph;
 
 import static org.klojang.db.SQLTypeNames.getTypeName;
 import static nl.naturalis.common.ClassMethods.className;
-import static nl.naturalis.common.check.CommonChecks.notNull;
+import static nl.naturalis.check.CommonChecks.notNull;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 class ReceiverNegotiator {

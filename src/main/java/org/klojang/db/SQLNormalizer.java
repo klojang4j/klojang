@@ -1,7 +1,7 @@
 package org.klojang.db;
 
 import nl.naturalis.common.CollectionMethods;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import nl.naturalis.common.collection.IntArrayList;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.util.MutableInt;
@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import static nl.naturalis.common.CollectionMethods.collectionToList;
-import static nl.naturalis.common.check.CommonChecks.blank;
+import static nl.naturalis.check.CommonChecks.blank;
 
 /**
  * Extracts named parameters from a SQL query string and replaces them with positional parameters

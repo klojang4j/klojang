@@ -1,8 +1,8 @@
 package org.klojang.util.namemappers;
 
 import org.klojang.template.NameMapper;
-import nl.naturalis.common.check.Check;
-import static nl.naturalis.common.check.CommonChecks.empty;
+import nl.naturalis.check.Check;
+import static nl.naturalis.check.CommonChecks.empty;
 import static java.lang.Character.*;
 
 /**

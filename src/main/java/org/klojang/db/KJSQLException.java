@@ -3,7 +3,7 @@ package org.klojang.db;
 import java.sql.SQLException;
 import org.klojang.KlojangRTException;
 import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import nl.naturalis.common.exception.UncheckedException;
 
 /**

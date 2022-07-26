@@ -1,7 +1,7 @@
 package org.klojang.template;
 
 import nl.naturalis.common.LaxTuple2;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import nl.naturalis.common.collection.IntList;
 import nl.naturalis.common.io.UnsafeByteArrayOutputStream;
 
@@ -16,7 +16,7 @@ import static nl.naturalis.common.ArrayMethods.EMPTY_STRING_ARRAY;
 import static nl.naturalis.common.CollectionMethods.asList;
 import static nl.naturalis.common.ObjectMethods.*;
 import static nl.naturalis.common.StringMethods.concat;
-import static nl.naturalis.common.check.CommonChecks.*;
+import static nl.naturalis.check.CommonChecks.*;
 import static org.klojang.template.Accessor.UNDEFINED;
 import static org.klojang.template.RenderException.*;
 import static org.klojang.template.TemplateUtils.getFQName;

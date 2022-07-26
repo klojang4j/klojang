@@ -1,9 +1,9 @@
 package org.klojang.util.namemappers;
 
 import org.klojang.template.NameMapper;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import static java.lang.Character.toUpperCase;
-import static nl.naturalis.common.check.CommonChecks.empty;
+import static nl.naturalis.check.CommonChecks.empty;
 
 /**
  * Converts camel case identifiers to word case identifiers. For example {@code myBloodyValentine}

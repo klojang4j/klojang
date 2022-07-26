@@ -4,7 +4,7 @@ import java.util.*;
 import static org.klojang.template.RenderException.repetitionMismatch;
 import static org.klojang.template.TemplateUtils.getFQName;
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
-import static nl.naturalis.common.check.CommonChecks.notNull;
+import static nl.naturalis.check.CommonChecks.notNull;
 
 class RenderState {
 

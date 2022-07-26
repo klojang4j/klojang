@@ -17,14 +17,14 @@ import org.klojang.x.db.ps.MapBinder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import nl.naturalis.common.Tuple2;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import nl.naturalis.common.collection.IntList;
 
 import static nl.naturalis.common.ObjectMethods.ifNull;
-import static nl.naturalis.common.check.CommonExceptions.STATE;
-import static nl.naturalis.common.check.CommonExceptions.illegalState;
-import static nl.naturalis.common.check.CommonChecks.no;
-import static nl.naturalis.common.check.CommonChecks.notNull;
+import static nl.naturalis.check.CommonExceptions.STATE;
+import static nl.naturalis.check.CommonExceptions.illegalState;
+import static nl.naturalis.check.CommonChecks.no;
+import static nl.naturalis.check.CommonChecks.notNull;
 
 /**
  * A factory for {@link SQLQuery}, {@link SQLInsert} and {@link SQLUpdate} instances. An {@code SQL}

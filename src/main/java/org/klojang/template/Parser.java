@@ -12,10 +12,10 @@ import static org.klojang.template.ErrorType.*;
 import static org.klojang.template.Template.ROOT_TEMPLATE_NAME;
 import static org.klojang.x.tmpl.TemplateSourceType.STRING;
 import static nl.naturalis.common.StringMethods.EMPTY;
-import static nl.naturalis.common.check.CommonChecks.blank;
-import static nl.naturalis.common.check.CommonChecks.eq;
-import static nl.naturalis.common.check.CommonChecks.EQ;
-import static nl.naturalis.common.check.CommonChecks.in;
+import static nl.naturalis.check.CommonChecks.blank;
+import static nl.naturalis.check.CommonChecks.eq;
+import static nl.naturalis.check.CommonChecks.EQ;
+import static nl.naturalis.check.CommonChecks.in;
 
 class Parser {
 

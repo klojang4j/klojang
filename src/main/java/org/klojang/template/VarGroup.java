@@ -1,9 +1,9 @@
 package org.klojang.template;
 
 import java.util.HashMap;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import static org.klojang.x.Messages.ERR_NO_SUCH_VARGROUP;
-import static nl.naturalis.common.check.CommonChecks.notNull;
+import static nl.naturalis.check.CommonChecks.notNull;
 
 /**
  * A {@code VarGroup} lets you group template variables across one or more templates. This enables

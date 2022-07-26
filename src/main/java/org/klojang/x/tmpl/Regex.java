@@ -3,15 +3,15 @@ package org.klojang.x.tmpl;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import nl.naturalis.common.check.ObjectCheck;
+import nl.naturalis.check.ObjectCheck;
 import org.klojang.SysProp;
 import org.klojang.template.ParseException;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 
 import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.toSet;
-import static nl.naturalis.common.check.CommonChecks.blank;
-import static nl.naturalis.common.check.CommonChecks.EQ;
+import static nl.naturalis.check.CommonChecks.blank;
+import static nl.naturalis.check.CommonChecks.EQ;
 
 public class Regex {
 

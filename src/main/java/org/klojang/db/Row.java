@@ -1,9 +1,8 @@
 package org.klojang.db;
 
 import nl.naturalis.common.Bool;
-import nl.naturalis.common.IntPair;
 import nl.naturalis.common.NumberMethods;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import org.klojang.template.RenderSession;
 
 import java.sql.ResultSet;
@@ -11,7 +10,7 @@ import java.util.*;
 import java.util.function.Function;
 
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
-import static nl.naturalis.common.check.CommonChecks.*;
+import static nl.naturalis.check.CommonChecks.*;
 
 /**
  * A thin wrapper around a {@code Map<String,Object>} instance mimicking some of the behaviour of

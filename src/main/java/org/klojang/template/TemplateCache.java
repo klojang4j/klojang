@@ -5,10 +5,10 @@ import java.util.LinkedList;
 import org.klojang.x.tmpl.TemplateId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import static org.klojang.SysProp.TMPL_CACHE_SIZE;
 import static org.klojang.template.Template.ROOT_TEMPLATE_NAME;
-import static nl.naturalis.common.check.CommonChecks.gte;
+import static nl.naturalis.check.CommonChecks.gte;
 
 class TemplateCache {
 

@@ -8,9 +8,9 @@ import org.klojang.x.acc.BeanAccessor;
 import org.klojang.x.acc.PathAccessor;
 import nl.naturalis.common.Bool;
 import nl.naturalis.common.NumberMethods;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 
-import static nl.naturalis.common.check.CommonChecks.int32;
+import static nl.naturalis.check.CommonChecks.int32;
 
 /**
  * Specifies all system properties that will be picked up by Klojang.

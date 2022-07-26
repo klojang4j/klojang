@@ -1,7 +1,7 @@
 package org.klojang.template;
 
 import nl.naturalis.common.Tuple2;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import nl.naturalis.common.collection.TypeHashMap;
 import nl.naturalis.common.collection.TypeMap;
 import org.klojang.x.StandardStringifiers;
@@ -13,7 +13,7 @@ import java.util.Map;
 
 import static nl.naturalis.common.ObjectMethods.ifNotNull;
 import static nl.naturalis.common.StringMethods.*;
-import static nl.naturalis.common.check.CommonChecks.*;
+import static nl.naturalis.check.CommonChecks.*;
 import static org.klojang.template.TemplateUtils.getNestedTemplate;
 import static org.klojang.x.Messages.ERR_NO_SUCH_VARIABLE;
 

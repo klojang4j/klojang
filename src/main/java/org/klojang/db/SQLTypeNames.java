@@ -1,7 +1,7 @@
 package org.klojang.db;
 
 import nl.naturalis.common.ExceptionMethods;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 
 import java.io.PrintStream;
 import java.lang.reflect.Field;
@@ -9,7 +9,7 @@ import java.sql.Types;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static nl.naturalis.common.check.CommonChecks.keyIn;
+import static nl.naturalis.check.CommonChecks.keyIn;
 
 public class SQLTypeNames {
 

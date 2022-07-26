@@ -5,10 +5,10 @@ import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.klojang.db.SQLTypeNames;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import static java.sql.Types.*;
 import static org.klojang.x.db.rs.RsMethod.*;
-import static nl.naturalis.common.check.CommonChecks.keyIn;
+import static nl.naturalis.check.CommonChecks.keyIn;
 
 class RsMethods {
 

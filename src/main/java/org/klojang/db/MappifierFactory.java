@@ -5,7 +5,7 @@ import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicReference;
 import org.klojang.template.NameMapper;
 import org.klojang.x.db.rs.RowChannel;
-import nl.naturalis.common.check.Check;
+import nl.naturalis.check.Check;
 import static org.klojang.x.db.rs.RowChannel.createChannels;
 
 /**
